@@ -19,12 +19,12 @@ const firebaseConfig = {
   measurementId: "G-KXCGEMQMPH"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// Forces Google account chooser every time
 googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
