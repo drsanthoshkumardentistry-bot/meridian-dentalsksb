@@ -1,5 +1,11 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signInWithRedirect, 
+  signOut 
+} from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
@@ -13,15 +19,26 @@ const firebaseConfig = {
   measurementId: "G-KXCGEMQMPH"
 };
 
-// Initialize Firebase App
 const app = initializeApp(firebaseConfig);
 
-// Export Authentication, Firestore DB, and Storage services
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+
+// Forces Google account chooser every time
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
+
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
-// Authentication helper methods
-export const loginWithGoogle = () => signInWithPopup(auth, googleProvider);
+export const loginWithGoogle = async () => {
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if (isMobile) {
+    return await signInWithRedirect(auth, googleProvider);
+  } else {
+    return await signInWithPopup(auth, googleProvider);
+  }
+};
+
 export const logoutUser = () => signOut(auth);
