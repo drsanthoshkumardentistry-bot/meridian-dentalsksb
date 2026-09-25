@@ -4,12 +4,12 @@ import {
   GoogleAuthProvider, 
   signInWithPopup, 
   signInWithRedirect, 
+  getRedirectResult, 
   signOut 
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
-// Your verified web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyC3VsF3Fodx3Rbp9ahqrz7qSbVvaY6Ukk0",
   authDomain: "meridian-dental.firebaseapp.com",
@@ -20,23 +20,20 @@ const firebaseConfig = {
   measurementId: "G-KXCGERQMPH"
 };
 
-// Initialize Firebase App
 const app = initializeApp(firebaseConfig);
 
-// Export Authentication & Google Provider
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// Forces the Google account chooser prompt every time
+// Always prompt account selection
 googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
-// Export Cloud Firestore Database & Storage
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
-// Responsive Google login (Redirect on Mobile, Popup on Desktop)
+// Responsive authentication handler (redirect on mobile, popup on desktop)
 export const loginWithGoogle = async () => {
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   if (isMobile) {
@@ -46,4 +43,5 @@ export const loginWithGoogle = async () => {
   }
 };
 
+export { getRedirectResult };
 export const logoutUser = () => signOut(auth);

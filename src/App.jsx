@@ -22,14 +22,14 @@ import {
   HeartPulse, 
   Image as ImageIcon, 
   Calendar, 
-  ExternalLink,
-  Lock,
-  UserCheck,
-  MessageCircle,
-  AlertTriangle,
-  QrCode,
-  Sun,
-  FileText
+  ExternalLink, 
+  Lock, 
+  UserCheck, 
+  MessageCircle, 
+  AlertTriangle, 
+  QrCode, 
+  Sun, 
+  FileText 
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -86,7 +86,7 @@ const sanitizePhoneForWhatsApp = (rawPhone) => {
   return cleaned;
 };
 
-// WhatsApp Dispatchers
+// --- WHATSAPP DISPATCH HANDLERS ---
 const sendAppointmentWhatsApp = (appointment, patientPhone = '') => {
   const phone = sanitizePhoneForWhatsApp(patientPhone);
   const message = encodeURIComponent(
@@ -148,7 +148,7 @@ const sendRecallWhatsApp = (patient, type) => {
   const phone = sanitizePhoneForWhatsApp(patient.phone);
   let text = '';
   if (type === 'postop') {
-    text = `Hello *${patient.name}*, this is a check-in from Meridian Dental following your dental procedure yesterday. How is your comfort level and healing? Please reply to this message if you have questions or discomfort.`;
+    text = `Hello *${patient.name}*, this is a check-in from Meridian Dental following your dental procedure yesterday. How is your comfort level and healing? Please reply to this message if you have any questions or discomfort.`;
   } else if (type === 'suture') {
     text = `Hello *${patient.name}*, reminder from Meridian Dental: your suture removal is due. Please visit the operatory for your follow-up check.`;
   } else {
@@ -157,7 +157,7 @@ const sendRecallWhatsApp = (patient, type) => {
   window.open(phone ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}` : `https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
 };
 
-// FDI Adult Dental Arch Standard
+// FDI Adult Standard Dental Numbers
 const FDI_TEETH = {
   upper: [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28],
   lower: [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38]
@@ -177,12 +177,12 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  // Active navigation tab
+  // Active navigation
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Primary Clinical Collections (Zero hardcoded demo data)
+  // Primary Clinical Collections
   const [patients, setPatients] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [invoices, setInvoices] = useState([]);
@@ -268,7 +268,7 @@ export default function App() {
     };
   }, [currentUser]);
 
-  // Persist local cache per tenant
+  // Persist cache per tenant
   useEffect(() => {
     if (currentUser) {
       localStorage.setItem(`md_prod_v3_${currentUser.uid}`, JSON.stringify({
@@ -446,7 +446,7 @@ export default function App() {
     return (
       <div className="min-h-screen bg-[#0f172a] text-white flex flex-col justify-center items-center p-4 font-sans selection:bg-blue-600">
         <div className="w-full max-w-sm sm:max-w-md bg-[#1e293b] border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-linear-to-tr from-blue-600 to-indigo-500 flex items-center justify-center mx-auto shadow-lg shadow-blue-500/30">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center mx-auto shadow-lg shadow-blue-500/30">
             <Lock className="w-8 h-8 text-white" />
           </div>
 
@@ -488,7 +488,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#f4f6f8] text-slate-800 flex flex-col font-sans pb-24 sm:pb-8 antialiased selection:bg-blue-600 selection:text-white">
       {/* Top Navbar */}
-      <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-3 sm:px-6 sticky top-0 z-30 shadow-xs">
+      <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-3 sm:px-6 sticky top-0 z-30 shadow-sm">
         <div className="flex items-center gap-2.5 sm:gap-3">
           <button 
             onClick={() => setSidebarOpen(true)}
@@ -499,7 +499,7 @@ export default function App() {
           <span className="font-bold text-base sm:text-lg text-slate-900 tracking-tight">Meridian Dental</span>
         </div>
         
-        {/* Search */}
+        {/* Global Search */}
         <div className="relative w-36 sm:w-64 md:w-80">
           <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input 
@@ -596,7 +596,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Main Responsive Body Container */}
+      {/* Main Responsive Body */}
       <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 md:p-8 space-y-6">
         {activeTab === 'dashboard' && (
           <DashboardView stats={stats} weeklyData={weeklyChartData} onSwitchTab={setActiveTab} />
@@ -673,7 +673,7 @@ export default function App() {
         </button>
       </nav>
 
-      {/* Patient Detail Modal (Odontogram, Rx, OPG, History, Recalls) */}
+      {/* Comprehensive Patient Modal (Odontogram, Rx, OPG, History, Recalls) */}
       {selectedPatientForDetails && (
         <PatientDetailsModal 
           patient={selectedPatientForDetails}
@@ -692,7 +692,7 @@ export default function App() {
         />
       )}
 
-      {/* Action Modals */}
+      {/* Modals */}
       {showAppointmentModal && (
         <NewAppointmentModal 
           uid={currentUser?.uid}
@@ -745,9 +745,8 @@ function DashboardView({ stats, weeklyData, onSwitchTab }) {
         </button>
       </div>
 
-      {/* Responsive KPI Grid: 1 col on mobile, 2 on tablet, 4 on desktop */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex items-center gap-3.5">
+        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center gap-3.5">
           <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
             <Users className="w-5 h-5" />
           </div>
@@ -757,7 +756,7 @@ function DashboardView({ stats, weeklyData, onSwitchTab }) {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex items-center gap-3.5">
+        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center gap-3.5">
           <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
             <CalendarIcon className="w-5 h-5" />
           </div>
@@ -767,7 +766,7 @@ function DashboardView({ stats, weeklyData, onSwitchTab }) {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex items-center gap-3.5">
+        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center gap-3.5">
           <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
             <IndianRupee className="w-5 h-5" />
           </div>
@@ -777,7 +776,7 @@ function DashboardView({ stats, weeklyData, onSwitchTab }) {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex items-center gap-3.5">
+        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center gap-3.5">
           <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
             <TrendingUp className="w-5 h-5" />
           </div>
@@ -788,9 +787,8 @@ function DashboardView({ stats, weeklyData, onSwitchTab }) {
         </div>
       </div>
 
-      {/* Analytics Charts Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-3">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3">
           <h3 className="text-sm font-bold text-slate-900">Weekly Clinical Load</h3>
           <div className="h-48 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
@@ -805,7 +803,7 @@ function DashboardView({ stats, weeklyData, onSwitchTab }) {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-3">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3">
           <h3 className="text-sm font-bold text-slate-900">Revenue Collections</h3>
           <div className="h-48 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
@@ -850,13 +848,13 @@ function AppointmentsView({
         <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Appointments</h2>
         <button 
           onClick={onOpenModal}
-          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition shadow-sm flex items-center gap-1.5 cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" /> Book
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs text-center space-y-2.5">
+      <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm text-center space-y-2.5">
         <div className="inline-flex items-center border border-slate-200 rounded-xl overflow-hidden text-xs">
           <button onClick={onPrev} className="px-3 py-1.5 hover:bg-slate-50 text-slate-600 border-r border-slate-200 cursor-pointer">
             <ChevronLeft className="w-3.5 h-3.5" />
@@ -890,7 +888,7 @@ function AppointmentsView({
             const matchedPatient = patients.find(p => p.name?.toLowerCase() === appt.patient?.toLowerCase());
 
             return (
-              <div key={appt.id} className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div key={appt.id} className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-start gap-3.5">
                   <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
                     <Clock className="w-4 h-4" />
@@ -938,7 +936,7 @@ function AppointmentsView({
 }
 
 // -------------------------------------------------------------
-// 3. PATIENTS & OPG DIRECTORY
+// 3. PATIENTS DIRECTORY
 // -------------------------------------------------------------
 function PatientsView({ patients, onOpenModal, onSelectPatient, onDeletePatient }) {
   return (
@@ -950,7 +948,7 @@ function PatientsView({ patients, onOpenModal, onSelectPatient, onDeletePatient 
         </div>
         <button 
           onClick={onOpenModal}
-          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition shadow-sm flex items-center gap-1.5 cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" /> Add Patient
         </button>
@@ -974,7 +972,7 @@ function PatientsView({ patients, onOpenModal, onSelectPatient, onDeletePatient 
             return (
               <div 
                 key={p.id} 
-                className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex items-center justify-between transition hover:border-blue-400 group"
+                className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between transition hover:border-blue-400 group"
               >
                 <div 
                   onClick={() => onSelectPatient(p)}
@@ -1022,10 +1020,10 @@ function PatientsView({ patients, onOpenModal, onSelectPatient, onDeletePatient 
 }
 
 // -------------------------------------------------------------
-// 4. COMPREHENSIVE PATIENT MODAL (Odontogram, Rx, OPG, History)
+// 4. PATIENT DETAILS MODAL (Odontogram, Rx, OPG, History, Recalls)
 // -------------------------------------------------------------
 function PatientDetailsModal({ patient, currentUser, onClose, onDeletePatient, onUpdateRecord }) {
-  const [tab, setTab] = useState('chart'); // chart | rx | opg | history | recalls
+  const [tab, setTab] = useState('chart');
   const [invertXray, setInvertXray] = useState(false);
 
   // New Rx state
@@ -1090,7 +1088,6 @@ function PatientDetailsModal({ patient, currentUser, onClose, onDeletePatient, o
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
       <div className="bg-white rounded-3xl w-full max-w-2xl p-5 sm:p-6 border border-slate-200 shadow-2xl space-y-4 my-6 max-h-[90vh] overflow-y-auto">
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
             <div className="flex items-center gap-2">
@@ -1194,14 +1191,13 @@ function PatientDetailsModal({ patient, currentUser, onClose, onDeletePatient, o
               {patient.prescriptions?.length > 0 && (
                 <button
                   onClick={() => sendPrescriptionWhatsApp(patient, patient.prescriptions)}
-                  className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer shadow-xs"
+                  className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer shadow-sm"
                 >
                   <MessageCircle className="w-3.5 h-3.5" /> Dispatch Rx to WhatsApp
                 </button>
               )}
             </div>
 
-            {/* Rx Medication Add Form */}
             <form onSubmit={handleAddPrescription} className="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2 text-xs">
               <p className="font-bold text-slate-700">Add Medication</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1250,7 +1246,6 @@ function PatientDetailsModal({ patient, currentUser, onClose, onDeletePatient, o
               </button>
             </form>
 
-            {/* Prescribed List */}
             <div className="space-y-2">
               {patient.prescriptions?.map((item) => (
                 <div key={item.id} className="bg-white border border-slate-200 p-3 rounded-xl flex items-center justify-between text-xs">
@@ -1318,7 +1313,6 @@ function PatientDetailsModal({ patient, currentUser, onClose, onDeletePatient, o
               )}
             </div>
 
-            {/* Direct File Picker Upload */}
             <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 text-xs">
               <label className="block font-bold text-slate-700 mb-1">Direct Upload from Operatory (Gallery / RVG Export)</label>
               <input 
@@ -1407,7 +1401,6 @@ function PatientDetailsModal({ patient, currentUser, onClose, onDeletePatient, o
           </div>
         )}
 
-        {/* Modal Footer */}
         <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
           <button 
             type="button" 
@@ -1448,7 +1441,7 @@ function BillingView({ invoices, patients, onOpenModal, onOpenUPI }) {
         </div>
         <button 
           onClick={onOpenModal}
-          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition shadow-sm flex items-center gap-1.5 cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" /> New Bill
         </button>
@@ -1458,7 +1451,7 @@ function BillingView({ invoices, patients, onOpenModal, onOpenUPI }) {
         <span className="font-bold">{formatCurrency(outstandingSum)}</span> outstanding receivables across {unpaidCount} invoice(s)
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-x-auto">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
         <table className="w-full text-left text-xs min-w-[550px]">
           <thead className="border-b border-slate-100 text-slate-500 font-semibold bg-slate-50/50">
             <tr>
@@ -1504,7 +1497,7 @@ function BillingView({ invoices, patients, onOpenModal, onOpenUPI }) {
                       </button>
                       <button
                         onClick={() => sendInvoiceWhatsApp(inv, matchedPatient?.phone || '')}
-                        className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-[11px] transition cursor-pointer shadow-xs inline-flex items-center gap-1"
+                        className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-[11px] transition cursor-pointer shadow-sm inline-flex items-center gap-1"
                       >
                         <MessageCircle className="w-3 h-3" /> Bill
                       </button>
@@ -1565,8 +1558,8 @@ function UPIPaymentModal({ invoice, onClose }) {
 function FounderProfileView({ onSwitchTab, onLogout }) {
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs">
-        <div className="relative h-36 sm:h-44 bg-linear-to-r from-[#0d2a4a] via-[#1a4a75] to-[#2563eb] overflow-hidden p-4 flex flex-col justify-center text-white">
+      <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+        <div className="relative h-36 sm:h-44 bg-gradient-to-r from-[#0d2a4a] via-[#1a4a75] to-[#2563eb] overflow-hidden p-4 flex flex-col justify-center text-white">
           <div className="relative z-10 max-w-[85%]">
             <h4 className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-blue-200">
               INNOVATION AT THE INTERSECTION OF
@@ -1622,7 +1615,7 @@ function FounderProfileView({ onSwitchTab, onLogout }) {
             <div className="flex items-center gap-2 mt-4">
               <button 
                 onClick={() => onSwitchTab('appointments')}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs py-2 rounded-full transition shadow-xs cursor-pointer text-center"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs py-2 rounded-full transition shadow-sm cursor-pointer text-center"
               >
                 Open to Diary
               </button>
@@ -1650,7 +1643,7 @@ function FounderProfileView({ onSwitchTab, onLogout }) {
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs space-y-4">
+      <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm space-y-4">
         <div>
           <h3 className="text-base font-bold text-slate-900">Analytics</h3>
           <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
@@ -1805,7 +1798,7 @@ function NewPatientModal({ uid, onSuccess, onClose }) {
           <button 
             type="submit" 
             disabled={saving}
-            className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition shadow-xs mt-2 cursor-pointer"
+            className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition shadow-sm mt-2 cursor-pointer"
           >
             {saving ? "Registering..." : "Create Patient Record"}
           </button>
@@ -1936,7 +1929,7 @@ function NewAppointmentModal({ uid, currentDateKey, patients, onSuccess, onClose
           <button 
             type="submit" 
             disabled={saving}
-            className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition shadow-xs mt-2 cursor-pointer"
+            className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition shadow-sm mt-2 cursor-pointer"
           >
             {saving ? "Confirming..." : "Confirm Booking"}
           </button>
@@ -2149,7 +2142,7 @@ function CreateInvoiceModal({ uid, patients, onSuccess, onClose }) {
           <button 
             type="submit" 
             disabled={saving}
-            className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition shadow-xs cursor-pointer"
+            className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition shadow-sm cursor-pointer"
           >
             {saving ? "Generating..." : "Generate & Post Invoice"}
           </button>
