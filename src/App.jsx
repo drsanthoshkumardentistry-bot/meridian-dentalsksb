@@ -1,18 +1,61 @@
 import React, { useState } from 'react';
-import { 
-  Calendar, 
-  Clock, 
-  User, 
-  Phone, 
-  CheckCircle, 
-  QrCode, 
-  Copy, 
-  ExternalLink,
-  ShieldCheck
-} from 'lucide-react';
+
+// Native SVG Icons (Eliminates external 'lucide-react' build dependencies)
+const IconCalendar = ({ className = "w-5 h-5" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>
+  </svg>
+);
+
+const IconClock = ({ className = "w-4 h-4" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+  </svg>
+);
+
+const IconUser = ({ className = "w-4 h-4" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+  </svg>
+);
+
+const IconPhone = ({ className = "w-4 h-4" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+  </svg>
+);
+
+const IconCheckCircle = ({ className = "w-4 h-4" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+  </svg>
+);
+
+const IconQrCode = ({ className = "w-6 h-6" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/>
+  </svg>
+);
+
+const IconCopy = ({ className = "w-3.5 h-3.5" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+  </svg>
+);
+
+const IconExternalLink = ({ className = "w-4 h-4" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+  </svg>
+);
+
+const IconShieldCheck = ({ className = "w-4 h-4" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>
+  </svg>
+);
 
 export default function App() {
-  // Navigation: 'appointments' | 'charting' | 'billing'
   const [activeTab, setActiveTab] = useState('appointments');
 
   // Appointment Form State
@@ -21,25 +64,21 @@ export default function App() {
   const [appointmentDate, setAppointmentDate] = useState('');
   const [appointmentTime, setAppointmentTime] = useState('');
   const [treatmentType, setTreatmentType] = useState('Consultation & Diagnostic Exam');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(null);
 
-  // Billing State (Configured with verified UPI ID)
+  // Billing State
   const [billAmount, setBillAmount] = useState('500');
   const [copiedUPI, setCopiedUPI] = useState(false);
   const upiId = "santhoshkumar758210@oksbi";
   const payeeName = "SanthoshKumar";
 
-  // Dynamic QR API generating exact UPI payment intent
   const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${billAmount}&cu=INR`;
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(upiUrl)}&margin=10`;
 
   // FDI Odontogram Interactive State (32 Adult Teeth)
   const defaultTeethState = {
-    // Upper Arch (Maxillary)
     18: 'Healthy', 17: 'Healthy', 16: 'Healthy', 15: 'Healthy', 14: 'Healthy', 13: 'Healthy', 12: 'Caries', 11: 'Healthy',
     21: 'Healthy', 22: 'Caries', 23: 'RCT Done', 24: 'Caries', 25: 'Healthy', 26: 'Healthy', 27: 'Healthy', 28: 'Healthy',
-    // Lower Arch (Mandibular)
     48: 'Healthy', 47: 'Healthy', 46: 'Healthy', 45: 'Healthy', 44: 'RCT Done', 43: 'Healthy', 42: 'Healthy', 41: 'Healthy',
     31: 'Restored', 32: 'Healthy', 33: 'Healthy', 34: 'Healthy', 35: 'Healthy', 36: 'Healthy', 37: 'RCT Done', 38: 'Healthy'
   };
@@ -62,7 +101,7 @@ export default function App() {
     setTeethStatus(prev => ({ ...prev, [toothNum]: statusCycle[nextIdx] }));
   };
 
-  // Immediate confirmation booking handler (Prevents UI lockup / infinite generating state)
+  // Synchronous, non-blocking booking handler
   const handleBookAppointment = (e) => {
     e.preventDefault();
     if (!patientName.trim() || !patientPhone.trim()) {
@@ -70,25 +109,17 @@ export default function App() {
       return;
     }
 
-    setIsSubmitting(true);
-
-    try {
-      const generatedToken = `APT-${Math.floor(1000 + Math.random() * 9000)}`;
-      setBookingSuccess({
-        id: generatedToken,
-        name: patientName.trim(),
-        phone: patientPhone.trim(),
-        date: appointmentDate || new Date().toISOString().split('T')[0],
-        time: appointmentTime || '10:00 AM',
-        treatment: treatmentType
-      });
-      setPatientName('');
-      setPatientPhone('');
-    } catch (err) {
-      console.error("Booking failed:", err);
-    } finally {
-      setIsSubmitting(false);
-    }
+    const generatedToken = `APT-${Math.floor(1000 + Math.random() * 9000)}`;
+    setBookingSuccess({
+      id: generatedToken,
+      name: patientName.trim(),
+      phone: patientPhone.trim(),
+      date: appointmentDate || new Date().toISOString().split('T')[0],
+      time: appointmentTime || '10:00 AM',
+      treatment: treatmentType
+    });
+    setPatientName('');
+    setPatientPhone('');
   };
 
   const copyToClipboard = () => {
@@ -104,7 +135,7 @@ export default function App() {
       <header className="sticky top-0 z-40 bg-white border-b border-slate-200 px-4 py-3 sm:px-6 shadow-sm">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           
-          {/* Official Squircle Brand Logo */}
+          {/* Logo & System Identity */}
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl bg-[#1e1c2e] flex items-center justify-center shadow-sm shrink-0">
               <span className="text-white font-extrabold text-base sm:text-lg tracking-tight font-sans">
@@ -159,7 +190,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Operatory Content */}
+      {/* Main Operatory View */}
       <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 lg:p-8">
         
         {/* TAB 1: APPOINTMENTS */}
@@ -169,7 +200,7 @@ export default function App() {
               <div className="px-5 py-4 border-b border-slate-200 bg-slate-50/60 flex items-center justify-between">
                 <div>
                   <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-blue-600" />
+                    <IconCalendar className="w-5 h-5 text-blue-600" />
                     Book Operatory Appointment
                   </h2>
                   <p className="text-xs text-slate-500">Register new patient consultations and operatory slots</p>
@@ -181,7 +212,9 @@ export default function App() {
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">Patient Full Name *</label>
                     <div className="relative">
-                      <User className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                      <div className="absolute left-3 top-3 text-slate-400">
+                        <IconUser className="w-4 h-4" />
+                      </div>
                       <input 
                         type="text"
                         required
@@ -196,7 +229,9 @@ export default function App() {
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">WhatsApp / Contact Number *</label>
                     <div className="relative">
-                      <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                      <div className="absolute left-3 top-3 text-slate-400">
+                        <IconPhone className="w-4 h-4" />
+                      </div>
                       <input 
                         type="tel"
                         required
@@ -211,7 +246,9 @@ export default function App() {
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">Appointment Date</label>
                     <div className="relative">
-                      <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                      <div className="absolute left-3 top-3 text-slate-400">
+                        <IconCalendar className="w-4 h-4" />
+                      </div>
                       <input 
                         type="date"
                         value={appointmentDate}
@@ -224,7 +261,9 @@ export default function App() {
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">Operatory Slot Time</label>
                     <div className="relative">
-                      <Clock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                      <div className="absolute left-3 top-3 text-slate-400">
+                        <IconClock className="w-4 h-4" />
+                      </div>
                       <input 
                         type="time"
                         value={appointmentTime}
@@ -254,10 +293,9 @@ export default function App() {
                 <div className="pt-2">
                   <button
                     type="submit"
-                    disabled={isSubmitting}
-                    className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    <CheckCircle className="w-4 h-4" />
+                    <IconCheckCircle className="w-4 h-4" />
                     <span>Confirm Appointment</span>
                   </button>
                 </div>
@@ -270,7 +308,7 @@ export default function App() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-600 text-white rounded-lg">
-                      <CheckCircle className="w-5 h-5" />
+                      <IconCheckCircle className="w-5 h-5" />
                     </div>
                     <div>
                       <h3 className="text-sm font-bold text-emerald-900">Appointment Confirmed</h3>
@@ -369,7 +407,7 @@ export default function App() {
           <div className="max-w-md mx-auto bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
             <div className="text-center space-y-1">
               <div className="inline-flex p-3 rounded-full bg-blue-50 text-blue-600 mb-2">
-                <QrCode className="w-6 h-6" />
+                <IconQrCode className="w-6 h-6" />
               </div>
               <h2 className="text-lg font-bold text-slate-900">Chairside UPI Invoicing</h2>
               <p className="text-xs text-slate-500">Scan with GPay, PhonePe, Paytm, or BHIM</p>
@@ -388,7 +426,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Generated Dynamic QR Code matching santhoshkumar758210@oksbi */}
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col items-center justify-center">
               <img 
                 src={qrCodeUrl}
@@ -405,7 +442,7 @@ export default function App() {
                     className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
                     title="Copy UPI ID"
                   >
-                    {copiedUPI ? <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedUPI ? <span className="text-emerald-600"><IconCheckCircle className="w-3.5 h-3.5" /></span> : <IconCopy className="w-3.5 h-3.5" />}
                   </button>
                 </div>
               </div>
@@ -415,7 +452,7 @@ export default function App() {
               href={upiUrl}
               className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-lg shadow-sm transition-all flex items-center justify-center gap-2"
             >
-              <ExternalLink className="w-4 h-4" />
+              <IconExternalLink className="w-4 h-4" />
               <span>Open Installed UPI App</span>
             </a>
           </div>
@@ -423,11 +460,11 @@ export default function App() {
 
       </main>
 
-      {/* Global Footer (No Personal Founder Profile) */}
+      {/* Global Footer */}
       <footer className="mt-auto border-t border-slate-200 bg-white py-4 px-4 text-center">
         <div className="flex items-center justify-center gap-2 text-xs text-slate-500 font-medium">
-          <ShieldCheck className="w-4 h-4 text-emerald-600" />
-          <span>Meridian Dental OS • Recognized by StartupTN (STN99974)[cite: 10]</span>
+          <IconShieldCheck className="w-4 h-4 text-emerald-600" />
+          <span>Meridian Dental OS • Recognized by StartupTN (STN99974)</span>
         </div>
       </footer>
     </div>
