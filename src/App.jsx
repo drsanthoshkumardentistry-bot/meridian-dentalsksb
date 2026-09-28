@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-// Native SVG Icons
+// Native SVG Icons (Zero external build dependencies)
 const IconCalendar = ({ className = "w-5 h-5" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
@@ -79,13 +79,34 @@ const IconShieldCheck = ({ className = "w-4 h-4" }) => (
 export default function App() {
   const [activeTab, setActiveTab] = useState('appointments');
 
-  // Appointment Form State
+  // Appointment Form & Queue State
   const [patientName, setPatientName] = useState('');
   const [patientPhone, setPatientPhone] = useState('');
   const [appointmentDate, setAppointmentDate] = useState('');
   const [appointmentTime, setAppointmentTime] = useState('');
   const [treatmentType, setTreatmentType] = useState('Consultation & Diagnostic Exam');
   const [bookingSuccess, setBookingSuccess] = useState(null);
+
+  const [appointmentsList, setAppointmentsList] = useState([
+    {
+      id: 'APT-1042',
+      name: 'Vigneshwaran M',
+      phone: '+91 98421 11029',
+      date: 'Today',
+      time: '11:30 AM',
+      treatment: 'Composite / GIC Restoration',
+      status: 'Confirmed'
+    },
+    {
+      id: 'APT-1043',
+      name: 'Ananya S',
+      phone: '+91 97904 88321',
+      date: 'Today',
+      time: '02:00 PM',
+      treatment: 'Endodontic Treatment (Root Canal)',
+      status: 'In Operatory'
+    }
+  ]);
 
   // Billing State
   const [billAmount, setBillAmount] = useState('500');
@@ -98,10 +119,14 @@ export default function App() {
 
   // FDI Odontogram Interactive State (32 Adult Teeth)
   const defaultTeethState = {
-    18: 'Healthy', 17: 'Healthy', 16: 'Healthy', 15: 'Healthy', 14: 'Healthy', 13: 'Healthy', 12: 'Caries', 11: 'Healthy',
-    21: 'Healthy', 22: 'Caries', 23: 'RCT Done', 24: 'Caries', 25: 'Healthy', 26: 'Healthy', 27: 'Healthy', 28: 'Healthy',
-    48: 'Healthy', 47: 'Healthy', 46: 'Healthy', 45: 'Healthy', 44: 'RCT Done', 43: 'Healthy', 42: 'Healthy', 41: 'Healthy',
-    31: 'Restored', 32: 'Healthy', 33: 'Healthy', 34: 'Healthy', 35: 'Healthy', 36: 'Healthy', 37: 'RCT Done', 38: 'Healthy'
+    18: 'Healthy', 17: 'Healthy', 16: 'Healthy', 15: 'Healthy',
+    14: 'Healthy', 13: 'Healthy', 12: 'Caries', 11: 'Healthy',
+    21: 'Healthy', 22: 'Caries', 23: 'RCT Done', 24: 'Caries',
+    25: 'Healthy', 26: 'Healthy', 27: 'Healthy', 28: 'Healthy',
+    48: 'Healthy', 47: 'Healthy', 46: 'Healthy', 45: 'Healthy',
+    44: 'RCT Done', 43: 'Healthy', 42: 'Healthy', 41: 'Healthy',
+    31: 'Restored', 32: 'Healthy', 33: 'Healthy', 34: 'Healthy',
+    35: 'Healthy', 36: 'Healthy', 37: 'RCT Done', 38: 'Healthy'
   };
   const [teethStatus, setTeethStatus] = useState(defaultTeethState);
 
@@ -130,14 +155,18 @@ export default function App() {
     }
 
     const generatedToken = `APT-${Math.floor(1000 + Math.random() * 9000)}`;
-    setBookingSuccess({
+    const newAppointment = {
       id: generatedToken,
       name: patientName.trim(),
       phone: patientPhone.trim(),
-      date: appointmentDate || new Date().toISOString().split('T')[0],
+      date: appointmentDate || 'Today',
       time: appointmentTime || '10:00 AM',
-      treatment: treatmentType
-    });
+      treatment: treatmentType,
+      status: 'Confirmed'
+    };
+
+    setBookingSuccess(newAppointment);
+    setAppointmentsList(prev => [newAppointment, ...prev]);
     setPatientName('');
     setPatientPhone('');
   };
@@ -151,22 +180,29 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans antialiased selection:bg-blue-100 overflow-x-hidden">
       
-      {/* Header (Clean Clinical Title) */}
+      {/* Official Header with Dark Squircle MD Brand Icon */}
       <header className="sticky top-0 z-40 bg-white border-b border-slate-200 px-4 py-3 sm:px-6 shadow-sm">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-[#0f172a] leading-none">
-                Meridian Dental
-              </h1>
-              <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                StartupTN STN99974
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl bg-[#1e1c2e] flex items-center justify-center shadow-sm shrink-0">
+              <span className="text-white font-extrabold text-base sm:text-lg tracking-tight font-sans">
+                MD
               </span>
             </div>
-            <p className="text-[11px] font-medium text-slate-500 mt-1 leading-none">
-              Dental Clinic Management System
-            </p>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-[#0f172a] leading-none">
+                  Meridian Dental
+                </h1>
+                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                  StartupTN STN99974
+                </span>
+              </div>
+              <p className="text-[11px] font-medium text-slate-500 mt-1 leading-none">
+                Dental Clinic Management System
+              </p>
+            </div>
           </div>
 
           {/* Navigation Tabs */}
@@ -203,7 +239,7 @@ export default function App() {
       </header>
 
       {/* Main Operatory View */}
-      <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+      <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         
         {/* TAB 1: APPOINTMENTS */}
         {activeTab === 'appointments' && (
@@ -352,136 +388,27 @@ export default function App() {
                 </div>
               </div>
             )}
-          </div>
-        )}
 
-        {/* TAB 2: FDI ODONTOGRAM */}
-        {activeTab === 'charting' && (
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
-              <div>
-                <h2 className="text-base font-bold text-slate-800">FDI Adult Odontogram (Tap Tooth to Cycle)</h2>
-                <p className="text-xs text-slate-500">Bilateral adult dental quadrant mapping</p>
+            {/* Operatory Patient Queue */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="px-5 py-3 border-b border-slate-200 bg-slate-50/60 flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                  Operatory Queue ({appointmentsList.length})
+                </h3>
               </div>
-              <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium">
-                {statusCycle.map((st) => (
-                  <span key={st} className={`px-2 py-0.5 rounded border ${statusColors[st]}`}>
-                    {st}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Upper Arch */}
-            <div className="space-y-2">
-              <span className="text-[11px] font-bold tracking-wider text-slate-500 uppercase">Upper Arch (Maxillary)</span>
-              <div className="overflow-x-auto pb-2">
-                <div className="flex gap-1.5 min-w-[620px] justify-between">
-                  {[18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28].map((tooth) => (
-                    <button
-                      key={tooth}
-                      type="button"
-                      onClick={() => cycleToothStatus(tooth)}
-                      className={`flex-1 py-2 px-1 rounded-lg border text-center transition-all cursor-pointer shadow-xs hover:scale-105 active:scale-95 ${statusColors[teethStatus[tooth]]}`}
-                    >
-                      <span className="block text-xs font-bold">{tooth}</span>
-                      <span className="block text-[9px] truncate">{teethStatus[tooth].substring(0, 3)}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Lower Arch */}
-            <div className="space-y-2">
-              <span className="text-[11px] font-bold tracking-wider text-slate-500 uppercase">
-                Lower Arch (Mandibular)
-              </span>
-              <div className="overflow-x-auto pb-2">
-                <div className="flex gap-1.5 min-w-[620px] justify-between">
-                  {[48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38].map((tooth) => (
-                    <button
-                      key={tooth}
-                      type="button"
-                      onClick={() => cycleToothStatus(tooth)}
-                      className={`flex-1 py-2 px-1 rounded-lg border text-center transition-all cursor-pointer shadow-xs hover:scale-105 active:scale-95 ${statusColors[teethStatus[tooth]]}`}
-                    >
-                      <span className="block text-xs font-bold">{tooth}</span>
-                      <span className="block text-[9px] truncate">{teethStatus[tooth].substring(0, 3)}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 3: CHAIRSIDE UPI INVOICING */}
-        {activeTab === 'billing' && (
-          <div className="max-w-md mx-auto bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
-            <div className="text-center space-y-1">
-              <div className="inline-flex p-3 rounded-full bg-blue-50 text-blue-600 mb-2">
-                <IconQrCode className="w-6 h-6" />
-              </div>
-              <h2 className="text-lg font-bold text-slate-900">Chairside UPI Invoicing</h2>
-              <p className="text-xs text-slate-500">Scan with GPay, PhonePe, Paytm, or BHIM</p>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Invoice Amount (INR)</label>
-              <div className="relative">
-                <span className="absolute left-3.5 top-2.5 text-slate-400 font-bold text-sm">₹</span>
-                <input 
-                  type="number"
-                  value={billAmount}
-                  onChange={(e) => setBillAmount(e.target.value)}
-                  className="w-full pl-8 pr-4 py-2 text-base font-bold text-slate-800 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            {/* Generated UPI QR */}
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col items-center justify-center">
-              <img 
-                src={qrCodeUrl}
-                alt="Dynamic UPI QR Code" 
-                className="w-56 h-56 rounded-lg bg-white p-2 shadow-sm border border-slate-200 object-contain"
-              />
-              <div className="mt-3 text-center">
-                <p className="text-xs font-semibold text-slate-700">{payeeName}</p>
-                <div className="mt-1 flex items-center justify-center gap-1.5">
-                  <span className="font-mono text-xs text-slate-500">{upiId}</span>
-                  <button 
-                    type="button"
-                    onClick={copyToClipboard}
-                    className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
-                    title="Copy UPI ID"
-                  >
-                    {copiedUPI ? <span className="text-emerald-600"><IconCheckCircle className="w-3.5 h-3.5" /></span> : <IconCopy className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <a 
-              href={upiUrl}
-              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-lg shadow-sm transition-all flex items-center justify-center gap-2"
-            >
-              <IconExternalLink className="w-4 h-4" />
-              <span>Open Installed UPI App</span>
-            </a>
-          </div>
-        )}
-
-      </main>
-
-      {/* Global Footer (Strictly Clinical / Venture Credential) */}
-      <footer className="mt-auto border-t border-slate-200 bg-white py-4 px-4 text-center">
-        <div className="flex items-center justify-center gap-2 text-xs text-slate-500 font-medium">
-          <IconShieldCheck className="w-4 h-4 text-emerald-600" />
-          <span>Meridian Dental OS • Recognized by StartupTN (STN99974)</span>
-        </div>
-      </footer>
-    </div>
-  );
-}
+              <div className="divide-y divide-slate-100">
+                {appointmentsList.map((apt) => (
+                  <div key={apt.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/50">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm text-slate-800">{apt.name}</span>
+                        <span className="text-[11px] font-mono text-slate-400">({apt.id})</span>
+                      </div>
+                      <p className="text-xs text-slate-500">{apt.treatment} • {apt.phone}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-slate-500">{apt.date} @ {apt.time}</span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        apt.status === 'In Operatory' 
+                          ? 'bg-purple-100 text-purple-700' 
+                          : 'bg-blue-100 text-blue-700'
