@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-// Native SVG Icons (Eliminates external 'lucide-react' build dependencies)
+// Native SVG Icons (Zero external build dependencies)
 const IconCalendar = ({ className = "w-5 h-5" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>
@@ -101,7 +101,7 @@ export default function App() {
     setTeethStatus(prev => ({ ...prev, [toothNum]: statusCycle[nextIdx] }));
   };
 
-  // Synchronous, non-blocking booking handler
+  // Instant booking execution (No async freeze)
   const handleBookAppointment = (e) => {
     e.preventDefault();
     if (!patientName.trim() || !patientPhone.trim()) {
@@ -135,7 +135,7 @@ export default function App() {
       <header className="sticky top-0 z-40 bg-white border-b border-slate-200 px-4 py-3 sm:px-6 shadow-sm">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           
-          {/* Logo & System Identity */}
+          {/* Official Squircle Brand Logo */}
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl bg-[#1e1c2e] flex items-center justify-center shadow-sm shrink-0">
               <span className="text-white font-extrabold text-base sm:text-lg tracking-tight font-sans">
@@ -383,90 +383,4 @@ export default function App() {
             {/* Lower Arch */}
             <div className="space-y-2">
               <span className="text-[11px] font-bold tracking-wider text-slate-500 uppercase">Lower Arch (Mandibular)</span>
-              <div className="overflow-x-auto pb-2">
-                <div className="flex gap-1.5 min-w-[620px] justify-between">
-                  {[48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38].map((tooth) => (
-                    <button
-                      key={tooth}
-                      type="button"
-                      onClick={() => cycleToothStatus(tooth)}
-                      className={`flex-1 py-2 px-1 rounded-lg border text-center transition-all cursor-pointer shadow-xs hover:scale-105 active:scale-95 ${statusColors[teethStatus[tooth]]}`}
-                    >
-                      <span className="block text-xs font-bold">{tooth}</span>
-                      <span className="block text-[9px] truncate">{teethStatus[tooth].substring(0, 3)}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 3: CHAIRSIDE UPI INVOICING */}
-        {activeTab === 'billing' && (
-          <div className="max-w-md mx-auto bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
-            <div className="text-center space-y-1">
-              <div className="inline-flex p-3 rounded-full bg-blue-50 text-blue-600 mb-2">
-                <IconQrCode className="w-6 h-6" />
-              </div>
-              <h2 className="text-lg font-bold text-slate-900">Chairside UPI Invoicing</h2>
-              <p className="text-xs text-slate-500">Scan with GPay, PhonePe, Paytm, or BHIM</p>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Invoice Amount (INR)</label>
-              <div className="relative">
-                <span className="absolute left-3.5 top-2.5 text-slate-400 font-bold text-sm">₹</span>
-                <input 
-                  type="number"
-                  value={billAmount}
-                  onChange={(e) => setBillAmount(e.target.value)}
-                  className="w-full pl-8 pr-4 py-2 text-base font-bold text-slate-800 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col items-center justify-center">
-              <img 
-                src={qrCodeUrl}
-                alt="Dynamic UPI QR Code" 
-                className="w-56 h-56 rounded-lg bg-white p-2 shadow-sm border border-slate-200 object-contain"
-              />
-              <div className="mt-3 text-center">
-                <p className="text-xs font-semibold text-slate-700">{payeeName}</p>
-                <div className="mt-1 flex items-center justify-center gap-1.5">
-                  <span className="font-mono text-xs text-slate-500">{upiId}</span>
-                  <button 
-                    type="button"
-                    onClick={copyToClipboard}
-                    className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
-                    title="Copy UPI ID"
-                  >
-                    {copiedUPI ? <span className="text-emerald-600"><IconCheckCircle className="w-3.5 h-3.5" /></span> : <IconCopy className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <a 
-              href={upiUrl}
-              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-lg shadow-sm transition-all flex items-center justify-center gap-2"
-            >
-              <IconExternalLink className="w-4 h-4" />
-              <span>Open Installed UPI App</span>
-            </a>
-          </div>
-        )}
-
-      </main>
-
-      {/* Global Footer */}
-      <footer className="mt-auto border-t border-slate-200 bg-white py-4 px-4 text-center">
-        <div className="flex items-center justify-center gap-2 text-xs text-slate-500 font-medium">
-          <IconShieldCheck className="w-4 h-4 text-emerald-600" />
-          <span>Meridian Dental OS • Recognized by StartupTN (STN99974)</span>
-        </div>
-      </footer>
-    </div>
-  );
-}
+              <div className="overflow-x-auto pb-2
