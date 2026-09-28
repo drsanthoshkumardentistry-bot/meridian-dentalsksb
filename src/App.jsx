@@ -1,57 +1,78 @@
 import React, { useState } from 'react';
 
-// Native SVG Icons (Zero external build dependencies)
+// Native SVG Icons
 const IconCalendar = ({ className = "w-5 h-5" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>
+    <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+    <line x1="16" x2="16" y1="2" y2="6" />
+    <line x1="8" x2="8" y1="2" y2="6" />
+    <line x1="3" x2="21" y1="10" y2="10" />
   </svg>
 );
 
 const IconClock = ({ className = "w-4 h-4" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
   </svg>
 );
 
 const IconUser = ({ className = "w-4 h-4" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
   </svg>
 );
 
 const IconPhone = ({ className = "w-4 h-4" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
   </svg>
 );
 
 const IconCheckCircle = ({ className = "w-4 h-4" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+    <polyline points="22 4 12 14.01 9 11.01" />
   </svg>
 );
 
 const IconQrCode = ({ className = "w-6 h-6" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/>
+    <rect width="5" height="5" x="3" y="3" rx="1" />
+    <rect width="5" height="5" x="16" y="3" rx="1" />
+    <rect width="5" height="5" x="3" y="16" rx="1" />
+    <path d="M21 16h-3a2 2 0 0 0-2 2v3" />
+    <path d="M21 21v.01" />
+    <path d="M12 7v3a2 2 0 0 1-2 2H7" />
+    <path d="M3 12h.01" />
+    <path d="M12 3h.01" />
+    <path d="M12 16v.01" />
+    <path d="M16 12h1" />
+    <path d="M21 12v.01" />
+    <path d="M12 21v-1" />
   </svg>
 );
 
 const IconCopy = ({ className = "w-3.5 h-3.5" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
   </svg>
 );
 
 const IconExternalLink = ({ className = "w-4 h-4" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+    <path d="M15 3h6v6" />
+    <path d="M10 14 21 3" />
+    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
   </svg>
 );
 
 const IconShieldCheck = ({ className = "w-4 h-4" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>
+    <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+    <path d="m9 12 2 2 4-4" />
   </svg>
 );
 
@@ -101,7 +122,6 @@ export default function App() {
     setTeethStatus(prev => ({ ...prev, [toothNum]: statusCycle[nextIdx] }));
   };
 
-  // Instant booking execution (No async freeze)
   const handleBookAppointment = (e) => {
     e.preventDefault();
     if (!patientName.trim() || !patientPhone.trim()) {
@@ -131,30 +151,22 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans antialiased selection:bg-blue-100 overflow-x-hidden">
       
-      {/* Official Meridian Dental Header */}
+      {/* Header (Clean Clinical Title) */}
       <header className="sticky top-0 z-40 bg-white border-b border-slate-200 px-4 py-3 sm:px-6 shadow-sm">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           
-          {/* Official Squircle Brand Logo */}
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl bg-[#1e1c2e] flex items-center justify-center shadow-sm shrink-0">
-              <span className="text-white font-extrabold text-base sm:text-lg tracking-tight font-sans">
-                MD
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-[#0f172a] leading-none">
+                Meridian Dental
+              </h1>
+              <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                StartupTN STN99974
               </span>
             </div>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-[#0f172a] leading-none">
-                  Meridian Dental
-                </h1>
-                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                  StartupTN STN99974
-                </span>
-              </div>
-              <p className="text-[11px] font-medium text-slate-500 mt-1 leading-none">
-                Dental Clinic Management System
-              </p>
-            </div>
+            <p className="text-[11px] font-medium text-slate-500 mt-1 leading-none">
+              Dental Clinic Management System
+            </p>
           </div>
 
           {/* Navigation Tabs */}
@@ -382,5 +394,94 @@ export default function App() {
 
             {/* Lower Arch */}
             <div className="space-y-2">
-              <span className="text-[11px] font-bold tracking-wider text-slate-500 uppercase">Lower Arch (Mandibular)</span>
-              <div className="overflow-x-auto pb-2
+              <span className="text-[11px] font-bold tracking-wider text-slate-500 uppercase">
+                Lower Arch (Mandibular)
+              </span>
+              <div className="overflow-x-auto pb-2">
+                <div className="flex gap-1.5 min-w-[620px] justify-between">
+                  {[48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38].map((tooth) => (
+                    <button
+                      key={tooth}
+                      type="button"
+                      onClick={() => cycleToothStatus(tooth)}
+                      className={`flex-1 py-2 px-1 rounded-lg border text-center transition-all cursor-pointer shadow-xs hover:scale-105 active:scale-95 ${statusColors[teethStatus[tooth]]}`}
+                    >
+                      <span className="block text-xs font-bold">{tooth}</span>
+                      <span className="block text-[9px] truncate">{teethStatus[tooth].substring(0, 3)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: CHAIRSIDE UPI INVOICING */}
+        {activeTab === 'billing' && (
+          <div className="max-w-md mx-auto bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+            <div className="text-center space-y-1">
+              <div className="inline-flex p-3 rounded-full bg-blue-50 text-blue-600 mb-2">
+                <IconQrCode className="w-6 h-6" />
+              </div>
+              <h2 className="text-lg font-bold text-slate-900">Chairside UPI Invoicing</h2>
+              <p className="text-xs text-slate-500">Scan with GPay, PhonePe, Paytm, or BHIM</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Invoice Amount (INR)</label>
+              <div className="relative">
+                <span className="absolute left-3.5 top-2.5 text-slate-400 font-bold text-sm">₹</span>
+                <input 
+                  type="number"
+                  value={billAmount}
+                  onChange={(e) => setBillAmount(e.target.value)}
+                  className="w-full pl-8 pr-4 py-2 text-base font-bold text-slate-800 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            {/* Generated UPI QR */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col items-center justify-center">
+              <img 
+                src={qrCodeUrl}
+                alt="Dynamic UPI QR Code" 
+                className="w-56 h-56 rounded-lg bg-white p-2 shadow-sm border border-slate-200 object-contain"
+              />
+              <div className="mt-3 text-center">
+                <p className="text-xs font-semibold text-slate-700">{payeeName}</p>
+                <div className="mt-1 flex items-center justify-center gap-1.5">
+                  <span className="font-mono text-xs text-slate-500">{upiId}</span>
+                  <button 
+                    type="button"
+                    onClick={copyToClipboard}
+                    className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    title="Copy UPI ID"
+                  >
+                    {copiedUPI ? <span className="text-emerald-600"><IconCheckCircle className="w-3.5 h-3.5" /></span> : <IconCopy className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <a 
+              href={upiUrl}
+              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-lg shadow-sm transition-all flex items-center justify-center gap-2"
+            >
+              <IconExternalLink className="w-4 h-4" />
+              <span>Open Installed UPI App</span>
+            </a>
+          </div>
+        )}
+
+      </main>
+
+      {/* Global Footer (Strictly Clinical / Venture Credential) */}
+      <footer className="mt-auto border-t border-slate-200 bg-white py-4 px-4 text-center">
+        <div className="flex items-center justify-center gap-2 text-xs text-slate-500 font-medium">
+          <IconShieldCheck className="w-4 h-4 text-emerald-600" />
+          <span>Meridian Dental OS • Recognized by StartupTN (STN99974)</span>
+        </div>
+      </footer>
+    </div>
+  );
+}
