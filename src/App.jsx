@@ -40,6 +40,7 @@ import {
 } from 'recharts';
 
 import { auth, loginWithGoogle, logoutUser, db } from './firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { onAuthStateChanged } from 'firebase/auth';
 import { 
   collection, 
@@ -961,6 +962,7 @@ function RadiologyDiagnosisView({ patients, onUpdatePatient }) {
   const [diagnosisNotes, setDiagnosisNotes] = useState(currentPatient?.radiologyReport?.diagnosisNotes || '');
   const [boneNotes, setBoneNotes] = useState(currentPatient?.radiologyReport?.boneStatus || '');
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [uploadingOPG, setUploadingOPG] = useState(false);
 
   useEffect(() => {
     if (currentPatient) {
@@ -986,7 +988,67 @@ function RadiologyDiagnosisView({ patients, onUpdatePatient }) {
     onUpdatePatient(updated);
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 2500);
-  };
+  }; 
+
+  const handleOPGUpload = async (event) => {
+  const file = event.target.files?.[0];
+
+  if (!file || !currentPatient) return;
+
+  if (!file.type.startsWith('image/')) {
+    alert('Please select an image file.');
+    return;
+  }
+
+  const maxSize = 15 * 1024 * 1024; // 15 MB
+
+  if (file.size > maxSize) {
+    alert('Please select an image smaller than 15 MB.');
+    return;
+  }
+
+  try {
+    setUploadingOPG(true);
+
+    const scanId = `opg-${Date.now()}`;
+
+    const storageRef = ref(
+      storage,
+      `clinics/${auth.currentUser.uid}/patients/${currentPatient.id}/opg/${scanId}-${file.name}`
+    );
+
+    await uploadBytes(storageRef, file, {
+      contentType: file.type
+    });
+
+    const downloadURL = await getDownloadURL(storageRef);
+
+    const newScan = {
+      id: scanId,
+      title: file.name,
+      date: new Date().toLocaleDateString('en-IN'),
+      url: downloadURL
+    };
+
+    const updatedPatient = {
+      ...currentPatient,
+      opgScans: [
+        ...(currentPatient.opgScans || []),
+        newScan
+      ]
+    };
+
+    await onUpdatePatient(updatedPatient);
+
+    alert('OPG image uploaded successfully!');
+  } catch (error) {
+    console.error('OPG upload error:', error);
+    alert(`OPG upload failed: ${error.message}`);
+  } finally {
+    setUploadingOPG(false);
+    event.target.value = '';
+  }
+};
 
   const currentScan = currentPatient?.opgScans?.[0] || {
     url: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800&auto=format&fit=crop&q=80',
@@ -1019,7 +1081,39 @@ function RadiologyDiagnosisView({ patients, onUpdatePatient }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Left Pane: Lightbox */}
         <div className="bg-slate-950 rounded-2xl p-4 border border-slate-800 flex flex-col justify-between space-y-3">
-          <div className="flex items-center justify-between text-white">
+          <div className="flex items-center gap-2">
+  <input
+    id="opg-upload"
+    type="file"
+    accept="image/*"
+    onChange={handleOPGUpload}
+    className="hidden"
+    disabled={uploadingOPG}
+  />
+
+  <label
+    htmlFor="opg-upload"
+    className={`px-2.5 py-1 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition ${
+      uploadingOPG
+        ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+        : 'bg-blue-600 text-white hover:bg-blue-700'
+    }`}
+  >
+    {uploadingOPG ? 'Uploading...' : '＋ Add OPG'}
+  </label>
+
+  <button 
+    onClick={() => setInvertLight(!invertLight)}
+    className={`px-2.5 py-1 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+      invertLight
+        ? 'bg-amber-400 text-slate-950'
+        : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
+    }`}
+  >
+    <Sun className="w-3.5 h-3.5" />
+    {invertLight ? 'Normal Light' : 'Invert Negative (X-Ray)'}
+  </button>
+</div>
             <div>
               <p className="text-xs font-bold">{currentScan.title}</p>
               <p className="text-[10px] text-slate-400">Patient: {currentPatient?.name}</p>
