@@ -39,7 +39,7 @@ import {
   CartesianGrid 
 } from 'recharts';
 
-import { auth, loginWithGoogle, logoutUser, db, getRedirectResult } from './firebase';
+import { auth, loginWithGoogle, logoutUser, db } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { 
   collection, 
@@ -215,30 +215,25 @@ export default function App() {
   const [selectedInvoiceForUPI, setSelectedInvoiceForUPI] = useState(null);
 
   useEffect(() => {
-    let isMounted = true;
-    if (typeof getRedirectResult === 'function') {
-      getRedirectResult(auth)
-        .then((result) => {
-          if (result?.user && isMounted) {
-            setCurrentUser(result.user);
-            setAuthLoading(false);
-          }
-        })
-        .catch((err) => console.warn("Redirect check:", err.message));
-    }
+  let isMounted = true;
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (isMounted) {
-        setCurrentUser(user);
-        setAuthLoading(false);
-      }
-    });
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    if (!isMounted) return;
 
-    return () => {
-      isMounted = false;
-      unsubscribe();
-    };
-  }, []);
+    console.log(
+      "Firebase Auth State:",
+      user ? `Signed in as ${user.email}` : "Signed out"
+    );
+
+    setCurrentUser(user);
+    setAuthLoading(false);
+  });
+
+  return () => {
+    isMounted = false;
+    unsubscribe();
+  };
+}, []);
 
   useEffect(() => {
     if (!currentUser || !db) return;
@@ -264,15 +259,24 @@ export default function App() {
   }, [currentUser]);
 
   const handleLogin = async () => {
-    try {
-      setIsLoggingIn(true);
-      await loginWithGoogle();
-    } catch (err) {
-      alert('Sign-In Notice: ' + err.message);
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
+  try {
+    setIsLoggingIn(true);
+
+    await loginWithGoogle();
+
+    // For redirect login, Firebase will reload the page.
+    // onAuthStateChanged() will detect the authenticated user.
+  } catch (err) {
+    console.error("Google Sign-In Error:", err);
+
+    alert(
+      "Sign-In failed.\n\n" +
+      (err?.message || "Please try again.")
+    );
+
+    setIsLoggingIn(false);
+  }
+};
 
   const handleLogout = async () => {
     await logoutUser();
