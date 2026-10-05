@@ -23,6 +23,11 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
+// Check if credentials are present in Vite env variables
+export const firebaseConfigured = Boolean(
+  import.meta.env.VITE_FIREBASE_API_KEY && import.meta.env.VITE_FIREBASE_PROJECT_ID
+);
+
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
@@ -39,11 +44,7 @@ export const initializeAuthPersistence = async () => {
   try {
     await setPersistence(auth, browserLocalPersistence);
   } catch (error) {
-    console.error(
-      "Firebase Auth persistence error:",
-      error
-    );
-
+    console.error("Firebase Auth persistence error:", error);
     throw error;
   }
 };
@@ -52,28 +53,16 @@ export const loginWithGoogle = async () => {
   await initializeAuthPersistence();
 
   try {
-    const result = await signInWithPopup(
-      auth,
-      googleProvider
-    );
-
+    const result = await signInWithPopup(auth, googleProvider);
     return result;
   } catch (err) {
-    console.warn(
-      "Google popup login failed:",
-      err?.code
-    );
+    console.warn("Google popup login failed:", err?.code);
 
     if (
       err?.code === "auth/popup-blocked" ||
-      err?.code ===
-        "auth/operation-not-supported-in-this-environment"
+      err?.code === "auth/operation-not-supported-in-this-environment"
     ) {
-      await signInWithRedirect(
-        auth,
-        googleProvider
-      );
-
+      await signInWithRedirect(auth, googleProvider);
       return null;
     }
 
