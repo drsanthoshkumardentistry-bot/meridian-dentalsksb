@@ -1,0 +1,184 @@
+rules_version = '2';
+
+service cloud.firestore {
+
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(clinicId) {
+      return signedIn()
+        && request.auth.uid == clinicId;
+    }
+
+    function isMember(clinicId) {
+      return isOwner(clinicId)
+        || exists(
+          /databases/$(database)/documents/clinics/$(clinicId)/members/$(request.auth.uid)
+        );
+    }
+
+    function hasRole(clinicId, roles) {
+      return isOwner(clinicId)
+        || (
+          isMember(clinicId)
+          && get(
+            /databases/$(database)/documents/clinics/$(clinicId)/members/$(request.auth.uid)
+          ).data.role in roles
+        );
+    }
+
+    match /clinics/{clinicId} {
+
+      allow create: if isOwner(clinicId);
+
+      allow read: if isMember(clinicId);
+
+      allow update, delete: if isOwner(clinicId);
+
+
+      match /members/{memberId} {
+
+        allow read: if isMember(clinicId);
+
+        allow create, update, delete:
+          if isOwner(clinicId);
+      }
+
+
+      match /settings/{documentId} {
+
+        allow read:
+          if isMember(clinicId);
+
+        allow write:
+          if hasRole(
+            clinicId,
+            ['owner', 'admin']
+          );
+      }
+
+
+      match /patients/{patientId} {
+
+        allow read:
+          if hasRole(
+            clinicId,
+            ['owner', 'admin', 'doctor', 'nurse']
+          );
+
+        allow create, update:
+          if hasRole(
+            clinicId,
+            ['owner', 'admin', 'doctor', 'nurse']
+          );
+
+        allow delete:
+          if hasRole(
+            clinicId,
+            ['owner', 'admin']
+          );
+      }
+
+
+      match /appointments/{appointmentId} {
+
+        allow read:
+          if hasRole(
+            clinicId,
+            ['owner', 'admin', 'doctor', 'nurse', 'reception']
+          );
+
+        allow create, update:
+          if hasRole(
+            clinicId,
+            ['owner', 'admin', 'doctor', 'nurse', 'reception']
+          );
+
+        allow delete:
+          if hasRole(
+            clinicId,
+            ['owner', 'admin']
+          );
+      }
+
+
+      match /invoices/{invoiceId} {
+
+        allow read:
+          if hasRole(
+            clinicId,
+            ['owner', 'admin', 'billing', 'reception']
+          );
+
+        allow create, update:
+          if hasRole(
+            clinicId,
+            ['owner', 'admin', 'billing', 'reception']
+          );
+
+        allow delete:
+          if hasRole(
+            clinicId,
+            ['owner', 'admin']
+          );
+      }
+
+
+      match /inventory/{inventoryId} {
+
+        allow read:
+          if isMember(clinicId);
+
+        allow create, update:
+          if hasRole(
+            clinicId,
+            ['owner', 'admin', 'inventory']
+          );
+
+        allow delete:
+          if hasRole(
+            clinicId,
+            ['owner', 'admin']
+          );
+      }
+
+
+      match /staff/{staffId} {
+
+        allow read:
+          if isMember(clinicId);
+
+        allow create, update:
+          if hasRole(
+            clinicId,
+            ['owner', 'admin']
+          );
+
+        allow delete:
+          if hasRole(
+            clinicId,
+            ['owner', 'admin']
+          );
+      }
+
+
+      match /auditLogs/{logId} {
+
+        allow read:
+          if hasRole(
+            clinicId,
+            ['owner', 'admin']
+          );
+
+        allow create:
+          if isMember(clinicId);
+
+        allow update, delete:
+          if false;
+      }
+    }
+  }
+}
