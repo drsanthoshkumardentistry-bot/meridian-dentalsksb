@@ -48,6 +48,7 @@ import {
 } from "firebase/firestore";
 
 import { onAuthStateChanged } from "firebase/auth";
+import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 
 /* =========================================================
    HELPERS & CLINICAL SCHEMAS
@@ -64,6 +65,35 @@ const todayString = () => {
 
 const money = (value) =>
   `₹${Number(value || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
+
+const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
+
+// Uploads an image to Firebase Storage (private to the signed-in clinic) and returns its download URL.
+async function uploadImage(file) {
+  const uid = auth?.currentUser?.uid;
+  if (!uid) throw new Error("You are not signed in.");
+  if (!file.type.startsWith("image/")) throw new Error("Please choose an image file (JPG or PNG).");
+  if (file.size > MAX_IMAGE_BYTES) throw new Error("Image is larger than 15 MB. Please compress it and try again.");
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const storageRef = ref(getStorage(), `clinics/${uid}/images/${Date.now()}_${safeName}`);
+  await uploadBytes(storageRef, file, { contentType: file.type });
+  return getDownloadURL(storageRef);
+}
+
+// Single source of truth for invoice maths (supports partial payments).
+const invoiceTotals = (inv) => {
+  const base = Number(inv.subtotal || 0) - Number(inv.discount || 0);
+  const gst = (base * Number(inv.gstRate || 0)) / 100;
+  const total = Math.max(base + gst, 0);
+  const patientDue = Math.max(total - Number(inv.insuranceCoverage || 0), 0);
+  const paid =
+    inv.status === "Paid"
+      ? patientDue
+      : inv.status === "Partial"
+      ? Math.min(Number(inv.amountPaid || 0), patientDue)
+      : 0;
+  return { base, gst, total, patientDue, paid, balance: Math.max(patientDue - paid, 0) };
+};
 
 const ADULT_TEETH_UPPER = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
 const ADULT_TEETH_LOWER = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
@@ -104,6 +134,7 @@ const emptyInvoice = {
   discount: 0,
   gstRate: 0,
   insuranceCoverage: 0,
+  amountPaid: 0,
   dueDate: todayString(),
   status: "Unpaid",
 };
@@ -131,7 +162,7 @@ const emptyStaff = {
 
 const emptyRadiology = {
   patientId: "",
-  modality: "OPG",
+  modality: "OPG (Orthopantomogram)",
   studyDate: todayString(),
   findings: "",
   impression: "",
@@ -427,7 +458,7 @@ function Topbar({ activePage, setOpen, search, setSearch }) {
         <h1 className="truncate text-lg font-bold text-slate-900">{title}</h1>
       </div>
 
-      <div className="ml-auto hidden w-72 md:block">
+      <div className="ml-auto w-44 sm:w-72">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
           <input
@@ -453,28 +484,12 @@ function Dashboard({ patients, appointments, invoices, inventory, setActivePage 
   );
 
   const revenue = useMemo(
-    () =>
-      invoices
-        .filter((i) => i.status === "Paid")
-        .reduce((sum, i) => {
-          const total =
-            Number(i.subtotal || 0) -
-            Number(i.discount || 0) +
-            ((Number(i.subtotal || 0) - Number(i.discount || 0)) * Number(i.gstRate || 0)) / 100;
-          return sum + Math.max(total - Number(i.insuranceCoverage || 0), 0);
-        }, 0),
+    () => invoices.reduce((sum, i) => sum + invoiceTotals(i).paid, 0),
     [invoices]
   );
 
   const outstanding = useMemo(
-    () =>
-      invoices
-        .filter((i) => i.status !== "Paid")
-        .reduce((sum, i) => {
-          const base = Number(i.subtotal || 0) - Number(i.discount || 0);
-          const total = base + (base * Number(i.gstRate || 0)) / 100;
-          return sum + Math.max(total - Number(i.insuranceCoverage || 0), 0);
-        }, 0),
+    () => invoices.reduce((sum, i) => sum + invoiceTotals(i).balance, 0),
     [invoices]
   );
 
@@ -513,7 +528,7 @@ function Dashboard({ patients, appointments, invoices, inventory, setActivePage 
             <EmptyState title="No appointments for today" text="Schedule clinical chair time from the Appointments tab." />
           ) : (
             <div className="space-y-2">
-              {todayAppointments
+              {[...todayAppointments]
                 .sort((a, b) => a.time.localeCompare(b.time))
                 .map((apt) => {
                   const pt = patients.find((p) => p.id === apt.patientId);
@@ -583,6 +598,7 @@ function Dashboard({ patients, appointments, invoices, inventory, setActivePage 
 function PatientModal({ patient, onClose, onSave }) {
   const [form, setForm] = useState(patient || emptyPatient);
   const [tab, setTab] = useState("clinical");
+  const [uploading, setUploading] = useState(false);
   const update = (k, v) => setForm((p) => ({ ...p, [k]: v }));
 
   const submit = (e) => {
@@ -601,14 +617,17 @@ function PatientModal({ patient, onClose, onSave }) {
     }));
   };
 
-  const handleOpgFile = (e) => {
+  const handleOpgFile = async (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        update("opgUrl", reader.result);
-      };
-      reader.readAsDataURL(file);
+    e.target.value = "";
+    if (!file) return;
+    setUploading(true);
+    try {
+      update("opgUrl", await uploadImage(file));
+    } catch (err) {
+      alert(err.message || "Upload failed. Check your connection and Storage rules.");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -680,12 +699,12 @@ function PatientModal({ patient, onClose, onSave }) {
               </div>
               <div className="flex-1 text-center sm:text-left">
                 <h4 className="text-sm font-bold text-slate-900">Insert Panoramic Radiograph (OPG)</h4>
-                <p className="text-xs text-slate-500">Upload DICOM, JPEG, or PNG radiograph from your device or link cloud storage.</p>
+                <p className="text-xs text-slate-500">Upload a JPEG or PNG (up to 15 MB). Images are stored privately in your clinic cloud storage.</p>
               </div>
               <div>
                 <label className={`${buttonPrimary} cursor-pointer`}>
-                  <Plus size={16} /> Choose OPG File
-                  <input type="file" accept="image/*" className="hidden" onChange={handleOpgFile} />
+                  <Plus size={16} /> {uploading ? "Uploading..." : "Choose OPG File"}
+                  <input type="file" accept="image/*" className="hidden" onChange={handleOpgFile} disabled={uploading} />
                 </label>
               </div>
             </div>
@@ -781,7 +800,7 @@ function PatientModal({ patient, onClose, onSave }) {
 
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
           <button type="button" className={buttonSecondary} onClick={onClose}>Cancel</button>
-          <button type="submit" className={buttonPrimary}><CheckCircle2 size={17} />Save Clinical Record</button>
+          <button type="submit" className={buttonPrimary} disabled={uploading}><CheckCircle2 size={17} />Save Clinical Record</button>
         </div>
       </form>
     </Modal>
@@ -939,7 +958,12 @@ function AppointmentModal({ appointment, patients, staff, onClose, onSave }) {
             </select>
           </Field>
           <Field label="Treating Doctor">
-            <input className={inputClass} value={form.doctor} onChange={(e) => update("doctor", e.target.value)} placeholder="Dr. Name" required />
+            <input className={inputClass} list="doctor-list" value={form.doctor} onChange={(e) => update("doctor", e.target.value)} placeholder="Dr. Name" required />
+            <datalist id="doctor-list">
+              {(staff || []).map((m) => (
+                <option key={m.id} value={m.name} />
+              ))}
+            </datalist>
           </Field>
           <Field label="Date">
             <input type="date" className={inputClass} value={form.date} onChange={(e) => update("date", e.target.value)} required />
@@ -1126,13 +1150,23 @@ function PrintableReceipt({ invoice, patient, settings, onClose }) {
           <span className="text-xl font-bold text-cyan-700">{money(patientDue)}</span>
         </div>
 
+        {invoice.status === "Partial" && (
+          <div className="rounded-xl border p-3 text-sm">
+            <div className="flex justify-between"><span>Amount Received</span><span>{money(invoiceTotals(invoice).paid)}</span></div>
+            <div className="mt-1 flex justify-between font-semibold text-amber-700"><span>Balance Due</span><span>{money(invoiceTotals(invoice).balance)}</span></div>
+          </div>
+        )}
+        {invoice.status === "Paid" && (
+          <p className="text-center text-sm font-bold uppercase tracking-wider text-emerald-700">Paid in full</p>
+        )}
+
         {settings.upiId && (
           <div className="text-xs text-center border-t pt-3 text-slate-500">
             UPI ID: <span className="font-semibold text-slate-800">{settings.upiId}</span>
           </div>
         )}
 
-        <div className="flex justify-end gap-3 pt-3">
+        <div className="no-print flex justify-end gap-3 pt-3">
           <button type="button" className={buttonSecondary} onClick={onClose}>Close</button>
           <button type="button" className={buttonPrimary} onClick={() => window.print()}>
             <Printer size={16} /> Print Receipt
@@ -1155,6 +1189,12 @@ function InvoiceModal({ invoice, patients, onClose, onSave }) {
   const submit = (e) => {
     e.preventDefault();
     if (!form.patientId) return alert("Select a patient.");
+    if (
+      form.status === "Partial" &&
+      !(Number(form.amountPaid) > 0 && Number(form.amountPaid) < patientDue)
+    ) {
+      return alert("For a partial payment, enter an amount received that is more than 0 and less than the patient due.");
+    }
     onSave({
       ...form,
       id: form.id || makeId("inv"),
@@ -1162,6 +1202,7 @@ function InvoiceModal({ invoice, patients, onClose, onSave }) {
       discount: Number(form.discount || 0),
       gstRate: Number(form.gstRate || 0),
       insuranceCoverage: Number(form.insuranceCoverage || 0),
+      amountPaid: form.status === "Partial" ? Number(form.amountPaid || 0) : 0,
     });
   };
 
@@ -1204,6 +1245,12 @@ function InvoiceModal({ invoice, patients, onClose, onSave }) {
           </Field>
         </div>
 
+        {form.status === "Partial" && (
+          <Field label="Amount Received So Far (₹)">
+            <input type="number" min="0" className={inputClass} value={form.amountPaid} onChange={(e) => update("amountPaid", e.target.value)} />
+          </Field>
+        )}
+
         <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
           <div className="flex justify-between text-sm">
             <span className="text-slate-500">Taxable Subtotal</span>
@@ -1221,6 +1268,12 @@ function InvoiceModal({ invoice, patients, onClose, onSave }) {
             <span>Net Patient Due</span>
             <span>{money(patientDue)}</span>
           </div>
+          {form.status === "Partial" && (
+            <div className="mt-1 flex justify-between text-sm font-semibold text-amber-700">
+              <span>Balance After Payment</span>
+              <span>{money(Math.max(patientDue - Number(form.amountPaid || 0), 0))}</span>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
@@ -1237,26 +1290,12 @@ function BillingPage({ invoices, patients, settings, onAdd, onEdit, onDelete }) 
   const patientName = (id) => patients.find((p) => p.id === id)?.name || "Unknown";
 
   const totalCollected = useMemo(
-    () =>
-      invoices
-        .filter((i) => i.status === "Paid")
-        .reduce((sum, i) => {
-          const base = Number(i.subtotal || 0) - Number(i.discount || 0);
-          const total = base + (base * Number(i.gstRate || 0)) / 100;
-          return sum + Math.max(total - Number(i.insuranceCoverage || 0), 0);
-        }, 0),
+    () => invoices.reduce((sum, i) => sum + invoiceTotals(i).paid, 0),
     [invoices]
   );
 
   const totalOutstanding = useMemo(
-    () =>
-      invoices
-        .filter((i) => i.status !== "Paid")
-        .reduce((sum, i) => {
-          const base = Number(i.subtotal || 0) - Number(i.discount || 0);
-          const total = base + (base * Number(i.gstRate || 0)) / 100;
-          return sum + Math.max(total - Number(i.insuranceCoverage || 0), 0);
-        }, 0),
+    () => invoices.reduce((sum, i) => sum + invoiceTotals(i).balance, 0),
     [invoices]
   );
 
@@ -1297,7 +1336,12 @@ function BillingPage({ invoices, patients, settings, onAdd, onEdit, onDelete }) 
                     <td className="px-5 py-4 text-sm font-semibold">{inv.id}</td>
                     <td className="px-5 py-4 text-sm">{patientName(inv.patientId)}</td>
                     <td className="px-5 py-4 text-sm text-slate-600">{inv.description}</td>
-                    <td className="px-5 py-4 font-semibold text-slate-900">{money(total)}</td>
+                    <td className="px-5 py-4 font-semibold text-slate-900">
+                      {money(total)}
+                      {inv.status === "Partial" && (
+                        <span className="block text-[11px] font-normal text-amber-700">Balance {money(invoiceTotals(inv).balance)}</span>
+                      )}
+                    </td>
                     <td className="px-5 py-4">
                       <Badge tone={inv.status === "Paid" ? "green" : inv.status === "Partial" ? "yellow" : "red"}>
                         {inv.status}
@@ -1611,6 +1655,7 @@ function StaffPage({ staff, onAdd, onEdit, onDelete }) {
 
 function RadiologyModal({ study, patients, onClose, onSave }) {
   const [form, setForm] = useState(study || emptyRadiology);
+  const [uploading, setUploading] = useState(false);
   const update = (k, v) => setForm((p) => ({ ...p, [k]: v }));
 
   const submit = (e) => {
@@ -1619,14 +1664,17 @@ function RadiologyModal({ study, patients, onClose, onSave }) {
     onSave({ ...form, id: form.id || makeId("rad") });
   };
 
-  const handleUpload = (e) => {
+  const handleUpload = async (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        update("imageUrl", reader.result);
-      };
-      reader.readAsDataURL(file);
+    e.target.value = "";
+    if (!file) return;
+    setUploading(true);
+    try {
+      update("imageUrl", await uploadImage(file));
+    } catch (err) {
+      alert(err.message || "Upload failed. Check your connection and Storage rules.");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -1673,19 +1721,19 @@ function RadiologyModal({ study, patients, onClose, onSave }) {
         </Field>
 
         <div className="space-y-2">
-          <span className="block text-xs font-semibold uppercase tracking-wider text-slate-500">Insert Radiograph / OPG Scan</span>
+          <span className="block text-xs font-semibold uppercase tracking-wider text-slate-500">Insert Radiograph / OPG Scan (up to 15 MB)</span>
           <div className="flex gap-2">
             <input className={inputClass} value={form.imageUrl} onChange={(e) => update("imageUrl", e.target.value)} placeholder="https://..." />
             <label className={`${buttonSecondary} shrink-0 cursor-pointer`}>
-              Upload File
-              <input type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+              {uploading ? "Uploading..." : "Upload File"}
+              <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
             </label>
           </div>
         </div>
 
         <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
           <button type="button" className={buttonSecondary} onClick={onClose}>Cancel</button>
-          <button type="submit" className={buttonPrimary}><FileText size={17} />Save Radiograph</button>
+          <button type="submit" className={buttonPrimary} disabled={uploading}><FileText size={17} />Save Radiograph</button>
         </div>
       </form>
     </Modal>
@@ -1969,6 +2017,7 @@ function App() {
   async function saveRecord(collectionName, item, message) {
     if (!user || !db) return;
     try {
+      // Settings live at clinics/{uid}/settings/practice; other records use their own id.
       await setDoc(
         doc(db, "clinics", user.uid, collectionName, item.id),
         { ...item, updatedAt: serverTimestamp() },
@@ -1977,7 +2026,7 @@ function App() {
       setToast(message);
     } catch (err) {
       console.error(`Failed to save to ${collectionName}:`, err);
-      alert("Failed to save to database. Check network status.");
+      alert("Failed to save to database. Check your connection and try again.");
     }
   }
 
@@ -2004,6 +2053,20 @@ function App() {
     );
   }
 
+  if (!firebaseConfigured || !auth || !db) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
+        <div className="max-w-md rounded-2xl border border-amber-200 bg-white p-6 shadow-lg">
+          <AlertTriangle className="text-amber-600" size={30} />
+          <h1 className="mt-4 text-xl font-bold text-slate-900">Firebase is not configured</h1>
+          <p className="mt-2 text-sm text-slate-600">
+            Add your Firebase keys (VITE_FIREBASE_* variables) in your .env file locally and in your Vercel project settings, then redeploy.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (!user) {
     return (
       <LoginScreen
@@ -2021,6 +2084,7 @@ function App() {
 
   return (
     <ErrorBoundary>
+      <style>{`@media print { body * { visibility: hidden; } #printable-receipt, #printable-receipt * { visibility: visible; } #printable-receipt { position: fixed; left: 0; top: 0; width: 100%; background: #fff; padding: 24px; } .no-print { display: none !important; } }`}</style>
       <div className="min-h-screen bg-slate-50">
         <Sidebar
           activePage={activePage}
@@ -2063,7 +2127,7 @@ function App() {
                 onAdd={() =>
                   setAppointmentModal({
                     ...emptyAppointment,
-                    doctor: staff.find((s) => s.role.includes("Dentist"))?.name || "",
+                    doctor: staff.find((s) => s.role?.includes("Dentist"))?.name || "",
                   })
                 }
                 onEdit={(apt) => setAppointmentModal(apt)}

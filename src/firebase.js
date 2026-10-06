@@ -1,28 +1,13 @@
-<<<<<<< HEAD
-import { initializeApp } from "firebase/app";
-
-=======
 import { initializeApp, getApps, getApp } from "firebase/app";
->>>>>>> ddd8c94 (Fix App.jsx syntax errors and improve state handling)
 import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
-  setPersistence,
-  browserLocalPersistence,
   signOut,
 } from "firebase/auth";
-
 import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
 
-<<<<<<< HEAD
 const firebaseConfig = {
-=======
-const rawConfig = {
->>>>>>> ddd8c94 (Fix App.jsx syntax errors and improve state handling)
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
@@ -31,94 +16,36 @@ const rawConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-<<<<<<< HEAD
-// Check if credentials are present in Vite env variables
 export const firebaseConfigured = Boolean(
-  import.meta.env.VITE_FIREBASE_API_KEY && import.meta.env.VITE_FIREBASE_PROJECT_ID
+  firebaseConfig.apiKey &&
+    firebaseConfig.authDomain &&
+    firebaseConfig.projectId &&
+    firebaseConfig.appId
 );
-
-const app = initializeApp(firebaseConfig);
-=======
-export const firebaseConfigured = Boolean(
-  rawConfig.apiKey &&
-  rawConfig.projectId &&
-  rawConfig.apiKey !== "undefined" &&
-  rawConfig.projectId !== "undefined"
-);
->>>>>>> ddd8c94 (Fix App.jsx syntax errors and improve state handling)
 
 let app = null;
-let authInstance = null;
-let dbInstance = null;
-let storageInstance = null;
+let auth = null;
+let db = null;
 
 if (firebaseConfigured) {
-  try {
-    app = getApps().length > 0 ? getApp() : initializeApp(rawConfig);
-    authInstance = getAuth(app);
-    dbInstance = getFirestore(app);
-    storageInstance = getStorage(app);
-  } catch (err) {
-    console.error("Firebase initialization failed:", err);
-  }
+  // initializeApp must run before getStorage() is used in App.jsx
+  app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
 }
 
-export const auth = authInstance;
-export const db = dbInstance;
-export const storage = storageInstance;
-
 const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({
-  prompt: "select_account",
-});
+googleProvider.setCustomParameters({ prompt: "select_account" });
 
-export const initializeAuthPersistence = async () => {
+export async function loginWithGoogle() {
+  if (!auth) throw new Error("Firebase is not configured.");
+  const result = await signInWithPopup(auth, googleProvider);
+  return result.user;
+}
+
+export async function logoutUser() {
   if (!auth) return;
-  try {
-    await setPersistence(auth, browserLocalPersistence);
-  } catch (error) {
-    console.error("Firebase Auth persistence error:", error);
-    throw error;
-    console.error("Firebase persistence error:", error);(Fix App.jsx syntax errors and improve state handling)
-  }
-};
+  await signOut(auth);
+}
 
-export const loginWithGoogle = async () => {
-<<<<<<< HEAD
-=======
-  if (!auth) throw new Error("Firebase Auth not initialized. Check your environment variables.");
->>>>>>> ddd8c94 (Fix App.jsx syntax errors and improve state handling)
-  await initializeAuthPersistence();
-  try {
-<<<<<<< HEAD
-    const result = await signInWithPopup(auth, googleProvider);
-    return result;
-  } catch (err) {
-    console.warn("Google popup login failed:", err?.code);
-
-=======
-    return await signInWithPopup(auth, googleProvider);
-  } catch (err) {
->>>>>>> ddd8c94 (Fix App.jsx syntax errors and improve state handling)
-    if (
-      err?.code === "auth/popup-blocked" ||
-      err?.code === "auth/operation-not-supported-in-this-environment"
-    ) {
-      await signInWithRedirect(auth, googleProvider);
-      return null;
-    }
-    throw err;
-  }
-};
-
-<<<<<<< HEAD
-export const getGoogleRedirectResult = () => {
-  return getRedirectResult(auth);
-};
-
-=======
->>>>>>> ddd8c94 (Fix App.jsx syntax errors and improve state handling)
-export const logoutUser = () => {
-  if (!auth) return Promise.resolve();
-  return signOut(auth);
-};
+export { app, auth, db };
