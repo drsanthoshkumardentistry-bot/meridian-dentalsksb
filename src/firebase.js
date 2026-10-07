@@ -6,6 +6,7 @@ import {
   signOut,
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -26,21 +27,6 @@ export const firebaseConfigured = Boolean(
 let app = null;
 let auth = null;
 let db = null;
-<<<<<<< HEAD
-
-if (firebaseConfigured) {
-  // initializeApp must run before getStorage() is used in App.jsx
-  app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-}
-
-const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({ prompt: "select_account" });
-
-export async function loginWithGoogle() {
-  if (!auth) throw new Error("Firebase is not configured.");
-=======
 let storage = null;
 
 if (firebaseConfigured) {
@@ -62,7 +48,6 @@ export async function loginWithGoogle() {
     throw new Error("Firebase is not configured.");
   }
 
->>>>>>> a426bff (Redesign dental OS and fix OPG management)
   const result = await signInWithPopup(auth, googleProvider);
   return result.user;
 }
@@ -72,8 +57,4 @@ export async function logoutUser() {
   await signOut(auth);
 }
 
-<<<<<<< HEAD
-export { app, auth, db };
-=======
-export { app, auth, db, storage };
->>>>>>> a426bff (Redesign dental OS and fix OPG management)
+export { app, auth, db, storage };s

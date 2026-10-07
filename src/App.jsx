@@ -48,7 +48,7 @@ import {
 } from "firebase/firestore";
 
 import { onAuthStateChanged } from "firebase/auth";
-import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
+import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 
 /* =========================================================
    HELPERS & CLINICAL SCHEMAS
@@ -72,12 +72,22 @@ const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 async function uploadImage(file) {
   const uid = auth?.currentUser?.uid;
   if (!uid) throw new Error("You are not signed in.");
-  if (!file.type.startsWith("image/")) throw new Error("Please choose an image file (JPG or PNG).");
+  if (!file.type.startsWith("image/")) throw new Error("Please choose an image file (JPG, PNG or WebP).");
   if (file.size > MAX_IMAGE_BYTES) throw new Error("Image is larger than 15 MB. Please compress it and try again.");
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
   const storageRef = ref(getStorage(), `clinics/${uid}/images/${Date.now()}_${safeName}`);
   await uploadBytes(storageRef, file, { contentType: file.type });
-  return getDownloadURL(storageRef);
+  return { url: await getDownloadURL(storageRef), path: storageRef.fullPath };
+}
+
+async function removeStoredImage(path) {
+  if (!path) return;
+  try {
+    await deleteObject(ref(getStorage(), path));
+  } catch (err) {
+    // A missing object should not prevent the clinical record from being removed.
+    if (err?.code !== "storage/object-not-found") console.warn("Image cleanup failed:", err);
+  }
 }
 
 // Single source of truth for invoice maths (supports partial payments).
@@ -112,6 +122,7 @@ const emptyPatient = {
   chiefComplaint: "",
   provisionalDiagnosis: "",
   opgUrl: "",
+  opgStoragePath: "",
   opgDate: todayString(),
   dentalChart: {},
 };
@@ -167,6 +178,7 @@ const emptyRadiology = {
   findings: "",
   impression: "",
   imageUrl: "",
+  imageStoragePath: "",
   status: "Reported",
 };
 
@@ -211,7 +223,7 @@ function Badge({ children, tone = "slate" }) {
     green: "bg-emerald-50 text-emerald-700 border-emerald-200",
     yellow: "bg-amber-50 text-amber-700 border-amber-200",
     red: "bg-rose-50 text-rose-700 border-rose-200",
-    blue: "bg-cyan-50 text-cyan-700 border-cyan-200",
+    blue: "bg-cyan-50 text-teal-700 border-cyan-200",
     purple: "bg-purple-50 text-purple-700 border-purple-200",
   };
   return (
@@ -230,7 +242,7 @@ function StatCard({ icon: Icon, label, value, subtitle }) {
           <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
           {subtitle && <p className="mt-1 text-xs text-slate-500">{subtitle}</p>}
         </div>
-        <div className="rounded-xl bg-cyan-50 p-3 text-cyan-700">
+        <div className="rounded-xl bg-cyan-50 p-3 text-teal-700">
           <Icon size={22} />
         </div>
       </div>
@@ -263,10 +275,10 @@ function Field({ label, children, className = "" }) {
 }
 
 const inputClass =
-  "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 transition";
+  "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-50 transition";
 
 const buttonPrimary =
-  "inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-cyan-700 transition shadow-xs disabled:opacity-50 cursor-pointer";
+  "inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition shadow-sm disabled:opacity-50 cursor-pointer";
 
 const buttonSecondary =
   "inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer";
@@ -351,7 +363,7 @@ function LoginScreen({ onGoogle, loading }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-cyan-50 via-white to-slate-100 p-5">
       <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-xl text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-600 text-white shadow-md">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-teal-600 text-white shadow-md">
           <Stethoscope size={32} />
         </div>
 
@@ -395,14 +407,14 @@ function Sidebar({ activePage, setActivePage, open, setOpen, user, onLogout }) {
         <div className="fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-xs lg:hidden" onClick={() => setOpen(false)} />
       )}
 
-      <aside className={`fixed inset-y-0 left-0 z-40 w-64 transform border-r border-slate-200 bg-white transition-transform duration-200 ease-in-out lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-600 text-white shadow-xs">
+      <aside className={`fixed inset-y-0 left-0 z-40 w-64 transform border-r border-slate-800 bg-slate-950 text-white transition-transform duration-200 ease-in-out lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="flex h-16 items-center gap-3 border-b border-slate-800 px-5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-600 text-white shadow-sm">
             <Stethoscope size={19} />
           </div>
           <div>
-            <p className="font-bold text-slate-900 leading-tight">Meridian</p>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-cyan-600">Dental OS</p>
+            <p className="font-bold text-white leading-tight">Meridian</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-teal-400">Clinical Suite</p>
           </div>
         </div>
 
@@ -418,7 +430,7 @@ function Sidebar({ activePage, setActivePage, open, setOpen, user, onLogout }) {
                   setOpen(false);
                 }}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition cursor-pointer ${
-                  active ? "bg-cyan-50 text-cyan-700 font-semibold" : "text-slate-600 hover:bg-slate-50"
+                  active ? "bg-teal-500/15 text-teal-300 font-semibold ring-1 ring-teal-400/20" : "text-slate-400 hover:bg-white/5 hover:text-white"
                 }`}
               >
                 <Icon size={18} />
@@ -429,10 +441,10 @@ function Sidebar({ activePage, setActivePage, open, setOpen, user, onLogout }) {
           })}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200 p-3 bg-white">
-          <div className="mb-3 rounded-xl bg-slate-50 p-3 border border-slate-100">
-            <p className="truncate text-sm font-semibold text-slate-800">{user?.displayName || "Practitioner"}</p>
-            <p className="truncate text-xs text-slate-500">{user?.email}</p>
+        <div className="absolute bottom-0 left-0 right-0 border-t border-slate-800 p-3 bg-slate-950">
+          <div className="mb-3 rounded-xl bg-white/5 p-3 border border-white/10">
+            <p className="truncate text-sm font-semibold text-white">{user?.displayName || "Practitioner"}</p>
+            <p className="truncate text-xs text-slate-400">{user?.email}</p>
           </div>
 
           <button onClick={onLogout} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50 transition cursor-pointer">
@@ -449,7 +461,7 @@ function Topbar({ activePage, setOpen, search, setSearch }) {
   const title = navigation.find((item) => item.id === activePage)?.label || "Dashboard";
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-200 bg-white/95 px-4 backdrop-blur lg:px-6">
+    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-200/80 bg-white/90 px-4 backdrop-blur-xl lg:px-6">
       <button className="rounded-lg p-2 hover:bg-slate-100 lg:hidden cursor-pointer" onClick={() => setOpen(true)}>
         <Menu size={20} />
       </button>
@@ -462,7 +474,7 @@ function Topbar({ activePage, setOpen, search, setSearch }) {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
           <input
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none focus:border-cyan-500 transition"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none focus:border-teal-500 transition"
             placeholder="Search records..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -519,7 +531,7 @@ function Dashboard({ patients, appointments, invoices, inventory, setActivePage 
               <h3 className="font-bold text-slate-900">Today's Schedule</h3>
               <p className="text-xs text-slate-500">Upcoming clinical appointments</p>
             </div>
-            <button className="text-sm font-semibold text-cyan-700 hover:text-cyan-800 cursor-pointer" onClick={() => setActivePage("appointments")}>
+            <button className="text-sm font-semibold text-teal-700 hover:text-teal-800 cursor-pointer" onClick={() => setActivePage("appointments")}>
               Full Calendar
             </button>
           </div>
@@ -541,7 +553,7 @@ function Dashboard({ patients, appointments, invoices, inventory, setActivePage 
                       <div className="h-9 w-px bg-slate-200" />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold text-slate-800">{pt?.name || "Patient"}</p>
-                        <p className="text-xs text-slate-500">{apt.type} · {apt.doctor || "General Chair"}</p>
+                        <p className="text-xs text-slate-500">{apt.type} • {apt.doctor || "General Chair"}</p>
                       </div>
                       <Badge tone={apt.status === "Confirmed" ? "green" : apt.status === "Checked-in" ? "purple" : "blue"}>
                         {apt.status}
@@ -576,13 +588,13 @@ function Dashboard({ patients, appointments, invoices, inventory, setActivePage 
               <ChevronRight size={17} className="text-rose-600" />
             </button>
 
-            <button onClick={() => setActivePage("patients")} className="flex w-full items-center gap-3 rounded-xl bg-cyan-50 p-3 text-left transition hover:bg-cyan-100 cursor-pointer border border-cyan-200">
-              <Users className="text-cyan-600 shrink-0" size={20} />
+            <button onClick={() => setActivePage("patients")} className="flex w-full items-center gap-3 rounded-xl bg-cyan-50 p-3 text-left transition hover:bg-teal-100 cursor-pointer border border-cyan-200">
+              <Users className="text-teal-600 shrink-0" size={20} />
               <div className="flex-1">
                 <p className="text-sm font-semibold text-slate-800">Patient Database</p>
                 <p className="text-xs text-slate-600">{patients.length} registered profiles</p>
               </div>
-              <ChevronRight size={17} className="text-cyan-600" />
+              <ChevronRight size={17} className="text-teal-600" />
             </button>
           </div>
         </div>
@@ -623,7 +635,11 @@ function PatientModal({ patient, onClose, onSave }) {
     if (!file) return;
     setUploading(true);
     try {
-      update("opgUrl", await uploadImage(file));
+      const previousPath = form.opgStoragePath;
+      const uploaded = await uploadImage(file);
+      if (previousPath) await removeStoredImage(previousPath);
+      update("opgUrl", uploaded.url);
+      update("opgStoragePath", uploaded.path);
     } catch (err) {
       alert(err.message || "Upload failed. Check your connection and Storage rules.");
     } finally {
@@ -637,21 +653,21 @@ function PatientModal({ patient, onClose, onSave }) {
         <button
           type="button"
           onClick={() => setTab("clinical")}
-          className={`border-b-2 px-4 py-2 text-sm font-semibold cursor-pointer ${tab === "clinical" ? "border-cyan-600 text-cyan-600" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          className={`border-b-2 px-4 py-2 text-sm font-semibold cursor-pointer ${tab === "clinical" ? "border-teal-600 text-teal-600" : "border-transparent text-slate-500 hover:text-slate-800"}`}
         >
           Diagnosis & FDI Charting
         </button>
         <button
           type="button"
           onClick={() => setTab("opg")}
-          className={`border-b-2 px-4 py-2 text-sm font-semibold cursor-pointer ${tab === "opg" ? "border-cyan-600 text-cyan-600" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          className={`border-b-2 px-4 py-2 text-sm font-semibold cursor-pointer ${tab === "opg" ? "border-teal-600 text-teal-600" : "border-transparent text-slate-500 hover:text-slate-800"}`}
         >
           Insert Panoramic OPG
         </button>
         <button
           type="button"
           onClick={() => setTab("general")}
-          className={`border-b-2 px-4 py-2 text-sm font-semibold cursor-pointer ${tab === "general" ? "border-cyan-600 text-cyan-600" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          className={`border-b-2 px-4 py-2 text-sm font-semibold cursor-pointer ${tab === "general" ? "border-teal-600 text-teal-600" : "border-transparent text-slate-500 hover:text-slate-800"}`}
         >
           Demographics & Medical
         </button>
@@ -694,7 +710,7 @@ function PatientModal({ patient, onClose, onSave }) {
         {tab === "opg" && (
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row items-center gap-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-700">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-cyan-100 text-teal-700">
                 <ImageIcon size={28} />
               </div>
               <div className="flex-1 text-center sm:text-left">
@@ -737,8 +753,13 @@ function PatientModal({ patient, onClose, onSave }) {
                 />
                 <button
                   type="button"
-                  onClick={() => update("opgUrl", "")}
-                  className="absolute top-4 right-4 rounded-lg bg-rose-600/80 p-2 text-white hover:bg-rose-600"
+                  title="Remove OPG"
+                  onClick={async () => {
+                    await removeStoredImage(form.opgStoragePath);
+                    update("opgUrl", "");
+                    update("opgStoragePath", "");
+                  }}
+                  className="absolute right-4 top-4 rounded-xl bg-rose-600/90 p-2.5 text-white shadow-lg hover:bg-rose-700"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -849,7 +870,7 @@ function PatientsPage({ patients, search, onAdd, onEdit, onDelete }) {
                 <tr key={pt.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-100 font-bold text-cyan-700">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-100 font-bold text-teal-700">
                         {pt.name?.charAt(0)?.toUpperCase()}
                       </div>
                       <div>
@@ -897,7 +918,7 @@ function PatientsPage({ patients, search, onAdd, onEdit, onDelete }) {
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex gap-2">
-                      <button className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-cyan-700 hover:bg-cyan-50 cursor-pointer" onClick={() => onEdit(pt)}>
+                      <button className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-teal-700 hover:bg-cyan-50 cursor-pointer" onClick={() => onEdit(pt)}>
                         Chart / Edit
                       </button>
                       <button className="rounded-lg p-1.5 text-rose-500 hover:bg-rose-50 cursor-pointer" onClick={() => onDelete(pt)}>
@@ -1048,7 +1069,7 @@ function AppointmentsPage({ appointments, patients, search, onAdd, onEdit, onDel
           <div key={apt.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
             <div className="flex flex-col gap-4 md:flex-row md:items-center">
               <div className="flex items-center gap-3 md:w-44">
-                <div className="rounded-xl bg-cyan-50 p-3 text-cyan-700"><Clock3 size={20} /></div>
+                <div className="rounded-xl bg-cyan-50 p-3 text-teal-700"><Clock3 size={20} /></div>
                 <div>
                   <p className="font-bold text-slate-900">{apt.time}</p>
                   <p className="text-xs text-slate-500">{apt.date}</p>
@@ -1057,7 +1078,7 @@ function AppointmentsPage({ appointments, patients, search, onAdd, onEdit, onDel
 
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-slate-900">{patientName(apt.patientId)}</p>
-                <p className="text-sm text-slate-600">{apt.type} · {apt.doctor}</p>
+                <p className="text-sm text-slate-600">{apt.type} • {apt.doctor}</p>
                 {apt.notes && <p className="mt-1 text-xs text-slate-400 truncate">{apt.notes}</p>}
               </div>
 
@@ -1065,7 +1086,7 @@ function AppointmentsPage({ appointments, patients, search, onAdd, onEdit, onDel
                 <Badge tone={apt.status === "Completed" ? "green" : apt.status === "Cancelled" ? "red" : apt.status === "Checked-in" ? "purple" : "blue"}>
                   {apt.status}
                 </Badge>
-                <button className="rounded-lg px-3 py-1.5 text-xs font-semibold text-cyan-700 hover:bg-cyan-50 cursor-pointer" onClick={() => onEdit(apt)}>Edit</button>
+                <button className="rounded-lg px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-cyan-50 cursor-pointer" onClick={() => onEdit(apt)}>Edit</button>
                 <button className="rounded-lg p-1.5 text-rose-500 hover:bg-rose-50 cursor-pointer" onClick={() => onDelete(apt)}><Trash2 size={16} /></button>
               </div>
             </div>
@@ -1100,7 +1121,7 @@ function PrintableReceipt({ invoice, patient, settings, onClose }) {
             {settings.gstin && <p className="text-xs text-slate-500">GSTIN: {settings.gstin}</p>}
           </div>
           <div className="text-right">
-            <span className="text-xs font-bold uppercase tracking-wider text-cyan-700">Tax Invoice</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-teal-700">Tax Invoice</span>
             <p className="text-sm font-semibold mt-1">{invoice.id}</p>
             <p className="text-xs text-slate-500">Date: {invoice.dueDate}</p>
           </div>
@@ -1137,7 +1158,7 @@ function PrintableReceipt({ invoice, patient, settings, onClose }) {
               </tr>
             )}
             {Number(invoice.insuranceCoverage || 0) > 0 && (
-              <tr className="text-xs text-cyan-700">
+              <tr className="text-xs text-teal-700">
                 <td className="py-1">Insurance / Shield Coverage</td>
                 <td className="py-1 text-right">- {money(invoice.insuranceCoverage)}</td>
               </tr>
@@ -1147,7 +1168,7 @@ function PrintableReceipt({ invoice, patient, settings, onClose }) {
 
         <div className="flex justify-between items-center bg-slate-50 p-3 rounded-xl border">
           <span className="font-bold text-slate-900">Total Patient Due</span>
-          <span className="text-xl font-bold text-cyan-700">{money(patientDue)}</span>
+          <span className="text-xl font-bold text-teal-700">{money(patientDue)}</span>
         </div>
 
         {invoice.status === "Partial" && (
@@ -1264,7 +1285,7 @@ function InvoiceModal({ invoice, patients, onClose, onSave }) {
             <span>Total Value</span>
             <span>{money(total)}</span>
           </div>
-          <div className="mt-1 flex justify-between text-sm font-semibold text-cyan-700">
+          <div className="mt-1 flex justify-between text-sm font-semibold text-teal-700">
             <span>Net Patient Due</span>
             <span>{money(patientDue)}</span>
           </div>
@@ -1352,7 +1373,7 @@ function BillingPage({ invoices, patients, settings, onAdd, onEdit, onDelete }) 
                         <button className="rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 cursor-pointer" title="Print Tax Invoice" onClick={() => setPrintInvoice(inv)}>
                           <Printer size={16} />
                         </button>
-                        <button className="text-xs font-semibold text-cyan-700 hover:text-cyan-800 cursor-pointer" onClick={() => onEdit(inv)}>Edit</button>
+                        <button className="text-xs font-semibold text-teal-700 hover:text-teal-800 cursor-pointer" onClick={() => onEdit(inv)}>Edit</button>
                         <button className="text-rose-500 hover:text-rose-700 cursor-pointer" onClick={() => onDelete(inv)}><Trash2 size={16} /></button>
                       </div>
                     </td>
@@ -1612,7 +1633,7 @@ function StaffPage({ staff, onAdd, onEdit, onDelete }) {
           <div key={member.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-cyan-100 font-bold text-cyan-700">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-cyan-100 font-bold text-teal-700">
                   {member.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
@@ -1670,7 +1691,11 @@ function RadiologyModal({ study, patients, onClose, onSave }) {
     if (!file) return;
     setUploading(true);
     try {
-      update("imageUrl", await uploadImage(file));
+      const previousPath = form.imageStoragePath;
+      const uploaded = await uploadImage(file);
+      if (previousPath) await removeStoredImage(previousPath);
+      update("imageUrl", uploaded.url);
+      update("imageStoragePath", uploaded.path);
     } catch (err) {
       alert(err.message || "Upload failed. Check your connection and Storage rules.");
     } finally {
@@ -1679,7 +1704,7 @@ function RadiologyModal({ study, patients, onClose, onSave }) {
   };
 
   return (
-    <Modal title="Radiological Study Report" onClose={onClose}>
+    <Modal title={study?.id ? "Edit Radiology Study" : "New Radiology Study"} onClose={onClose}>
       <form onSubmit={submit} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Patient">
@@ -1720,27 +1745,35 @@ function RadiologyModal({ study, patients, onClose, onSave }) {
           <textarea className={inputClass} rows="2" value={form.impression} onChange={(e) => update("impression", e.target.value)} placeholder="e.g. Bilateral horizontally impacted third molars, chronic apical periodontitis..." />
         </Field>
 
-        <div className="space-y-2">
-          <span className="block text-xs font-semibold uppercase tracking-wider text-slate-500">Insert Radiograph / OPG Scan (up to 15 MB)</span>
-          <div className="flex gap-2">
-            <input className={inputClass} value={form.imageUrl} onChange={(e) => update("imageUrl", e.target.value)} placeholder="https://..." />
+        <div className="space-y-3">
+          <span className="block text-xs font-semibold uppercase tracking-wider text-slate-500">Radiograph / OPG image</span>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input className={inputClass} value={form.imageUrl} onChange={(e) => { update("imageUrl", e.target.value); update("imageStoragePath", ""); }} placeholder="Paste image URL or upload a scan" />
             <label className={`${buttonSecondary} shrink-0 cursor-pointer`}>
-              {uploading ? "Uploading..." : "Upload File"}
-              <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
+              <ImageIcon size={16} /> {uploading ? "Uploading..." : "Upload scan"}
+              <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleUpload} disabled={uploading} />
             </label>
           </div>
+          {form.imageUrl && (
+            <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 p-2">
+              <img src={form.imageUrl} alt="Radiograph preview" className="mx-auto max-h-64 rounded-xl object-contain" />
+              <button type="button" title="Remove scan" onClick={async () => { await removeStoredImage(form.imageStoragePath); update("imageUrl", ""); update("imageStoragePath", ""); }} className="absolute right-4 top-4 rounded-xl bg-rose-600 p-2 text-white shadow-lg hover:bg-rose-700">
+                <Trash2 size={16} />
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
           <button type="button" className={buttonSecondary} onClick={onClose}>Cancel</button>
-          <button type="submit" className={buttonPrimary} disabled={uploading}><FileText size={17} />Save Radiograph</button>
+          <button type="submit" className={buttonPrimary} disabled={uploading}><FileText size={17} />{study?.id ? "Save changes" : "Save radiograph"}</button>
         </div>
       </form>
     </Modal>
   );
 }
 
-function RadiologyPage({ radiology, patients, onAdd, onDelete }) {
+function RadiologyPage({ radiology, patients, onAdd, onEdit, onDelete }) {
   const patientName = (id) => patients.find((p) => p.id === id)?.name || "Unknown patient";
   const [selectedImage, setSelectedImage] = useState(null);
 
@@ -1785,7 +1818,7 @@ function RadiologyPage({ radiology, patients, onAdd, onDelete }) {
                   <div className="mt-3">
                     <button
                       onClick={() => setSelectedImage(study.imageUrl)}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-cyan-600 hover:text-cyan-700 cursor-pointer"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-600 hover:text-teal-700 cursor-pointer"
                     >
                       <ImageIcon size={14} /> Open Full View Scan →
                     </button>
@@ -1793,9 +1826,14 @@ function RadiologyPage({ radiology, patients, onAdd, onDelete }) {
                 )}
               </div>
 
-              <button className="rounded-lg p-2 text-rose-500 hover:bg-rose-50 cursor-pointer" onClick={() => onDelete(study)}>
-                <Trash2 size={17} />
-              </button>
+              <div className="flex shrink-0 items-center gap-1">
+                <button type="button" title="Edit study" className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 hover:text-teal-700 cursor-pointer" onClick={() => onEdit(study)}>
+                  <FileText size={17} />
+                </button>
+                <button type="button" title="Delete study" className="rounded-xl p-2 text-rose-500 hover:bg-rose-50 cursor-pointer" onClick={() => onDelete(study)}>
+                  <Trash2 size={17} />
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -2030,15 +2068,17 @@ function App() {
     }
   }
 
-  async function deleteRecord(collectionName, id, message) {
+  async function deleteRecord(collectionName, id, message, item = null) {
     if (!user || !db) return;
-    if (!window.confirm("Permanently delete this record?")) return;
+    if (!window.confirm("Permanently delete this record? This cannot be undone.")) return;
     try {
+      if (item?.opgStoragePath) await removeStoredImage(item.opgStoragePath);
+      if (item?.imageStoragePath) await removeStoredImage(item.imageStoragePath);
       await deleteDoc(doc(db, "clinics", user.uid, collectionName, id));
       setToast(message);
     } catch (err) {
       console.error(`Failed to delete from ${collectionName}:`, err);
-      alert("Deletion failed.");
+      alert(err?.message || "Deletion failed. Please try again.");
     }
   }
 
@@ -2085,7 +2125,7 @@ function App() {
   return (
     <ErrorBoundary>
       <style>{`@media print { body * { visibility: hidden; } #printable-receipt, #printable-receipt * { visibility: visible; } #printable-receipt { position: fixed; left: 0; top: 0; width: 100%; background: #fff; padding: 24px; } .no-print { display: none !important; } }`}</style>
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-[#f5f7f8]">
         <Sidebar
           activePage={activePage}
           setActivePage={setActivePage}
@@ -2115,7 +2155,7 @@ function App() {
                 search={search}
                 onAdd={() => setPatientModal({ ...emptyPatient })}
                 onEdit={(pt) => setPatientModal(pt)}
-                onDelete={(pt) => deleteRecord("patients", pt.id, "Patient record removed.")}
+                onDelete={(pt) => deleteRecord("patients", pt.id, "Patient record removed.", pt)}
               />
             )}
 
@@ -2175,7 +2215,8 @@ function App() {
                 radiology={radiology}
                 patients={patients}
                 onAdd={() => setRadiologyModal({ ...emptyRadiology })}
-                onDelete={(rad) => deleteRecord("radiology", rad.id, "Radiology study removed.")}
+                onEdit={(rad) => setRadiologyModal(rad)}
+                onDelete={(rad) => deleteRecord("radiology", rad.id, "Radiology study removed.", rad)}
               />
             )}
 
@@ -2268,3 +2309,4 @@ function App() {
 }
 
 export default App;
+
