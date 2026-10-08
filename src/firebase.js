@@ -57,4 +57,4 @@ export async function logoutUser() {
   await signOut(auth);
 }
 
-export { app, auth, db, storage };s
+export { app, auth, db, storage };
