@@ -15,6 +15,7 @@ import {
   FileText,
   Home,
   IndianRupee,
+  Image as ImageIcon,
   LogIn,
   LogOut,
   Menu,
@@ -57,6 +58,8 @@ import {
 } from "firebase/firestore";
 
 import { onAuthStateChanged } from "firebase/auth";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "./firebase";
 
 /* =========================================================
    HELPERS & DATA DEFINITIONS
@@ -382,10 +385,13 @@ function PrescriptionsPage({ prescriptions, patients, onSaveRx, onDeleteRx }) {
 
               {form.medications.map((m, idx) => (
                 <div key={idx} className="grid grid-cols-12 gap-2 items-center bg-slate-50 p-2 rounded-xl">
-                  <div className="col-span-5">
+                  <div className="col-span-5 space-y-1">
+                    <select className={inputClass} value={["Paracetamol","Ibuprofen","Amoxicillin","Metronidazole","Chlorhexidine mouthwash","Custom / other"].includes(m.drug) ? m.drug : "Custom / other"} onChange={(e) => updateDrug(idx, "drug", e.target.value === "Custom / other" ? "" : e.target.value)}>
+                      <option value="">Choose medication</option>{["Paracetamol","Ibuprofen","Amoxicillin","Metronidazole","Chlorhexidine mouthwash","Custom / other"].map((name) => <option key={name}>{name}</option>)}
+                    </select>
                     <input
                       className={inputClass}
-                      placeholder="Drug name & strength"
+                      placeholder="Drug name & strength (custom allowed)"
                       value={m.drug}
                       onChange={(e) => updateDrug(idx, "drug", e.target.value)}
                       required
@@ -845,7 +851,7 @@ function MembershipPage({ memberships, patients, onAddPlan }) {
 }
 
 function RepeatVisitGeneratorPage({ patients, appointments }) {
-  const overdueScaling = useMemo(() => patients.filter((_, idx) => idx % 3 === 0), [patients]);
+  const overdueScaling = useMemo(() => patients.filter((p) => p.recallDate && p.recallDate <= new Date().toISOString().slice(0, 10)), [patients]);
   const unfinishedTreatments = useMemo(() => patients.filter((p) => p.journeyStage === "Treatment Plan Presented" || p.journeyStage === "In-Treatment"), [patients]);
 
   return (
@@ -856,7 +862,7 @@ function RepeatVisitGeneratorPage({ patients, appointments }) {
           Repeat Visit Generator (4 Smart Doors)
         </h2>
         <p className="text-sm text-slate-500">
-          Re-engage existing patients to boost recurring revenue without high ad acquisition costs.
+          Recall queue uses actual recall dates saved in patient records; no sample patients are generated.
         </p>
       </div>
 
@@ -867,7 +873,7 @@ function RepeatVisitGeneratorPage({ patients, appointments }) {
           </div>
           <p className="text-xs text-slate-600 mt-2">Routine scaling, polishing & preventive oral health examinations.</p>
           <p className="text-2xl font-bold text-slate-900 mt-4">{overdueScaling.length} Patients</p>
-          <p className="text-[11px] text-cyan-700 font-medium">Eligible for recall</p>
+          <p className="text-[11px] text-cyan-700 font-medium">Based on saved recall dates</p>
         </div>
 
         <div className="rounded-2xl border border-amber-100 bg-amber-50/50 p-5">
@@ -884,7 +890,7 @@ function RepeatVisitGeneratorPage({ patients, appointments }) {
             <Award size={18} /> Door 3: Family Checkups
           </div>
           <p className="text-xs text-slate-600 mt-2">Engage spouses and children of existing high-value patients.</p>
-          <p className="text-2xl font-bold text-slate-900 mt-4">{Math.round(patients.length * 0.4)} Families</p>
+          <p className="text-2xl font-bold text-slate-900 mt-4">{patients.filter((p) => p.familyGroupId).length} Family-linked patients</p>
           <p className="text-[11px] text-purple-700 font-medium">Untapped network</p>
         </div>
 
@@ -905,17 +911,17 @@ function RepeatVisitGeneratorPage({ patients, appointments }) {
             <div key={pt.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl border border-slate-100 bg-slate-50">
               <div>
                 <p className="font-semibold text-slate-800">{pt.name}</p>
-                <p className="text-xs text-slate-500">Overdue for Periodic Scaling & Oral Examination · Phone: {pt.phone}</p>
+                <p className="text-xs text-slate-500">Recall date: {pt.recallDate} · Phone: {pt.phone}</p>
               </div>
               <a
                 href={`https://wa.me/91${pt.phone?.replace(/\D/g, "")}?text=Dear%20${encodeURIComponent(
                   pt.name
-                )},%20it%20is%20time%20for%20your%20routine%206-month%20dental%20health%20checkup.`}
+                )},%20this%20is%20a%20reminder%20for%20your%20dental%20visit.`}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1.5 rounded-xl bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-cyan-700 self-start sm:self-auto"
               >
-                <MessageSquare size={14} /> Send 6-Month Recall
+                <MessageSquare size={14} /> Send Recall
               </a>
             </div>
           ))}
@@ -1166,6 +1172,8 @@ function PatientsPage({ patients, search, onAdd, onDelete }) {
               <th className="px-5 py-3">Phone</th>
               <th className="px-5 py-3">Journey Stage</th>
               <th className="px-5 py-3">Blood Group</th>
+              <th className="px-5 py-3">Diagnosis</th>
+              <th className="px-5 py-3">FDI Tooth</th>
               <th className="px-5 py-3">Actions</th>
             </tr>
           </thead>
@@ -1178,6 +1186,8 @@ function PatientsPage({ patients, search, onAdd, onDelete }) {
                   <Badge tone="blue">{pt.journeyStage || "New Enquiry"}</Badge>
                 </td>
                 <td className="px-5 py-4 text-sm text-slate-600">{pt.bloodGroup || "—"}</td>
+                <td className="px-5 py-4 text-sm text-slate-600">{pt.diagnosis || "—"}</td>
+                <td className="px-5 py-4 text-sm text-slate-600">{pt.fdiTooth || "—"}</td>
                 <td className="px-5 py-4">
                   <button className="text-red-500 hover:text-red-700 cursor-pointer p-1" onClick={() => onDelete(pt)}>
                     <Trash2 size={16} />
@@ -1187,7 +1197,7 @@ function PatientsPage({ patients, search, onAdd, onDelete }) {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan="5" className="p-10 text-center text-sm text-slate-400">
+                <td colSpan="7" className="p-10 text-center text-sm text-slate-400">
                   No patients found. Click "New Patient" to begin.
                 </td>
               </tr>
@@ -1240,6 +1250,57 @@ function AppointmentsPage({ appointments, patients, onAdd, onDelete }) {
   );
 }
 
+function OpgPage({ patients, user, saveDoc, toast }) {
+  const [patientId, setPatientId] = useState(patients[0]?.id || "");
+  const [file, setFile] = useState(null);
+  const [observation, setObservation] = useState("");
+  const [diagnosis, setDiagnosis] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { if (!patientId && patients[0]) setPatientId(patients[0].id); }, [patients, patientId]);
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!user || !patientId) return alert("Select a patient first.");
+    if (!file && !observation.trim() && !diagnosis.trim()) return alert("Choose an image or enter observations/diagnosis.");
+    setBusy(true);
+    try {
+      let url = imageUrl;
+      if (file) {
+        if (!storage) throw new Error("Firebase Storage is not configured.");
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const path = `clinics/${user.uid}/opg/${patientId}/${Date.now()}-${safeName}`;
+        const uploaded = await uploadBytes(ref(storage, path), file, { contentType: file.type });
+        url = await getDownloadURL(uploaded.ref);
+      }
+      const id = `opg_${Date.now()}`;
+      await saveDoc("opgReports", { id, patientId, imageUrl: url, imageName: file?.name || "", observation, diagnosis, createdAt: new Date().toISOString() }, "OPG report saved.");
+      setFile(null); setObservation(""); setDiagnosis(""); setImageUrl("");
+    } catch (err) { console.error(err); alert(`Could not save OPG: ${err.message || "Check Firebase Storage setup and rules."}`); }
+    finally { setBusy(false); }
+  };
+  return <div className="max-w-3xl space-y-5"><div><h2 className="text-xl font-bold">OPG Imaging & Diagnosis</h2><p className="text-sm text-slate-500">Upload a panoramic image and record clinical observations separately.</p></div><form onSubmit={submit} className="space-y-4 rounded-2xl border bg-white p-5">
+    <Field label="Patient"><select className={inputClass} value={patientId} onChange={e => setPatientId(e.target.value)} required><option value="">Select patient</option>{patients.map(p => <option key={p.id} value={p.id}>{p.name} {p.phone ? `— ${p.phone}` : ""}</option>)}</select></Field>
+    <Field label="OPG image (JPG, PNG, WEBP)"><input className={inputClass} type="file" accept="image/*" onChange={e => setFile(e.target.files?.[0] || null)} /></Field>
+    {file && <p className="text-xs text-slate-500">Selected: {file.name} ({Math.round(file.size / 1024)} KB)</p>}
+    <Field label="Observation"><textarea className={inputClass} rows="4" value={observation} onChange={e => setObservation(e.target.value)} placeholder="Type radiographic observations..." /></Field>
+    <Field label="Diagnosis"><textarea className={inputClass} rows="3" value={diagnosis} onChange={e => setDiagnosis(e.target.value)} placeholder="Type diagnosis / impression..." /></Field>
+    <button className={buttonPrimary} disabled={busy || !patients.length}>{busy ? "Saving..." : "Save OPG report"}</button>
+  </form></div>;
+}
+
+function PracticeProfilePage({ user, profile, setProfile, onSave }) {
+  const payload = profile.upiId ? `upi://pay?pa=${encodeURIComponent(profile.upiId)}&pn=${encodeURIComponent(profile.clinicName || "Dental Clinic")}&cu=INR` : "";
+  const qrUrl = payload ? `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(payload)}` : "";
+  return <div className="max-w-3xl space-y-5"><div><h2 className="text-xl font-bold">Practice Profile & UPI</h2><p className="text-sm text-slate-500">Set clinic details and generate a bill-specific UPI QR.</p></div><form onSubmit={e => { e.preventDefault(); onSave(profile); }} className="space-y-4 rounded-2xl border bg-white p-5">
+    <Field label="Clinic name"><input className={inputClass} value={profile.clinicName || ""} onChange={e => setProfile({ ...profile, clinicName: e.target.value })} required /></Field>
+    <Field label="Clinic phone"><input className={inputClass} value={profile.phone || ""} onChange={e => setProfile({ ...profile, phone: e.target.value })} /></Field>
+    <Field label="Clinic address"><textarea className={inputClass} value={profile.address || ""} onChange={e => setProfile({ ...profile, address: e.target.value })} rows="2" /></Field>
+    <Field label="UPI ID"><input className={inputClass} placeholder="clinicname@bank" value={profile.upiId || ""} onChange={e => setProfile({ ...profile, upiId: e.target.value })} /></Field>
+    <Field label="Existing UPI QR (optional image URL)"><input className={inputClass} placeholder="Paste hosted image URL if you have one" value={profile.existingQrUrl || ""} onChange={e => setProfile({ ...profile, existingQrUrl: e.target.value })} /></Field>
+    <button className={buttonPrimary}>Save practice profile</button>
+  </form>{qrUrl && <div className="rounded-2xl border bg-white p-5"><h3 className="font-semibold">UPI payment QR preview</h3><p className="text-sm text-slate-500">This base QR has no bill amount. Generate a bill-specific QR from billing when the amount is known.</p><img className="mt-3 h-56 w-56 border rounded-xl" src={qrUrl} alt="Clinic UPI QR" /><p className="text-sm mt-2">UPI ID: {profile.upiId}</p></div>}{profile.existingQrUrl && <div className="rounded-2xl border bg-white p-5"><h3 className="font-semibold">Uploaded/existing QR preview</h3><img className="mt-3 max-h-64" src={profile.existingQrUrl} alt="Existing clinic UPI QR" /></div>}</div>;
+}
+
 /* =========================================================
    NAVIGATION SHELL & APP CORE
 ========================================================= */
@@ -1255,6 +1316,8 @@ const navigation = [
   { id: "analytics", label: "Growth Analytics", icon: BarChart3 },
   { id: "appointments", label: "Appointments", icon: CalendarDays },
   { id: "patients", label: "Patient Registry", icon: Users },
+  { id: "opg", label: "OPG & Diagnosis", icon: ImageIcon },
+  { id: "profile", label: "Practice Profile / UPI", icon: Settings },
 ];
 
 function App() {
@@ -1271,6 +1334,7 @@ function App() {
   const [invoices, setInvoices] = useState([]);
   const [prescriptions, setPrescriptions] = useState([]);
   const [memberships, setMemberships] = useState([]);
+  const [practiceProfile, setPracticeProfile] = useState({ clinicName: "", phone: "", address: "", upiId: "", existingQrUrl: "" });
 
   const [patientModal, setPatientModal] = useState(null);
   const [appointmentModal, setAppointmentModal] = useState(null);
@@ -1309,6 +1373,7 @@ function App() {
       onSnapshot(collection(db, "clinics", cid, "memberships"), (s) =>
         setMemberships(s.docs.map((d) => ({ id: d.id, ...d.data() })))
       ),
+      onSnapshot(doc(db, "clinics", cid, "settings", "profile"), (s) => { if (s.exists()) setPracticeProfile((old) => ({ ...old, ...s.data() })); }),
     ];
 
     return () => unsubs.forEach((u) => u());
@@ -1479,11 +1544,14 @@ function App() {
             />
           )}
 
+          {activePage === "opg" && <OpgPage patients={patients} user={user} saveDoc={saveDoc} />}
+          {activePage === "profile" && <PracticeProfilePage user={user} profile={practiceProfile} setProfile={setPracticeProfile} onSave={(profile) => saveDoc("settings", { ...profile, id: "profile" }, "Practice profile saved.")} />}
+
           {activePage === "patients" && (
             <PatientsPage
               patients={patients}
               search={search}
-              onAdd={() => setPatientModal({ name: "", phone: "", journeyStage: "New Enquiry" })}
+              onAdd={() => setPatientModal({ name: "", phone: "", journeyStage: "New Enquiry", age: "", dateOfBirth: "", gender: "", address: "", email: "", bloodGroup: "", fdiTooth: "", diagnosis: "" })}
               onDelete={(pt) => removeDoc("patients", pt.id, "Patient deleted.")}
             />
           )}
@@ -1509,6 +1577,16 @@ function App() {
             <Field label="Phone">
               <input className={inputClass} value={patientModal.phone} onChange={(e) => setPatientModal({ ...patientModal, phone: e.target.value })} required />
             </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Date of Birth"><input type="date" className={inputClass} value={patientModal.dateOfBirth || ""} onChange={(e) => setPatientModal({ ...patientModal, dateOfBirth: e.target.value })} /></Field>
+              <Field label="Age"><input type="number" min="0" className={inputClass} value={patientModal.age || ""} onChange={(e) => setPatientModal({ ...patientModal, age: e.target.value })} /></Field>
+              <Field label="Gender"><select className={inputClass} value={patientModal.gender || ""} onChange={(e) => setPatientModal({ ...patientModal, gender: e.target.value })}><option value="">Select</option><option>Female</option><option>Male</option><option>Other</option><option>Prefer not to say</option></select></Field>
+              <Field label="Email"><input type="email" className={inputClass} value={patientModal.email || ""} onChange={(e) => setPatientModal({ ...patientModal, email: e.target.value })} /></Field>
+              <Field label="Blood Group"><select className={inputClass} value={patientModal.bloodGroup || ""} onChange={(e) => setPatientModal({ ...patientModal, bloodGroup: e.target.value })}><option value="">Unknown</option>{["A+","A-","B+","B-","AB+","AB-","O+","O-"].map(x => <option key={x}>{x}</option>)}</select></Field>
+              <Field label="FDI Tooth"><input className={inputClass} placeholder="e.g. 36" value={patientModal.fdiTooth || ""} onChange={(e) => setPatientModal({ ...patientModal, fdiTooth: e.target.value })} /></Field>
+            </div>
+            <Field label="Address"><textarea className={inputClass} rows="2" value={patientModal.address || ""} onChange={(e) => setPatientModal({ ...patientModal, address: e.target.value })} /></Field>
+            <Field label="Diagnosis"><textarea className={inputClass} rows="2" placeholder="Type clinical diagnosis" value={patientModal.diagnosis || ""} onChange={(e) => setPatientModal({ ...patientModal, diagnosis: e.target.value })} /></Field>
             <Field label="Journey Stage">
               <select className={inputClass} value={patientModal.journeyStage || "New Enquiry"} onChange={(e) => setPatientModal({ ...patientModal, journeyStage: e.target.value })}>
                 {JOURNEY_STAGES.map((s) => (
@@ -1551,6 +1629,10 @@ function App() {
                 <input type="time" className={inputClass} value={appointmentModal.time} onChange={(e) => setAppointmentModal({ ...appointmentModal, time: e.target.value })} required />
               </Field>
             </div>
+            <Field label="Anticoagulants / coagulants taken"><input className={inputClass} placeholder="Medication, dose, or none" value={appointmentModal.coagulants || ""} onChange={(e) => setAppointmentModal({ ...appointmentModal, coagulants: e.target.value })} /></Field>
+            <Field label="Antihypertensive drugs"><input className={inputClass} placeholder="Medication, dose, or none" value={appointmentModal.hypotensiveDrugs || ""} onChange={(e) => setAppointmentModal({ ...appointmentModal, hypotensiveDrugs: e.target.value })} /></Field>
+            <Field label="Amoxicillin / penicillin allergy"><select className={inputClass} value={appointmentModal.penicillinAllergy || "Unknown"} onChange={(e) => setAppointmentModal({ ...appointmentModal, penicillinAllergy: e.target.value })}><option>Unknown</option><option>No known allergy</option><option>Yes - amoxicillin allergy</option><option>Yes - penicillin allergy</option><option>Other / details in notes</option></select></Field>
+            <Field label="Medical notes"><textarea className={inputClass} rows="2" value={appointmentModal.medicalNotes || ""} onChange={(e) => setAppointmentModal({ ...appointmentModal, medicalNotes: e.target.value })} /></Field>
             <div className="flex justify-end gap-3 pt-2">
               <button type="button" className={buttonSecondary} onClick={() => setAppointmentModal(null)}>Cancel</button>
               <button type="submit" className={buttonPrimary}><CheckCircle2 size={16} /> Book Chair</button>
