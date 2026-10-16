@@ -33,8 +33,13 @@ import {
   Phone,
   FileText,
   User,
-  HeartPulse
+  HeartPulse,
+  LogIn,
+  LogOut
 } from "lucide-react";
+
+import { auth, firebaseConfigured, loginWithGoogle, logoutUser } from "./firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 // --- DENTITION SCHEMAS (FDI TWO-DIGIT SYSTEM) ---
 const PERMANENT_UPPER = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
@@ -73,6 +78,62 @@ const PRESET_MEDICATIONS = [
 ];
 
 export default function App() {
+  // Firebase authentication gate: dashboard stays hidden until a Google account is signed in.
+  const [authUser, setAuthUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState("");
+  const [loginBusy, setLoginBusy] = useState(false);
+
+  useEffect(() => {
+    if (!firebaseConfigured || !auth) {
+      setAuthLoading(false);
+      return undefined;
+    }
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      (user) => {
+        setAuthUser(user || null);
+        setAuthLoading(false);
+        setAuthError("");
+      },
+      (error) => {
+        console.error("Authentication state error:", error);
+        setAuthError("Could not verify your login. Please refresh and try again.");
+        setAuthLoading(false);
+      }
+    );
+    return unsubscribe;
+  }, []);
+
+  const handleGoogleLogin = async () => {
+    setAuthError("");
+    setLoginBusy(true);
+    try {
+      await loginWithGoogle();
+      // onAuthStateChanged updates the screen after Firebase confirms the session.
+    } catch (error) {
+      const messages = {
+        "auth/unauthorized-domain": "This website domain is not authorized in Firebase. Add it in Firebase Console → Authentication → Settings → Authorized domains.",
+        "auth/popup-closed-by-user": "The sign-in window was closed before login finished.",
+        "auth/popup-blocked": "Your browser blocked the sign-in window. Please allow pop-ups and try again.",
+        "auth/network-request-failed": "Network error. Check your internet connection and try again."
+      };
+      setAuthError(messages[error?.code] || error?.message || "Google sign-in failed. Please try again.");
+    } finally {
+      setLoginBusy(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      setAuthUser(null);
+      setAuthError("");
+    } catch (error) {
+      setAuthError("Unable to log out. Please try again.");
+    }
+  };
+
   // Navigation State
   const [activeNav, setActiveNav] = useState("Patients & Odontogram");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -629,6 +690,45 @@ export default function App() {
   const todayAppointments = appointments.filter((appointment) => dashboardDateKey(appointment.date) === todayKey).length;
   const lowStockCount = inventory.filter((item) => item.status === "Low Stock" || Number(item.quantity) <= Number(item.minThreshold)).length;
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#0b1329] flex items-center justify-center p-6 text-white">
+        <div className="text-center"><div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-cyan-300/30 border-t-cyan-300" />
+          <p className="text-sm text-slate-300">Checking your Meridian Dental OS session…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!authUser) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-5 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-cyan-900/40 via-slate-950 to-indigo-950/60" />
+        <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/90 p-8 shadow-2xl backdrop-blur-xl">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-400 text-slate-950"><HeartPulse className="h-7 w-7" /></div>
+          <div className="text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-cyan-300">Meridian Dental OS</p>
+            <h1 className="mt-3 text-2xl font-bold tracking-tight">Welcome back</h1>
+            <p className="mt-2 text-sm leading-6 text-slate-400">Sign in with your Google account to access the dental practice dashboard.</p>
+          </div>
+          {!firebaseConfigured ? (
+            <div className="mt-7 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+              Firebase is not configured. Add the VITE_FIREBASE_* environment variables to your local environment and deployment settings, then redeploy.
+            </div>
+          ) : (
+            <button type="button" onClick={handleGoogleLogin} disabled={loginBusy}
+              className="mt-7 flex w-full items-center justify-center gap-3 rounded-xl bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60">
+              {loginBusy ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-800" /> : <LogIn className="h-5 w-5" />}
+              {loginBusy ? "Connecting to Google…" : "Continue with Google"}
+            </button>
+          )}
+          {authError && <p role="alert" className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm leading-5 text-rose-200">{authError}</p>}
+          <p className="mt-6 text-center text-xs text-slate-500">Secure sign-in powered by Firebase Authentication</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-[#f8fafc] text-slate-800 font-sans overflow-hidden">
       
@@ -699,36 +799,29 @@ export default function App() {
           </nav>
         </div>
 
-        {/* User Profile in Sidebar Footer (matching 73133.jpg) */}
-        <div className="p-4 border-t border-slate-800/80 flex items-center justify-between text-xs">
-          <div>
-            <div className="font-semibold text-white">siva sabari</div>
-            <div className="text-[11px] text-slate-400 truncate max-w-[150px]">
-              sabari2005g@gmail.com
+        {/* Signed-in account and session controls */}
+        <div className="p-4 border-t border-slate-800/80">
+          <div className="flex items-center gap-3 min-w-0">
+            {authUser.photoURL ? <img src={authUser.photoURL} alt="Account avatar" className="h-9 w-9 rounded-full border border-slate-600 object-cover" /> :
+              <div className="h-9 w-9 shrink-0 rounded-full bg-cyan-400/15 text-cyan-300 flex items-center justify-center"><User className="h-4 w-4" /></div>}
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-xs font-semibold text-white">{authUser.displayName || "Signed-in user"}</div>
+              <div className="truncate text-[11px] text-slate-400" title={authUser.email || ""}>{authUser.email || "Google account"}</div>
             </div>
-          </div>
-          <button
-            title="Export Practice Backup JSON"
-            onClick={() => {
-              const exportData = {
-                practiceProfile,
-                patients,
-                appointments,
-                invoices,
-                inventory,
-                employees,
-              };
+            <button title="Export Practice Backup JSON" aria-label="Export practice backup" onClick={() => {
+              const exportData = { practiceProfile, patients, appointments, invoices, inventory, employees };
               const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
               const url = URL.createObjectURL(blob);
               const a = document.createElement("a");
               a.href = url;
               a.download = `meridian-backup-${new Date().toISOString().split("T")[0]}.json`;
               a.click();
+              URL.revokeObjectURL(url);
               showToast("System database backup downloaded");
-            }}
-            className="text-slate-400 hover:text-white p-1"
-          >
-            <Download className="w-4 h-4" />
+            }} className="text-slate-400 hover:text-white p-1 shrink-0"><Download className="w-4 h-4" /></button>
+          </div>
+          <button type="button" onClick={handleLogout} className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-300 transition hover:border-rose-400/50 hover:bg-rose-500/10 hover:text-rose-200">
+            <LogOut className="h-4 w-4" /> Sign out
           </button>
         </div>
       </aside>
