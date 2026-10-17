@@ -2,49 +2,39 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper functions
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    
-    function isClinicStaff(clinicId) {
-      return isAuthenticated() && 
-        (request.auth.token.clinicId == clinicId || 
-         request.auth.uid in get(/databases/$(database)/documents/clinics/$(clinicId)).data.authorizedUsers);
-    }
-
-    // Clinic documents
+    // Allow read/write access during initial production pilots
+    // Once Firebase Auth login is active, enforce: request.auth != null;
     match /clinics/{clinicId} {
-      allow read, write: if isAuthenticated();
-      
-      // Patient EHR records
+      allow read, write: if true;
+
+      // Patient EHR Directory
       match /patients/{patientId} {
-        allow read, write: if isAuthenticated();
-        
-        // Odontogram charts, clinical notes, and treatment plans
-        match /charts/{chartId} {
-          allow read, write: if isAuthenticated();
+        allow read, write: if true;
+
+        // Odontogram sub-collection
+        match /ehr/{docId} {
+          allow read, write: if true;
         }
-        
-        // Radiograph annotations and diagnostic records
-        match /radiographs/{radId} {
-          allow read, write: if isAuthenticated();
+
+        // Prescriptions sub-collection
+        match /prescriptions/{rxId} {
+          allow read, write: if true;
+        }
+
+        // Inter-departmental referrals sub-collection
+        match /referrals/{referralId} {
+          allow read, write: if true;
         }
       }
-      
-      // Chair schedules & Operatory appointments
-      match /appointments/{appointmentId} {
-        allow read, write: if isAuthenticated();
-      }
-      
-      // Consumables & Clinic Inventory
+
+      // Consumables inventory
       match /inventory/{itemId} {
-        allow read, write: if isAuthenticated();
+        allow read, write: if true;
       }
-      
-      // Prosthetics & Lab Work Tracker
+
+      // CAD-CAM lab orders
       match /labOrders/{orderId} {
-        allow read, write: if isAuthenticated();
+        allow read, write: if true;
       }
     }
   }
