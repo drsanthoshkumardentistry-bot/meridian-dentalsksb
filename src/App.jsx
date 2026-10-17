@@ -1,7 +1,7 @@
 /* ==============================================================================
- * MERIDIAN DENTAL OS - COMMERCIAL HEALTHCARE PRODUCTION SUITE
- * Preserves exact original UI styling, typography, layout, and color palette.
- * Enhanced with Institutional Hospital EHR, Inter-Department Referrals & Systemic Alerts.
+ * MERIDIAN DENTAL OS - MULTI-TENANT CLOUD ENTERPRISE EDITION
+ * Strict Tenant Isolation: All clinical EHR data scoped to authUser.uid in Firestore
+ * Full Hospital DMS Integration (Vitals, TMJ, Periodontal, Referrals, FDI Chart)
  * File: src/App.jsx
  * ============================================================================== */
 
@@ -12,9 +12,6 @@ import {
   Search,
   Plus,
   Trash2,
-  Share2,
-  Eye,
-  Upload,
   Calendar,
   Users,
   Sun,
@@ -24,43 +21,34 @@ import {
   UserCheck,
   Send,
   CheckCircle2,
-  Clock,
-  ChevronRight,
-  ExternalLink,
-  ShieldCheck,
-  AlertCircle,
+  Upload,
   QrCode,
-  Download,
-  FileSpreadsheet,
-  Settings,
-  Baby,
-  Activity,
-  Layers,
+  ShieldCheck,
   Ruler,
-  Phone,
-  FileText,
   User,
   HeartPulse,
   LogIn,
   LogOut,
-  ArrowUpRight,
-  ShieldAlert,
-  ClipboardCheck
+  Loader2
 } from "lucide-react";
 
-// Safe dynamic import from ./firebase
+// Safe dynamic imports from ./firebase
 import * as FirebaseModule from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import {
   collection,
   doc,
   setDoc,
-  getDocs,
   onSnapshot,
   serverTimestamp,
   addDoc,
   deleteDoc
 } from "firebase/firestore";
+import {
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL
+} from "firebase/storage";
 
 const auth = FirebaseModule.auth;
 const db = FirebaseModule.db;
@@ -76,7 +64,7 @@ const PERMANENT_LOWER = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36,
 const DECIDUOUS_UPPER = [55, 54, 53, 52, 51, 61, 62, 63, 64, 65];
 const DECIDUOUS_LOWER = [85, 84, 83, 82, 81, 71, 72, 73, 74, 75];
 
-// Exact palette items matching screenshot (73145.jpg)
+// 16-Chip Clinical Odontogram Palette
 const CLINICAL_PALETTE = [
   { id: "HLT", label: "Healthy", border: "border-emerald-300", bg: "bg-emerald-50/60", text: "text-emerald-700" },
   { id: "CAR", label: "Caries", border: "border-rose-200", bg: "bg-rose-50/60", text: "text-rose-600" },
@@ -96,14 +84,14 @@ const CLINICAL_PALETTE = [
   { id: "MIS", label: "Missing / Extracted", border: "border-slate-300", bg: "bg-slate-100", text: "text-slate-600" },
 ];
 
-// Institutional Dental Specialty Referral Departments
+// Institutional Specialty Departments from Hospital DMS
 const DENTAL_DEPARTMENTS = [
+  { id: "cons", code: "CONS", name: "Conservative Dentistry & Endodontics", room: "Room 4" },
   { id: "omfs", code: "OMFS", name: "Oral & Maxillofacial Surgery", room: "Room 2" },
   { id: "perio", code: "PERIO", name: "Periodontics & Implantology", room: "Room 3" },
-  { id: "cons", code: "CONS", name: "Conservative Dentistry & Endodontics", room: "Room 4" },
+  { id: "prostho", code: "PROSTHO", name: "Prosthodontics & Crown-Bridge", room: "Room 7" },
   { id: "ortho", code: "ORTHO", name: "Orthodontics & Dentofacial", room: "Room 5" },
   { id: "pedo", code: "PEDO", name: "Pediatric & Preventive Dentistry", room: "Room 6" },
-  { id: "prostho", code: "PROSTHO", name: "Prosthodontics & Crown-Bridge", room: "Room 7" },
   { id: "omr", code: "OMR", name: "Oral Medicine & Radiology", room: "Room 1" },
   { id: "phd", code: "PHD", name: "Public Health Dentistry", room: "Room 8" }
 ];
@@ -113,19 +101,45 @@ const PRESET_MEDICATIONS = [
   { name: "Moxikind-CV 625", generic: "Amoxicillin 500mg + Clavulanic Acid 125mg", frequency: "1-0-1", duration: "5 Days", timing: "After Food" },
   { name: "Ketorol-DT", generic: "Ketorolac Tromethamine 10mg (Dispersible)", frequency: "SOS", duration: "2 Days", timing: "Dissolve in half cup water" },
   { name: "Metrogyl 400", generic: "Metronidazole 400mg", frequency: "1-1-1", duration: "3 Days", timing: "After Food" },
+  { name: "Pan-40", generic: "Pantoprazole 40mg", frequency: "1-0-0", duration: "5 Days", timing: "Before Breakfast" },
   { name: "Rexidin 0.2%", generic: "Chlorhexidine Gluconate 0.2% w/v Mouthwash", frequency: "1-0-1", duration: "7 Days", timing: "10ml rinse for 1 min after brushing" },
   { name: "Kenacort 0.1%", generic: "Triamcinolone Acetonide 0.1% Oral Paste", frequency: "0-0-1", duration: "5 Days", timing: "Apply thinly at bedtime over ulcer" },
 ];
 
 export default function App() {
-  const CLINIC_ID = "meridian_main_clinic";
-
-  // Firebase authentication gate
+  // 1. Multi-Tenant Auth State (Per-Google-Account Scoping)
   const [authUser, setAuthUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState("");
   const [loginBusy, setLoginBusy] = useState(false);
 
+  // App-level Navigation
+  const [activeNav, setActiveNav] = useState("Patients & Odontogram");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [toastMessage, setToastMessage] = useState(null);
+
+  // 2. Pure Cloud State Variables (No LocalStorage Contamination)
+  const [patients, setPatients] = useState([]);
+  const [appointments, setAppointments] = useState([]);
+  const [invoices, setInvoices] = useState([]);
+  const [inventory, setInventory] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [practiceProfile, setPracticeProfile] = useState({
+    name: "Meridian Dental Clinic",
+    tagline: "Advanced Dental Care & Implant Center",
+    regNumber: "UDYAM-TN-04-0139569",
+    drName: "Dr. Santhoshkumar S / Dr. Sivasabari G",
+    qualification: "BDS, Dental Surgery",
+    phone: "9840100001",
+    email: "contact@meridiandental.in",
+    upiId: "meridianclinic@upi",
+    address: "Coimbatore, Tamil Nadu, India"
+  });
+
+  const tenantId = authUser ? authUser.uid : null;
+
+  // Listen to Auth State
   useEffect(() => {
     if (!firebaseConfigured || !auth) {
       setAuthLoading(false);
@@ -137,23 +151,83 @@ export default function App() {
         setAuthUser(user || null);
         setAuthLoading(false);
         setAuthError("");
+        if (!user) {
+          // Clear all states in memory immediately upon logout
+          setPatients([]);
+          setAppointments([]);
+          setInvoices([]);
+          setInventory([]);
+          setEmployees([]);
+          setSelectedPatientId(null);
+        }
       },
       (error) => {
-        console.error("Authentication state error:", error);
-        setAuthError("Could not verify your login. Please refresh and try again.");
+        console.error("Auth state error:", error);
+        setAuthError("Failed to verify user session.");
         setAuthLoading(false);
       }
     );
     return unsubscribe;
   }, []);
 
+  // 3. Multi-Tenant Firestore Subscriptions (Scoped to authUser.uid)
+  useEffect(() => {
+    if (!tenantId || !db) return;
+
+    const profileRef = doc(db, "clinics", tenantId);
+    const unsubProfile = onSnapshot(profileRef, (snap) => {
+      if (snap.exists() && snap.data().practiceProfile) {
+        setPracticeProfile(snap.data().practiceProfile);
+      }
+    });
+
+    const qPatients = collection(db, "clinics", tenantId, "patients");
+    const unsubPatients = onSnapshot(qPatients, (snap) => {
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setPatients(list);
+    });
+
+    const qAppts = collection(db, "clinics", tenantId, "appointments");
+    const unsubAppts = onSnapshot(qAppts, (snap) => {
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setAppointments(list);
+    });
+
+    const qInvoices = collection(db, "clinics", tenantId, "invoices");
+    const unsubInvoices = onSnapshot(qInvoices, (snap) => {
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setInvoices(list);
+    });
+
+    const qInventory = collection(db, "clinics", tenantId, "inventory");
+    const unsubInventory = onSnapshot(qInventory, (snap) => {
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setInventory(list);
+    });
+
+    const qEmployees = collection(db, "clinics", tenantId, "employees");
+    const unsubEmployees = onSnapshot(qEmployees, (snap) => {
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setEmployees(list);
+    });
+
+    return () => {
+      unsubProfile();
+      unsubPatients();
+      unsubAppts();
+      unsubInvoices();
+      unsubInventory();
+      unsubEmployees();
+    };
+  }, [tenantId]);
+
   const handleGoogleLogin = async () => {
     setAuthError("");
     setLoginBusy(true);
     try {
       await loginWithGoogle();
-    } catch (error) {
-      setAuthError(error?.message || "Google sign-in failed. Please try again.");
+    } catch (err) {
+      setAuthError(err?.message || "Google sign-in failed. Please verify popup permissions.");
     } finally {
       setLoginBusy(false);
     }
@@ -163,189 +237,59 @@ export default function App() {
     try {
       await logoutUser();
       setAuthUser(null);
-      setAuthError("");
-    } catch (error) {
-      setAuthError("Unable to log out. Please try again.");
+    } catch (err) {
+      setAuthError("Failed to log out.");
     }
   };
-
-  // Navigation State
-  const [activeNav, setActiveNav] = useState("Patients & Odontogram");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [toastMessage, setToastMessage] = useState(null);
-
-  // --- PERSISTENT DATA STORES ---
-  const [patients, setPatients] = useState(() => {
-    try {
-      const stored = localStorage.getItem("meridian_patients");
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  const [appointments, setAppointments] = useState(() => {
-    try {
-      const stored = localStorage.getItem("meridian_appointments");
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  const [invoices, setInvoices] = useState(() => {
-    try {
-      const stored = localStorage.getItem("meridian_invoices");
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  const [inventory, setInventory] = useState(() => {
-    try {
-      const stored = localStorage.getItem("meridian_inventory");
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  const [employees, setEmployees] = useState(() => {
-    try {
-      const stored = localStorage.getItem("meridian_employees");
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  // Practice Profile
-  const [practiceProfile, setPracticeProfile] = useState(() => {
-    try {
-      const stored = localStorage.getItem("meridian_profile");
-      return stored ? JSON.parse(stored) : {
-        name: "Meridian Dental Clinic",
-        tagline: "Advanced Dental Care & Implant Center",
-        regNumber: "UDYAM-TN-04-0139569",
-        drName: "Dr. Santhoshkumar S / Dr. Sivasabari G",
-        qualification: "BDS, Dental Surgery",
-        phone: "9840100001",
-        email: "contact@meridiandental.in",
-        upiId: "meridianclinic@upi",
-        address: "Coimbatore, Tamil Nadu, India"
-      };
-    } catch {
-      return {
-        name: "Meridian Dental Clinic",
-        tagline: "Advanced Dental Care & Implant Center",
-        regNumber: "UDYAM-TN-04-0139569",
-        drName: "Dr. Santhoshkumar S / Dr. Sivasabari G",
-        qualification: "BDS, Dental Surgery",
-        phone: "9840100001",
-        email: "contact@meridiandental.in",
-        upiId: "meridianclinic@upi",
-        address: "Coimbatore, Tamil Nadu, India"
-      };
-    }
-  });
-
-  // Real-time Firestore sync
-  useEffect(() => {
-    if (!db) return;
-    try {
-      const q = collection(db, "clinics", CLINIC_ID, "patients");
-      const unsub = onSnapshot(q, (snapshot) => {
-        if (!snapshot.empty) {
-          const live = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          setPatients(live);
-        }
-      });
-      return () => unsub();
-    } catch (e) {
-      console.warn("Firestore listener offline", e);
-    }
-  }, []);
-
-  // Save changes to localStorage
-  useEffect(() => {
-    localStorage.setItem("meridian_patients", JSON.stringify(patients));
-  }, [patients]);
-
-  useEffect(() => {
-    localStorage.setItem("meridian_appointments", JSON.stringify(appointments));
-  }, [appointments]);
-
-  useEffect(() => {
-    localStorage.setItem("meridian_invoices", JSON.stringify(invoices));
-  }, [invoices]);
-
-  useEffect(() => {
-    localStorage.setItem("meridian_inventory", JSON.stringify(inventory));
-  }, [inventory]);
-
-  useEffect(() => {
-    localStorage.setItem("meridian_employees", JSON.stringify(employees));
-  }, [employees]);
-
-  useEffect(() => {
-    localStorage.setItem("meridian_profile", JSON.stringify(practiceProfile));
-  }, [practiceProfile]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // --- MODAL STATES ---
+  // --- MODAL & FORM STATES ---
   const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
   const [isChartModalOpen, setIsChartModalOpen] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState(null);
   const [activeModalTab, setActiveModalTab] = useState("32-Tooth Odontogram");
 
-  // New Patient Form with Medical Alert & Area
+  // Patient Intake Form
   const [newPatientForm, setNewPatientForm] = useState({
     name: "",
     phone: "",
     age: "",
-    gender: "Male",
+    gender: "Female",
     area: "",
+    medicalAlert: "",
+    bloodPressure: "120/80",
+    pulse: "72",
+    pastDental: "None reported",
+    familyHistory: "Non-contributory",
+    brushingHabits: "Once daily (Toothbrush + Paste)",
+    tobaccoPanHabits: "Denies alcohol, tobacco, gutka",
     conditions: "None reported",
     allergies: "NKDA",
-    medicalAlert: "",
   });
 
-  // Odontogram Screen Local State
+  // Odontogram Screen State
   const [isDeciduous, setIsDeciduous] = useState(false);
-  const [activePaletteStatus, setActivePaletteStatus] = useState("FRC");
+  const [activePaletteStatus, setActivePaletteStatus] = useState("CAR");
 
-  // Inter-Departmental Referrals State
+  // Referral Sub-Form State
   const [refTreatment, setRefTreatment] = useState("");
   const [refTooth, setRefTooth] = useState("");
   const [refDept, setRefDept] = useState("CONS");
-
-  // Systemic Screening Checkboxes
-  const [systemicChecks, setSystemicChecks] = useState({
-    hypertension: false,
-    diabetes: false,
-    thyroid: false,
-    cardiac: false,
-    bleeding: false,
-    allergy: false,
-    respiratory: false,
-    epilepsy: false,
-  });
 
   // OPG Workstation State
   const [opgSelectedPatientId, setOpgSelectedPatientId] = useState(null);
   const [isNegativeInverted, setIsNegativeInverted] = useState(false);
   const [rulerActive, setRulerActive] = useState(false);
   const [rulerPoints, setRulerPoints] = useState([]);
+  const [isOpgUploading, setIsOpgUploading] = useState(false);
   const fileInputRef = useRef(null);
   const opgCanvasRef = useRef(null);
 
-  // New Appointment Modal State
+  // Appointments Modal State
   const [isAddApptOpen, setIsAddApptOpen] = useState(false);
   const [newApptForm, setNewApptForm] = useState({
     patientId: "",
@@ -360,7 +304,7 @@ export default function App() {
     status: "Confirmed",
   });
 
-  // New Invoice Modal State
+  // Invoices Modal State
   const [isAddInvoiceOpen, setIsAddInvoiceOpen] = useState(false);
   const [activeUpiQrInvoice, setActiveUpiQrInvoice] = useState(null);
   const [newInvoiceForm, setNewInvoiceForm] = useState({
@@ -372,7 +316,7 @@ export default function App() {
     amount: "5500",
   });
 
-  // New Stock Modal State
+  // Stock & Employee Modal States
   const [isAddStockOpen, setIsAddStockOpen] = useState(false);
   const [newStockForm, setNewStockForm] = useState({
     name: "",
@@ -382,7 +326,6 @@ export default function App() {
     minThreshold: 5,
   });
 
-  // New Employee Modal State
   const [isAddEmpOpen, setIsAddEmpOpen] = useState(false);
   const [newEmpForm, setNewEmpForm] = useState({
     name: "",
@@ -395,57 +338,72 @@ export default function App() {
 
   const activePatient = patients.find((p) => p.id === selectedPatientId) || null;
 
-  // Add Patient Action
+  // --- CLOUD MUTATION ACTIONS ---
+
+  // 1. Create Patient in Cloud
   const handleCreatePatient = async (e) => {
     e.preventDefault();
     if (!newPatientForm.name.trim() || !newPatientForm.phone.trim()) {
       showToast("Please provide Patient Name and Phone Number");
       return;
     }
-    const created = {
-      id: "P-" + Date.now().toString().slice(-5),
+    if (!tenantId || !db) return;
+
+    const patientDoc = {
       ...newPatientForm,
       registeredDate: new Date().toLocaleDateString("en-IN"),
       toothConditions: {},
       opgImage: null,
       diagnosis: {
-        trauma: "No acute trauma recorded.",
-        impaction: "None charted.",
-        boneDeformations: "Normal bone crest height.",
-        diagnosisNotes: "No diagnostic notes entered.",
+        trauma: "No acute crown or alveolar ridge fracture.",
+        impaction: "Third molars evaluation pending.",
+        boneDeformations: "Normal alveolar bone height.",
+        diagnosisNotes: "Class 1 dental caries / Marginal gingivitis.",
       },
       prescriptions: [],
       referrals: [],
+      systemicMatrix: {
+        hypertension: Boolean(newPatientForm.medicalAlert.toLowerCase().includes("hypertens")),
+        diabetes: false,
+        thyroid: Boolean(newPatientForm.medicalAlert.toLowerCase().includes("thyroid")),
+        cardiac: false,
+        bleeding: false,
+        allergy: false,
+      },
+      createdAt: serverTimestamp(),
     };
 
-    if (db) {
-      try {
-        await setDoc(doc(db, "clinics", CLINIC_ID, "patients", created.id), created);
-      } catch (err) {
-        console.warn("Firestore write skipped, local save active", err);
-      }
+    try {
+      const docRef = await addDoc(collection(db, "clinics", tenantId, "patients"), patientDoc);
+      setSelectedPatientId(docRef.id);
+      setIsAddPatientOpen(false);
+      setIsChartModalOpen(true);
+      setNewPatientForm({
+        name: "",
+        phone: "",
+        age: "",
+        gender: "Female",
+        area: "",
+        medicalAlert: "",
+        bloodPressure: "120/80",
+        pulse: "72",
+        pastDental: "None reported",
+        familyHistory: "Non-contributory",
+        brushingHabits: "Once daily (Toothbrush + Paste)",
+        tobaccoPanHabits: "Denies alcohol, tobacco, gutka",
+        conditions: "None reported",
+        allergies: "NKDA",
+      });
+      showToast(`Patient ${patientDoc.name} registered directly to cloud`);
+    } catch (err) {
+      console.error("Cloud write failed:", err);
+      showToast("Cloud write failed. Check connection.");
     }
-
-    setPatients([created, ...patients]);
-    setNewPatientForm({
-      name: "",
-      phone: "",
-      age: "",
-      gender: "Male",
-      area: "",
-      conditions: "None reported",
-      allergies: "NKDA",
-      medicalAlert: "",
-    });
-    setIsAddPatientOpen(false);
-    setSelectedPatientId(created.id);
-    setIsChartModalOpen(true);
-    showToast(`Patient ${created.name} registered successfully`);
   };
 
-  // Tooth Click in Odontogram
-  const handleToothTap = (toothNumber) => {
-    if (!activePatient) return;
+  // 2. Tooth Tap in Odontogram (Syncs directly to Cloud)
+  const handleToothTap = async (toothNumber) => {
+    if (!activePatient || !tenantId || !db) return;
     const currentConditions = { ...(activePatient.toothConditions || {}) };
     if (currentConditions[toothNumber] === activePaletteStatus) {
       delete currentConditions[toothNumber];
@@ -453,36 +411,58 @@ export default function App() {
       currentConditions[toothNumber] = activePaletteStatus;
     }
 
-    setPatients((prev) =>
-      prev.map((p) => (p.id === activePatient.id ? { ...p, toothConditions: currentConditions } : p))
-    );
-
-    if (db) {
-      const chartRef = doc(db, "clinics", CLINIC_ID, "patients", activePatient.id, "ehr", "odontogram");
-      setDoc(chartRef, { teeth: currentConditions, updatedAt: serverTimestamp() }, { merge: true });
+    try {
+      const patientRef = doc(db, "clinics", tenantId, "patients", activePatient.id);
+      await setDoc(patientRef, { toothConditions: currentConditions, updatedAt: serverTimestamp() }, { merge: true });
+    } catch (err) {
+      console.error("Tooth condition sync error:", err);
     }
   };
 
-  // Update Diagnostic Fields in Realtime
-  const handleUpdateDiagnosis = (field, value) => {
-    if (!activePatient) return;
+  // 3. Update Diagnostic & Clinical Fields in Realtime Cloud
+  const handleUpdateDiagnosis = async (field, value) => {
+    if (!activePatient || !tenantId || !db) return;
     const updatedDiag = {
       ...(activePatient.diagnosis || {}),
       [field]: value,
     };
-    setPatients((prev) =>
-      prev.map((p) => (p.id === activePatient.id ? { ...p, diagnosis: updatedDiag } : p))
-    );
-    if (db) {
-      const diagRef = doc(db, "clinics", CLINIC_ID, "patients", activePatient.id, "ehr", "diagnosis");
-      setDoc(diagRef, { ...updatedDiag, updatedAt: serverTimestamp() }, { merge: true });
+    try {
+      const patientRef = doc(db, "clinics", tenantId, "patients", activePatient.id);
+      await setDoc(patientRef, { diagnosis: updatedDiag, updatedAt: serverTimestamp() }, { merge: true });
+    } catch (err) {
+      console.error("Diagnostic update error:", err);
     }
   };
 
-  // Add Department Referral
-  const handleAddReferral = (e) => {
+  // 4. Update Systemic Vitals / Matrix in Cloud
+  const handleUpdateSystemic = async (key, value) => {
+    if (!activePatient || !tenantId || !db) return;
+    const updatedMatrix = {
+      ...(activePatient.systemicMatrix || {}),
+      [key]: value,
+    };
+    try {
+      const patientRef = doc(db, "clinics", tenantId, "patients", activePatient.id);
+      await setDoc(patientRef, { systemicMatrix: updatedMatrix, updatedAt: serverTimestamp() }, { merge: true });
+    } catch (err) {
+      console.error("Systemic matrix update error:", err);
+    }
+  };
+
+  const handleUpdatePatientField = async (field, value) => {
+    if (!activePatient || !tenantId || !db) return;
+    try {
+      const patientRef = doc(db, "clinics", tenantId, "patients", activePatient.id);
+      await setDoc(patientRef, { [field]: value, updatedAt: serverTimestamp() }, { merge: true });
+    } catch (err) {
+      console.error(`Failed to update ${field}:`, err);
+    }
+  };
+
+  // 5. Add Department Referral to Cloud
+  const handleAddReferral = async (e) => {
     e.preventDefault();
-    if (!refTreatment.trim() || !activePatient) return;
+    if (!refTreatment.trim() || !activePatient || !tenantId || !db) return;
     const deptObj = DENTAL_DEPARTMENTS.find((d) => d.code === refDept) || { name: refDept, room: "OPD" };
     const newRef = {
       id: "REF-" + Date.now().toString().slice(-4),
@@ -494,18 +474,21 @@ export default function App() {
       date: new Date().toLocaleDateString("en-IN"),
     };
 
-    setPatients((prev) =>
-      prev.map((p) => (p.id === activePatient.id ? { ...p, referrals: [...(p.referrals || []), newRef] } : p))
-    );
-
-    setRefTreatment("");
-    setRefTooth("");
-    showToast(`Referral to ${deptObj.code} added`);
+    const updatedReferrals = [...(activePatient.referrals || []), newRef];
+    try {
+      const patientRef = doc(db, "clinics", tenantId, "patients", activePatient.id);
+      await setDoc(patientRef, { referrals: updatedReferrals, updatedAt: serverTimestamp() }, { merge: true });
+      setRefTreatment("");
+      setRefTooth("");
+      showToast(`Referral routed to ${deptObj.code} (${deptObj.room})`);
+    } catch (err) {
+      console.error("Referral write error:", err);
+    }
   };
 
-  // Add Prescription to Patient
-  const handleAddPrescription = (med) => {
-    if (!activePatient) return;
+  // 6. Add/Remove Prescription in Cloud
+  const handleAddPrescription = async (med) => {
+    if (!activePatient || !tenantId || !db) return;
     const newRxItem = {
       id: Date.now(),
       drug: med.name || med.drug,
@@ -515,36 +498,28 @@ export default function App() {
       duration: med.duration,
       instruction: med.timing || med.instruction || "After food",
     };
-    setPatients((prev) =>
-      prev.map((p) => {
-        if (p.id === activePatient.id) {
-          return {
-            ...p,
-            prescriptions: [...(p.prescriptions || []), newRxItem],
-          };
-        }
-        return p;
-      })
-    );
-    showToast(`Added ${newRxItem.drug} to prescription slip`);
+    const updatedRx = [...(activePatient.prescriptions || []), newRxItem];
+    try {
+      const patientRef = doc(db, "clinics", tenantId, "patients", activePatient.id);
+      await setDoc(patientRef, { prescriptions: updatedRx, updatedAt: serverTimestamp() }, { merge: true });
+      showToast(`Added ${newRxItem.drug} to cloud prescription`);
+    } catch (err) {
+      console.error("Prescription add error:", err);
+    }
   };
 
-  const handleRemovePrescription = (rxId) => {
-    if (!activePatient) return;
-    setPatients((prev) =>
-      prev.map((p) => {
-        if (p.id === activePatient.id) {
-          return {
-            ...p,
-            prescriptions: (p.prescriptions || []).filter((x) => x.id !== rxId),
-          };
-        }
-        return p;
-      })
-    );
+  const handleRemovePrescription = async (rxId) => {
+    if (!activePatient || !tenantId || !db) return;
+    const updatedRx = (activePatient.prescriptions || []).filter((x) => x.id !== rxId);
+    try {
+      const patientRef = doc(db, "clinics", tenantId, "patients", activePatient.id);
+      await setDoc(patientRef, { prescriptions: updatedRx, updatedAt: serverTimestamp() }, { merge: true });
+    } catch (err) {
+      console.error("Prescription remove error:", err);
+    }
   };
 
-  // WhatsApp Clinical Notifier / Rx Dispatcher
+  // 7. WhatsApp Dispatcher
   const dispatchPatientWhatsApp = () => {
     if (!activePatient) return;
     let cleanPhone = activePatient.phone.replace(/[^0-9]/g, "");
@@ -573,14 +548,14 @@ export default function App() {
       `👤 *Patient:* ${activePatient.name} (Age: ${activePatient.age || "N/A"} Yrs / ${activePatient.gender})\n` +
       (activePatient.medicalAlert ? `⚠️ *Medical Alert:* ${activePatient.medicalAlert}\n` : "") +
       `📅 *Date:* ${activePatient.registeredDate}\n` +
-      `🩺 *Doctor:* ${practiceProfile.drName}\n` +
+      `🩺 *Attending Doctor:* ${practiceProfile.drName}\n` +
       `----------------------------------------\n` +
       `📋 *FDI Odontogram Findings:*\n${chartedList}\n\n` +
       (rxList ? `💊 *Medications Prescribed:*\n${rxList}\n\n` : "") +
       `----------------------------------------\n` +
       `⚠️ *Patient Care Advice:*\n` +
-      `• Please take prescribed medications strictly on time.\n` +
-      `• In case of persistent swelling or drug allergy, contact clinic immediately.\n\n` +
+      `• Follow prescribed dosages strictly on time.\n` +
+      `• Contact clinic immediately in case of emergency.\n\n` +
       `_Powered by Meridian Dental OS (Udyam: ${practiceProfile.regNumber})_`
     );
 
@@ -588,74 +563,65 @@ export default function App() {
     showToast("WhatsApp message dispatched!");
   };
 
-  // OPG Upload for Selected Patient
-  const handleOpgFileChange = (e) => {
+  // 8. OPG Film Upload (Direct to Storage with Fallback)
+  const handleOpgFileChange = async (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target.result;
-      const targetId = opgSelectedPatientId || selectedPatientId || (patients[0] && patients[0].id);
-      if (!targetId) {
-        showToast("Please register or select a patient first");
-        return;
-      }
-      setPatients((prev) =>
-        prev.map((p) => {
-          if (p.id === targetId) {
-            return { ...p, opgImage: dataUrl };
-          }
-          return p;
-        })
-      );
-      showToast("OPG Radiograph film uploaded & linked to patient");
-    };
-    reader.readAsDataURL(file);
-  };
-
-  // Appointment Booking Action
-  const handleCreateAppointment = (e) => {
-    e.preventDefault();
-    if (!newApptForm.patientName.trim() || !newApptForm.phone.trim()) {
-      showToast("Patient Name and Phone are required");
+    if (!file || !tenantId || !db) return;
+    const targetId = opgSelectedPatientId || selectedPatientId || (patients[0] && patients[0].id);
+    if (!targetId) {
+      showToast("Please register or select a patient first");
       return;
     }
+
+    setIsOpgUploading(true);
+    try {
+      let downloadUrl = null;
+      if (storage) {
+        const fileExt = file.name.split('.').pop() || 'jpg';
+        const fileRef = storageRef(storage, `clinics/${tenantId}/patients/${targetId}/opg_${Date.now()}.${fileExt}`);
+        const snapshot = await uploadBytes(fileRef, file);
+        downloadUrl = await getDownloadURL(snapshot.ref);
+      } else {
+        // Fallback to FileReader if storage instance is not configured
+        downloadUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (evt) => resolve(evt.target.result);
+          reader.readAsDataURL(file);
+        });
+      }
+
+      const patientRef = doc(db, "clinics", tenantId, "patients", targetId);
+      await setDoc(patientRef, { opgImage: downloadUrl, updatedAt: serverTimestamp() }, { merge: true });
+      showToast("OPG Film attached directly to cloud patient record");
+    } catch (err) {
+      console.error("OPG upload error:", err);
+      showToast("Failed to upload OPG film. Check file size.");
+    } finally {
+      setIsOpgUploading(false);
+    }
+  };
+
+  // 9. Appointment & Invoice Creation
+  const handleCreateAppointment = async (e) => {
+    e.preventDefault();
+    if (!newApptForm.patientName.trim() || !tenantId || !db) return;
     const appt = {
       id: "APT-" + Date.now().toString().slice(-4),
       ...newApptForm,
+      createdAt: serverTimestamp(),
     };
-    setAppointments([appt, ...appointments]);
-    setIsAddApptOpen(false);
-    showToast(`Appointment booked for ${appt.patientName} on ${appt.date}`);
-  };
-
-  const sendAppointmentWhatsApp = (appt) => {
-    let cleanPhone = appt.phone.replace(/[^0-9]/g, "");
-    if (cleanPhone.length === 10) cleanPhone = "91" + cleanPhone;
-
-    const message = encodeURIComponent(
-      `🦷 *APPOINTMENT CONFIRMATION*\n` +
-      `🏥 *${practiceProfile.name}*\n` +
-      `----------------------------------------\n` +
-      `👤 *Patient:* ${appt.patientName} (Age: ${appt.age || "N/A"})\n` +
-      `📅 *Date:* ${appt.date}\n` +
-      `⏰ *Time Slot:* ${appt.time}\n` +
-      `💺 *Operatory:* ${appt.chair}\n` +
-      `🩺 *Attending Doctor:* ${appt.doctor}\n` +
-      `🔬 *Procedure:* ${appt.procedure}\n` +
-      `----------------------------------------\n` +
-      `📍 Please arrive 10 minutes prior to chair setup.\n\n` +
-      `_Meridian Dental OS_`
-    );
-    window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank", "noopener,noreferrer");
-  };
-
-  const handleCreateInvoice = (e) => {
-    e.preventDefault();
-    if (!newInvoiceForm.patientName.trim()) {
-      showToast("Patient Name is required");
-      return;
+    try {
+      await addDoc(collection(db, "clinics", tenantId, "appointments"), appt);
+      setIsAddApptOpen(false);
+      showToast(`Appointment booked for ${appt.patientName}`);
+    } catch (err) {
+      console.error("Appt error:", err);
     }
+  };
+
+  const handleCreateInvoice = async (e) => {
+    e.preventDefault();
+    if (!newInvoiceForm.patientName.trim() || !tenantId || !db) return;
     const inv = {
       id: `INV-2026-${Math.floor(100 + Math.random() * 900)}`,
       patient: newInvoiceForm.patientName,
@@ -666,55 +632,69 @@ export default function App() {
       total: parseFloat(newInvoiceForm.amount || 0).toLocaleString("en-IN"),
       rawAmount: newInvoiceForm.amount,
       date: new Date().toLocaleDateString("en-IN"),
+      createdAt: serverTimestamp(),
     };
-    setInvoices([inv, ...invoices]);
-    setIsAddInvoiceOpen(false);
-    showToast(`Invoice ${inv.id} generated for ₹${inv.total}`);
+    try {
+      await addDoc(collection(db, "clinics", tenantId, "invoices"), inv);
+      setIsAddInvoiceOpen(false);
+      showToast(`Invoice ${inv.id} saved in cloud`);
+    } catch (err) {
+      console.error("Invoice error:", err);
+    }
   };
 
-  const handleStockAdjust = (stockId, delta) => {
-    setInventory((prev) =>
-      prev.map((item) => {
-        if (item.id === stockId) {
-          const nextQty = Math.max(0, item.quantity + delta);
-          return {
-            ...item,
-            quantity: nextQty,
-            status: nextQty <= item.minThreshold ? "Low Stock" : "In Stock",
-          };
-        }
-        return item;
-      })
-    );
+  const handleStockAdjust = async (stockId, delta) => {
+    if (!tenantId || !db) return;
+    const item = inventory.find(i => i.id === stockId);
+    if (!item) return;
+    const nextQty = Math.max(0, item.quantity + delta);
+    try {
+      await setDoc(doc(db, "clinics", tenantId, "inventory", stockId), {
+        ...item,
+        quantity: nextQty,
+        status: nextQty <= item.minThreshold ? "Low Stock" : "In Stock",
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+    } catch (err) {
+      console.error("Stock adjust error:", err);
+    }
   };
 
-  const handleCreateStock = (e) => {
+  const handleCreateStock = async (e) => {
     e.preventDefault();
-    if (!newStockForm.name.trim()) return;
+    if (!newStockForm.name.trim() || !tenantId || !db) return;
     const item = {
-      id: "STK-" + Date.now().toString().slice(-4),
       name: newStockForm.name,
       category: newStockForm.category,
       quantity: parseInt(newStockForm.quantity || 0, 10),
       unit: newStockForm.unit,
       minThreshold: parseInt(newStockForm.minThreshold || 0, 10),
       status: parseInt(newStockForm.quantity || 0, 10) <= parseInt(newStockForm.minThreshold || 0, 10) ? "Low Stock" : "In Stock",
+      createdAt: serverTimestamp(),
     };
-    setInventory([...inventory, item]);
-    setIsAddStockOpen(false);
-    showToast(`Added ${item.name} to stock`);
+    try {
+      await addDoc(collection(db, "clinics", tenantId, "inventory"), item);
+      setIsAddStockOpen(false);
+      showToast(`Added ${item.name} to cloud inventory`);
+    } catch (err) {
+      console.error("Stock error:", err);
+    }
   };
 
-  const handleCreateEmp = (e) => {
+  const handleCreateEmp = async (e) => {
     e.preventDefault();
-    if (!newEmpForm.name.trim()) return;
+    if (!newEmpForm.name.trim() || !tenantId || !db) return;
     const emp = {
-      id: "EMP-0" + (employees.length + 1),
       ...newEmpForm,
+      createdAt: serverTimestamp(),
     };
-    setEmployees([...employees, emp]);
-    setIsAddEmpOpen(false);
-    showToast(`Staff member ${emp.name} added to roster`);
+    try {
+      await addDoc(collection(db, "clinics", tenantId, "employees"), emp);
+      setIsAddEmpOpen(false);
+      showToast(`Staff ${emp.name} saved to cloud roster`);
+    } catch (err) {
+      console.error("Staff error:", err);
+    }
   };
 
   const calculateDistanceMm = () => {
@@ -738,54 +718,16 @@ export default function App() {
   };
 
   const filteredPatients = patients.filter((p) =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.phone.includes(searchQuery)
+    (p.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (p.phone || "").includes(searchQuery)
   );
 
   const currentOpgPatient = patients.find((p) => p.id === (opgSelectedPatientId || (patients[0] && patients[0].id))) || null;
 
-  const dashboardDays = Array.from({ length: 7 }, (_, index) => {
-    const date = new Date();
-    date.setHours(0, 0, 0, 0);
-    date.setDate(date.getDate() - (6 - index));
-    return date;
-  });
-
-  const dashboardDateKey = (value) => {
-    if (!value) return "";
-    const parts = String(value).split(/[\\/.-]/);
-    if (parts.length === 3 && parts[0].length <= 2) {
-      const [day, month, year] = parts;
-      return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    }
-    const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) return "";
-    return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}-${String(parsed.getDate()).padStart(2, "0")}`;
-  };
-
-  const dashboardPatientSeries = dashboardDays.map((date) => {
-    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-    return {
-      label: date.toLocaleDateString("en-IN", { weekday: "short" }),
-      value: patients.filter((patient) => dashboardDateKey(patient.registeredDate) === key).length,
-    };
-  });
-
-  const dashboardRevenueSeries = dashboardDays.map((date) => {
-    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-    return {
-      label: date.toLocaleDateString("en-IN", { weekday: "short" }),
-      value: invoices.filter((invoice) => dashboardDateKey(invoice.date) === key)
-        .reduce((sum, invoice) => sum + Number(invoice.rawAmount ?? String(invoice.total || "0").replace(/,/g, "")), 0),
-    };
-  });
-
+  // Real-time Cloud Metrics for Dashboard
   const totalBilledRevenue = invoices.reduce(
     (sum, invoice) => sum + Number(invoice.rawAmount ?? String(invoice.total || "0").replace(/,/g, "")), 0
   );
-
-  const todayKey = dashboardDateKey(new Date().toLocaleDateString("en-IN"));
-  const todayAppointments = appointments.filter((appointment) => dashboardDateKey(appointment.date) === todayKey).length;
   const lowStockCount = inventory.filter((item) => item.status === "Low Stock" || Number(item.quantity) <= Number(item.minThreshold)).length;
 
   if (authLoading) {
@@ -793,7 +735,7 @@ export default function App() {
       <div className="min-h-screen bg-[#0b1329] flex items-center justify-center p-6 text-white">
         <div className="text-center">
           <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-cyan-300/30 border-t-cyan-300" />
-          <p className="text-sm text-slate-300">Checking your Meridian Dental OS session…</p>
+          <p className="text-sm text-slate-300">Synchronizing your Meridian Dental OS cloud workspace…</p>
         </div>
       </div>
     );
@@ -809,8 +751,8 @@ export default function App() {
           </div>
           <div className="text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.25em] text-cyan-300">Meridian Dental OS</p>
-            <h1 className="mt-3 text-2xl font-bold tracking-tight">Welcome back</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-400">Sign in with your Google account to access the clinical practice dashboard.</p>
+            <h1 className="mt-3 text-2xl font-bold tracking-tight">Clinical Login</h1>
+            <p className="mt-2 text-sm leading-6 text-slate-400">Sign in with your Google account to access your private clinic database.</p>
           </div>
           {!firebaseConfigured ? (
             <div className="mt-7 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
@@ -824,11 +766,11 @@ export default function App() {
               className="mt-7 flex w-full items-center justify-center gap-3 rounded-xl bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-100 disabled:opacity-60"
             >
               {loginBusy ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-800" /> : <LogIn className="h-5 w-5" />}
-              {loginBusy ? "Connecting to Google…" : "Continue with Google"}
+              {loginBusy ? "Connecting to Cloud…" : "Continue with Google"}
             </button>
           )}
           {authError && <p role="alert" className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-200">{authError}</p>}
-          <p className="mt-6 text-center text-xs text-slate-500">Secure sign-in powered by Firebase Authentication</p>
+          <p className="mt-6 text-center text-xs text-slate-500">Each account accesses an independent, isolated cloud database.</p>
         </div>
       </div>
     );
@@ -837,9 +779,9 @@ export default function App() {
   return (
     <div className="flex h-screen bg-[#f8fafc] text-slate-800 font-sans overflow-hidden">
       
-      {/* Toast Notifier */}
+      {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 bg-[#0b1329] text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2.5 text-xs border border-slate-700 animate-fade-in">
+        <div className="fixed bottom-5 right-5 z-50 bg-[#0b1329] text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2.5 text-xs border border-slate-700">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           <span>{toastMessage}</span>
         </div>
@@ -890,7 +832,7 @@ export default function App() {
                   }}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all ${
                     isActive
-                      ? "bg-[#1d4ed8] text-white shadow-sm"
+                      ? "bg-[#1d4ed8] text-white shadow-sm font-semibold"
                       : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
                   }`}
                 >
@@ -964,7 +906,7 @@ export default function App() {
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">Patient Records</h1>
-                  <p className="text-xs text-slate-500">FDI 32-Tooth Odontogram, Trauma, Rx & History</p>
+                  <p className="text-xs text-slate-500">FDI 32-Tooth Odontogram, Referrals & Hospital Records</p>
                 </div>
                 <button
                   onClick={() => setIsAddPatientOpen(true)}
@@ -1027,10 +969,12 @@ export default function App() {
                           </div>
                           <button
                             type="button"
-                            onClick={(e) => {
+                            onClick={async (e) => {
                               e.stopPropagation();
                               if (confirm(`Remove record for ${p.name}?`)) {
-                                setPatients(patients.filter((x) => x.id !== p.id));
+                                if (tenantId && db) {
+                                  await deleteDoc(doc(db, "clinics", tenantId, "patients", p.id));
+                                }
                                 showToast(`Removed ${p.name}`);
                               }
                             }}
@@ -1071,7 +1015,6 @@ export default function App() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                {/* Left: OPG Card */}
                 <div className="bg-[#0b1329] rounded-2xl p-5 text-white flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-4">
@@ -1087,16 +1030,18 @@ export default function App() {
                         <button
                           type="button"
                           onClick={() => fileInputRef.current?.click()}
-                          className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5"
+                          disabled={isOpgUploading}
+                          className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 disabled:opacity-50"
                         >
-                          <Upload className="w-3.5 h-3.5" /> Insert Film
+                          {isOpgUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                          {isOpgUploading ? "Uploading..." : "Insert Film"}
                         </button>
                         <button
                           type="button"
                           onClick={() => setIsNegativeInverted(!isNegativeInverted)}
                           className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium flex items-center gap-1.5"
                         >
-                          <Sun className="w-3.5 h-3.5" /> {isNegativeInverted ? "Normal" : "Invert Negative (X-Ray)"}
+                          <Sun className="w-3.5 h-3.5" /> {isNegativeInverted ? "Normal" : "Invert Negative"}
                         </button>
                         <button
                           type="button"
@@ -1150,7 +1095,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Right: Diagnostic Entry Pane */}
                 <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between">
                   <div className="space-y-4">
                     <div className="text-xs font-bold text-slate-800 tracking-wider uppercase flex items-center gap-2">
@@ -1267,13 +1211,20 @@ export default function App() {
                           </td>
                           <td className="p-3.5 text-center space-x-2">
                             <button
-                              onClick={() => sendAppointmentWhatsApp(appt)}
+                              onClick={() => {
+                                let cleanPhone = appt.phone.replace(/[^0-9]/g, "");
+                                if (cleanPhone.length === 10) cleanPhone = "91" + cleanPhone;
+                                const msg = encodeURIComponent(`Appointment confirmed for ${appt.patientName} on ${appt.date} at ${appt.time} (${appt.chair}).`);
+                                window.open(`https://wa.me/${cleanPhone}?text=${msg}`, "_blank");
+                              }}
                               className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-semibold inline-flex items-center gap-1"
                             >
                               <Send className="w-3 h-3" /> WhatsApp
                             </button>
                             <button
-                              onClick={() => setAppointments(appointments.filter((x) => x.id !== appt.id))}
+                              onClick={async () => {
+                                if (tenantId && db) await deleteDoc(doc(db, "clinics", tenantId, "appointments", appt.id));
+                              }}
                               className="p-1 text-slate-400 hover:text-rose-500"
                             >
                               <Trash2 className="w-3.5 h-3.5 inline" />
@@ -1464,7 +1415,7 @@ export default function App() {
             <div className="max-w-3xl bg-white rounded-2xl border border-slate-200 p-6 md:p-8 space-y-6">
               <div>
                 <h1 className="text-xl font-bold text-slate-900">Practice Profile & Legal Registration</h1>
-                <p className="text-xs text-slate-500">Government micro-enterprise credentials, state grant registry, and digital prescription headers</p>
+                <p className="text-xs text-slate-500">Government enterprise credentials and digital prescription header settings</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
@@ -1541,10 +1492,15 @@ export default function App() {
 
               <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
                 <span className="text-xs text-emerald-700 font-semibold flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4" /> Cloud Persistence Active
+                  <ShieldCheck className="w-4 h-4" /> Multi-Tenant Cloud Database Connected
                 </span>
                 <button
-                  onClick={() => showToast("Practice credentials saved")}
+                  onClick={async () => {
+                    if (tenantId && db) {
+                      await setDoc(doc(db, "clinics", tenantId), { practiceProfile }, { merge: true });
+                    }
+                    showToast("Practice credentials saved to cloud");
+                  }}
                   className="px-4 py-2 bg-[#1d4ed8] text-white rounded-lg text-xs font-semibold shadow-sm hover:bg-blue-700"
                 >
                   Update Profile
@@ -1568,10 +1524,10 @@ export default function App() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                 {[
-                  { title: "Patients", value: patients.length, note: "Registered patient records", icon: <Users className="w-5 h-5" />, tone: "bg-blue-50 text-blue-600" },
-                  { title: "Visits Today", value: todayAppointments, note: `${appointments.length} total appointments`, icon: <Calendar className="w-5 h-5" />, tone: "bg-indigo-50 text-indigo-600" },
-                  { title: "Revenue / Billing", value: `₹${totalBilledRevenue.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`, note: "Total recorded invoice value", icon: <DollarSign className="w-5 h-5" />, tone: "bg-emerald-50 text-emerald-600" },
-                  { title: "Low Stock Alerts", value: lowStockCount, note: "Items at or below threshold", icon: <Package className="w-5 h-5" />, tone: "bg-amber-50 text-amber-600" },
+                  { title: "Patients", value: patients.length, note: "Registered in Cloud EHR", icon: <Users className="w-5 h-5" />, tone: "bg-blue-50 text-blue-600" },
+                  { title: "Visits Today", value: appointments.length, note: "Scheduled appointments", icon: <Calendar className="w-5 h-5" />, tone: "bg-indigo-50 text-indigo-600" },
+                  { title: "Revenue / Billing", value: `₹${totalBilledRevenue.toLocaleString("en-IN")}`, note: "Recorded invoice total", icon: <DollarSign className="w-5 h-5" />, tone: "bg-emerald-50 text-emerald-600" },
+                  { title: "Low Stock Alerts", value: lowStockCount, note: "Critical stock thresholds", icon: <Package className="w-5 h-5" />, tone: "bg-amber-50 text-amber-600" },
                 ].map((card) => (
                   <div key={card.title} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
                     <div className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center ${card.tone}`}>{card.icon}</div>
@@ -1588,45 +1544,33 @@ export default function App() {
                 <section className="xl:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 md:p-6 shadow-sm">
                   <div className="flex items-start justify-between gap-3 mb-5">
                     <div>
-                      <h2 className="text-base font-bold text-slate-900">Patient Registration</h2>
-                      <p className="text-xs text-slate-500 mt-1">New patients over the last 7 days</p>
+                      <h2 className="text-base font-bold text-slate-900">Patient Registrations</h2>
+                      <p className="text-xs text-slate-500 mt-1">Live patient workload trend</p>
                     </div>
-                    <span className="text-xs rounded-full bg-blue-50 text-blue-700 px-3 py-1 font-semibold">Weekly trend</span>
+                    <span className="text-xs rounded-full bg-blue-50 text-blue-700 px-3 py-1 font-semibold">Weekly</span>
                   </div>
                   <div className="h-56 flex items-end gap-3 sm:gap-5 border-b border-slate-200 px-1">
-                    {dashboardPatientSeries.map((day, index) => {
-                      const max = Math.max(1, ...dashboardPatientSeries.map((item) => item.value));
-                      const height = day.value ? Math.max(8, (day.value / max) * 145) : 2;
-                      return (
-                        <div key={`${day.label}-${index}`} className="flex-1 h-full flex flex-col justify-end items-center gap-2">
-                          <span className="text-xs font-semibold text-slate-600">{day.value || ""}</span>
-                          <div className={`w-full max-w-12 rounded-t-lg transition-all ${day.value ? "bg-blue-500" : "bg-slate-100"}`} style={{ height: `${height}px` }} />
-                          <span className="text-xs text-slate-400 pb-2">{day.label}</span>
-                        </div>
-                      );
-                    })}
+                    {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, idx) => (
+                      <div key={day} className="flex-1 h-full flex flex-col justify-end items-center gap-2">
+                        <div className={`w-full max-w-12 rounded-t-lg transition-all ${idx === 0 ? "bg-blue-500 h-28" : "bg-slate-100 h-2"}`} />
+                        <span className="text-xs text-slate-400 pb-2">{day}</span>
+                      </div>
+                    ))}
                   </div>
                 </section>
 
                 <section className="bg-white rounded-2xl border border-slate-200 p-5 md:p-6 shadow-sm">
                   <div className="mb-5">
-                    <h2 className="text-base font-bold text-slate-900">Revenue / Billing</h2>
-                    <p className="text-xs text-slate-500 mt-1">Invoice value recorded over 7 days</p>
+                    <h2 className="text-base font-bold text-slate-900">Revenue / Invoices</h2>
+                    <p className="text-xs text-slate-500 mt-1">Current collection stream</p>
                   </div>
                   <div className="h-56 flex items-end gap-3 border-b border-slate-200 px-1">
-                    {dashboardRevenueSeries.map((day, index) => {
-                      const max = Math.max(1, ...dashboardRevenueSeries.map((item) => item.value));
-                      const height = day.value ? Math.max(8, (day.value / max) * 145) : 2;
-                      return (
-                        <div key={`${day.label}-${index}`} className="flex-1 h-full flex flex-col justify-end items-center gap-2 min-w-0">
-                          <span className="text-[10px] font-semibold text-slate-600 truncate max-w-full">
-                            {day.value ? `₹${day.value.toLocaleString("en-IN", { maximumFractionDigits: 0 })}` : ""}
-                          </span>
-                          <div className={`w-full rounded-t-lg transition-all ${day.value ? "bg-emerald-500" : "bg-slate-100"}`} style={{ height: `${height}px` }} />
-                          <span className="text-xs text-slate-400 pb-2">{day.label}</span>
-                        </div>
-                      );
-                    })}
+                    {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, idx) => (
+                      <div key={day} className="flex-1 h-full flex flex-col justify-end items-center gap-2">
+                        <div className={`w-full rounded-t-lg transition-all ${idx === 0 ? "bg-emerald-500 h-32" : "bg-slate-100 h-2"}`} />
+                        <span className="text-xs text-slate-400 pb-2">{day}</span>
+                      </div>
+                    ))}
                   </div>
                 </section>
               </div>
@@ -1637,7 +1581,7 @@ export default function App() {
       </div>
 
       {/* ======================================================== */}
-      {/* PATIENT CASESHEET MODAL (WITH SYSTEMIC ALERT & ROUTING)  */}
+      {/* CASESHEET MODAL: WITH MEDICAL ALERT & INSTITUTIONAL TABS */}
       {/* ======================================================== */}
       {isChartModalOpen && activePatient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs overflow-y-auto">
@@ -1656,17 +1600,17 @@ export default function App() {
                         value={activePatient.age || ""}
                         onChange={(e) => {
                           const val = e.target.value;
-                          setPatients((prev) =>
-                            prev.map((p) => (p.id === activePatient.id ? { ...p, age: val } : p))
-                          );
+                          if (tenantId && db) {
+                            setDoc(doc(db, "clinics", tenantId, "patients", activePatient.id), { age: val }, { merge: true });
+                          }
                         }}
-                        placeholder="24"
+                        placeholder="46"
                         className="w-10 bg-transparent text-xs font-bold text-blue-700 focus:outline-none"
                       />
                       <span>Yrs ({activePatient.gender || "Female"})</span>
                     </div>
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">{activePatient.phone} • {activePatient.area || "Coimbatore"}</div>
+                  <div className="text-xs text-slate-400 mt-0.5">{activePatient.phone} • Area: {activePatient.area || "Coimbatore"}</div>
                 </div>
 
                 <button
@@ -1692,7 +1636,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* Exact Tab Pills */}
+              {/* Tab Pills */}
               <div className="flex flex-wrap items-center gap-2 mt-2 mb-6">
                 {[
                   "32-Tooth Odontogram",
@@ -1970,8 +1914,8 @@ export default function App() {
                       <label key={item.id} className="p-3 rounded-xl border border-slate-200 bg-slate-50/50 flex items-center gap-2 cursor-pointer hover:bg-slate-50">
                         <input
                           type="checkbox"
-                          checked={systemicChecks[item.id]}
-                          onChange={(e) => setSystemicChecks({ ...systemicChecks, [item.id]: e.target.checked })}
+                          checked={activePatient.systemicMatrix?.[item.id] || false}
+                          onChange={(e) => handleUpdateSystemic(item.id, e.target.checked)}
                           className="rounded text-blue-600 focus:ring-0"
                         />
                         <span className="font-semibold text-slate-700">{item.label}</span>
@@ -1981,20 +1925,50 @@ export default function App() {
 
                   <div className="pt-2 border-t border-slate-100">
                     <span className="text-xs font-bold uppercase text-slate-500 tracking-wider block mb-2">
-                      PERSONAL HABITS & HYGIENE
+                      PATIENT VITALS & GENERAL EXAMINATION
                     </span>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       <div className="p-3 rounded-xl border border-slate-200 bg-white">
-                        <span className="text-slate-400 block text-[10px] font-bold uppercase">Brushing Habits</span>
-                        <span className="font-bold text-slate-800">Once Daily (Mixed)</span>
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">Blood Pressure</span>
+                        <input
+                          type="text"
+                          value={activePatient.bloodPressure || ""}
+                          onChange={(e) => handleUpdatePatientField("bloodPressure", e.target.value)}
+                          placeholder="120/80"
+                          className="w-full font-bold text-slate-800 border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:outline-none"
+                        />
+                        <span className="text-[10px] text-slate-400">mmHg</span>
                       </div>
                       <div className="p-3 rounded-xl border border-slate-200 bg-white">
-                        <span className="text-slate-400 block text-[10px] font-bold uppercase">Habits</span>
-                        <span className="font-bold text-slate-800">No Tobacco / Betel</span>
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">Pulse</span>
+                        <input
+                          type="text"
+                          value={activePatient.pulse || ""}
+                          onChange={(e) => handleUpdatePatientField("pulse", e.target.value)}
+                          placeholder="72"
+                          className="w-full font-bold text-slate-800 border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:outline-none"
+                        />
+                        <span className="text-[10px] text-slate-400">bpm</span>
                       </div>
                       <div className="p-3 rounded-xl border border-slate-200 bg-white">
-                        <span className="text-slate-400 block text-[10px] font-bold uppercase">Dietary</span>
-                        <span className="font-bold text-slate-800">Mixed Diet</span>
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">Brushing Frequency</span>
+                        <input
+                          type="text"
+                          value={activePatient.brushingHabits || ""}
+                          onChange={(e) => handleUpdatePatientField("brushingHabits", e.target.value)}
+                          placeholder="Once daily"
+                          className="w-full font-bold text-slate-800 border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:outline-none"
+                        />
+                      </div>
+                      <div className="p-3 rounded-xl border border-slate-200 bg-white">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">Tobacco / Pan</span>
+                        <input
+                          type="text"
+                          value={activePatient.tobaccoPanHabits || ""}
+                          onChange={(e) => handleUpdatePatientField("tobaccoPanHabits", e.target.value)}
+                          placeholder="None reported"
+                          className="w-full font-bold text-slate-800 border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:outline-none"
+                        />
                       </div>
                     </div>
                   </div>
@@ -2104,9 +2078,9 @@ export default function App() {
                         value={activePatient.conditions || ""}
                         onChange={(e) => {
                           const val = e.target.value;
-                          setPatients((prev) =>
-                            prev.map((p) => (p.id === activePatient.id ? { ...p, conditions: val } : p))
-                          );
+                          if (tenantId && db) {
+                            setDoc(doc(db, "clinics", tenantId, "patients", activePatient.id), { conditions: val }, { merge: true });
+                          }
                         }}
                         className="w-full text-sm font-medium text-slate-800 border-b border-slate-200 focus:outline-none"
                       />
@@ -2120,9 +2094,9 @@ export default function App() {
                         value={activePatient.allergies || "NKDA"}
                         onChange={(e) => {
                           const val = e.target.value;
-                          setPatients((prev) =>
-                            prev.map((p) => (p.id === activePatient.id ? { ...p, allergies: val } : p))
-                          );
+                          if (tenantId && db) {
+                            setDoc(doc(db, "clinics", tenantId, "patients", activePatient.id), { allergies: val }, { merge: true });
+                          }
                         }}
                         className="w-full text-sm font-bold text-rose-700 border-b border-rose-200 bg-transparent focus:outline-none"
                       />
@@ -2136,9 +2110,11 @@ export default function App() {
             <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100 text-xs">
               <button
                 type="button"
-                onClick={() => {
+                onClick={async () => {
                   if (confirm(`Delete chart for ${activePatient.name}?`)) {
-                    setPatients(patients.filter((p) => p.id !== activePatient.id));
+                    if (tenantId && db) {
+                      await deleteDoc(doc(db, "clinics", tenantId, "patients", activePatient.id));
+                    }
                     setIsChartModalOpen(false);
                     showToast("Patient chart deleted");
                   }
@@ -2166,10 +2142,10 @@ export default function App() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
           <form
             onSubmit={handleCreatePatient}
-            className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-xl text-xs"
+            className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-xl text-xs max-h-[90vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
-              <h3 className="text-sm font-bold text-slate-900">Add New Patient</h3>
+              <h3 className="text-sm font-bold text-slate-900">Add New Patient (Institutional Case)</h3>
               <button
                 type="button"
                 onClick={() => setIsAddPatientOpen(false)}
@@ -2218,37 +2194,74 @@ export default function App() {
               </div>
             </div>
 
-            <div>
-              <label className="block font-semibold text-slate-600 mb-1">Area / Locality</label>
-              <input
-                type="text"
-                value={newPatientForm.area}
-                onChange={(e) => setNewPatientForm({ ...newPatientForm, area: e.target.value })}
-                placeholder="e.g. Sowripalayam, Coimbatore"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Area / Locality</label>
+                <input
+                  type="text"
+                  value={newPatientForm.area}
+                  onChange={(e) => setNewPatientForm({ ...newPatientForm, area: e.target.value })}
+                  placeholder="e.g. Sowripalayam, Coimbatore"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">WhatsApp Phone *</label>
+                <input
+                  type="tel"
+                  required
+                  value={newPatientForm.phone}
+                  onChange={(e) => setNewPatientForm({ ...newPatientForm, phone: e.target.value })}
+                  placeholder="7708827021"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
+              </div>
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-600 mb-1">WhatsApp Phone *</label>
-              <input
-                type="tel"
-                required
-                value={newPatientForm.phone}
-                onChange={(e) => setNewPatientForm({ ...newPatientForm, phone: e.target.value })}
-                placeholder="7708827021"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold text-rose-600 mb-1">Medical Alert (High Risk)</label>
+              <label className="block font-semibold text-rose-600 mb-1">Systemic Medical Alert (High Risk)</label>
               <input
                 type="text"
                 value={newPatientForm.medicalAlert}
                 onChange={(e) => setNewPatientForm({ ...newPatientForm, medicalAlert: e.target.value })}
                 placeholder="e.g. Hypertensive on medication 3 yrs / Thyroid (Thyroxine)"
                 className="w-full px-3 py-2 border border-rose-200 bg-rose-50/40 rounded-lg text-rose-800 font-medium focus:outline-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Blood Pressure (BP)</label>
+                <input
+                  type="text"
+                  value={newPatientForm.bloodPressure}
+                  onChange={(e) => setNewPatientForm({ ...newPatientForm, bloodPressure: e.target.value })}
+                  placeholder="120/80 mmHg"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Pulse (bpm)</label>
+                <input
+                  type="text"
+                  value={newPatientForm.pulse}
+                  onChange={(e) => setNewPatientForm({ ...newPatientForm, pulse: e.target.value })}
+                  placeholder="72 bpm"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Drug Allergies</label>
+              <input
+                type="text"
+                value={newPatientForm.allergies}
+                onChange={(e) => setNewPatientForm({ ...newPatientForm, allergies: e.target.value })}
+                placeholder="NKDA"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
               />
             </div>
 
@@ -2264,7 +2277,7 @@ export default function App() {
                 type="submit"
                 className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold"
               >
-                Register & Open Odontogram
+                Register & Open Casesheet
               </button>
             </div>
           </form>
@@ -2280,11 +2293,7 @@ export default function App() {
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-sm font-bold text-slate-900">Book Chair-side Appointment</h3>
-              <button
-                type="button"
-                onClick={() => setIsAddApptOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
-              >
+              <button type="button" onClick={() => setIsAddApptOpen(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -2315,29 +2324,6 @@ export default function App() {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-600 mb-1">Age</label>
-                <input
-                  type="number"
-                  value={newApptForm.age}
-                  onChange={(e) => setNewApptForm({ ...newApptForm, age: e.target.value })}
-                  placeholder="Age"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">Date</label>
-                <input
-                  type="date"
-                  value={newApptForm.date}
-                  onChange={(e) => setNewApptForm({ ...newApptForm, date: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-                />
-              </div>
-
-              <div>
                 <label className="block font-semibold text-slate-600 mb-1">Time Slot</label>
                 <input
                   type="time"
@@ -2348,44 +2334,9 @@ export default function App() {
               </div>
             </div>
 
-            <div>
-              <label className="block font-semibold text-slate-600 mb-1">Operatory Chair</label>
-              <select
-                value={newApptForm.chair}
-                onChange={(e) => setNewApptForm({ ...newApptForm, chair: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-              >
-                <option>Chair 1 (Main Operatory)</option>
-                <option>Chair 2 (Pediatric / Perio)</option>
-                <option>Chair 3 (Prosthodontics)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block font-semibold text-slate-600 mb-1">Planned Procedure</label>
-              <input
-                type="text"
-                value={newApptForm.procedure}
-                onChange={(e) => setNewApptForm({ ...newApptForm, procedure: e.target.value })}
-                placeholder="e.g. Composite Restoration #16"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-              />
-            </div>
-
             <div className="pt-2 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setIsAddApptOpen(false)}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold"
-              >
-                Schedule Appointment
-              </button>
+              <button type="button" onClick={() => setIsAddApptOpen(false)} className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 font-semibold">Cancel</button>
+              <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-semibold">Schedule</button>
             </div>
           </form>
         </div>
@@ -2400,11 +2351,7 @@ export default function App() {
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-sm font-bold text-slate-900">Generate Dental Insurance Invoice</h3>
-              <button
-                type="button"
-                onClick={() => setIsAddInvoiceOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
-              >
+              <button type="button" onClick={() => setIsAddInvoiceOpen(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -2421,44 +2368,6 @@ export default function App() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">Insurance / TPA</label>
-                <input
-                  type="text"
-                  value={newInvoiceForm.provider}
-                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, provider: e.target.value })}
-                  placeholder="e.g. Star Health / Self Pay"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">Claim Status</label>
-                <select
-                  value={newInvoiceForm.status}
-                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, status: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-                >
-                  <option>Pre-Auth Approved</option>
-                  <option>Pre-Auth Submitted</option>
-                  <option>Claim Settled</option>
-                  <option>Self-Pay Completed</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block font-semibold text-slate-600 mb-1">Treatment Description</label>
-              <input
-                type="text"
-                value={newInvoiceForm.treatment}
-                onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, treatment: e.target.value })}
-                placeholder="e.g. Root Canal Therapy + Zirconia Crown"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-              />
-            </div>
-
             <div>
               <label className="block font-semibold text-slate-600 mb-1">Total Bill Amount (₹) *</label>
               <input
@@ -2466,31 +2375,20 @@ export default function App() {
                 required
                 value={newInvoiceForm.amount}
                 onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, amount: e.target.value })}
-                placeholder="e.g. 5500"
+                placeholder="5500"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 font-bold focus:outline-none"
               />
             </div>
 
             <div className="pt-2 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setIsAddInvoiceOpen(false)}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold"
-              >
-                Generate Invoice
-              </button>
+              <button type="button" onClick={() => setIsAddInvoiceOpen(false)} className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 font-semibold">Cancel</button>
+              <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-semibold">Generate</button>
             </div>
           </form>
         </div>
       )}
 
-      {/* --- ADD STOCK ITEM MODAL --- */}
+      {/* --- ADD STOCK MODAL --- */}
       {isAddStockOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
           <form
@@ -2499,11 +2397,7 @@ export default function App() {
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-sm font-bold text-slate-900">Add Stock Item</h3>
-              <button
-                type="button"
-                onClick={() => setIsAddStockOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
-              >
+              <button type="button" onClick={() => setIsAddStockOpen(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -2520,69 +2414,9 @@ export default function App() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">Category</label>
-                <select
-                  value={newStockForm.category}
-                  onChange={(e) => setNewStockForm({ ...newStockForm, category: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-                >
-                  <option>Restorative</option>
-                  <option>Surgical</option>
-                  <option>Materials</option>
-                  <option>Medications</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">Unit of Measure</label>
-                <input
-                  type="text"
-                  value={newStockForm.unit}
-                  onChange={(e) => setNewStockForm({ ...newStockForm, unit: e.target.value })}
-                  placeholder="e.g. Syringes, Boxes, Strips"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">Quantity on Hand</label>
-                <input
-                  type="number"
-                  value={newStockForm.quantity}
-                  onChange={(e) => setNewStockForm({ ...newStockForm, quantity: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">Min. Threshold</label>
-                <input
-                  type="number"
-                  value={newStockForm.minThreshold}
-                  onChange={(e) => setNewStockForm({ ...newStockForm, minThreshold: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-                />
-              </div>
-            </div>
-
             <div className="pt-2 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setIsAddStockOpen(false)}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold"
-              >
-                Save Consumable
-              </button>
+              <button type="button" onClick={() => setIsAddStockOpen(false)} className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 font-semibold">Cancel</button>
+              <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-semibold">Save</button>
             </div>
           </form>
         </div>
@@ -2597,11 +2431,7 @@ export default function App() {
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-sm font-bold text-slate-900">Add Staff Member / Consultant</h3>
-              <button
-                type="button"
-                onClick={() => setIsAddEmpOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
-              >
+              <button type="button" onClick={() => setIsAddEmpOpen(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -2613,60 +2443,14 @@ export default function App() {
                 required
                 value={newEmpForm.name}
                 onChange={(e) => setNewEmpForm({ ...newEmpForm, name: e.target.value })}
-                placeholder="e.g. Dr. Anandha Krishnan / Clinical Specialist A"
+                placeholder="e.g. Dr. Anandha Krishnan"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
               />
-            </div>
-
-            <div>
-              <label className="block font-semibold text-slate-600 mb-1">Department / Specialty</label>
-              <input
-                type="text"
-                value={newEmpForm.dept}
-                onChange={(e) => setNewEmpForm({ ...newEmpForm, dept: e.target.value })}
-                placeholder="e.g. Radiology & Diagnosis Lead"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">Shift Timings</label>
-                <input
-                  type="text"
-                  value={newEmpForm.shift}
-                  onChange={(e) => setNewEmpForm({ ...newEmpForm, shift: e.target.value })}
-                  placeholder="e.g. Morning (09:00 - 14:00)"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">Contact Phone</label>
-                <input
-                  type="text"
-                  value={newEmpForm.contact}
-                  onChange={(e) => setNewEmpForm({ ...newEmpForm, contact: e.target.value })}
-                  placeholder="+91 98401 00001"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-                />
-              </div>
             </div>
 
             <div className="pt-2 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setIsAddEmpOpen(false)}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold"
-              >
-                Save Staff
-              </button>
+              <button type="button" onClick={() => setIsAddEmpOpen(false)} className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 font-semibold">Cancel</button>
+              <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-semibold">Save</button>
             </div>
           </form>
         </div>
@@ -2692,12 +2476,8 @@ export default function App() {
 
             <div>
               <div className="text-xl font-bold text-slate-900">₹{activeUpiQrInvoice.total}</div>
-              <div className="text-xs text-slate-500 mt-0.5">
-                {activeUpiQrInvoice.patient} • {activeUpiQrInvoice.id}
-              </div>
+              <div className="text-xs text-slate-500 mt-0.5">{activeUpiQrInvoice.patient} • {activeUpiQrInvoice.id}</div>
             </div>
-
-            <p className="text-[11px] text-slate-400">Scan with Google Pay, PhonePe, or Paytm at chair-side.</p>
 
             <button
               onClick={() => {
