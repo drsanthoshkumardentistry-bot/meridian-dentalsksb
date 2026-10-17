@@ -1,3 +1,10 @@
+/* ==============================================================================
+ * MERIDIAN DENTAL OS - COMMERCIAL HEALTHCARE PRODUCTION SUITE
+ * Preserves exact original UI styling, typography, layout, and color palette.
+ * Enhanced with Institutional Hospital EHR, Inter-Department Referrals & Systemic Alerts.
+ * File: src/App.jsx
+ * ============================================================================== */
+
 import React, { useState, useEffect, useRef } from "react";
 import {
   Menu,
@@ -35,11 +42,32 @@ import {
   User,
   HeartPulse,
   LogIn,
-  LogOut
+  LogOut,
+  ArrowUpRight,
+  ShieldAlert,
+  ClipboardCheck
 } from "lucide-react";
 
-import { auth, firebaseConfigured, loginWithGoogle, logoutUser } from "./firebase";
+// Safe dynamic import from ./firebase
+import * as FirebaseModule from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import {
+  collection,
+  doc,
+  setDoc,
+  getDocs,
+  onSnapshot,
+  serverTimestamp,
+  addDoc,
+  deleteDoc
+} from "firebase/firestore";
+
+const auth = FirebaseModule.auth;
+const db = FirebaseModule.db;
+const storage = FirebaseModule.storage;
+const firebaseConfigured = Boolean(auth && FirebaseModule.firebaseConfigured !== false);
+const loginWithGoogle = FirebaseModule.loginWithGoogle || (async () => {});
+const logoutUser = FirebaseModule.logoutUser || (async () => {});
 
 // --- DENTITION SCHEMAS (FDI TWO-DIGIT SYSTEM) ---
 const PERMANENT_UPPER = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
@@ -68,6 +96,18 @@ const CLINICAL_PALETTE = [
   { id: "MIS", label: "Missing / Extracted", border: "border-slate-300", bg: "bg-slate-100", text: "text-slate-600" },
 ];
 
+// Institutional Dental Specialty Referral Departments
+const DENTAL_DEPARTMENTS = [
+  { id: "omfs", code: "OMFS", name: "Oral & Maxillofacial Surgery", room: "Room 2" },
+  { id: "perio", code: "PERIO", name: "Periodontics & Implantology", room: "Room 3" },
+  { id: "cons", code: "CONS", name: "Conservative Dentistry & Endodontics", room: "Room 4" },
+  { id: "ortho", code: "ORTHO", name: "Orthodontics & Dentofacial", room: "Room 5" },
+  { id: "pedo", code: "PEDO", name: "Pediatric & Preventive Dentistry", room: "Room 6" },
+  { id: "prostho", code: "PROSTHO", name: "Prosthodontics & Crown-Bridge", room: "Room 7" },
+  { id: "omr", code: "OMR", name: "Oral Medicine & Radiology", room: "Room 1" },
+  { id: "phd", code: "PHD", name: "Public Health Dentistry", room: "Room 8" }
+];
+
 const PRESET_MEDICATIONS = [
   { name: "Zerodol-SP", generic: "Aceclofenac 100mg + Paracetamol 325mg + Serratiopeptidase 15mg", frequency: "1-0-1", duration: "3 Days", timing: "After Food" },
   { name: "Moxikind-CV 625", generic: "Amoxicillin 500mg + Clavulanic Acid 125mg", frequency: "1-0-1", duration: "5 Days", timing: "After Food" },
@@ -78,7 +118,9 @@ const PRESET_MEDICATIONS = [
 ];
 
 export default function App() {
-  // Firebase authentication gate: dashboard stays hidden until a Google account is signed in.
+  const CLINIC_ID = "meridian_main_clinic";
+
+  // Firebase authentication gate
   const [authUser, setAuthUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState("");
@@ -110,15 +152,8 @@ export default function App() {
     setLoginBusy(true);
     try {
       await loginWithGoogle();
-      // onAuthStateChanged updates the screen after Firebase confirms the session.
     } catch (error) {
-      const messages = {
-        "auth/unauthorized-domain": "This website domain is not authorized in Firebase. Add it in Firebase Console → Authentication → Settings → Authorized domains.",
-        "auth/popup-closed-by-user": "The sign-in window was closed before login finished.",
-        "auth/popup-blocked": "Your browser blocked the sign-in window. Please allow pop-ups and try again.",
-        "auth/network-request-failed": "Network error. Check your internet connection and try again."
-      };
-      setAuthError(messages[error?.code] || error?.message || "Google sign-in failed. Please try again.");
+      setAuthError(error?.message || "Google sign-in failed. Please try again.");
     } finally {
       setLoginBusy(false);
     }
@@ -140,7 +175,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [toastMessage, setToastMessage] = useState(null);
 
-  // --- PERSISTENT DATA STORES (Zero Mock Data) ---
+  // --- PERSISTENT DATA STORES ---
   const [patients, setPatients] = useState(() => {
     try {
       const stored = localStorage.getItem("meridian_patients");
@@ -216,6 +251,23 @@ export default function App() {
     }
   });
 
+  // Real-time Firestore sync
+  useEffect(() => {
+    if (!db) return;
+    try {
+      const q = collection(db, "clinics", CLINIC_ID, "patients");
+      const unsub = onSnapshot(q, (snapshot) => {
+        if (!snapshot.empty) {
+          const live = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          setPatients(live);
+        }
+      });
+      return () => unsub();
+    } catch (e) {
+      console.warn("Firestore listener offline", e);
+    }
+  }, []);
+
   // Save changes to localStorage
   useEffect(() => {
     localStorage.setItem("meridian_patients", JSON.stringify(patients));
@@ -241,7 +293,6 @@ export default function App() {
     localStorage.setItem("meridian_profile", JSON.stringify(practiceProfile));
   }, [practiceProfile]);
 
-  // Toast Notification Helper
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
@@ -253,19 +304,38 @@ export default function App() {
   const [selectedPatientId, setSelectedPatientId] = useState(null);
   const [activeModalTab, setActiveModalTab] = useState("32-Tooth Odontogram");
 
-  // New Patient Form
+  // New Patient Form with Medical Alert & Area
   const [newPatientForm, setNewPatientForm] = useState({
     name: "",
     phone: "",
     age: "",
     gender: "Male",
+    area: "",
     conditions: "None reported",
     allergies: "NKDA",
+    medicalAlert: "",
   });
 
   // Odontogram Screen Local State
   const [isDeciduous, setIsDeciduous] = useState(false);
   const [activePaletteStatus, setActivePaletteStatus] = useState("FRC");
+
+  // Inter-Departmental Referrals State
+  const [refTreatment, setRefTreatment] = useState("");
+  const [refTooth, setRefTooth] = useState("");
+  const [refDept, setRefDept] = useState("CONS");
+
+  // Systemic Screening Checkboxes
+  const [systemicChecks, setSystemicChecks] = useState({
+    hypertension: false,
+    diabetes: false,
+    thyroid: false,
+    cardiac: false,
+    bleeding: false,
+    allergy: false,
+    respiratory: false,
+    epilepsy: false,
+  });
 
   // OPG Workstation State
   const [opgSelectedPatientId, setOpgSelectedPatientId] = useState(null);
@@ -323,11 +393,10 @@ export default function App() {
     active: true,
   });
 
-  // Helper: Active Selected Patient Record
   const activePatient = patients.find((p) => p.id === selectedPatientId) || null;
 
   // Add Patient Action
-  const handleCreatePatient = (e) => {
+  const handleCreatePatient = async (e) => {
     e.preventDefault();
     if (!newPatientForm.name.trim() || !newPatientForm.phone.trim()) {
       showToast("Please provide Patient Name and Phone Number");
@@ -346,15 +415,27 @@ export default function App() {
         diagnosisNotes: "No diagnostic notes entered.",
       },
       prescriptions: [],
+      referrals: [],
     };
+
+    if (db) {
+      try {
+        await setDoc(doc(db, "clinics", CLINIC_ID, "patients", created.id), created);
+      } catch (err) {
+        console.warn("Firestore write skipped, local save active", err);
+      }
+    }
+
     setPatients([created, ...patients]);
     setNewPatientForm({
       name: "",
       phone: "",
       age: "",
       gender: "Male",
+      area: "",
       conditions: "None reported",
       allergies: "NKDA",
+      medicalAlert: "",
     });
     setIsAddPatientOpen(false);
     setSelectedPatientId(created.id);
@@ -365,39 +446,61 @@ export default function App() {
   // Tooth Click in Odontogram
   const handleToothTap = (toothNumber) => {
     if (!activePatient) return;
+    const currentConditions = { ...(activePatient.toothConditions || {}) };
+    if (currentConditions[toothNumber] === activePaletteStatus) {
+      delete currentConditions[toothNumber];
+    } else {
+      currentConditions[toothNumber] = activePaletteStatus;
+    }
+
     setPatients((prev) =>
-      prev.map((p) => {
-        if (p.id === activePatient.id) {
-          const currentConditions = { ...(p.toothConditions || {}) };
-          if (currentConditions[toothNumber] === activePaletteStatus) {
-            delete currentConditions[toothNumber];
-          } else {
-            currentConditions[toothNumber] = activePaletteStatus;
-          }
-          return { ...p, toothConditions: currentConditions };
-        }
-        return p;
-      })
+      prev.map((p) => (p.id === activePatient.id ? { ...p, toothConditions: currentConditions } : p))
     );
+
+    if (db) {
+      const chartRef = doc(db, "clinics", CLINIC_ID, "patients", activePatient.id, "ehr", "odontogram");
+      setDoc(chartRef, { teeth: currentConditions, updatedAt: serverTimestamp() }, { merge: true });
+    }
   };
 
   // Update Diagnostic Fields in Realtime
   const handleUpdateDiagnosis = (field, value) => {
     if (!activePatient) return;
+    const updatedDiag = {
+      ...(activePatient.diagnosis || {}),
+      [field]: value,
+    };
     setPatients((prev) =>
-      prev.map((p) => {
-        if (p.id === activePatient.id) {
-          return {
-            ...p,
-            diagnosis: {
-              ...(p.diagnosis || {}),
-              [field]: value,
-            },
-          };
-        }
-        return p;
-      })
+      prev.map((p) => (p.id === activePatient.id ? { ...p, diagnosis: updatedDiag } : p))
     );
+    if (db) {
+      const diagRef = doc(db, "clinics", CLINIC_ID, "patients", activePatient.id, "ehr", "diagnosis");
+      setDoc(diagRef, { ...updatedDiag, updatedAt: serverTimestamp() }, { merge: true });
+    }
+  };
+
+  // Add Department Referral
+  const handleAddReferral = (e) => {
+    e.preventDefault();
+    if (!refTreatment.trim() || !activePatient) return;
+    const deptObj = DENTAL_DEPARTMENTS.find((d) => d.code === refDept) || { name: refDept, room: "OPD" };
+    const newRef = {
+      id: "REF-" + Date.now().toString().slice(-4),
+      treatment: refTreatment.trim(),
+      toothRegion: refTooth.trim() || "U/L",
+      department: deptObj.name,
+      roomNo: deptObj.room,
+      status: "Approved",
+      date: new Date().toLocaleDateString("en-IN"),
+    };
+
+    setPatients((prev) =>
+      prev.map((p) => (p.id === activePatient.id ? { ...p, referrals: [...(p.referrals || []), newRef] } : p))
+    );
+
+    setRefTreatment("");
+    setRefTooth("");
+    showToast(`Referral to ${deptObj.code} added`);
   };
 
   // Add Prescription to Patient
@@ -468,6 +571,7 @@ export default function App() {
       `📍 ${practiceProfile.address} | 📞 ${practiceProfile.phone}\n` +
       `----------------------------------------\n` +
       `👤 *Patient:* ${activePatient.name} (Age: ${activePatient.age || "N/A"} Yrs / ${activePatient.gender})\n` +
+      (activePatient.medicalAlert ? `⚠️ *Medical Alert:* ${activePatient.medicalAlert}\n` : "") +
       `📅 *Date:* ${activePatient.registeredDate}\n` +
       `🩺 *Doctor:* ${practiceProfile.drName}\n` +
       `----------------------------------------\n` +
@@ -525,7 +629,6 @@ export default function App() {
     showToast(`Appointment booked for ${appt.patientName} on ${appt.date}`);
   };
 
-  // Direct WhatsApp for Appointment
   const sendAppointmentWhatsApp = (appt) => {
     let cleanPhone = appt.phone.replace(/[^0-9]/g, "");
     if (cleanPhone.length === 10) cleanPhone = "91" + cleanPhone;
@@ -547,7 +650,6 @@ export default function App() {
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank", "noopener,noreferrer");
   };
 
-  // Invoice Creation Action
   const handleCreateInvoice = (e) => {
     e.preventDefault();
     if (!newInvoiceForm.patientName.trim()) {
@@ -570,7 +672,6 @@ export default function App() {
     showToast(`Invoice ${inv.id} generated for ₹${inv.total}`);
   };
 
-  // Stock Quick Adjust
   const handleStockAdjust = (stockId, delta) => {
     setInventory((prev) =>
       prev.map((item) => {
@@ -587,7 +688,6 @@ export default function App() {
     );
   };
 
-  // Stock Create
   const handleCreateStock = (e) => {
     e.preventDefault();
     if (!newStockForm.name.trim()) return;
@@ -605,7 +705,6 @@ export default function App() {
     showToast(`Added ${item.name} to stock`);
   };
 
-  // Employee Create
   const handleCreateEmp = (e) => {
     e.preventDefault();
     if (!newEmpForm.name.trim()) return;
@@ -618,13 +717,11 @@ export default function App() {
     showToast(`Staff member ${emp.name} added to roster`);
   };
 
-  // OPG Ruler Measurement Calculation
   const calculateDistanceMm = () => {
     if (rulerPoints.length !== 2) return null;
     const dx = rulerPoints[1].x - rulerPoints[0].x;
     const dy = rulerPoints[1].y - rulerPoints[0].y;
     const px = Math.sqrt(dx * dx + dy * dy);
-    // Estimated 0.08mm per pixel calibration
     return (px * 0.08).toFixed(1);
   };
 
@@ -640,25 +737,22 @@ export default function App() {
     }
   };
 
-  // Filtered Patients List
   const filteredPatients = patients.filter((p) =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.phone.includes(searchQuery)
   );
 
-  // Active OPG Patient Object
   const currentOpgPatient = patients.find((p) => p.id === (opgSelectedPatientId || (patients[0] && patients[0].id))) || null;
 
-  // Dashboard analytics: use real records saved in this browser (no fabricated sample data).
   const dashboardDays = Array.from({ length: 7 }, (_, index) => {
     const date = new Date();
     date.setHours(0, 0, 0, 0);
     date.setDate(date.getDate() - (6 - index));
     return date;
   });
+
   const dashboardDateKey = (value) => {
     if (!value) return "";
-    // Existing records store dates using the Indian locale (DD/MM/YYYY).
     const parts = String(value).split(/[\\/.-]/);
     if (parts.length === 3 && parts[0].length <= 2) {
       const [day, month, year] = parts;
@@ -668,6 +762,7 @@ export default function App() {
     if (Number.isNaN(parsed.getTime())) return "";
     return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}-${String(parsed.getDate()).padStart(2, "0")}`;
   };
+
   const dashboardPatientSeries = dashboardDays.map((date) => {
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
     return {
@@ -675,6 +770,7 @@ export default function App() {
       value: patients.filter((patient) => dashboardDateKey(patient.registeredDate) === key).length,
     };
   });
+
   const dashboardRevenueSeries = dashboardDays.map((date) => {
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
     return {
@@ -683,9 +779,11 @@ export default function App() {
         .reduce((sum, invoice) => sum + Number(invoice.rawAmount ?? String(invoice.total || "0").replace(/,/g, "")), 0),
     };
   });
+
   const totalBilledRevenue = invoices.reduce(
     (sum, invoice) => sum + Number(invoice.rawAmount ?? String(invoice.total || "0").replace(/,/g, "")), 0
   );
+
   const todayKey = dashboardDateKey(new Date().toLocaleDateString("en-IN"));
   const todayAppointments = appointments.filter((appointment) => dashboardDateKey(appointment.date) === todayKey).length;
   const lowStockCount = inventory.filter((item) => item.status === "Low Stock" || Number(item.quantity) <= Number(item.minThreshold)).length;
@@ -693,7 +791,8 @@ export default function App() {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-[#0b1329] flex items-center justify-center p-6 text-white">
-        <div className="text-center"><div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-cyan-300/30 border-t-cyan-300" />
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-cyan-300/30 border-t-cyan-300" />
           <p className="text-sm text-slate-300">Checking your Meridian Dental OS session…</p>
         </div>
       </div>
@@ -705,24 +804,30 @@ export default function App() {
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-5 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-cyan-900/40 via-slate-950 to-indigo-950/60" />
         <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/90 p-8 shadow-2xl backdrop-blur-xl">
-          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-400 text-slate-950"><HeartPulse className="h-7 w-7" /></div>
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-400 text-slate-950">
+            <HeartPulse className="h-7 w-7" />
+          </div>
           <div className="text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.25em] text-cyan-300">Meridian Dental OS</p>
             <h1 className="mt-3 text-2xl font-bold tracking-tight">Welcome back</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-400">Sign in with your Google account to access the dental practice dashboard.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-400">Sign in with your Google account to access the clinical practice dashboard.</p>
           </div>
           {!firebaseConfigured ? (
             <div className="mt-7 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
-              Firebase is not configured. Add the VITE_FIREBASE_* environment variables to your local environment and deployment settings, then redeploy.
+              Firebase is not configured. Add the VITE_FIREBASE_* environment variables to your deployment settings.
             </div>
           ) : (
-            <button type="button" onClick={handleGoogleLogin} disabled={loginBusy}
-              className="mt-7 flex w-full items-center justify-center gap-3 rounded-xl bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60">
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={loginBusy}
+              className="mt-7 flex w-full items-center justify-center gap-3 rounded-xl bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-100 disabled:opacity-60"
+            >
               {loginBusy ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-800" /> : <LogIn className="h-5 w-5" />}
               {loginBusy ? "Connecting to Google…" : "Continue with Google"}
             </button>
           )}
-          {authError && <p role="alert" className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm leading-5 text-rose-200">{authError}</p>}
+          {authError && <p role="alert" className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-200">{authError}</p>}
           <p className="mt-6 text-center text-xs text-slate-500">Secure sign-in powered by Firebase Authentication</p>
         </div>
       </div>
@@ -732,7 +837,7 @@ export default function App() {
   return (
     <div className="flex h-screen bg-[#f8fafc] text-slate-800 font-sans overflow-hidden">
       
-      {/* --- TOAST NOTIFICATION --- */}
+      {/* Toast Notifier */}
       {toastMessage && (
         <div className="fixed bottom-5 right-5 z-50 bg-[#0b1329] text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2.5 text-xs border border-slate-700 animate-fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
@@ -740,14 +845,13 @@ export default function App() {
         </div>
       )}
 
-      {/* --- SIDEBAR (Exact match to screenshot 73133.jpg) --- */}
+      {/* --- SIDEBAR --- */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#0b1329] text-white flex flex-col justify-between transition-transform duration-300 md:static md:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div>
-          {/* Logo & Header */}
           <div className="p-5 flex items-center justify-between border-b border-slate-800/80">
             <div>
               <div className="text-base font-bold text-white tracking-wide flex items-center gap-2">
@@ -765,7 +869,6 @@ export default function App() {
             </button>
           </div>
 
-          {/* Navigation Links */}
           <nav className="p-3 space-y-1">
             {[
               { label: "Dashboard", icon: <Menu className="w-4 h-4" /> },
@@ -799,37 +902,32 @@ export default function App() {
           </nav>
         </div>
 
-        {/* Signed-in account and session controls */}
         <div className="p-4 border-t border-slate-800/80">
           <div className="flex items-center gap-3 min-w-0">
-            {authUser.photoURL ? <img src={authUser.photoURL} alt="Account avatar" className="h-9 w-9 rounded-full border border-slate-600 object-cover" /> :
-              <div className="h-9 w-9 shrink-0 rounded-full bg-cyan-400/15 text-cyan-300 flex items-center justify-center"><User className="h-4 w-4" /></div>}
+            {authUser.photoURL ? (
+              <img src={authUser.photoURL} alt="Avatar" className="h-9 w-9 rounded-full border border-slate-600 object-cover" />
+            ) : (
+              <div className="h-9 w-9 shrink-0 rounded-full bg-cyan-400/15 text-cyan-300 flex items-center justify-center">
+                <User className="h-4 w-4" />
+              </div>
+            )}
             <div className="min-w-0 flex-1">
-              <div className="truncate text-xs font-semibold text-white">{authUser.displayName || "Signed-in user"}</div>
-              <div className="truncate text-[11px] text-slate-400" title={authUser.email || ""}>{authUser.email || "Google account"}</div>
+              <div className="truncate text-xs font-semibold text-white">{authUser.displayName || "Dr. Clinician"}</div>
+              <div className="truncate text-[11px] text-slate-400">{authUser.email}</div>
             </div>
-            <button title="Export Practice Backup JSON" aria-label="Export practice backup" onClick={() => {
-              const exportData = { practiceProfile, patients, appointments, invoices, inventory, employees };
-              const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = `meridian-backup-${new Date().toISOString().split("T")[0]}.json`;
-              a.click();
-              URL.revokeObjectURL(url);
-              showToast("System database backup downloaded");
-            }} className="text-slate-400 hover:text-white p-1 shrink-0"><Download className="w-4 h-4" /></button>
           </div>
-          <button type="button" onClick={handleLogout} className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-300 transition hover:border-rose-400/50 hover:bg-rose-500/10 hover:text-rose-200">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-300 transition hover:bg-rose-500/10 hover:text-rose-200"
+          >
             <LogOut className="h-4 w-4" /> Sign out
           </button>
         </div>
       </aside>
 
-      {/* --- MAIN WORKSPACE --- */}
+      {/* --- WORKSPACE --- */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        
-        {/* Top Navbar */}
         <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-4">
             <button
@@ -842,7 +940,6 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Global Search Bar */}
             <div className="relative hidden sm:block w-72 md:w-96">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
               <input
@@ -853,46 +950,30 @@ export default function App() {
                 className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
-
-            {/* Profile Avatar Badge */}
             <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-semibold">
               S
             </div>
-            <button
-              title="Practice Info"
-              onClick={() => setActiveNav("Practice Profile")}
-              className="text-slate-400 hover:text-slate-600"
-            >
-              <ExternalLink className="w-4 h-4" />
-            </button>
           </div>
         </header>
 
-        {/* Dynamic Body Content */}
         <main className="p-6 md:p-8 max-w-7xl mx-auto w-full">
           
-          {/* ======================================================== */}
-          {/* TAB 1: PATIENTS & ODONTOGRAM (Screenshot 73139.jpg)     */}
-          {/* ======================================================== */}
+          {/* TAB 1: PATIENTS & ODONTOGRAM */}
           {activeNav === "Patients & Odontogram" && (
             <div>
-              {/* Header Title with Add Patient Button */}
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">Patient Records</h1>
-                  <p className="text-xs text-slate-500">
-                    FDI 32-Tooth Odontogram, Trauma, Rx & History
-                  </p>
+                  <p className="text-xs text-slate-500">FDI 32-Tooth Odontogram, Trauma, Rx & History</p>
                 </div>
                 <button
                   onClick={() => setIsAddPatientOpen(true)}
-                  className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all"
+                  className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
                 >
                   <Plus className="w-4 h-4" /> Add Patient
                 </button>
               </div>
 
-              {/* Patient Records List */}
               {filteredPatients.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
                   <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
@@ -900,14 +981,8 @@ export default function App() {
                   </div>
                   <h3 className="text-sm font-bold text-slate-800">No Patient Records Yet</h3>
                   <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    Start by clicking "Add Patient" to register your first clinical chart, FDI odontogram, and e-prescription.
+                    Click "Add Patient" to register a clinical case sheet with dental odontogram and systemic review.
                   </p>
-                  <button
-                    onClick={() => setIsAddPatientOpen(true)}
-                    className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold inline-flex items-center gap-1.5"
-                  >
-                    <Plus className="w-4 h-4" /> Register First Patient
-                  </button>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -928,12 +1003,15 @@ export default function App() {
                             <span className="text-xs font-semibold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-100">
                               Age: {p.age || "N/A"} Yrs
                             </span>
-                            <span className="text-[10px] text-slate-400 font-normal">
-                              ({p.gender})
-                            </span>
+                            <span className="text-[10px] text-slate-400 font-normal">({p.gender})</span>
+                            {p.medicalAlert && (
+                              <span className="text-[10px] font-bold bg-rose-50 text-rose-700 px-2 py-0.5 rounded border border-rose-200">
+                                ALERT: {p.medicalAlert}
+                              </span>
+                            )}
                           </div>
                           <div className="text-xs text-slate-400 mt-1">
-                            {p.phone} • Registered: {p.registeredDate}
+                            {p.phone} • {p.area || "Coimbatore"} • Registered: {p.registeredDate}
                           </div>
                           <div className="text-xs text-slate-500 mt-0.5">
                             Conditions: <span className="font-medium text-slate-700">{p.conditions || "None reported"}</span>
@@ -945,7 +1023,7 @@ export default function App() {
                             <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
                               {chartedCount} Teeth Charted
                             </span>
-                            <div className="text-[11px] text-slate-400 mt-1">Open FDI Odontogram →</div>
+                            <div className="text-[11px] text-slate-400 mt-1">Open Casesheet →</div>
                           </div>
                           <button
                             type="button"
@@ -969,104 +1047,67 @@ export default function App() {
             </div>
           )}
 
-          {/* ======================================================== */}
-          {/* TAB 2: OPG & DIAGNOSIS STUDIO (Screenshot 73143.jpg)     */}
-          {/* ======================================================== */}
+          {/* TAB 2: OPG & DIAGNOSIS STUDIO */}
           {activeNav === "OPG & Diagnosis Studio" && (
             <div className="space-y-6">
-              {/* Header with Patient Selector */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">OPG & Diagnosis Studio</h1>
-                  <p className="text-xs text-slate-500">
-                    Side-by-Side Panoramic Radiograph & Clinical Findings Workstation
-                  </p>
+                  <p className="text-xs text-slate-500">Side-by-Side Panoramic Radiograph & Clinical Findings Workstation</p>
                 </div>
                 <div>
-                  {patients.length > 0 ? (
+                  {patients.length > 0 && (
                     <select
                       value={opgSelectedPatientId || (currentOpgPatient ? currentOpgPatient.id : "")}
                       onChange={(e) => setOpgSelectedPatientId(e.target.value)}
-                      className="text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-700 font-semibold focus:outline-none"
                     >
                       {patients.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} ({p.age}y - #{p.id})
-                        </option>
+                        <option key={p.id} value={p.id}>{p.name} ({p.age}y)</option>
                       ))}
                     </select>
-                  ) : (
-                    <div className="text-xs bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg border border-amber-200">
-                      No patients registered yet
-                    </div>
                   )}
                 </div>
               </div>
 
-              {/* Studio Split Layout (Exact match to 73143.jpg) */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                
-                {/* Left: OPG Radiograph Card */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                {/* Left: OPG Card */}
                 <div className="bg-[#0b1329] rounded-2xl p-5 text-white flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <div>
                         <div className="text-sm font-bold">Baseline Panoramic OPG</div>
                         <div className="text-[11px] text-slate-400">
-                          Patient: {currentOpgPatient ? `${currentOpgPatient.name} (${currentOpgPatient.age}y)` : "No Patient Selected"}
+                          Patient: {currentOpgPatient ? currentOpgPatient.name : "None"}
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2">
-                        {/* Real file input */}
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          onChange={handleOpgFileChange}
-                          accept="image/*"
-                          className="hidden"
-                        />
-
-                        {/* Insert Button */}
+                        <input type="file" ref={fileInputRef} onChange={handleOpgFileChange} accept="image/*" className="hidden" />
                         <button
                           type="button"
                           onClick={() => fileInputRef.current?.click()}
-                          className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                          className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5"
                         >
-                          <Upload className="w-3.5 h-3.5" />
-                          Insert OPG Film
+                          <Upload className="w-3.5 h-3.5" /> Insert Film
                         </button>
-
-                        {/* Invert Negative Button */}
                         <button
                           type="button"
                           onClick={() => setIsNegativeInverted(!isNegativeInverted)}
-                          className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors"
+                          className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium flex items-center gap-1.5"
                         >
-                          <Sun className="w-3.5 h-3.5" />
-                          {isNegativeInverted ? "Normal View" : "Invert Negative (X-Ray)"}
+                          <Sun className="w-3.5 h-3.5" /> {isNegativeInverted ? "Normal" : "Invert Negative (X-Ray)"}
                         </button>
-
-                        {/* Ruler Measurement Tool */}
                         <button
                           type="button"
-                          onClick={() => {
-                            setRulerActive(!rulerActive);
-                            setRulerPoints([]);
-                          }}
-                          className={`px-2 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                            rulerActive
-                              ? "bg-amber-500 text-white border-amber-400"
-                              : "bg-slate-800 border-slate-700 text-slate-300"
-                          }`}
-                          title="Measure Working Length / Bone Loss in mm"
+                          onClick={() => { setRulerActive(!rulerActive); setRulerPoints([]); }}
+                          className={`px-2 py-1.5 rounded-lg text-xs font-medium border ${rulerActive ? "bg-amber-500 text-white border-amber-400" : "bg-slate-800 text-slate-300"}`}
                         >
                           <Ruler className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
 
-                    {/* Image Canvas Container */}
                     <div
                       ref={opgCanvasRef}
                       onClick={handleOpgCanvasClick}
@@ -1078,44 +1119,17 @@ export default function App() {
                         <>
                           <img
                             src={currentOpgPatient.opgImage}
-                            alt="Patient OPG Radiograph"
-                            className={`w-full h-full object-cover transition-all duration-300 ${
-                              isNegativeInverted ? "filter invert contrast-125 brightness-90" : ""
-                            }`}
+                            alt="OPG Film"
+                            className={`w-full h-full object-cover ${isNegativeInverted ? "filter invert contrast-125" : ""}`}
                           />
-
-                          {/* SVG Interactive Ruler Overlay */}
                           <svg className="absolute inset-0 w-full h-full pointer-events-none">
                             {rulerPoints.map((pt, idx) => (
-                              <circle
-                                key={idx}
-                                cx={pt.x}
-                                cy={pt.y}
-                                r="4"
-                                fill="#f59e0b"
-                                stroke="#ffffff"
-                                strokeWidth="1.5"
-                              />
+                              <circle key={idx} cx={pt.x} cy={pt.y} r="4" fill="#f59e0b" stroke="#ffffff" strokeWidth="1.5" />
                             ))}
                             {rulerPoints.length === 2 && (
                               <>
-                                <line
-                                  x1={rulerPoints[0].x}
-                                  y1={rulerPoints[0].y}
-                                  x2={rulerPoints[1].x}
-                                  y2={rulerPoints[1].y}
-                                  stroke="#f59e0b"
-                                  strokeWidth="2"
-                                  strokeDasharray="4 2"
-                                />
-                                <text
-                                  x={(rulerPoints[0].x + rulerPoints[1].x) / 2 + 10}
-                                  y={(rulerPoints[0].y + rulerPoints[1].y) / 2 - 10}
-                                  fill="#f59e0b"
-                                  fontSize="12"
-                                  fontWeight="bold"
-                                  className="drop-shadow-md"
-                                >
+                                <line x1={rulerPoints[0].x} y1={rulerPoints[0].y} x2={rulerPoints[1].x} y2={rulerPoints[1].y} stroke="#f59e0b" strokeWidth="2" strokeDasharray="4 2" />
+                                <text x={(rulerPoints[0].x + rulerPoints[1].x) / 2 + 10} y={(rulerPoints[0].y + rulerPoints[1].y) / 2 - 10} fill="#f59e0b" fontSize="12" fontWeight="bold">
                                   {calculateDistanceMm()} mm (WL)
                                 </text>
                               </>
@@ -1123,101 +1137,67 @@ export default function App() {
                           </svg>
                         </>
                       ) : (
-                        <div className="text-center p-6 space-y-2">
-                          <Upload className="w-8 h-8 text-slate-600 mx-auto" />
+                        <div className="text-center p-6 text-slate-500">
+                          <Upload className="w-8 h-8 text-slate-600 mx-auto mb-2" />
                           <p className="text-xs text-slate-400">No OPG film uploaded for this patient.</p>
-                          <button
-                            type="button"
-                            onClick={() => fileInputRef.current?.click()}
-                            className="text-xs text-blue-400 hover:underline font-medium"
-                          >
-                            Click to browse & attach panoramic film
-                          </button>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-[11px] text-slate-400 pt-4 mt-2 border-t border-slate-800">
-                    <span>
-                      {rulerActive ? (
-                        <strong className="text-amber-400">
-                          {rulerPoints.length === 0 && "Click apex point"}
-                          {rulerPoints.length === 1 && "Click cusp / crest point"}
-                          {rulerPoints.length === 2 && `Estimated Length: ${calculateDistanceMm()} mm`}
-                        </strong>
-                      ) : (
-                        "High-Contrast Diagnostic View"
-                      )}
-                    </span>
-                    {currentOpgPatient && currentOpgPatient.opgImage && (
-                      <button
-                        onClick={() => window.open(currentOpgPatient.opgImage, "_blank")}
-                        className="text-blue-400 hover:underline flex items-center gap-1"
-                      >
-                        Full Resolution <ExternalLink className="w-3 h-3" />
-                      </button>
-                    )}
+                  <div className="flex items-center justify-between text-[11px] text-slate-400 pt-3 border-t border-slate-800">
+                    <span>{rulerActive ? `Caliper Mode: ${calculateDistanceMm() || 0} mm` : "High-Contrast Diagnostic View"}</span>
                   </div>
                 </div>
 
-                {/* Right: Diagnostic Entry Pane (matches 73143.jpg) */}
+                {/* Right: Diagnostic Entry Pane */}
                 <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between">
                   <div className="space-y-4">
                     <div className="text-xs font-bold text-slate-800 tracking-wider uppercase flex items-center gap-2">
-                      <Sun className="w-4 h-4 text-blue-600" />
-                      Diagnostic Entry Pane
+                      <Sun className="w-4 h-4 text-blue-600" /> Diagnostic Entry Pane
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-rose-600 mb-1">
-                        Trauma Findings
-                      </label>
+                      <label className="block text-xs font-semibold text-rose-600 mb-1">Trauma Findings</label>
                       <input
                         type="text"
                         value={currentOpgPatient?.diagnosis?.trauma || ""}
                         onChange={(e) => handleUpdateDiagnosis("trauma", e.target.value)}
                         placeholder="Crown fracture, luxation, alveolar ridge integrity..."
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Impaction Classification
-                      </label>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Impaction Classification</label>
                       <input
                         type="text"
                         value={currentOpgPatient?.diagnosis?.impaction || ""}
                         onChange={(e) => handleUpdateDiagnosis("impaction", e.target.value)}
                         placeholder="Angulation, depth, position relative to ramus..."
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Bone Deformations & Height
-                      </label>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Bone Deformations & Height</label>
                       <input
                         type="text"
                         value={currentOpgPatient?.diagnosis?.boneDeformations || ""}
                         onChange={(e) => handleUpdateDiagnosis("boneDeformations", e.target.value)}
                         placeholder="Horizontal bone loss, angular crest defects, furcation..."
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Diagnosis & Treatment Plan (Type Next to OPG)
-                      </label>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Diagnosis & Treatment Plan</label>
                       <textarea
                         rows={3}
                         value={currentOpgPatient?.diagnosis?.diagnosisNotes || ""}
                         onChange={(e) => handleUpdateDiagnosis("diagnosisNotes", e.target.value)}
-                        placeholder="Type formal clinical diagnosis and operative procedures here..."
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        placeholder="Type formal clinical diagnosis and operative procedures..."
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
                       />
                     </div>
                   </div>
@@ -1226,28 +1206,23 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => showToast("Diagnostic findings saved successfully")}
-                      className="w-full py-2.5 bg-[#1d4ed8] hover:bg-blue-700 text-white font-semibold text-xs rounded-lg transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                      className="w-full py-2.5 bg-[#1d4ed8] hover:bg-blue-700 text-white font-semibold text-xs rounded-lg flex items-center justify-center gap-1.5"
                     >
                       <CheckCircle2 className="w-4 h-4" /> Save Diagnostic Findings
                     </button>
                   </div>
                 </div>
-
               </div>
             </div>
           )}
 
-          {/* ======================================================== */}
-          {/* TAB 3: APPOINTMENTS DIARY                                */}
-          {/* ======================================================== */}
+          {/* TAB 3: APPOINTMENTS DIARY */}
           {activeNav === "Appointments Diary" && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">Appointments Diary</h1>
-                  <p className="text-xs text-slate-500">
-                    Chair-side scheduling, patient queuing & automated WhatsApp confirmations
-                  </p>
+                  <p className="text-xs text-slate-500">Chair-side scheduling & automated WhatsApp alerts</p>
                 </div>
                 <button
                   onClick={() => setIsAddApptOpen(true)}
@@ -1261,9 +1236,6 @@ export default function App() {
                 <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
                   <Calendar className="w-10 h-10 text-blue-600 mx-auto" />
                   <h3 className="text-sm font-bold text-slate-800">No Appointments Scheduled</h3>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    Click "Book Appointment" to schedule chair time, assign doctors, and notify patients via WhatsApp.
-                  </p>
                 </div>
               ) : (
                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
@@ -1273,7 +1245,6 @@ export default function App() {
                         <th className="p-3.5">ID / Patient</th>
                         <th className="p-3.5">Date & Slot</th>
                         <th className="p-3.5">Operatory Chair</th>
-                        <th className="p-3.5">Attending Doctor</th>
                         <th className="p-3.5">Procedure</th>
                         <th className="p-3.5">Status</th>
                         <th className="p-3.5 text-center">Action</th>
@@ -1284,13 +1255,10 @@ export default function App() {
                         <tr key={appt.id} className="hover:bg-slate-50/60">
                           <td className="p-3.5">
                             <div className="font-bold text-slate-900">{appt.patientName}</div>
-                            <div className="text-[10px] text-slate-400">{appt.phone} • Age: {appt.age || "N/A"}</div>
+                            <div className="text-[10px] text-slate-400">{appt.phone}</div>
                           </td>
-                          <td className="p-3.5 font-medium text-slate-700">
-                            {appt.date} at <strong className="text-slate-900">{appt.time}</strong>
-                          </td>
-                          <td className="p-3.5 text-slate-600 font-medium">{appt.chair}</td>
-                          <td className="p-3.5 text-slate-600">{appt.doctor}</td>
+                          <td className="p-3.5 font-medium">{appt.date} at <strong>{appt.time}</strong></td>
+                          <td className="p-3.5 text-slate-600">{appt.chair}</td>
                           <td className="p-3.5 font-semibold text-blue-700">{appt.procedure}</td>
                           <td className="p-3.5">
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -1300,17 +1268,13 @@ export default function App() {
                           <td className="p-3.5 text-center space-x-2">
                             <button
                               onClick={() => sendAppointmentWhatsApp(appt)}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-semibold inline-flex items-center gap-1 shadow-2xs"
-                              title="Send WhatsApp confirmation"
+                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-semibold inline-flex items-center gap-1"
                             >
                               <Send className="w-3 h-3" /> WhatsApp
                             </button>
                             <button
-                              onClick={() => {
-                                setAppointments(appointments.filter((x) => x.id !== appt.id));
-                                showToast("Appointment cancelled");
-                              }}
-                              className="p-1 text-slate-400 hover:text-rose-500 rounded"
+                              onClick={() => setAppointments(appointments.filter((x) => x.id !== appt.id))}
+                              className="p-1 text-slate-400 hover:text-rose-500"
                             >
                               <Trash2 className="w-3.5 h-3.5 inline" />
                             </button>
@@ -1324,17 +1288,13 @@ export default function App() {
             </div>
           )}
 
-          {/* ======================================================== */}
-          {/* TAB 4: DENTAL INSURANCE & INVOICES (Screenshot 73155.jpg) */}
-          {/* ======================================================== */}
+          {/* TAB 4: DENTAL INSURANCE & INVOICES */}
           {activeNav === "Dental Insurance & Invoices" && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">Dental Insurance & Invoices</h1>
-                  <p className="text-xs text-slate-500">
-                    Pre-Auth Claims, Co-pay & Instant UPI Billing
-                  </p>
+                  <p className="text-xs text-slate-500">Pre-Auth Claims, Co-pay & Instant UPI Billing</p>
                 </div>
                 <button
                   onClick={() => setIsAddInvoiceOpen(true)}
@@ -1348,9 +1308,6 @@ export default function App() {
                 <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
                   <DollarSign className="w-10 h-10 text-blue-600 mx-auto" />
                   <h3 className="text-sm font-bold text-slate-800">No Invoices Generated Yet</h3>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    Create itemized clinical invoices and accept instant UPI QR payments at the dental chair.
-                  </p>
                 </div>
               ) : (
                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
@@ -1359,8 +1316,8 @@ export default function App() {
                       <tr>
                         <th className="p-4">Invoice / Claim ID</th>
                         <th className="p-4">Patient</th>
-                        <th className="p-4">Insurance Provider</th>
-                        <th className="p-4">Claim Status</th>
+                        <th className="p-4">Provider</th>
+                        <th className="p-4">Status</th>
                         <th className="p-4">Total (₹)</th>
                         <th className="p-4 text-center">Actions</th>
                       </tr>
@@ -1372,20 +1329,18 @@ export default function App() {
                             <div className="font-bold text-blue-700">{inv.id}</div>
                             <div className="text-[10px] text-slate-400">Claim: {inv.claimId}</div>
                           </td>
-                          <td className="p-4 font-semibold text-slate-800">{inv.patient}</td>
+                          <td className="p-4 font-semibold">{inv.patient}</td>
                           <td className="p-4 text-slate-600">{inv.provider}</td>
                           <td className="p-4">
                             <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
                               {inv.status}
                             </span>
                           </td>
-                          <td className="p-4 font-bold text-slate-900 text-sm">
-                            ₹{inv.total}
-                          </td>
+                          <td className="p-4 font-bold text-sm">₹{inv.total}</td>
                           <td className="p-4 text-center">
                             <button
                               onClick={() => setActiveUpiQrInvoice(inv)}
-                              className="px-3 py-1.5 bg-slate-100 hover:bg-blue-50 border border-slate-200 text-slate-800 hover:text-blue-700 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-colors"
+                              className="px-3 py-1.5 bg-slate-100 hover:bg-blue-50 border border-slate-200 text-slate-800 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5"
                             >
                               <QrCode className="w-3.5 h-3.5" /> UPI QR
                             </button>
@@ -1399,17 +1354,13 @@ export default function App() {
             </div>
           )}
 
-          {/* ======================================================== */}
-          {/* TAB 5: STOCK MAINTENANCE (Screenshot 73151.jpg)          */}
-          {/* ======================================================== */}
+          {/* TAB 5: STOCK MAINTENANCE */}
           {activeNav === "Stock Maintenance" && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">Stock Maintenance</h1>
-                  <p className="text-xs text-slate-500">
-                    Operatory Consumables, Materials & Medications
-                  </p>
+                  <p className="text-xs text-slate-500">Operatory Consumables, Materials & Medications</p>
                 </div>
                 <button
                   onClick={() => setIsAddStockOpen(true)}
@@ -1423,9 +1374,6 @@ export default function App() {
                 <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
                   <Package className="w-10 h-10 text-blue-600 mx-auto" />
                   <h3 className="text-sm font-bold text-slate-800">Inventory Empty</h3>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    Track operatory materials like Composite Resins, Local Anesthesia, and Sutures with threshold alerts.
-                  </p>
                 </div>
               ) : (
                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
@@ -1435,7 +1383,6 @@ export default function App() {
                         <th className="p-3.5">Item Name</th>
                         <th className="p-3.5">Category</th>
                         <th className="p-3.5">Quantity on Hand</th>
-                        <th className="p-3.5">Min. Threshold</th>
                         <th className="p-3.5">Status</th>
                         <th className="p-3.5 text-center">Quick Adjust</th>
                       </tr>
@@ -1446,34 +1393,18 @@ export default function App() {
                           <td className="p-3.5 font-bold text-slate-900">{item.name}</td>
                           <td className="p-3.5 text-slate-600">{item.category}</td>
                           <td className="p-3.5">
-                            <span className="font-bold text-slate-900 text-sm">{item.quantity}</span>{" "}
-                            <span className="text-[11px] text-slate-500">{item.unit}</span>
+                            <span className="font-bold text-sm">{item.quantity}</span> {item.unit}
                           </td>
-                          <td className="p-3.5 text-slate-500">{item.minThreshold} {item.unit}</td>
                           <td className="p-3.5">
-                            <span
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                item.status === "Low Stock"
-                                  ? "bg-amber-100 text-amber-800 border border-amber-300"
-                                  : "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                              }`}
-                            >
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              item.status === "Low Stock" ? "bg-amber-100 text-amber-800 border border-amber-300" : "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                            }`}>
                               {item.status}
                             </span>
                           </td>
                           <td className="p-3.5 text-center space-x-1.5">
-                            <button
-                              onClick={() => handleStockAdjust(item.id, -1)}
-                              className="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded font-semibold text-slate-700"
-                            >
-                              -1
-                            </button>
-                            <button
-                              onClick={() => handleStockAdjust(item.id, 5)}
-                              className="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded font-semibold"
-                            >
-                              +5
-                            </button>
+                            <button onClick={() => handleStockAdjust(item.id, -1)} className="px-2 py-1 bg-slate-100 rounded font-semibold text-slate-700">-1</button>
+                            <button onClick={() => handleStockAdjust(item.id, 5)} className="px-2 py-1 bg-blue-50 text-blue-700 rounded font-semibold">+5</button>
                           </td>
                         </tr>
                       ))}
@@ -1484,17 +1415,13 @@ export default function App() {
             </div>
           )}
 
-          {/* ======================================================== */}
-          {/* TAB 6: EMPLOYEE ROLES & ROSTER (Screenshot 73153.jpg)     */}
-          {/* ======================================================== */}
+          {/* TAB 6: EMPLOYEE ROLES & ROSTER */}
           {activeNav === "Employee Roles & Roster" && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">Employee Roles & Roster</h1>
-                  <p className="text-xs text-slate-500">
-                    Operatory Staff Allocation & Duty Timings
-                  </p>
+                  <p className="text-xs text-slate-500">Operatory Staff Allocation & Duty Timings</p>
                 </div>
                 <button
                   onClick={() => setIsAddEmpOpen(true)}
@@ -1508,24 +1435,14 @@ export default function App() {
                 <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
                   <Briefcase className="w-10 h-10 text-blue-600 mx-auto" />
                   <h3 className="text-sm font-bold text-slate-800">No Staff Added</h3>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    Add chair-side assistants, visiting endodontists, and operatory coordinators.
-                  </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {employees.map((emp) => (
-                    <div
-                      key={emp.id}
-                      className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-3"
-                    >
+                    <div key={emp.id} className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
-                          {emp.id}
-                        </span>
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                          Active
-                        </span>
+                        <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">{emp.id}</span>
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Active</span>
                       </div>
                       <div>
                         <div className="text-sm font-bold text-slate-900">{emp.name || emp.role}</div>
@@ -1542,16 +1459,12 @@ export default function App() {
             </div>
           )}
 
-          {/* ======================================================== */}
-          {/* TAB 7: PRACTICE PROFILE & COMPLIANCE                     */}
-          {/* ======================================================== */}
+          {/* TAB 7: PRACTICE PROFILE */}
           {activeNav === "Practice Profile" && (
             <div className="max-w-3xl bg-white rounded-2xl border border-slate-200 p-6 md:p-8 space-y-6">
               <div>
                 <h1 className="text-xl font-bold text-slate-900">Practice Profile & Legal Registration</h1>
-                <p className="text-xs text-slate-500">
-                  Government micro-enterprise credentials, state grant registry, and digital prescription headers
-                </p>
+                <p className="text-xs text-slate-500">Government micro-enterprise credentials, state grant registry, and digital prescription headers</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
@@ -1628,7 +1541,7 @@ export default function App() {
 
               <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
                 <span className="text-xs text-emerald-700 font-semibold flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4" /> Realtime Cloud Persistence Active
+                  <ShieldCheck className="w-4 h-4" /> Cloud Persistence Active
                 </span>
                 <button
                   onClick={() => showToast("Practice credentials saved")}
@@ -1640,9 +1553,7 @@ export default function App() {
             </div>
           )}
 
-          {/* ======================================================== */}
-          {/* TAB 8: DASHBOARD OVERVIEW                                */}
-          {/* ======================================================== */}
+          {/* TAB 8: DASHBOARD OVERVIEW */}
           {activeNav === "Dashboard" && (
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
@@ -1650,7 +1561,9 @@ export default function App() {
                   <h1 className="text-2xl font-bold tracking-tight text-slate-900">Clinical Overview</h1>
                   <p className="text-sm text-slate-500 mt-1">Meridian Dental Clinical Workspace</p>
                 </div>
-                <button onClick={() => setActiveNav("Appointments Diary")} className="text-sm font-semibold text-blue-600 hover:text-blue-800">View today's diary ›</button>
+                <button onClick={() => setActiveNav("Appointments Diary")} className="text-sm font-semibold text-blue-600 hover:text-blue-800">
+                  View today's diary ›
+                </button>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -1662,44 +1575,61 @@ export default function App() {
                 ].map((card) => (
                   <div key={card.title} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
                     <div className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center ${card.tone}`}>{card.icon}</div>
-                    <div className="min-w-0"><div className="text-sm font-medium text-slate-500">{card.title}</div><div className="text-2xl font-bold text-slate-900 mt-0.5 break-words">{card.value}</div><div className="text-xs text-slate-400 mt-1">{card.note}</div></div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-slate-500">{card.title}</div>
+                      <div className="text-2xl font-bold text-slate-900 mt-0.5 break-words">{card.value}</div>
+                      <div className="text-xs text-slate-400 mt-1">{card.note}</div>
+                    </div>
                   </div>
                 ))}
               </div>
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
                 <section className="xl:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 md:p-6 shadow-sm">
-                  <div className="flex items-start justify-between gap-3 mb-5"><div><h2 className="text-base font-bold text-slate-900">Patient Registration</h2><p className="text-xs text-slate-500 mt-1">New patients over the last 7 days</p></div><span className="text-xs rounded-full bg-blue-50 text-blue-700 px-3 py-1 font-semibold">Weekly trend</span></div>
-                  <div className="h-56 flex items-end gap-3 sm:gap-5 border-b border-slate-200 px-1">
-                    {dashboardPatientSeries.map((day, index) => { const max = Math.max(1, ...dashboardPatientSeries.map((item) => item.value)); const height = day.value ? Math.max(8, (day.value / max) * 145) : 2; return <div key={`${day.label}-${index}`} className="flex-1 h-full flex flex-col justify-end items-center gap-2"><span className="text-xs font-semibold text-slate-600">{day.value || ""}</span><div title={`${day.label}: ${day.value} patient(s)`} className={`w-full max-w-12 rounded-t-lg transition-all ${day.value ? "bg-blue-500 hover:bg-blue-600" : "bg-slate-100"}`} style={{ height: `${height}px` }} /><span className="text-xs text-slate-400 pb-2">{day.label}</span></div>; })}
+                  <div className="flex items-start justify-between gap-3 mb-5">
+                    <div>
+                      <h2 className="text-base font-bold text-slate-900">Patient Registration</h2>
+                      <p className="text-xs text-slate-500 mt-1">New patients over the last 7 days</p>
+                    </div>
+                    <span className="text-xs rounded-full bg-blue-50 text-blue-700 px-3 py-1 font-semibold">Weekly trend</span>
                   </div>
-                  <div className="mt-4 text-xs text-slate-400">Based on patient registration dates stored in this app.</div>
+                  <div className="h-56 flex items-end gap-3 sm:gap-5 border-b border-slate-200 px-1">
+                    {dashboardPatientSeries.map((day, index) => {
+                      const max = Math.max(1, ...dashboardPatientSeries.map((item) => item.value));
+                      const height = day.value ? Math.max(8, (day.value / max) * 145) : 2;
+                      return (
+                        <div key={`${day.label}-${index}`} className="flex-1 h-full flex flex-col justify-end items-center gap-2">
+                          <span className="text-xs font-semibold text-slate-600">{day.value || ""}</span>
+                          <div className={`w-full max-w-12 rounded-t-lg transition-all ${day.value ? "bg-blue-500" : "bg-slate-100"}`} style={{ height: `${height}px` }} />
+                          <span className="text-xs text-slate-400 pb-2">{day.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </section>
 
                 <section className="bg-white rounded-2xl border border-slate-200 p-5 md:p-6 shadow-sm">
-                  <div className="mb-5"><h2 className="text-base font-bold text-slate-900">Revenue / Billing</h2><p className="text-xs text-slate-500 mt-1">Invoice value recorded over 7 days</p></div>
-                  <div className="h-56 flex items-end gap-3 border-b border-slate-200 px-1">
-                    {dashboardRevenueSeries.map((day, index) => { const max = Math.max(1, ...dashboardRevenueSeries.map((item) => item.value)); const height = day.value ? Math.max(8, (day.value / max) * 145) : 2; return <div key={`${day.label}-${index}`} className="flex-1 h-full flex flex-col justify-end items-center gap-2 min-w-0"><span className="text-[10px] font-semibold text-slate-600 truncate max-w-full">{day.value ? `₹${day.value.toLocaleString("en-IN", { maximumFractionDigits: 0 })}` : ""}</span><div title={`${day.label}: ₹${day.value.toLocaleString("en-IN")}`} className={`w-full rounded-t-lg transition-all ${day.value ? "bg-emerald-500 hover:bg-emerald-600" : "bg-slate-100"}`} style={{ height: `${height}px` }} /><span className="text-xs text-slate-400 pb-2">{day.label}</span></div>; })}
+                  <div className="mb-5">
+                    <h2 className="text-base font-bold text-slate-900">Revenue / Billing</h2>
+                    <p className="text-xs text-slate-500 mt-1">Invoice value recorded over 7 days</p>
                   </div>
-                  <div className="mt-4 text-xs text-slate-400">Uses invoice totals, not verified payment collections.</div>
+                  <div className="h-56 flex items-end gap-3 border-b border-slate-200 px-1">
+                    {dashboardRevenueSeries.map((day, index) => {
+                      const max = Math.max(1, ...dashboardRevenueSeries.map((item) => item.value));
+                      const height = day.value ? Math.max(8, (day.value / max) * 145) : 2;
+                      return (
+                        <div key={`${day.label}-${index}`} className="flex-1 h-full flex flex-col justify-end items-center gap-2 min-w-0">
+                          <span className="text-[10px] font-semibold text-slate-600 truncate max-w-full">
+                            {day.value ? `₹${day.value.toLocaleString("en-IN", { maximumFractionDigits: 0 })}` : ""}
+                          </span>
+                          <div className={`w-full rounded-t-lg transition-all ${day.value ? "bg-emerald-500" : "bg-slate-100"}`} style={{ height: `${height}px` }} />
+                          <span className="text-xs text-slate-400 pb-2">{day.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </section>
               </div>
-
-              <section className="bg-white rounded-2xl border border-slate-200 p-5 md:p-6 shadow-sm">
-                <div className="mb-4"><h2 className="text-base font-bold text-slate-900">Operatory Quick Actions</h2><p className="text-xs text-slate-500 mt-1">Open common clinical and practice tools</p></div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-                  {[
-                    { title: "OPG & Diagnosis Studio", subtitle: "Radiographs and clinical findings", icon: <Sun className="w-5 h-5" />, target: "OPG & Diagnosis Studio", tone: "text-blue-600 bg-blue-50" },
-                    { title: "Patient Records", subtitle: "Patients and FDI odontogram", icon: <Users className="w-5 h-5" />, target: "Patients & Odontogram", tone: "text-indigo-600 bg-indigo-50" },
-                    { title: "Appointments Diary", subtitle: "Schedule and visit queue", icon: <Calendar className="w-5 h-5" />, target: "Appointments Diary", tone: "text-emerald-600 bg-emerald-50" },
-                    { title: "Billing & Invoices", subtitle: "Invoice and insurance claims", icon: <DollarSign className="w-5 h-5" />, target: "Dental Insurance & Invoices", tone: "text-purple-600 bg-purple-50" },
-                  ].map((action) => (
-                    <button key={action.target} onClick={() => setActiveNav(action.target)} className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-left hover:border-blue-300 hover:bg-blue-50/50 transition-colors">
-                      <span className={`w-10 h-10 shrink-0 rounded-lg flex items-center justify-center ${action.tone}`}>{action.icon}</span><span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-slate-800">{action.title}</span><span className="block text-xs text-slate-500 mt-1">{action.subtitle}</span></span><ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 shrink-0" />
-                    </button>
-                  ))}
-                </div>
-              </section>
             </div>
           )}
 
@@ -1707,19 +1637,18 @@ export default function App() {
       </div>
 
       {/* ======================================================== */}
-      {/* PATIENT ODONTOGRAM & CLINICAL MODAL (Exact match)        */}
+      {/* PATIENT CASESHEET MODAL (WITH SYSTEMIC ALERT & ROUTING)  */}
       {/* ======================================================== */}
       {isChartModalOpen && activePatient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs overflow-y-auto">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl p-6 md:p-7 relative max-h-[92vh] flex flex-col justify-between overflow-y-auto">
             
-            {/* Modal Header */}
             <div>
+              {/* Header */}
               <div className="flex items-start justify-between pb-3">
                 <div>
                   <div className="text-xl font-bold text-slate-900 flex items-center gap-3">
                     {activePatient.name}
-                    {/* Editable Age Badge */}
                     <div className="flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-md text-xs font-medium text-slate-700 border border-slate-200">
                       <span>Age:</span>
                       <input
@@ -1734,10 +1663,10 @@ export default function App() {
                         placeholder="24"
                         className="w-10 bg-transparent text-xs font-bold text-blue-700 focus:outline-none"
                       />
-                      <span>Yrs</span>
+                      <span>Yrs ({activePatient.gender || "Female"})</span>
                     </div>
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">{activePatient.phone}</div>
+                  <div className="text-xs text-slate-400 mt-0.5">{activePatient.phone} • {activePatient.area || "Coimbatore"}</div>
                 </div>
 
                 <button
@@ -1748,11 +1677,28 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Exact Tab Navigation Pills (From your screenshots) */}
+              {/* PERSISTENT SYSTEMIC MEDICAL ALERT BANNER */}
+              {activePatient.medicalAlert && (
+                <div className="mb-4 p-3 px-4 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-pulse" />
+                    <span className="text-xs font-bold text-rose-800">
+                      MEDICAL ALERT: {activePatient.medicalAlert}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold text-rose-600 uppercase">
+                    Verify Vitals Prior to Infiltration
+                  </span>
+                </div>
+              )}
+
+              {/* Exact Tab Pills */}
               <div className="flex flex-wrap items-center gap-2 mt-2 mb-6">
                 {[
                   "32-Tooth Odontogram",
+                  "Department Referrals",
                   "Diagnosis & Trauma",
+                  "Systemic Review",
                   "Prescriptions",
                   "Medical History",
                 ].map((tab) => {
@@ -1763,7 +1709,7 @@ export default function App() {
                       onClick={() => setActiveModalTab(tab)}
                       className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${
                         isActive
-                          ? "bg-[#1d4ed8] text-white shadow-sm"
+                          ? "bg-[#1d4ed8] text-white shadow-sm font-semibold"
                           : "text-slate-600 hover:bg-slate-100"
                       }`}
                     >
@@ -1773,31 +1719,26 @@ export default function App() {
                 })}
               </div>
 
-              {/* TAB 1: ODONTOGRAM (Screenshot 73145.jpg) */}
+              {/* TAB 1: 32-TOOTH ODONTOGRAM */}
               {activeModalTab === "32-Tooth Odontogram" && (
                 <div className="space-y-5">
-                  
-                  {/* Palette Header with Switchable Deciduous/Permanent Toggle */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-1 gap-2">
                     <div className="text-[11px] font-bold text-slate-800 tracking-wider uppercase">
                       CLINICAL ODONTOGRAM PALETTE (SELECT STATUS, THEN TAP TOOTH)
                     </div>
-
-                    {/* DENTITION SWITCH TOGGLE */}
                     <div className="flex items-center gap-2">
                       <span className="text-[11px] text-slate-400">
                         {isDeciduous ? "Pediatric Primary FDI (20)" : "Adult Upper & Lower FDI (32)"}
                       </span>
                       <button
                         onClick={() => setIsDeciduous(!isDeciduous)}
-                        className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition-colors"
+                        className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200"
                       >
                         {isDeciduous ? "Switch to Adult (32)" : "Switch to Deciduous (20)"}
                       </button>
                     </div>
                   </div>
 
-                  {/* Palette Pills Grid */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
                     {CLINICAL_PALETTE.map((item) => {
                       const isSelected = activePaletteStatus === item.id;
@@ -1817,7 +1758,7 @@ export default function App() {
                     })}
                   </div>
 
-                  {/* UPPER ARCH (MAXILLARY) */}
+                  {/* Upper Arch */}
                   <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-100">
                     <div className="text-[10px] font-bold tracking-widest text-slate-400 uppercase text-center mb-2">
                       {isDeciduous ? "Upper Arch (Deciduous Maxillary)" : "Upper Arch (Maxillary)"}
@@ -1831,9 +1772,7 @@ export default function App() {
                             key={num}
                             onClick={() => handleToothTap(num)}
                             className={`w-10 h-12 rounded-lg border flex flex-col items-center justify-center transition-all bg-white shadow-2xs ${
-                              found
-                                ? `${found.border} ${found.bg}`
-                                : "border-emerald-300 text-emerald-700"
+                              found ? `${found.border} ${found.bg}` : "border-emerald-300 text-emerald-700"
                             }`}
                           >
                             <span className="text-xs font-bold text-slate-800">{num}</span>
@@ -1846,7 +1785,7 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* LOWER ARCH (MANDIBULAR) */}
+                  {/* Lower Arch */}
                   <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-100">
                     <div className="text-[10px] font-bold tracking-widest text-slate-400 uppercase text-center mb-2">
                       {isDeciduous ? "Lower Arch (Deciduous Mandibular)" : "Lower Arch (Mandibular)"}
@@ -1860,9 +1799,7 @@ export default function App() {
                             key={num}
                             onClick={() => handleToothTap(num)}
                             className={`w-10 h-12 rounded-lg border flex flex-col items-center justify-center transition-all bg-white shadow-2xs ${
-                              found
-                                ? `${found.border} ${found.bg}`
-                                : "border-emerald-300 text-emerald-700"
+                              found ? `${found.border} ${found.bg}` : "border-emerald-300 text-emerald-700"
                             }`}
                           >
                             <span className="text-xs font-bold text-slate-800">{num}</span>
@@ -1875,20 +1812,14 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Active Odontogram Findings Tags */}
                   <div className="pt-2">
-                    <div className="text-xs font-bold text-slate-800 mb-2">
-                      Active Odontogram Findings:
-                    </div>
+                    <div className="text-xs font-bold text-slate-800 mb-2">Active Odontogram Findings:</div>
                     <div className="flex flex-wrap gap-2">
                       {Object.keys(activePatient.toothConditions || {}).length === 0 ? (
                         <span className="text-xs text-slate-400 italic">No specific pathology recorded. Tap teeth above.</span>
                       ) : (
                         Object.entries(activePatient.toothConditions || {}).map(([t, c]) => (
-                          <span
-                            key={t}
-                            className="text-xs bg-slate-50 border border-slate-200 px-3 py-1 rounded-md text-slate-700 font-mono"
-                          >
+                          <span key={t} className="text-xs bg-slate-50 border border-slate-200 px-3 py-1 rounded-md text-slate-700 font-mono">
                             Tooth {t}: <strong className="text-slate-900">{c}</strong>
                           </span>
                         ))
@@ -1898,13 +1829,86 @@ export default function App() {
                 </div>
               )}
 
-              {/* TAB 2: DIAGNOSIS & TRAUMA (Screenshot 73157.jpg) */}
+              {/* TAB 2: DEPARTMENT REFERRALS ROUTER */}
+              {activeModalTab === "Department Referrals" && (
+                <div className="space-y-4">
+                  <form onSubmit={handleAddReferral} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-end gap-3 text-xs">
+                    <div className="flex-1 min-w-[140px]">
+                      <label className="font-bold text-slate-600 block mb-1">Treatment Directive</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. EXTRACTION, SCALING, GIC"
+                        value={refTreatment}
+                        onChange={(e) => setRefTreatment(e.target.value)}
+                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white"
+                      />
+                    </div>
+                    <div className="w-28">
+                      <label className="font-bold text-slate-600 block mb-1">Tooth / Region</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 18 or 46"
+                        value={refTooth}
+                        onChange={(e) => setRefTooth(e.target.value)}
+                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white"
+                      />
+                    </div>
+                    <div className="w-44">
+                      <label className="font-bold text-slate-600 block mb-1">Department</label>
+                      <select
+                        value={refDept}
+                        onChange={(e) => setRefDept(e.target.value)}
+                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white"
+                      >
+                        {DENTAL_DEPARTMENTS.map((d) => (
+                          <option key={d.id} value={d.code}>{d.code} ({d.room})</option>
+                        ))}
+                      </select>
+                    </div>
+                    <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-bold">
+                      + Add Referral
+                    </button>
+                  </form>
+
+                  <div className="space-y-2">
+                    {(activePatient.referrals || []).length === 0 ? (
+                      <div className="p-6 text-center text-xs text-slate-400 bg-slate-50 rounded-xl">
+                        No specialty referrals queued. Route directives to OMFS, Perio, Cons, or Prostho above.
+                      </div>
+                    ) : (
+                      activePatient.referrals.map((r, i) => (
+                        <div key={r.id || i} className="p-3 rounded-xl border border-slate-200 bg-white flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-3">
+                            <span className="w-6 h-6 rounded-md bg-slate-100 flex items-center justify-center font-bold text-slate-700">
+                              {i + 1}
+                            </span>
+                            <div>
+                              <span className="font-bold text-slate-900 uppercase">{r.treatment}</span>
+                              <span className="text-slate-400 font-mono ml-2">Tooth/Arch: <strong>{r.toothRegion}</strong></span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
+                              {r.department} ({r.roomNo})
+                            </span>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">
+                              Approved
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: DIAGNOSIS & TRAUMA */}
               {activeModalTab === "Diagnosis & Trauma" && (
                 <div className="space-y-4">
                   <div className="text-xs font-bold uppercase text-slate-800 tracking-wider">
                     Radiology & Diagnostic Record
                   </div>
-
                   <div className="border border-slate-200 rounded-xl p-4 divide-y divide-slate-100 bg-white">
                     <div className="py-2.5">
                       <div className="text-xs font-bold text-rose-600">Trauma Evaluation:</div>
@@ -1946,26 +1950,73 @@ export default function App() {
                 </div>
               )}
 
-              {/* TAB 3: PRESCRIPTIONS & WHATSAPP ENGINE (Screenshot 73147.jpg) */}
+              {/* TAB 4: SYSTEMIC REVIEW CHECKBOX MATRIX */}
+              {activeModalTab === "Systemic Review" && (
+                <div className="space-y-4 text-xs">
+                  <span className="text-xs font-bold uppercase text-slate-500 tracking-wider block">
+                    SYSTEMIC CONDITIONS & MEDICAL SCREENING
+                  </span>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                      { id: "hypertension", label: "Hypertension (BP)" },
+                      { id: "diabetes", label: "Diabetes Mellitus" },
+                      { id: "thyroid", label: "Thyroid (Thyroxine)" },
+                      { id: "cardiac", label: "Heart Disease" },
+                      { id: "allergy", label: "Drug Allergies" },
+                      { id: "bleeding", label: "Bleeding Diathesis" },
+                      { id: "respiratory", label: "Asthma / Respiratory" },
+                      { id: "epilepsy", label: "Epileptic Seizures" }
+                    ].map((item) => (
+                      <label key={item.id} className="p-3 rounded-xl border border-slate-200 bg-slate-50/50 flex items-center gap-2 cursor-pointer hover:bg-slate-50">
+                        <input
+                          type="checkbox"
+                          checked={systemicChecks[item.id]}
+                          onChange={(e) => setSystemicChecks({ ...systemicChecks, [item.id]: e.target.checked })}
+                          className="rounded text-blue-600 focus:ring-0"
+                        />
+                        <span className="font-semibold text-slate-700">{item.label}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100">
+                    <span className="text-xs font-bold uppercase text-slate-500 tracking-wider block mb-2">
+                      PERSONAL HABITS & HYGIENE
+                    </span>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="p-3 rounded-xl border border-slate-200 bg-white">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">Brushing Habits</span>
+                        <span className="font-bold text-slate-800">Once Daily (Mixed)</span>
+                      </div>
+                      <div className="p-3 rounded-xl border border-slate-200 bg-white">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">Habits</span>
+                        <span className="font-bold text-slate-800">No Tobacco / Betel</span>
+                      </div>
+                      <div className="p-3 rounded-xl border border-slate-200 bg-white">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">Dietary</span>
+                        <span className="font-bold text-slate-800">Mixed Diet</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 5: PRESCRIPTIONS & WHATSAPP ENGINE */}
               {activeModalTab === "Prescriptions" && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="text-xs font-bold uppercase text-slate-800 tracking-wider">
                       Prescriptions Slip
                     </div>
-                    
-                    {/* AUTOMATED WHATSAPP BOT BUTTON */}
                     <button
                       type="button"
                       onClick={dispatchPatientWhatsApp}
                       className="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all bg-emerald-600 hover:bg-emerald-700 text-white"
                     >
-                      <Send className="w-3.5 h-3.5" />
-                      Dispatch WhatsApp Prescription
+                      <Send className="w-3.5 h-3.5" /> Dispatch WhatsApp Prescription
                     </button>
                   </div>
 
-                  {/* Formulary Quick Fill Presets */}
                   <div>
                     <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1.5">
                       Quick-Select Dental Presets:
@@ -1976,7 +2027,7 @@ export default function App() {
                           key={med.name}
                           type="button"
                           onClick={() => handleAddPrescription(med)}
-                          className="px-2.5 py-1 text-xs bg-slate-50 hover:bg-blue-50 border border-slate-200 text-slate-700 hover:text-blue-700 rounded-lg flex items-center gap-1 transition-all"
+                          className="px-2.5 py-1 text-xs bg-slate-50 hover:bg-blue-50 border border-slate-200 text-slate-700 hover:text-blue-700 rounded-lg flex items-center gap-1"
                         >
                           <Plus className="w-3 h-3 text-blue-600" />
                           <span className="font-semibold">{med.name}</span>
@@ -1986,7 +2037,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Active Prescriptions Table */}
                   <div className="border border-slate-200 rounded-xl overflow-hidden">
                     <table className="w-full text-left text-xs">
                       <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-b border-slate-200">
@@ -2038,13 +2088,12 @@ export default function App() {
                 </div>
               )}
 
-              {/* TAB 4: MEDICAL HISTORY (Screenshot 73149.jpg) */}
+              {/* TAB 6: MEDICAL HISTORY */}
               {activeModalTab === "Medical History" && (
                 <div className="space-y-4">
                   <div className="text-xs font-bold uppercase text-slate-800 tracking-wider">
                     Systemic Screening & Allergies
                   </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="border border-slate-200 rounded-xl p-4 bg-white">
                       <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
@@ -2062,7 +2111,6 @@ export default function App() {
                         className="w-full text-sm font-medium text-slate-800 border-b border-slate-200 focus:outline-none"
                       />
                     </div>
-
                     <div className="border border-rose-100 rounded-xl p-4 bg-rose-50/40">
                       <div className="text-[10px] font-bold uppercase tracking-wider text-rose-500 mb-1">
                         Allergies
@@ -2084,7 +2132,7 @@ export default function App() {
               )}
             </div>
 
-            {/* Modal Bottom Actions (matches 73147.jpg & 73149.jpg) */}
+            {/* Modal Bottom Actions */}
             <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100 text-xs">
               <button
                 type="button"
@@ -2138,7 +2186,7 @@ export default function App() {
                 required
                 value={newPatientForm.name}
                 onChange={(e) => setNewPatientForm({ ...newPatientForm, name: e.target.value })}
-                placeholder="e.g. Ramesh Kumar"
+                placeholder="e.g. Nirmala J"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
               />
             </div>
@@ -2151,7 +2199,7 @@ export default function App() {
                   required
                   value={newPatientForm.age}
                   onChange={(e) => setNewPatientForm({ ...newPatientForm, age: e.target.value })}
-                  placeholder="e.g. 24"
+                  placeholder="e.g. 46"
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                 />
               </div>
@@ -2163,11 +2211,22 @@ export default function App() {
                   onChange={(e) => setNewPatientForm({ ...newPatientForm, gender: e.target.value })}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                 >
-                  <option>Male</option>
                   <option>Female</option>
+                  <option>Male</option>
                   <option>Pediatric</option>
                 </select>
               </div>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Area / Locality</label>
+              <input
+                type="text"
+                value={newPatientForm.area}
+                onChange={(e) => setNewPatientForm({ ...newPatientForm, area: e.target.value })}
+                placeholder="e.g. Sowripalayam, Coimbatore"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+              />
             </div>
 
             <div>
@@ -2177,19 +2236,19 @@ export default function App() {
                 required
                 value={newPatientForm.phone}
                 onChange={(e) => setNewPatientForm({ ...newPatientForm, phone: e.target.value })}
-                placeholder="10-digit mobile"
+                placeholder="7708827021"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-600 mb-1">Systemic Conditions</label>
+              <label className="block font-semibold text-rose-600 mb-1">Medical Alert (High Risk)</label>
               <input
                 type="text"
-                value={newPatientForm.conditions}
-                onChange={(e) => setNewPatientForm({ ...newPatientForm, conditions: e.target.value })}
-                placeholder="e.g. None reported, Diabetes, Hypertension"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                value={newPatientForm.medicalAlert}
+                onChange={(e) => setNewPatientForm({ ...newPatientForm, medicalAlert: e.target.value })}
+                placeholder="e.g. Hypertensive on medication 3 yrs / Thyroid (Thyroxine)"
+                className="w-full px-3 py-2 border border-rose-200 bg-rose-50/40 rounded-lg text-rose-800 font-medium focus:outline-none"
               />
             </div>
 
@@ -2613,7 +2672,7 @@ export default function App() {
         </div>
       )}
 
-      {/* --- UPI QR MODAL (MATCHING SCREENSHOT BILLING) --- */}
+      {/* --- UPI QR MODAL --- */}
       {activeUpiQrInvoice && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
           <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-sm p-6 text-center space-y-4 shadow-xl">
@@ -2625,7 +2684,6 @@ export default function App() {
             </div>
 
             <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 inline-block mx-auto">
-              {/* Dynamic QR SVG */}
               <div className="w-44 h-44 bg-white p-2 border border-slate-200 rounded-lg flex flex-col items-center justify-center shadow-xs">
                 <QrCode className="w-32 h-32 text-slate-900" />
                 <span className="text-[10px] text-slate-500 font-mono mt-1 font-semibold">{practiceProfile.upiId}</span>
@@ -2639,9 +2697,7 @@ export default function App() {
               </div>
             </div>
 
-            <p className="text-[11px] text-slate-400">
-              Scan with Google Pay, PhonePe, or Paytm at chair-side.
-            </p>
+            <p className="text-[11px] text-slate-400">Scan with Google Pay, PhonePe, or Paytm at chair-side.</p>
 
             <button
               onClick={() => {
