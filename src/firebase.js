@@ -1,5 +1,5 @@
 /* ==============================================================================
- * MERIDIAN DENTAL OS - FIREBASE CONFIGURATION & AUTH HELPERS
+ * MERIDIAN DENTAL OS - FIREBASE CONFIGURATION & MULTI-TENANT AUTH
  * File: src/firebase.js
  * ============================================================================== */
 
@@ -22,15 +22,18 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:1234567890:web:abcdef"
 };
 
-// Singleton initialization to prevent hot-reload duplicate instances
+// Singleton initialization to prevent hot-reload duplicates
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
-// Authentication helper exports expected by App.jsx
+// Authentication helper exports with account selection prompt parameter
 const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: "select_account" // Forces Google to display account picker on login
+});
 
 export const loginWithGoogle = async () => {
   try {
@@ -51,7 +54,7 @@ export const logoutUser = async () => {
   }
 };
 
-// Export boolean flag expected by App.jsx
+// Required safety configuration flag
 export const firebaseConfigured = true;
 
 export default app;
