@@ -11,6 +11,7 @@ import {
   Plus,
   Trash2,
   Share2,
+  Eye,
   Upload,
   Calendar,
   Users,
@@ -21,12 +22,29 @@ import {
   UserCheck,
   Send,
   CheckCircle2,
+  Clock,
+  ChevronRight,
+  ExternalLink,
   ShieldCheck,
+  AlertCircle,
   QrCode,
+  Download,
+  FileSpreadsheet,
+  Settings,
+  Baby,
+  Activity,
+  Layers,
   Ruler,
+  Phone,
+  FileText,
   User,
+  HeartPulse,
+  LogIn,
   LogOut,
-  Activity
+  ArrowRight,
+  MessageCircle,
+  ShieldAlert,
+  ClipboardCheck
 } from "lucide-react";
 
 // Safe dynamic import from ./firebase
@@ -36,15 +54,16 @@ import {
   collection,
   doc,
   setDoc,
+  getDocs,
   onSnapshot,
-  serverTimestamp
+  serverTimestamp,
+  addDoc,
+  deleteDoc
 } from "firebase/firestore";
-
-// Import your dedicated LandingPage component
-import LandingPage from "./components/landingpage";
 
 const auth = FirebaseModule.auth;
 const db = FirebaseModule.db;
+const storage = FirebaseModule.storage;
 const firebaseConfigured = Boolean(auth && FirebaseModule.firebaseConfigured !== false);
 const loginWithGoogle = FirebaseModule.loginWithGoogle || (async () => {});
 const logoutUser = FirebaseModule.logoutUser || (async () => {});
@@ -62,7 +81,7 @@ const CLINICAL_PALETTE = [
   { id: "RES", label: "Restored", border: "border-sky-200", bg: "bg-sky-50/60", text: "text-sky-600" },
   { id: "RCT", label: "RCT Done", border: "border-purple-200", bg: "bg-purple-50/60", text: "text-purple-600" },
   { id: "CRW", label: "Crown", border: "border-amber-200", bg: "bg-amber-50/60", text: "text-amber-600" },
-  { id: "BRG", label: "Bridging", border: "border-indigo-200", bg: "bg-indigo-50/60", text: "text-indigo-600" },
+  { id: "BRG", label: "Bridging (Under Cr...", border: "border-indigo-200", bg: "bg-indigo-50/60", text: "text-indigo-600" },
   { id: "IMP", label: "Implanted", border: "border-teal-200", bg: "bg-teal-50/60", text: "text-teal-600" },
   { id: "FRC", label: "Fractured (Trauma)", border: "border-rose-400 ring-2 ring-rose-200", bg: "bg-rose-50", text: "text-rose-700" },
   { id: "SPC", label: "Spacing", border: "border-cyan-200", bg: "bg-cyan-50/60", text: "text-cyan-600" },
@@ -89,7 +108,7 @@ const DENTAL_DEPARTMENTS = [
 const PRESET_MEDICATIONS = [
   { name: "Zerodol-SP", generic: "Aceclofenac 100mg + Paracetamol 325mg + Serratiopeptidase 15mg", frequency: "1-0-1", duration: "3 Days", timing: "After Food" },
   { name: "Moxikind-CV 625", generic: "Amoxicillin 500mg + Clavulanic Acid 125mg", frequency: "1-0-1", duration: "5 Days", timing: "After Food" },
-  { name: "Ketorol-DT", generic: "Ketorolac Tromethamine 10mg", frequency: "SOS", duration: "2 Days", timing: "Dissolve in half cup water" },
+  { name: "Ketorol-DT", generic: "Ketorolac Tromethamine 10mg (Dispersible)", frequency: "SOS", duration: "2 Days", timing: "Dissolve in half cup water" },
   { name: "Metrogyl 400", generic: "Metronidazole 400mg", frequency: "1-1-1", duration: "3 Days", timing: "After Food" },
   { name: "Rexidin 0.2%", generic: "Chlorhexidine Gluconate 0.2% w/v Mouthwash", frequency: "1-0-1", duration: "7 Days", timing: "10ml rinse for 1 min after brushing" },
   { name: "Kenacort 0.1%", generic: "Triamcinolone Acetonide 0.1% Oral Paste", frequency: "0-0-1", duration: "5 Days", timing: "Apply thinly at bedtime over ulcer" },
@@ -209,7 +228,7 @@ export default function App() {
     try {
       const stored = localStorage.getItem("meridian_profile");
       return stored ? JSON.parse(stored) : {
-        name: "MeridianDental Clinic",
+        name: "Meridian Dental Clinic",
         tagline: "Advanced Dental Care & Implant Center",
         regNumber: "UDYAM-TN-04-0139569",
         drName: "Dr. Santhoshkumar S / Dr. Sivasabari G",
@@ -221,7 +240,7 @@ export default function App() {
       };
     } catch {
       return {
-        name: "MeridianDental Clinic",
+        name: "Meridian Dental Clinic",
         tagline: "Advanced Dental Care & Implant Center",
         regNumber: "UDYAM-TN-04-0139569",
         drName: "Dr. Santhoshkumar S / Dr. Sivasabari G",
@@ -514,7 +533,7 @@ export default function App() {
       `⚠️ *Patient Care Advice:*\n` +
       `• Please take prescribed medications strictly on time.\n` +
       `• In case of persistent swelling or drug allergy, contact clinic immediately.\n\n` +
-      `_Powered by MeridianDental OS (Udyam: ${practiceProfile.regNumber})_`
+      `_Powered by Meridian Dental OS (Udyam: ${practiceProfile.regNumber})_`
     );
 
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank", "noopener,noreferrer");
@@ -576,7 +595,7 @@ export default function App() {
       `🔬 *Procedure:* ${appt.procedure}\n` +
       `----------------------------------------\n` +
       `📍 Please arrive 10 minutes prior to chair setup.\n\n` +
-      `_MeridianDental OS_`
+      `_Meridian Dental OS_`
     );
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank", "noopener,noreferrer");
   };
@@ -724,17 +743,172 @@ export default function App() {
       <div className="min-h-screen bg-[#0b1329] flex items-center justify-center p-6 text-white">
         <div className="text-center">
           <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-cyan-300/30 border-t-cyan-300" />
-          <p className="text-sm text-slate-300">Checking your MeridianDental OS session…</p>
+          <p className="text-sm text-slate-300">Checking your Meridian Dental OS session…</p>
         </div>
       </div>
     );
   }
 
   // =========================================================================
-  // VIEW 1: PROFESSIONAL LANDING PAGE
+  // VIEW 1: PROFESSIONAL LANDING PAGE (BESTOSYS STYLE)
   // =========================================================================
   if (viewMode === "landing") {
-    return <LandingPage onLoginClick={() => setViewMode("dashboard")} />;
+    return (
+      <div className="min-h-screen bg-white text-slate-900 font-sans antialiased selection:bg-blue-600 selection:text-white">
+        
+        {/* Top Header Navigation */}
+        <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 px-6 py-4 flex items-center justify-between max-w-7xl mx-auto">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center font-black tracking-wider shadow-sm">
+              MD
+            </div>
+            <div>
+              <span className="text-base font-extrabold tracking-tight text-slate-900 block leading-none">
+                Meridian Dental
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">
+                Dental OS
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-3">
+            <button 
+              onClick={() => setViewMode("dashboard")}
+              className="text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-2.5 rounded-xl transition border border-blue-200 cursor-pointer"
+            >
+              14-Day Free Trial
+            </button>
+            <button 
+              onClick={() => setViewMode("dashboard")}
+              className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-5 py-2.5 rounded-xl shadow-md transition cursor-pointer"
+            >
+              Log In
+            </button>
+          </div>
+        </header>
+
+        {/* Hero Section */}
+        <section className="px-6 pt-16 pb-12 max-w-4xl mx-auto text-center space-y-6">
+          <div className="inline-flex items-center space-x-2 bg-blue-50 border border-blue-100 px-3.5 py-1.5 rounded-full">
+            <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+            <span className="text-xs font-bold text-blue-700 uppercase tracking-wider">
+              Registered Clinical Healthcare Operating System
+            </span>
+          </div>
+
+          <h1 className="text-4xl sm:text-6xl font-black text-slate-900 tracking-tight leading-tight">
+            A Chair-Side Native Operating System for <br />
+            <span className="text-blue-600">Modern Dental Practices</span>
+          </h1>
+
+          <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            Unifying interactive 32-tooth FDI odontogram charting, OPG diagnostic studio, e-prescriptions, and operatory workflows in a lightning-fast browser platform.
+          </p>
+
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button 
+              onClick={() => setViewMode("dashboard")}
+              className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-8 py-4 rounded-2xl shadow-lg shadow-blue-600/20 transition transform active:scale-95 cursor-pointer"
+            >
+              <span>Launch Platform</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          <p className="text-[11px] font-semibold text-slate-400 tracking-wider uppercase pt-2">
+            StartUpTN: STN99974 | MSME Micro: UDYAM-TN-04-0139569
+          </p>
+        </section>
+
+        {/* Workflow Friction & Solution Banner */}
+        <section className="px-6 max-w-5xl mx-auto mb-16">
+          <div className="bg-gradient-to-br from-slate-900 to-blue-950 rounded-3xl p-8 sm:p-12 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
+            <div className="space-y-4 max-w-lg z-10">
+              <span className="text-xs font-extrabold uppercase tracking-widest bg-blue-800/60 px-3.5 py-1 rounded-full border border-blue-500/30 text-blue-200">
+                Eliminate Paper Records
+              </span>
+              <h3 className="text-2xl font-black tracking-tight">Save 15 Minutes Per Patient</h3>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Paper case files cause lost history and slow chair-side exams. Meridian Dental OS replaces fragmented silos with unified inventory tracking, lab coordination, and automated WhatsApp communication.
+              </p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 text-center z-10 min-w-[200px]">
+              <Activity className="w-10 h-10 text-blue-400 mx-auto mb-2" />
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Performance</span>
+              <p className="text-lg font-black mt-1 text-white">3x Faster Consultations</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Core Features Grid */}
+        <section className="px-6 max-w-5xl mx-auto pb-20 space-y-8">
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+              Engineered for the Operatory Floor
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500">
+              Built by clinicians and developers for absolute speed and accuracy.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+            
+            <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-xs hover:shadow-lg transition text-center space-y-4 group">
+              <div className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto shadow-md group-hover:scale-110 transition">
+                <Activity className="w-7 h-7" />
+              </div>
+              <h3 className="text-base font-black text-slate-900">32-Tooth FDI Odontogram</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Instant visual mapping for caries, restorations, RCT, crowns, implants, and trauma notation with single-click palettes.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-xs hover:shadow-lg transition text-center space-y-4 group">
+              <div className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto shadow-md group-hover:scale-110 transition">
+                <Share2 className="w-7 h-7" />
+              </div>
+              <h3 className="text-base font-black text-slate-900">WhatsApp E-Prescriptions</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                One-tap digital prescription dispatch directly to patient mobile numbers alongside automated low-stock inventory alerts.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-xs hover:shadow-lg transition text-center space-y-4 group">
+              <div className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto shadow-md group-hover:scale-110 transition">
+                <ShieldCheck className="w-7 h-7" />
+              </div>
+              <h3 className="text-base font-black text-slate-900">Cloud Data Security</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Bank-grade cloud architecture with multi-level encryption protecting patient history records and billing data.
+              </p>
+            </div>
+
+          </div>
+        </section>
+
+        {/* Floating WhatsApp Widget */}
+        <div className="fixed bottom-6 right-6 z-50">
+          <a 
+            href="https://wa.me/919043205927" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="w-14 h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full flex items-center justify-center shadow-xl shadow-emerald-500/30 transition transform hover:scale-110 active:scale-95"
+            aria-label="Chat on WhatsApp"
+          >
+            <MessageCircle className="w-7 h-7 fill-current" />
+          </a>
+        </div>
+
+        {/* Footer */}
+        <footer className="bg-slate-900 text-slate-400 py-12 px-6 text-center text-xs space-y-3 border-t border-slate-800">
+          <p className="font-bold text-slate-200">Meridian Dental OS — Clinical Healthcare Operating System</p>
+          <p>StartUpTN Ref: STN99974 | MSME Micro: UDYAM-TN-04-0139569 | Founding Team: Santhoshkumar S & Sivasabari G</p>
+          <p className="text-slate-500 pt-4">© 2026 Meridian Dental OS. All rights reserved.</p>
+        </footer>
+
+      </div>
+    );
   }
 
   // =========================================================================
@@ -758,20 +932,12 @@ export default function App() {
       >
         <div>
           <div className="p-5 flex items-center justify-between border-b border-slate-800/80">
-            <div className="flex items-center gap-2.5">
-              <img 
-                src="/logo.png" 
-                alt="Logo" 
-                className="w-8 h-8 rounded-lg object-cover" 
-                onError={(e) => { e.target.style.display = 'none'; }}
-              />
-              <div>
-                <div className="text-base font-bold text-white tracking-wide">
-                  MeridianDental
-                </div>
-                <div className="text-[11px] text-slate-400 font-normal">
-                  Practice Management OS
-                </div>
+            <div>
+              <div className="text-base font-bold text-white tracking-wide flex items-center gap-2">
+                Meridian Dental
+              </div>
+              <div className="text-[11px] text-slate-400 font-normal">
+                Practice Management OS
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -834,7 +1000,7 @@ export default function App() {
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <div className="truncate text-xs font-semibold text-white">{authUser?.displayName || "Dr. Santhoshkumar S"}</div>
+              <div className="truncate text-xs font-semibold text-white">{authUser?.displayName || "Dr. Santhoshkumar"}</div>
               <div className="truncate text-[11px] text-slate-400">{authUser?.email || "coimbatore@meridian.in"}</div>
             </div>
           </div>
@@ -858,15 +1024,7 @@ export default function App() {
             >
               <Menu className="w-6 h-6" />
             </button>
-            <div className="flex items-center gap-2.5">
-              <img 
-                src="/logo.png" 
-                alt="Logo" 
-                className="w-7 h-7 rounded-lg object-cover" 
-                onError={(e) => { e.target.style.display = 'none'; }}
-              />
-              <div className="text-lg font-bold text-slate-900">MeridianDental OS</div>
-            </div>
+            <div className="text-lg font-bold text-slate-900">Meridian Dental OS</div>
           </div>
 
           <div className="flex items-center gap-4">
@@ -886,6 +1044,9 @@ export default function App() {
             >
               View Landing Page
             </button>
+            <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-semibold">
+              S
+            </div>
           </div>
         </header>
 
@@ -1490,7 +1651,7 @@ export default function App() {
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
                 <div>
                   <h1 className="text-2xl font-bold tracking-tight text-slate-900">Clinical Overview</h1>
-                  <p className="text-sm text-slate-500 mt-1">MeridianDental Clinical Workspace</p>
+                  <p className="text-sm text-slate-500 mt-1">Meridian Dental Clinical Workspace</p>
                 </div>
                 <button onClick={() => setActiveNav("Appointments Diary")} className="text-sm font-semibold text-blue-600 hover:text-blue-800">
                   View today's diary ›
