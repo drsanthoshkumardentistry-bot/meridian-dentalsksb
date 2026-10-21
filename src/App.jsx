@@ -2,7 +2,7 @@
  * MERIDIAN DENTAL OS - COMMERCIAL HEALTHCARE PRODUCTION SUITE
  * Preserves exact original UI styling, typography, layout, and color palette.
  * Enhanced with Institutional Hospital EHR, Inter-Department Referrals, Systemic Alerts,
- * and U-Shaped Arch Form Odontogram with Dynamic Age-Based Dentition Mapping.
+ * U-Shaped Arch Form Odontogram, and Dentobees-style Add Appointment Flow.
  * File: src/App.jsx
  * ============================================================================== */
 
@@ -346,20 +346,26 @@ export default function App() {
   const fileInputRef = useRef(null);
   const opgCanvasRef = useRef(null);
 
-  // New Appointment Modal State
+  // New Appointment Modal State (Dentobees Style)
   const [isAddApptOpen, setIsAddApptOpen] = useState(false);
   const [newApptForm, setNewApptForm] = useState({
     patientId: "",
     patientName: "",
     phone: "",
     age: "",
+    gender: "Male",
+    location: "",
     date: new Date().toISOString().split("T")[0],
     time: "10:30",
+    amPm: "AM",
+    duration: "15 Mins",
     chair: "Chair 1 (Main Operatory)",
     doctor: practiceProfile.drName,
     procedure: "Root Canal Therapy (Access)",
+    notes: "",
     status: "Confirmed",
   });
+  const [apptMobileDropdownOpen, setApptMobileDropdownOpen] = useState(false);
 
   // New Invoice Modal State
   const [isAddInvoiceOpen, setIsAddInvoiceOpen] = useState(false);
@@ -450,7 +456,7 @@ export default function App() {
     });
     setIsAddPatientOpen(false);
     setSelectedPatientId(created.id);
-    setIsDeciduousOverride(null); // Reset override for new patient age evaluation
+    setIsDeciduousOverride(null);
     setIsChartModalOpen(true);
     showToast(`Patient ${created.name} registered successfully`);
   };
@@ -629,7 +635,7 @@ export default function App() {
   const handleCreateAppointment = (e) => {
     e.preventDefault();
     if (!newApptForm.patientName.trim() || !newApptForm.phone.trim()) {
-      showToast("Patient Name and Phone are required");
+      showToast("Patient Name and Mobile Number are required");
       return;
     }
     const appt = {
@@ -651,10 +657,11 @@ export default function App() {
       `----------------------------------------\n` +
       `👤 *Patient:* ${appt.patientName} (Age: ${appt.age || "N/A"})\n` +
       `📅 *Date:* ${appt.date}\n` +
-      `⏰ *Time Slot:* ${appt.time}\n` +
+      `⏰ *Time Slot:* ${appt.time} ${appt.amPm || "AM"} (${appt.duration || "15 Mins"})\n` +
       `💺 *Operatory:* ${appt.chair}\n` +
       `🩺 *Attending Doctor:* ${appt.doctor}\n` +
-      `🔬 *Procedure:* ${appt.procedure}\n` +
+      `🔬 *Procedure / Complaint:* ${appt.procedure}\n` +
+      (appt.notes ? `📝 *Notes:* ${appt.notes}\n` : "") +
       `----------------------------------------\n` +
       `📍 Please arrive 10 minutes prior to chair setup.\n\n` +
       `_Meridian Dental OS_`
@@ -1005,7 +1012,7 @@ export default function App() {
                         key={p.id}
                         onClick={() => {
                           setSelectedPatientId(p.id);
-                          setIsDeciduousOverride(null); // Reset override on select
+                          setIsDeciduousOverride(null);
                           setIsChartModalOpen(true);
                         }}
                         className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex items-center justify-between cursor-pointer hover:border-blue-300 transition-all"
@@ -1258,7 +1265,7 @@ export default function App() {
                         <th className="p-3.5">ID / Patient</th>
                         <th className="p-3.5">Date & Slot</th>
                         <th className="p-3.5">Operatory Chair</th>
-                        <th className="p-3.5">Procedure</th>
+                        <th className="p-3.5">Procedure / Complaint</th>
                         <th className="p-3.5">Status</th>
                         <th className="p-3.5 text-center">Action</th>
                       </tr>
@@ -1270,7 +1277,7 @@ export default function App() {
                             <div className="font-bold text-slate-900">{appt.patientName}</div>
                             <div className="text-[10px] text-slate-400">{appt.phone}</div>
                           </td>
-                          <td className="p-3.5 font-medium">{appt.date} at <strong>{appt.time}</strong></td>
+                          <td className="p-3.5 font-medium">{appt.date} at <strong>{appt.time} {appt.amPm}</strong></td>
                           <td className="p-3.5 text-slate-600">{appt.chair}</td>
                           <td className="p-3.5 font-semibold text-blue-700">{appt.procedure}</td>
                           <td className="p-3.5">
@@ -1789,7 +1796,6 @@ export default function App() {
                         {(isDeciduousMode() ? DECIDUOUS_UPPER : PERMANENT_UPPER).map((num, idx, arr) => {
                           const code = activePatient.toothConditions?.[num];
                           const found = CLINICAL_PALETTE.find((p) => p.id === code);
-                          // Add slight vertical curvature offset for U-shape realism
                           const mid = arr.length / 2;
                           const offsetClass = Math.abs(idx - mid + 0.5) > 4 ? "translate-y-2" : Math.abs(idx - mid + 0.5) > 2 ? "translate-y-1" : "translate-y-0";
                           return (
@@ -1820,7 +1826,6 @@ export default function App() {
 
                     {/* Mandibular (Lower Arch) - U-Curve Display */}
                     <div className="mt-4">
-                      {/* U-Shaped Horseshoe Wrapper (Inverted curve for lower) */}
                       <div className="max-w-2xl mx-auto px-4 py-3 rounded-b-[5rem] border-b-2 border-x-2 border-cyan-500/30 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center gap-1 sm:gap-2 flex-wrap">
                         {(isDeciduousMode() ? DECIDUOUS_LOWER : PERMANENT_LOWER).map((num, idx, arr) => {
                           const code = activePatient.toothConditions?.[num];
@@ -2311,64 +2316,142 @@ export default function App() {
         </div>
       )}
 
-      {/* --- ADD APPOINTMENT MODAL --- */}
+      {/* --- ADD APPOINTMENT MODAL (DENTOBEES STYLE) --- */}
       {isAddApptOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs overflow-y-auto">
           <form
             onSubmit={handleCreateAppointment}
-            className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-xl text-xs"
+            className="bg-white rounded-2xl border border-slate-200 w-full max-w-xl p-6 md:p-7 space-y-4 shadow-2xl text-xs relative max-h-[95vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
-              <h3 className="text-sm font-bold text-slate-900">Book Chair-side Appointment</h3>
+              <h3 className="text-base font-bold text-slate-900">Add New Appointment</h3>
               <button
                 type="button"
                 onClick={() => setIsAddApptOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div>
-              <label className="block font-semibold text-slate-600 mb-1">Patient Name *</label>
-              <input
-                type="text"
-                required
-                value={newApptForm.patientName}
-                onChange={(e) => setNewApptForm({ ...newApptForm, patientName: e.target.value })}
-                placeholder="Patient Full Name"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-              />
-            </div>
+            {/* Row 1: Mobile Number lookup (with interactive dropdown matching Dentobees) & Patient Name */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative">
+              <div className="relative">
+                <label className="block font-semibold text-slate-700 mb-1">Mobile Number *</label>
+                <div className="relative">
+                  <input
+                    type="tel"
+                    required
+                    value={newApptForm.phone}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setNewApptForm({ ...newApptForm, phone: val });
+                      setApptMobileDropdownOpen(true);
+                    }}
+                    onFocus={() => setApptMobileDropdownOpen(true)}
+                    placeholder="Search mobile or enter new..."
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {newApptForm.phone && (
+                    <button
+                      type="button"
+                      onClick={() => setNewApptForm({ ...newApptForm, phone: "", patientName: "", age: "", gender: "Male", location: "" })}
+                      className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 text-xs"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">Mobile *</label>
-                <input
-                  type="tel"
-                  required
-                  value={newApptForm.phone}
-                  onChange={(e) => setNewApptForm({ ...newApptForm, phone: e.target.value })}
-                  placeholder="10-digit number"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-                />
+                {/* Patient Search Dropdown matching Dentobees UI */}
+                {apptMobileDropdownOpen && (
+                  <div className="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-56 overflow-y-auto divide-y divide-slate-100">
+                    {patients
+                      .filter((p) => p.phone.includes(newApptForm.phone) || p.name.toLowerCase().includes(newApptForm.phone.toLowerCase()))
+                      .map((p) => (
+                        <div
+                          key={p.id}
+                          onClick={() => {
+                            setNewApptForm({
+                              ...newApptForm,
+                              patientId: p.id,
+                              patientName: p.name,
+                              phone: p.phone,
+                              age: p.age || "",
+                              gender: p.gender || "Male",
+                              location: p.area || "Coimbatore",
+                            });
+                            setApptMobileDropdownOpen(false);
+                          }}
+                          className="p-3 hover:bg-emerald-50 cursor-pointer flex items-center justify-between transition-colors"
+                        >
+                          <div>
+                            <div className="font-bold text-slate-900 flex items-center gap-2">
+                              <User className="w-3.5 h-3.5 text-blue-600" />
+                              {p.name}
+                            </div>
+                            <div className="text-[11px] text-slate-500 mt-0.5">
+                              Age: {p.age || "N/A"}Y / {p.gender || "Patient"} • Location: {p.area || "Coimbatore"}
+                            </div>
+                            <div className="text-[10px] text-emerald-700 font-mono mt-0.5">Phone: {p.phone}</div>
+                          </div>
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">Select</span>
+                        </div>
+                      ))}
+                    {patients.filter((p) => p.phone.includes(newApptForm.phone) || p.name.toLowerCase().includes(newApptForm.phone.toLowerCase())).length === 0 && (
+                      <div className="p-3 text-xs text-slate-400 text-center italic">
+                        No matching patient found. Enter details to register new visit.
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-600 mb-1">Age</label>
+                <label className="block font-semibold text-slate-700 mb-1">Patient Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={newApptForm.patientName}
+                  onChange={(e) => setNewApptForm({ ...newApptForm, patientName: e.target.value })}
+                  placeholder="Enter patient name"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            {/* Row 2: Age & Doctor */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Age</label>
                 <input
                   type="number"
                   value={newApptForm.age}
                   onChange={(e) => setNewApptForm({ ...newApptForm, age: e.target.value })}
-                  placeholder="Age"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                  placeholder="Enter patient age"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Doctor</label>
+                <select
+                  value={newApptForm.doctor}
+                  onChange={(e) => setNewApptForm({ ...newApptForm, doctor: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option>{practiceProfile.drName}</option>
+                  <option>Dr. Sivasabari G</option>
+                  <option>Dr. Anandha Krishnan (OMFS)</option>
+                  <option>Dr. Priya Dharshini (Perio)</option>
+                </select>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            {/* Row 3: Date, Time Slot & Duration */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block font-semibold text-slate-600 mb-1">Date</label>
+                <label className="block font-semibold text-slate-700 mb-1">Date</label>
                 <input
                   type="date"
                   value={newApptForm.date}
@@ -2378,53 +2461,92 @@ export default function App() {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-600 mb-1">Time Slot</label>
+                <label className="block font-semibold text-slate-700 mb-1">Time & AM/PM</label>
+                <div className="flex gap-1.5">
+                  <input
+                    type="time"
+                    value={newApptForm.time}
+                    onChange={(e) => setNewApptForm({ ...newApptForm, time: e.target.value })}
+                    className="flex-1 px-2.5 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                  />
+                  <select
+                    value={newApptForm.amPm}
+                    onChange={(e) => setNewApptForm({ ...newApptForm, amPm: e.target.value })}
+                    className="w-16 px-2 py-2 border border-slate-300 rounded-lg text-slate-800 bg-white focus:outline-none font-bold"
+                  >
+                    <option>AM</option>
+                    <option>PM</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Duration</label>
+                <select
+                  value={newApptForm.duration}
+                  onChange={(e) => setNewApptForm({ ...newApptForm, duration: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 bg-white focus:outline-none"
+                >
+                  <option>15 Mins</option>
+                  <option>30 Mins</option>
+                  <option>45 Mins</option>
+                  <option>60 Mins (1 Hour)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Row 4: Operatory Chair & Procedure */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Operatory Chair</label>
+                <select
+                  value={newApptForm.chair}
+                  onChange={(e) => setNewApptForm({ ...newApptForm, chair: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 bg-white focus:outline-none"
+                >
+                  <option>Chair 1 (Main Operatory)</option>
+                  <option>Chair 2 (Pediatric / Perio)</option>
+                  <option>Chair 3 (Prosthodontics)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Patient Complaint / Procedure</label>
                 <input
-                  type="time"
-                  value={newApptForm.time}
-                  onChange={(e) => setNewApptForm({ ...newApptForm, time: e.target.value })}
+                  type="text"
+                  value={newApptForm.procedure}
+                  onChange={(e) => setNewApptForm({ ...newApptForm, procedure: e.target.value })}
+                  placeholder="e.g. Toothache #36 / Root Canal"
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                 />
               </div>
             </div>
 
+            {/* Row 5: Clinical Notes */}
             <div>
-              <label className="block font-semibold text-slate-600 mb-1">Operatory Chair</label>
-              <select
-                value={newApptForm.chair}
-                onChange={(e) => setNewApptForm({ ...newApptForm, chair: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-              >
-                <option>Chair 1 (Main Operatory)</option>
-                <option>Chair 2 (Pediatric / Perio)</option>
-                <option>Chair 3 (Prosthodontics)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block font-semibold text-slate-600 mb-1">Planned Procedure</label>
-              <input
-                type="text"
-                value={newApptForm.procedure}
-                onChange={(e) => setNewApptForm({ ...newApptForm, procedure: e.target.value })}
-                placeholder="e.g. Composite Restoration #16"
+              <label className="block font-semibold text-slate-700 mb-1">Notes</label>
+              <textarea
+                rows={2}
+                value={newApptForm.notes}
+                onChange={(e) => setNewApptForm({ ...newApptForm, notes: e.target.value })}
+                placeholder="Enter any additional clinical notes or instructions..."
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
               />
             </div>
 
-            <div className="pt-2 flex justify-end gap-2">
+            <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setIsAddApptOpen(false)}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
+                className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold"
+                className="px-5 py-2 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold shadow-sm"
               >
-                Schedule Appointment
+                Save Appointment
               </button>
             </div>
           </form>
