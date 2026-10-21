@@ -1,5 +1,5 @@
 /* ==============================================================================
- * MERIDENT (POWERED BY MERIDIANDENTAL OS) - SIGNATURE VIDEO-INSPIRED LANDING
+ * MERIDENT (POWERED BY MERIDIANDENTAL OS) - SIGNATURE WHITE & BLUE LANDING
  * File: src/components/landingpage.jsx
  * ============================================================================== */
 
@@ -24,7 +24,9 @@ import {
   PlusCircle,
   LineChart,
   SearchCheck,
-  Check
+  Check,
+  Calendar,
+  FileText
 } from "lucide-react";
 
 export default function LandingPage({ onLoginClick }) {
@@ -66,7 +68,7 @@ export default function LandingPage({ onLoginClick }) {
         </div>
       </header>
 
-      {/* 2. HERO SECTION (Inspired by Video 77360.mp4) */}
+      {/* 2. HERO SECTION */}
       <section className="px-6 pt-16 pb-16 max-w-5xl mx-auto text-center space-y-8 bg-gradient-to-b from-blue-50 via-white to-white">
         <div className="inline-flex items-center space-x-2 bg-blue-100 border border-blue-200 px-4 py-1.5 rounded-full shadow-inner">
           <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
@@ -84,7 +86,7 @@ export default function LandingPage({ onLoginClick }) {
           The ultimate ERP solution for modern dental clinics, unifying 32-tooth FDI odontograms, OPG diagnostics, automated billing, and patient follow-ups.
         </p>
 
-        {/* Hero CTAs matching video layout */}
+        {/* Hero CTAs */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
           <button 
             onClick={onLoginClick}
@@ -113,7 +115,7 @@ export default function LandingPage({ onLoginClick }) {
           </a>
         </div>
 
-        {/* Dashboard Preview Mockup Container from Video */}
+        {/* Dashboard Preview Mockup Container */}
         <div className="pt-8 max-w-4xl mx-auto">
           <div className="bg-slate-900 rounded-3xl p-3 sm:p-4 shadow-2xl border border-slate-800">
             <div className="bg-white rounded-2xl p-4 text-left space-y-3">
@@ -140,7 +142,7 @@ export default function LandingPage({ onLoginClick }) {
         <div className="bg-gradient-to-b from-blue-900 via-blue-950 to-slate-950 text-white rounded-[36px] p-8 sm:p-14 shadow-2xl text-center space-y-12">
           <div className="space-y-4">
             <div className="w-14 h-14 bg-blue-800/80 rounded-2xl flex items-center justify-center mx-auto text-cyan-400 border border-blue-600/40 shadow-md">
-              <PlusCircle className="w-7 h-7" />
+              <Users className="w-7 h-7" />
             </div>
             <h3 className="text-2xl sm:text-3xl font-black text-white">Grow your patient base</h3>
             <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto">Automated re-call systems, smart scheduling, and direct WhatsApp reminders.</p>
@@ -148,7 +150,7 @@ export default function LandingPage({ onLoginClick }) {
 
           <div className="space-y-4 pt-6 border-t border-blue-800/40">
             <div className="w-14 h-14 bg-blue-800/80 rounded-2xl flex items-center justify-center mx-auto text-cyan-400 border border-blue-600/40 shadow-md">
-              <LineChart className="w-7 h-7" />
+              <TrendingUp className="w-7 h-7" />
             </div>
             <h3 className="text-2xl sm:text-3xl font-black text-white">Improve Operations</h3>
             <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto">Centralized digital case files, staff rostering, and inter-departmental referrals.</p>
@@ -156,7 +158,7 @@ export default function LandingPage({ onLoginClick }) {
 
           <div className="space-y-4 pt-6 border-t border-blue-800/40">
             <div className="w-14 h-14 bg-blue-800/80 rounded-2xl flex items-center justify-center mx-auto text-cyan-400 border border-blue-600/40 shadow-md">
-              <SearchCheck className="w-7 h-7" />
+              <BarChart3 className="w-7 h-7" />
             </div>
             <h3 className="text-2xl sm:text-3xl font-black text-white">Collect & Track Better</h3>
             <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto">Instant UPI QR billing, pre-auth insurance claims, and consumable stock triggers.</p>
@@ -243,7 +245,7 @@ export default function LandingPage({ onLoginClick }) {
               <h4 className="text-lg font-black tracking-tight text-white">SANTHOSHKUMAR S</h4>
               <p className="text-xs font-semibold text-cyan-300 uppercase tracking-widest">Founder & Managing Director</p>
               <p className="text-[11px] text-slate-300 pt-2 leading-relaxed">
-                BDS Student, Sri Ramakrishna Dental College & Hospital, Coimbatore[span_0](start_span)[span_0](end_span). Full-stack healthcare software architect[span_1](start_span)[span_1](end_span).
+                BDS Student, Sri Ramakrishna Dental College & Hospital, Coimbatore[span_1](start_span)[span_1](end_span). Full-stack healthcare software architect[span_2](start_span)[span_2](end_span).
               </p>
             </div>
 
@@ -255,7 +257,7 @@ export default function LandingPage({ onLoginClick }) {
               <h4 className="text-lg font-black tracking-tight text-white">SIVASABARI G</h4>
               <p className="text-xs font-semibold text-indigo-300 uppercase tracking-widest">Co-Founder & CEO</p>
               <p className="text-[11px] text-slate-300 pt-2 leading-relaxed">
-                BDS Student, Dhanalakshmi Srinivasan Dental College & Hospital, Perambalur[span_2](start_span)[span_2](end_span). Operatory field requirements & clinical trials lead[span_3](start_span)[span_3](end_span).
+                BDS Student, Dhanalakshmi Srinivasan Dental College & Hospital, Perambalur[span_3](start_span)[span_3](end_span). Operatory field requirements & clinical trials lead[span_4](start_span)[span_4](end_span).
               </p>
             </div>
           </div>
