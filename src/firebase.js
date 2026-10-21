@@ -29,10 +29,10 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
-// Authentication helper exports with account selection prompt parameter
+// Configure Google Provider with account selection prompt
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
-  prompt: "select_account" // Forces Google to display account selection picker
+  prompt: "select_account" // Forces Google to show the account picker every time
 });
 
 export const loginWithGoogle = async () => {
@@ -54,7 +54,7 @@ export const logoutUser = async () => {
   }
 };
 
-// Required safety configuration flag
+// Required configuration safety flag
 export const firebaseConfigured = true;
 
 export default app;
