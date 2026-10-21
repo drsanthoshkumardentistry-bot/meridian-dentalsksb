@@ -1,5 +1,5 @@
 /* ==============================================================================
- * MERIDIAN DENTAL OS - FIREBASE CONFIGURATION & MULTI-TENANT AUTH
+ * MERIDENT OS - FIREBASE CONFIGURATION & MULTI-TENANT AUTH
  * File: src/firebase.js
  * ============================================================================== */
 
@@ -32,7 +32,7 @@ export const storage = getStorage(app);
 // Authentication helper exports with account selection prompt parameter
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
-  prompt: "select_account" // Forces Google to display account picker on login
+  prompt: "select_account" // Forces Google to display account selection picker
 });
 
 export const loginWithGoogle = async () => {
