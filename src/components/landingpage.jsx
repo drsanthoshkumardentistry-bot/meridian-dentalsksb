@@ -1,5 +1,5 @@
 /* ==============================================================================
- * MERIDENT (POWERED BY MERIDIANDENTAL OS) - SIGNATURE WHITE & BLUE LANDING
+ * MERIDENT (POWERED BY MERIDIANDENTAL OS) - SIGNATURE VIDEO-INSPIRED LANDING
  * File: src/components/landingpage.jsx
  * ============================================================================== */
 
@@ -19,9 +19,12 @@ import {
   TrendingUp,
   Users,
   BarChart3,
+  PhoneCall,
+  PlayCircle,
   PlusCircle,
   LineChart,
-  SearchCheck
+  SearchCheck,
+  Check
 } from "lucide-react";
 
 export default function LandingPage({ onLoginClick }) {
@@ -63,11 +66,11 @@ export default function LandingPage({ onLoginClick }) {
         </div>
       </header>
 
-      {/* 2. HERO SECTION */}
-      <section className="px-6 pt-16 pb-16 max-w-4xl mx-auto text-center space-y-6">
-        <div className="inline-flex items-center space-x-2 bg-blue-50 border border-blue-100 px-4 py-1.5 rounded-full shadow-inner">
+      {/* 2. HERO SECTION (Inspired by Video 77360.mp4) */}
+      <section className="px-6 pt-16 pb-16 max-w-5xl mx-auto text-center space-y-8 bg-gradient-to-b from-blue-50 via-white to-white">
+        <div className="inline-flex items-center space-x-2 bg-blue-100 border border-blue-200 px-4 py-1.5 rounded-full shadow-inner">
           <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
-          <span className="text-xs font-bold text-blue-700 uppercase tracking-wider">
+          <span className="text-xs font-bold text-blue-800 uppercase tracking-wider">
             Registered Clinical Healthcare Operating System
           </span>
         </div>
@@ -78,17 +81,53 @@ export default function LandingPage({ onLoginClick }) {
         </h1>
 
         <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed">
-          The ultimate ERP solution for modern dental clinics, unifying 32-tooth FDI odontograms, OPG diagnostics, and automated workflows.
+          The ultimate ERP solution for modern dental clinics, unifying 32-tooth FDI odontograms, OPG diagnostics, automated billing, and patient follow-ups.
         </p>
 
-        <div className="pt-2">
+        {/* Hero CTAs matching video layout */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
           <button 
             onClick={onLoginClick}
-            className="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-extrabold px-8 py-4 rounded-2xl shadow-lg shadow-blue-600/20 transition transform active:scale-95 cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-extrabold px-8 py-4 rounded-2xl shadow-xl shadow-blue-600/20 transition transform active:scale-95 cursor-pointer"
           >
-            <span>Book A Free Demo / Launch Platform</span>
+            <span>Book A Free Demo</span>
             <ArrowRight className="w-4 h-4" />
           </button>
+          <button 
+            onClick={onLoginClick}
+            className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-sm font-bold px-8 py-4 rounded-2xl shadow-sm transition cursor-pointer"
+          >
+            <PlayCircle className="w-4 h-4 text-blue-600" />
+            <span>Watch Overview</span>
+          </button>
+        </div>
+
+        {/* Quick Call Pill Bar */}
+        <div className="pt-2">
+          <a 
+            href="tel:9043205927" 
+            className="inline-flex items-center space-x-2 bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-2.5 rounded-full text-xs font-bold shadow-xs hover:bg-emerald-100 transition"
+          >
+            <PhoneCall className="w-4 h-4 text-emerald-600" />
+            <span>Quick Call: +91 9043205927</span>
+          </a>
+        </div>
+
+        {/* Dashboard Preview Mockup Container from Video */}
+        <div className="pt-8 max-w-4xl mx-auto">
+          <div className="bg-slate-900 rounded-3xl p-3 sm:p-4 shadow-2xl border border-slate-800">
+            <div className="bg-white rounded-2xl p-4 text-left space-y-3">
+              <div className="flex items-center justify-between border-b pb-3 border-slate-100">
+                <span className="text-xs font-bold text-slate-800">Welcome, MeriDent Studio</span>
+                <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">Active Operatory</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                <div className="bg-slate-50 p-2 rounded-xl">Appointments: <strong className="text-blue-600">4 Active</strong></div>
+                <div className="bg-slate-50 p-2 rounded-xl">Check-ins: <strong className="text-emerald-600">3 Ready</strong></div>
+                <div className="bg-slate-50 p-2 rounded-xl">Billing: <strong className="text-indigo-600">₹****</strong></div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <p className="text-[11px] font-semibold text-slate-400 tracking-wider uppercase pt-2">
@@ -96,7 +135,7 @@ export default function LandingPage({ onLoginClick }) {
         </p>
       </section>
 
-      {/* 3. THREE-PILLAR HIGHLIGHT GRID (Inspired by reference layout) */}
+      {/* 3. THREE-PILLAR DEEP BLUE HIGHLIGHT GRID (Grow, Improve, Collect) */}
       <section className="px-6 max-w-5xl mx-auto mb-20">
         <div className="bg-gradient-to-b from-blue-900 via-blue-950 to-slate-950 text-white rounded-[36px] p-8 sm:p-14 shadow-2xl text-center space-y-12">
           <div className="space-y-4">
@@ -160,7 +199,34 @@ export default function LandingPage({ onLoginClick }) {
         </div>
       </section>
 
-      {/* 5. FOUNDER & CO-FOUNDER LEADERSHIP SECTION (Explicitly Highlighted) */}
+      {/* 5. STANDARDIZE CLINIC OPERATIONS */}
+      <section className="px-6 max-w-5xl mx-auto pb-16">
+        <div className="bg-gradient-to-br from-blue-900 to-slate-900 text-white rounded-3xl p-8 sm:p-12 shadow-xl space-y-6">
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
+            Standardize Your Clinic Operations with MeriDent
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-medium">
+            <div className="flex items-center gap-3 bg-white/10 p-3 rounded-xl">
+              <CheckCircle2 className="w-5 h-5 text-cyan-400 shrink-0" />
+              <span>Efficient Patient Care & 32-Tooth Odontogram</span>
+            </div>
+            <div className="flex items-center gap-3 bg-white/10 p-3 rounded-xl">
+              <CheckCircle2 className="w-5 h-5 text-cyan-400 shrink-0" />
+              <span>Detailed Financial Reports & Invoices</span>
+            </div>
+            <div className="flex items-center gap-3 bg-white/10 p-3 rounded-xl">
+              <CheckCircle2 className="w-5 h-5 text-cyan-400 shrink-0" />
+              <span>Dental Lab & Inventory Consumable Management</span>
+            </div>
+            <div className="flex items-center gap-3 bg-white/10 p-3 rounded-xl">
+              <CheckCircle2 className="w-5 h-5 text-cyan-400 shrink-0" />
+              <span>Automated WhatsApp Prescription Dispatch</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 6. FOUNDER & CO-FOUNDER LEADERSHIP SECTION (Explicitly Highlighted) */}
       <section className="px-6 max-w-4xl mx-auto pb-20">
         <div className="bg-gradient-to-r from-blue-950 via-slate-900 to-blue-950 text-white rounded-3xl p-8 sm:p-10 shadow-xl space-y-8">
           <div className="text-center space-y-2">
@@ -177,7 +243,7 @@ export default function LandingPage({ onLoginClick }) {
               <h4 className="text-lg font-black tracking-tight text-white">SANTHOSHKUMAR S</h4>
               <p className="text-xs font-semibold text-cyan-300 uppercase tracking-widest">Founder & Managing Director</p>
               <p className="text-[11px] text-slate-300 pt-2 leading-relaxed">
-                BDS Student, Sri Ramakrishna Dental College & Hospital, Coimbatore[span_1](start_span)[span_1](end_span). Full-stack healthcare software architect[span_2](start_span)[span_2](end_span).
+                BDS Student, Sri Ramakrishna Dental College & Hospital, Coimbatore[span_0](start_span)[span_0](end_span). Full-stack healthcare software architect[span_1](start_span)[span_1](end_span).
               </p>
             </div>
 
@@ -189,14 +255,14 @@ export default function LandingPage({ onLoginClick }) {
               <h4 className="text-lg font-black tracking-tight text-white">SIVASABARI G</h4>
               <p className="text-xs font-semibold text-indigo-300 uppercase tracking-widest">Co-Founder & CEO</p>
               <p className="text-[11px] text-slate-300 pt-2 leading-relaxed">
-                BDS Student, Dhanalakshmi Srinivasan Dental College & Hospital, Perambalur[span_3](start_span)[span_3](end_span). Operatory field requirements & clinical trials lead[span_4](start_span)[span_4](end_span).
+                BDS Student, Dhanalakshmi Srinivasan Dental College & Hospital, Perambalur[span_2](start_span)[span_2](end_span). Operatory field requirements & clinical trials lead[span_3](start_span)[span_3](end_span).
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 6. FLOATING WHATSAPP WIDGET */}
+      {/* 7. FLOATING WHATSAPP WIDGET */}
       <div className="fixed bottom-6 right-6 z-50">
         <a 
           href="https://wa.me/919043205927" 
@@ -209,7 +275,7 @@ export default function LandingPage({ onLoginClick }) {
         </a>
       </div>
 
-      {/* 7. FOOTER */}
+      {/* 8. FOOTER */}
       <footer className="bg-slate-900 text-slate-400 py-12 px-6 text-center text-xs space-y-3 border-t border-slate-800">
         <p className="font-bold text-slate-200">MeriDent — Powered by MeridianDental OS</p>
         <p>StartUpTN Ref: STN99974 | MSME Micro: UDYAM-TN-04-0139569</p>
