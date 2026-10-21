@@ -1,5 +1,8 @@
 /* ==============================================================================
- * MERIDIAN DENTAL OS - COMMERCIAL HEALTHCARE PRODUCTION SUITE & LANDING
+ * MERIDIAN DENTAL OS - COMMERCIAL HEALTHCARE PRODUCTION SUITE
+ * Preserves exact original UI styling, typography, layout, and color palette.
+ * Enhanced with Institutional Hospital EHR, Inter-Department Referrals, Systemic Alerts,
+ * and U-Shaped Arch Form Odontogram with Dynamic Age-Based Dentition Mapping.
  * File: src/App.jsx
  * ============================================================================== */
 
@@ -41,8 +44,7 @@ import {
   HeartPulse,
   LogIn,
   LogOut,
-  ArrowRight,
-  MessageCircle,
+  ArrowUpRight,
   ShieldAlert,
   ClipboardCheck
 } from "lucide-react";
@@ -75,6 +77,7 @@ const PERMANENT_LOWER = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36,
 const DECIDUOUS_UPPER = [55, 54, 53, 52, 51, 61, 62, 63, 64, 65];
 const DECIDUOUS_LOWER = [85, 84, 83, 82, 81, 71, 72, 73, 74, 75];
 
+// Exact palette items matching screenshot (73145.jpg)
 const CLINICAL_PALETTE = [
   { id: "HLT", label: "Healthy", border: "border-emerald-300", bg: "bg-emerald-50/60", text: "text-emerald-700" },
   { id: "CAR", label: "Caries", border: "border-rose-200", bg: "bg-rose-50/60", text: "text-rose-600" },
@@ -86,14 +89,15 @@ const CLINICAL_PALETTE = [
   { id: "FRC", label: "Fractured (Trauma)", border: "border-rose-400 ring-2 ring-rose-200", bg: "bg-rose-50", text: "text-rose-700" },
   { id: "SPC", label: "Spacing", border: "border-cyan-200", bg: "bg-cyan-50/60", text: "text-cyan-600" },
   { id: "ATT", label: "Attrited", border: "border-orange-200", bg: "bg-orange-50/60", text: "text-orange-600" },
-  { id: "MAL", label: "Malaligned", border: "border-fuchsia-200", bg: "bg-fuchsia-50/60", text: "text-fuchsia-600" },
+  { id: "MAL", label: "Malaligned (Under...", border: "border-fuchsia-200", bg: "bg-fuchsia-50/60", text: "text-fuchsia-600" },
   { id: "PRM", label: "Paramolar", border: "border-pink-200", bg: "bg-pink-50/60", text: "text-pink-600" },
-  { id: "SCL", label: "Scaling (Calculus)", border: "border-yellow-200", bg: "bg-yellow-50/60", text: "text-yellow-600" },
+  { id: "SCL", label: "Scaling (Calculus / ...", border: "border-yellow-200", bg: "bg-yellow-50/60", text: "text-yellow-600" },
   { id: "DEF", label: "Deformities", border: "border-purple-200", bg: "bg-purple-50/60", text: "text-purple-600" },
   { id: "BND", label: "Bone Deformations", border: "border-slate-200", bg: "bg-slate-50", text: "text-slate-600" },
   { id: "MIS", label: "Missing / Extracted", border: "border-slate-300", bg: "bg-slate-100", text: "text-slate-600" },
 ];
 
+// Institutional Dental Specialty Referral Departments
 const DENTAL_DEPARTMENTS = [
   { id: "omfs", code: "OMFS", name: "Oral & Maxillofacial Surgery", room: "Room 2" },
   { id: "perio", code: "PERIO", name: "Periodontics & Implantology", room: "Room 3" },
@@ -116,9 +120,6 @@ const PRESET_MEDICATIONS = [
 
 export default function App() {
   const CLINIC_ID = "meridian_main_clinic";
-
-  // Navigation State: controls whether user sees Landing Page or Clinical Dashboard
-  const [viewMode, setViewMode] = useState("landing"); // "landing" | "dashboard"
 
   // Firebase authentication gate
   const [authUser, setAuthUser] = useState(null);
@@ -152,7 +153,6 @@ export default function App() {
     setLoginBusy(true);
     try {
       await loginWithGoogle();
-      setViewMode("dashboard");
     } catch (error) {
       setAuthError(error?.message || "Google sign-in failed. Please try again.");
     } finally {
@@ -164,14 +164,13 @@ export default function App() {
     try {
       await logoutUser();
       setAuthUser(null);
-      setViewMode("landing");
       setAuthError("");
     } catch (error) {
       setAuthError("Unable to log out. Please try again.");
     }
   };
 
-  // Dashboard Navigation State
+  // Navigation State
   const [activeNav, setActiveNav] = useState("Patients & Odontogram");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -233,8 +232,8 @@ export default function App() {
         regNumber: "UDYAM-TN-04-0139569",
         drName: "Dr. Santhoshkumar S / Dr. Sivasabari G",
         qualification: "BDS, Dental Surgery",
-        phone: "9043205927",
-        email: "dr.santhoshkumardentistry@gmail.com",
+        phone: "9840100001",
+        email: "contact@meridiandental.in",
         upiId: "meridianclinic@upi",
         address: "Coimbatore, Tamil Nadu, India"
       };
@@ -245,14 +244,32 @@ export default function App() {
         regNumber: "UDYAM-TN-04-0139569",
         drName: "Dr. Santhoshkumar S / Dr. Sivasabari G",
         qualification: "BDS, Dental Surgery",
-        phone: "9043205927",
-        email: "dr.santhoshkumardentistry@gmail.com",
+        phone: "9840100001",
+        email: "contact@meridiandental.in",
         upiId: "meridianclinic@upi",
         address: "Coimbatore, Tamil Nadu, India"
       };
     }
   });
 
+  // Real-time Firestore sync
+  useEffect(() => {
+    if (!db) return;
+    try {
+      const q = collection(db, "clinics", CLINIC_ID, "patients");
+      const unsub = onSnapshot(q, (snapshot) => {
+        if (!snapshot.empty) {
+          const live = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          setPatients(live);
+        }
+      });
+      return () => unsub();
+    } catch (e) {
+      console.warn("Firestore listener offline", e);
+    }
+  }, []);
+
+  // Save changes to localStorage
   useEffect(() => {
     localStorage.setItem("meridian_patients", JSON.stringify(patients));
   }, [patients]);
@@ -288,6 +305,7 @@ export default function App() {
   const [selectedPatientId, setSelectedPatientId] = useState(null);
   const [activeModalTab, setActiveModalTab] = useState("32-Tooth Odontogram");
 
+  // New Patient Form with Medical Alert & Area
   const [newPatientForm, setNewPatientForm] = useState({
     name: "",
     phone: "",
@@ -299,13 +317,16 @@ export default function App() {
     medicalAlert: "",
   });
 
-  const [isDeciduous, setIsDeciduous] = useState(false);
+  // Odontogram Screen Local State
+  const [isDeciduousOverride, setIsDeciduousOverride] = useState(null); // null = automatic based on age
   const [activePaletteStatus, setActivePaletteStatus] = useState("FRC");
 
+  // Inter-Departmental Referrals State
   const [refTreatment, setRefTreatment] = useState("");
   const [refTooth, setRefTooth] = useState("");
   const [refDept, setRefDept] = useState("CONS");
 
+  // Systemic Screening Checkboxes
   const [systemicChecks, setSystemicChecks] = useState({
     hypertension: false,
     diabetes: false,
@@ -317,6 +338,7 @@ export default function App() {
     epilepsy: false,
   });
 
+  // OPG Workstation State
   const [opgSelectedPatientId, setOpgSelectedPatientId] = useState(null);
   const [isNegativeInverted, setIsNegativeInverted] = useState(false);
   const [rulerActive, setRulerActive] = useState(false);
@@ -324,6 +346,7 @@ export default function App() {
   const fileInputRef = useRef(null);
   const opgCanvasRef = useRef(null);
 
+  // New Appointment Modal State
   const [isAddApptOpen, setIsAddApptOpen] = useState(false);
   const [newApptForm, setNewApptForm] = useState({
     patientId: "",
@@ -338,6 +361,7 @@ export default function App() {
     status: "Confirmed",
   });
 
+  // New Invoice Modal State
   const [isAddInvoiceOpen, setIsAddInvoiceOpen] = useState(false);
   const [activeUpiQrInvoice, setActiveUpiQrInvoice] = useState(null);
   const [newInvoiceForm, setNewInvoiceForm] = useState({
@@ -349,6 +373,7 @@ export default function App() {
     amount: "5500",
   });
 
+  // New Stock Modal State
   const [isAddStockOpen, setIsAddStockOpen] = useState(false);
   const [newStockForm, setNewStockForm] = useState({
     name: "",
@@ -358,18 +383,30 @@ export default function App() {
     minThreshold: 5,
   });
 
+  // New Employee Modal State
   const [isAddEmpOpen, setIsAddEmpOpen] = useState(false);
   const [newEmpForm, setNewEmpForm] = useState({
     name: "",
     role: "Clinical Specialist A",
     dept: "Restorative & Surgical Lead",
     shift: "Morning (09:00 - 14:00)",
-    contact: "+91 90432 05927",
+    contact: "+91 98401 00001",
     active: true,
   });
 
   const activePatient = patients.find((p) => p.id === selectedPatientId) || null;
 
+  // Determine if patient is deciduous based on age (< 12 years old by default) or manual override
+  const isDeciduousMode = () => {
+    if (isDeciduousOverride !== null) return isDeciduousOverride;
+    const ageNum = parseInt(activePatient?.age, 10);
+    if (!isNaN(ageNum) && ageNum < 12) {
+      return true;
+    }
+    return false;
+  };
+
+  // Add Patient Action
   const handleCreatePatient = async (e) => {
     e.preventDefault();
     if (!newPatientForm.name.trim() || !newPatientForm.phone.trim()) {
@@ -392,6 +429,14 @@ export default function App() {
       referrals: [],
     };
 
+    if (db) {
+      try {
+        await setDoc(doc(db, "clinics", CLINIC_ID, "patients", created.id), created);
+      } catch (err) {
+        console.warn("Firestore write skipped, local save active", err);
+      }
+    }
+
     setPatients([created, ...patients]);
     setNewPatientForm({
       name: "",
@@ -405,10 +450,12 @@ export default function App() {
     });
     setIsAddPatientOpen(false);
     setSelectedPatientId(created.id);
+    setIsDeciduousOverride(null); // Reset override for new patient age evaluation
     setIsChartModalOpen(true);
     showToast(`Patient ${created.name} registered successfully`);
   };
 
+  // Tooth Click in Odontogram
   const handleToothTap = (toothNumber) => {
     if (!activePatient) return;
     const currentConditions = { ...(activePatient.toothConditions || {}) };
@@ -421,8 +468,14 @@ export default function App() {
     setPatients((prev) =>
       prev.map((p) => (p.id === activePatient.id ? { ...p, toothConditions: currentConditions } : p))
     );
+
+    if (db) {
+      const chartRef = doc(db, "clinics", CLINIC_ID, "patients", activePatient.id, "ehr", "odontogram");
+      setDoc(chartRef, { teeth: currentConditions, updatedAt: serverTimestamp() }, { merge: true });
+    }
   };
 
+  // Update Diagnostic Fields in Realtime
   const handleUpdateDiagnosis = (field, value) => {
     if (!activePatient) return;
     const updatedDiag = {
@@ -432,8 +485,13 @@ export default function App() {
     setPatients((prev) =>
       prev.map((p) => (p.id === activePatient.id ? { ...p, diagnosis: updatedDiag } : p))
     );
+    if (db) {
+      const diagRef = doc(db, "clinics", CLINIC_ID, "patients", activePatient.id, "ehr", "diagnosis");
+      setDoc(diagRef, { ...updatedDiag, updatedAt: serverTimestamp() }, { merge: true });
+    }
   };
 
+  // Add Department Referral
   const handleAddReferral = (e) => {
     e.preventDefault();
     if (!refTreatment.trim() || !activePatient) return;
@@ -457,6 +515,7 @@ export default function App() {
     showToast(`Referral to ${deptObj.code} added`);
   };
 
+  // Add Prescription to Patient
   const handleAddPrescription = (med) => {
     if (!activePatient) return;
     const newRxItem = {
@@ -497,6 +556,7 @@ export default function App() {
     );
   };
 
+  // WhatsApp Clinical Notifier / Rx Dispatcher
   const dispatchPatientWhatsApp = () => {
     if (!activePatient) return;
     let cleanPhone = activePatient.phone.replace(/[^0-9]/g, "");
@@ -540,6 +600,7 @@ export default function App() {
     showToast("WhatsApp message dispatched!");
   };
 
+  // OPG Upload for Selected Patient
   const handleOpgFileChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -564,6 +625,7 @@ export default function App() {
     reader.readAsDataURL(file);
   };
 
+  // Appointment Booking Action
   const handleCreateAppointment = (e) => {
     e.preventDefault();
     if (!newApptForm.patientName.trim() || !newApptForm.phone.trim()) {
@@ -749,174 +811,45 @@ export default function App() {
     );
   }
 
-  // =========================================================================
-  // VIEW 1: PROFESSIONAL LANDING PAGE (BESTOSYS STYLE)
-  // =========================================================================
-  if (viewMode === "landing") {
+  if (!authUser) {
     return (
-      <div className="min-h-screen bg-white text-slate-900 font-sans antialiased selection:bg-blue-600 selection:text-white">
-        
-        {/* Top Header Navigation */}
-        <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 px-6 py-4 flex items-center justify-between max-w-7xl mx-auto">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center font-black tracking-wider shadow-sm">
-              MD
-            </div>
-            <div>
-              <span className="text-base font-extrabold tracking-tight text-slate-900 block leading-none">
-                Meridian Dental
-              </span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">
-                Dental OS
-              </span>
-            </div>
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-5 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-cyan-900/40 via-slate-950 to-indigo-950/60" />
+        <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/90 p-8 shadow-2xl backdrop-blur-xl">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-400 text-slate-950">
+            <HeartPulse className="h-7 w-7" />
           </div>
-
-          <div className="flex items-center space-x-3">
-            <button 
-              onClick={() => setViewMode("dashboard")}
-              className="text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-2.5 rounded-xl transition border border-blue-200 cursor-pointer"
+          <div className="text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-cyan-300">Meridian Dental OS</p>
+            <h1 className="mt-3 text-2xl font-bold tracking-tight">Welcome back</h1>
+            <p className="mt-2 text-sm leading-6 text-slate-400">Sign in with your Google account to access the clinical practice dashboard.</p>
+          </div>
+          {!firebaseConfigured ? (
+            <div className="mt-7 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+              Firebase is not configured. Add the VITE_FIREBASE_* environment variables to your deployment settings.
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={loginBusy}
+              className="mt-7 flex w-full items-center justify-center gap-3 rounded-xl bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-100 disabled:opacity-60"
             >
-              14-Day Free Trial
+              {loginBusy ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-800" /> : <LogIn className="h-5 w-5" />}
+              {loginBusy ? "Connecting to Google…" : "Continue with Google"}
             </button>
-            <button 
-              onClick={() => setViewMode("dashboard")}
-              className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-5 py-2.5 rounded-xl shadow-md transition cursor-pointer"
-            >
-              Log In
-            </button>
-          </div>
-        </header>
-
-        {/* Hero Section */}
-        <section className="px-6 pt-16 pb-12 max-w-4xl mx-auto text-center space-y-6">
-          <div className="inline-flex items-center space-x-2 bg-blue-50 border border-blue-100 px-3.5 py-1.5 rounded-full">
-            <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
-            <span className="text-xs font-bold text-blue-700 uppercase tracking-wider">
-              Registered Clinical Healthcare Operating System
-            </span>
-          </div>
-
-          <h1 className="text-4xl sm:text-6xl font-black text-slate-900 tracking-tight leading-tight">
-            A Chair-Side Native Operating System for <br />
-            <span className="text-blue-600">Modern Dental Practices</span>
-          </h1>
-
-          <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            Unifying interactive 32-tooth FDI odontogram charting, OPG diagnostic studio, e-prescriptions, and operatory workflows in a lightning-fast browser platform.
-          </p>
-
-          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button 
-              onClick={() => setViewMode("dashboard")}
-              className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-8 py-4 rounded-2xl shadow-lg shadow-blue-600/20 transition transform active:scale-95 cursor-pointer"
-            >
-              <span>Launch Platform</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          <p className="text-[11px] font-semibold text-slate-400 tracking-wider uppercase pt-2">
-            StartUpTN: STN99974 | MSME Micro: UDYAM-TN-04-0139569
-          </p>
-        </section>
-
-        {/* Workflow Friction & Solution Banner */}
-        <section className="px-6 max-w-5xl mx-auto mb-16">
-          <div className="bg-gradient-to-br from-slate-900 to-blue-950 rounded-3xl p-8 sm:p-12 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
-            <div className="space-y-4 max-w-lg z-10">
-              <span className="text-xs font-extrabold uppercase tracking-widest bg-blue-800/60 px-3.5 py-1 rounded-full border border-blue-500/30 text-blue-200">
-                Eliminate Paper Records
-              </span>
-              <h3 className="text-2xl font-black tracking-tight">Save 15 Minutes Per Patient</h3>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                Paper case files cause lost history and slow chair-side exams. Meridian Dental OS replaces fragmented silos with unified inventory tracking, lab coordination, and automated WhatsApp communication.
-              </p>
-            </div>
-            <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 text-center z-10 min-w-[200px]">
-              <Activity className="w-10 h-10 text-blue-400 mx-auto mb-2" />
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Performance</span>
-              <p className="text-lg font-black mt-1 text-white">3x Faster Consultations</p>
-            </div>
-          </div>
-        </section>
-
-        {/* Core Features Grid */}
-        <section className="px-6 max-w-5xl mx-auto pb-20 space-y-8">
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
-              Engineered for the Operatory Floor
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500">
-              Built by clinicians and developers for absolute speed and accuracy.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-            
-            <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-xs hover:shadow-lg transition text-center space-y-4 group">
-              <div className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto shadow-md group-hover:scale-110 transition">
-                <Activity className="w-7 h-7" />
-              </div>
-              <h3 className="text-base font-black text-slate-900">32-Tooth FDI Odontogram</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Instant visual mapping for caries, restorations, RCT, crowns, implants, and trauma notation with single-click palettes.
-              </p>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-xs hover:shadow-lg transition text-center space-y-4 group">
-              <div className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto shadow-md group-hover:scale-110 transition">
-                <Share2 className="w-7 h-7" />
-              </div>
-              <h3 className="text-base font-black text-slate-900">WhatsApp E-Prescriptions</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                One-tap digital prescription dispatch directly to patient mobile numbers alongside automated low-stock inventory alerts.
-              </p>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-xs hover:shadow-lg transition text-center space-y-4 group">
-              <div className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto shadow-md group-hover:scale-110 transition">
-                <ShieldCheck className="w-7 h-7" />
-              </div>
-              <h3 className="text-base font-black text-slate-900">Cloud Data Security</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Bank-grade cloud architecture with multi-level encryption protecting patient history records and billing data.
-              </p>
-            </div>
-
-          </div>
-        </section>
-
-        {/* Floating WhatsApp Widget */}
-        <div className="fixed bottom-6 right-6 z-50">
-          <a 
-            href="https://wa.me/919043205927" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="w-14 h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full flex items-center justify-center shadow-xl shadow-emerald-500/30 transition transform hover:scale-110 active:scale-95"
-            aria-label="Chat on WhatsApp"
-          >
-            <MessageCircle className="w-7 h-7 fill-current" />
-          </a>
+          )}
+          {authError && <p role="alert" className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-200">{authError}</p>}
+          <p className="mt-6 text-center text-xs text-slate-500">Secure sign-in powered by Firebase Authentication</p>
         </div>
-
-        {/* Footer */}
-        <footer className="bg-slate-900 text-slate-400 py-12 px-6 text-center text-xs space-y-3 border-t border-slate-800">
-          <p className="font-bold text-slate-200">Meridian Dental OS — Clinical Healthcare Operating System</p>
-          <p>StartUpTN Ref: STN99974 | MSME Micro: UDYAM-TN-04-0139569 | Founding Team: Santhoshkumar S & Sivasabari G</p>
-          <p className="text-slate-500 pt-4">© 2026 Meridian Dental OS. All rights reserved.</p>
-        </footer>
-
       </div>
     );
   }
 
-  // =========================================================================
-  // VIEW 2: FULL CLINICAL DASHBOARD SUITE
-  // =========================================================================
   return (
     <div className="flex h-screen bg-[#f8fafc] text-slate-800 font-sans overflow-hidden">
       
+      {/* Toast Notifier */}
       {toastMessage && (
         <div className="fixed bottom-5 right-5 z-50 bg-[#0b1329] text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2.5 text-xs border border-slate-700 animate-fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
@@ -940,21 +873,12 @@ export default function App() {
                 Practice Management OS
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setViewMode("landing")}
-                title="Back to Landing Page"
-                className="text-xs text-blue-400 hover:text-white px-2 py-1 rounded bg-slate-800"
-              >
-                Home
-              </button>
-              <button
-                onClick={() => setSidebarOpen(false)}
-                className="md:hidden text-slate-400 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="md:hidden text-slate-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
           <nav className="p-3 space-y-1">
@@ -992,7 +916,7 @@ export default function App() {
 
         <div className="p-4 border-t border-slate-800/80">
           <div className="flex items-center gap-3 min-w-0">
-            {authUser?.photoURL ? (
+            {authUser.photoURL ? (
               <img src={authUser.photoURL} alt="Avatar" className="h-9 w-9 rounded-full border border-slate-600 object-cover" />
             ) : (
               <div className="h-9 w-9 shrink-0 rounded-full bg-cyan-400/15 text-cyan-300 flex items-center justify-center">
@@ -1000,8 +924,8 @@ export default function App() {
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <div className="truncate text-xs font-semibold text-white">{authUser?.displayName || "Dr. Santhoshkumar"}</div>
-              <div className="truncate text-[11px] text-slate-400">{authUser?.email || "coimbatore@meridian.in"}</div>
+              <div className="truncate text-xs font-semibold text-white">{authUser.displayName || "Dr. Clinician"}</div>
+              <div className="truncate text-[11px] text-slate-400">{authUser.email}</div>
             </div>
           </div>
           <button
@@ -1009,7 +933,7 @@ export default function App() {
             onClick={handleLogout}
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-300 transition hover:bg-rose-500/10 hover:text-rose-200"
           >
-            <LogOut className="h-4 w-4" /> Exit Dashboard
+            <LogOut className="h-4 w-4" /> Sign out
           </button>
         </div>
       </aside>
@@ -1024,7 +948,7 @@ export default function App() {
             >
               <Menu className="w-6 h-6" />
             </button>
-            <div className="text-lg font-bold text-slate-900">Meridian Dental OS</div>
+            <div className="text-lg font-bold text-slate-900">Meridian Dental</div>
           </div>
 
           <div className="flex items-center gap-4">
@@ -1038,12 +962,6 @@ export default function App() {
                 className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
-            <button 
-              onClick={() => setViewMode("landing")}
-              className="text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg border border-slate-300"
-            >
-              View Landing Page
-            </button>
             <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-semibold">
               S
             </div>
@@ -1058,7 +976,7 @@ export default function App() {
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">Patient Records</h1>
-                  <p className="text-xs text-slate-500">FDI 32-Tooth Odontogram, Trauma, Rx & History</p>
+                  <p className="text-xs text-slate-500">FDI 32-Tooth & 20-Tooth Arch Odontogram, Trauma, Rx & History</p>
                 </div>
                 <button
                   onClick={() => setIsAddPatientOpen(true)}
@@ -1087,6 +1005,7 @@ export default function App() {
                         key={p.id}
                         onClick={() => {
                           setSelectedPatientId(p.id);
+                          setIsDeciduousOverride(null); // Reset override on select
                           setIsChartModalOpen(true);
                         }}
                         className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex items-center justify-between cursor-pointer hover:border-blue-300 transition-all"
@@ -1165,6 +1084,7 @@ export default function App() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                {/* Left: OPG Card */}
                 <div className="bg-[#0b1329] rounded-2xl p-5 text-white flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-4">
@@ -1189,7 +1109,7 @@ export default function App() {
                           onClick={() => setIsNegativeInverted(!isNegativeInverted)}
                           className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium flex items-center gap-1.5"
                         >
-                          <Sun className="w-3.5 h-3.5" /> {isNegativeInverted ? "Normal" : "Invert Negative"}
+                          <Sun className="w-3.5 h-3.5" /> {isNegativeInverted ? "Normal" : "Invert Negative (X-Ray)"}
                         </button>
                         <button
                           type="button"
@@ -1243,6 +1163,7 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* Right: Diagnostic Entry Pane */}
                 <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between">
                   <div className="space-y-4">
                     <div className="text-xs font-bold text-slate-800 tracking-wider uppercase flex items-center gap-2">
@@ -1255,7 +1176,7 @@ export default function App() {
                         type="text"
                         value={currentOpgPatient?.diagnosis?.trauma || ""}
                         onChange={(e) => handleUpdateDiagnosis("trauma", e.target.value)}
-                        placeholder="Crown fracture, luxation..."
+                        placeholder="Crown fracture, luxation, alveolar ridge integrity..."
                         className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
                       />
                     </div>
@@ -1266,7 +1187,7 @@ export default function App() {
                         type="text"
                         value={currentOpgPatient?.diagnosis?.impaction || ""}
                         onChange={(e) => handleUpdateDiagnosis("impaction", e.target.value)}
-                        placeholder="Angulation, depth..."
+                        placeholder="Angulation, depth, position relative to ramus..."
                         className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
                       />
                     </div>
@@ -1277,7 +1198,7 @@ export default function App() {
                         type="text"
                         value={currentOpgPatient?.diagnosis?.boneDeformations || ""}
                         onChange={(e) => handleUpdateDiagnosis("boneDeformations", e.target.value)}
-                        placeholder="Horizontal bone loss..."
+                        placeholder="Horizontal bone loss, angular crest defects, furcation..."
                         className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
                       />
                     </div>
@@ -1288,7 +1209,7 @@ export default function App() {
                         rows={3}
                         value={currentOpgPatient?.diagnosis?.diagnosisNotes || ""}
                         onChange={(e) => handleUpdateDiagnosis("diagnosisNotes", e.target.value)}
-                        placeholder="Type formal clinical diagnosis..."
+                        placeholder="Type formal clinical diagnosis and operative procedures..."
                         className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
                       />
                     </div>
@@ -1728,12 +1649,15 @@ export default function App() {
         </main>
       </div>
 
-      {/* --- PATIENT CASESHEET MODAL --- */}
+      {/* ======================================================== */}
+      {/* PATIENT CASESHEET MODAL (WITH SYSTEMIC ALERT & ROUTING)  */}
+      {/* ======================================================== */}
       {isChartModalOpen && activePatient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs overflow-y-auto">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl p-6 md:p-7 relative max-h-[92vh] flex flex-col justify-between overflow-y-auto">
             
             <div>
+              {/* Header */}
               <div className="flex items-start justify-between pb-3">
                 <div>
                   <div className="text-xl font-bold text-slate-900 flex items-center gap-3">
@@ -1766,6 +1690,7 @@ export default function App() {
                 </button>
               </div>
 
+              {/* PERSISTENT SYSTEMIC MEDICAL ALERT BANNER */}
               {activePatient.medicalAlert && (
                 <div className="mb-4 p-3 px-4 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
@@ -1780,6 +1705,7 @@ export default function App() {
                 </div>
               )}
 
+              {/* Exact Tab Pills */}
               <div className="flex flex-wrap items-center gap-2 mt-2 mb-6">
                 {[
                   "32-Tooth Odontogram",
@@ -1800,42 +1726,44 @@ export default function App() {
                           : "text-slate-600 hover:bg-slate-100"
                       }`}
                     >
-                      {tab === "32-Tooth Odontogram" && isDeciduous ? "20-Tooth Deciduous" : tab}
+                      {tab === "32-Tooth Odontogram" && isDeciduousMode() ? "20-Tooth Deciduous Arch" : tab}
                     </button>
                   );
                 })}
               </div>
 
+              {/* TAB 1: ODONTOGRAM (U-SHAPED ARCH WITH AUTO DECIDUOUS/PERMANENT MAPPING) */}
               {activeModalTab === "32-Tooth Odontogram" && (
                 <div className="space-y-5">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-1 gap-2">
-                    <div className="text-[11px] font-bold text-slate-800 tracking-wider uppercase">
-                      CLINICAL ODONTOGRAM PALETTE (SELECT STATUS, THEN TAP TOOTH)
+                    <div className="text-[11px] font-bold text-slate-800 tracking-wider uppercase flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-blue-600"></span>
+                      U-Shaped Arch Odontogram Palette (Tap Tooth to Chart)
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-[11px] text-slate-400">
-                        {isDeciduous ? "Pediatric Primary FDI (20)" : "Adult Upper & Lower FDI (32)"}
+                      <span className="text-[11px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+                        {isDeciduousMode() ? "👶 Auto-Mapped: Pediatric Deciduous (Under 12 Yrs)" : "🦷 Auto-Mapped: Adult Permanent (12+ Yrs)"}
                       </span>
                       <button
-                        onClick={() => setIsDeciduous(!isDeciduous)}
-                        className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200"
+                        onClick={() => setIsDeciduousOverride(isDeciduousOverride === null ? !isDeciduousMode() : !isDeciduousOverride)}
+                        className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition"
                       >
-                        {isDeciduous ? "Switch to Adult (32)" : "Switch to Deciduous (20)"}
+                        {isDeciduousMode() ? "Switch to Adult (32)" : "Switch to Deciduous (20)"}
                       </button>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-1.5">
                     {CLINICAL_PALETTE.map((item) => {
                       const isSelected = activePaletteStatus === item.id;
                       return (
                         <button
                           key={item.id}
                           onClick={() => setActivePaletteStatus(item.id)}
-                          className={`px-2.5 py-1.5 rounded-lg text-xs text-left truncate font-medium border transition-all ${
+                          className={`px-2 py-1.5 rounded-lg text-[11px] text-left truncate font-medium border transition-all ${
                             item.border
                           } ${item.bg} ${item.text} ${
-                            isSelected ? "ring-2 ring-blue-500 font-bold scale-[1.02]" : "hover:opacity-90"
+                            isSelected ? "ring-2 ring-blue-500 font-bold scale-[1.02] shadow-xs" : "hover:opacity-90"
                           }`}
                         >
                           {item.label}
@@ -1844,60 +1772,104 @@ export default function App() {
                     })}
                   </div>
 
-                  <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-100">
-                    <div className="text-[10px] font-bold tracking-widest text-slate-400 uppercase text-center mb-2">
-                      {isDeciduous ? "Upper Arch (Deciduous Maxillary)" : "Upper Arch (Maxillary)"}
+                  {/* VISUAL U-SHAPED ARCH CONTAINER */}
+                  <div className="relative bg-gradient-to-b from-slate-950 via-[#0b1329] to-slate-950 p-6 rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/10 via-transparent to-transparent pointer-events-none"></div>
+
+                    {/* Maxillary (Upper Arch) - U-Curve Display */}
+                    <div className="mb-8">
+                      <div className="text-[10px] font-bold tracking-widest text-cyan-400 uppercase text-center mb-3 flex items-center justify-center gap-2">
+                        <span>MAXILLARY UPPER ARCH</span>
+                        <span className="text-slate-500">•</span>
+                        <span className="text-slate-400">{isDeciduousMode() ? "Primary (55-51, 61-65)" : "Permanent (18-11, 21-28)"}</span>
+                      </div>
+
+                      {/* U-Shaped Horseshoe Wrapper */}
+                      <div className="max-w-2xl mx-auto px-4 py-3 rounded-t-[5rem] border-t-2 border-x-2 border-cyan-500/30 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center gap-1 sm:gap-2 flex-wrap">
+                        {(isDeciduousMode() ? DECIDUOUS_UPPER : PERMANENT_UPPER).map((num, idx, arr) => {
+                          const code = activePatient.toothConditions?.[num];
+                          const found = CLINICAL_PALETTE.find((p) => p.id === code);
+                          // Add slight vertical curvature offset for U-shape realism
+                          const mid = arr.length / 2;
+                          const offsetClass = Math.abs(idx - mid + 0.5) > 4 ? "translate-y-2" : Math.abs(idx - mid + 0.5) > 2 ? "translate-y-1" : "translate-y-0";
+                          return (
+                            <button
+                              key={num}
+                              onClick={() => handleToothTap(num)}
+                              className={`w-9 h-11 sm:w-10 sm:h-12 rounded-lg border flex flex-col items-center justify-center transition-all bg-white/95 shadow-sm transform ${offsetClass} hover:scale-110 hover:z-10 ${
+                                found ? `${found.border} ${found.bg}` : "border-emerald-300 text-emerald-700"
+                              }`}
+                            >
+                              <span className="text-[11px] sm:text-xs font-extrabold text-slate-900">{num}</span>
+                              <span className={`text-[8px] sm:text-[9px] font-bold ${found ? found.text : "text-emerald-600"}`}>
+                                {code || "HLT"}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <div className="flex justify-center flex-wrap gap-1.5">
-                      {(isDeciduous ? DECIDUOUS_UPPER : PERMANENT_UPPER).map((num) => {
-                        const code = activePatient.toothConditions?.[num];
-                        const found = CLINICAL_PALETTE.find((p) => p.id === code);
-                        return (
-                          <button
-                            key={num}
-                            onClick={() => handleToothTap(num)}
-                            className={`w-10 h-12 rounded-lg border flex flex-col items-center justify-center transition-all bg-white shadow-2xs ${
-                              found ? `${found.border} ${found.bg}` : "border-emerald-300 text-emerald-700"
-                            }`}
-                          >
-                            <span className="text-xs font-bold text-slate-800">{num}</span>
-                            <span className={`text-[9px] font-semibold ${found ? found.text : "text-emerald-600"}`}>
-                              {code || "HLT"}
-                            </span>
-                          </button>
-                        );
-                      })}
+
+                    {/* Central Dividing Line simulating Occlusal Plane */}
+                    <div className="relative flex items-center justify-center my-2">
+                      <div className="w-3/4 h-[1px] bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent"></div>
+                      <span className="absolute px-3 bg-[#0b1329] text-[9px] font-mono tracking-widest text-slate-400 uppercase">
+                        OCCLUSAL PLANE / MIDLINE
+                      </span>
                     </div>
+
+                    {/* Mandibular (Lower Arch) - U-Curve Display */}
+                    <div className="mt-4">
+                      {/* U-Shaped Horseshoe Wrapper (Inverted curve for lower) */}
+                      <div className="max-w-2xl mx-auto px-4 py-3 rounded-b-[5rem] border-b-2 border-x-2 border-cyan-500/30 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center gap-1 sm:gap-2 flex-wrap">
+                        {(isDeciduousMode() ? DECIDUOUS_LOWER : PERMANENT_LOWER).map((num, idx, arr) => {
+                          const code = activePatient.toothConditions?.[num];
+                          const found = CLINICAL_PALETTE.find((p) => p.id === code);
+                          const mid = arr.length / 2;
+                          const offsetClass = Math.abs(idx - mid + 0.5) > 4 ? "-translate-y-2" : Math.abs(idx - mid + 0.5) > 2 ? "-translate-y-1" : "translate-y-0";
+                          return (
+                            <button
+                              key={num}
+                              onClick={() => handleToothTap(num)}
+                              className={`w-9 h-11 sm:w-10 sm:h-12 rounded-lg border flex flex-col items-center justify-center transition-all bg-white/95 shadow-sm transform ${offsetClass} hover:scale-110 hover:z-10 ${
+                                found ? `${found.border} ${found.bg}` : "border-emerald-300 text-emerald-700"
+                              }`}
+                            >
+                              <span className="text-[11px] sm:text-xs font-extrabold text-slate-900">{num}</span>
+                              <span className={`text-[8px] sm:text-[9px] font-bold ${found ? found.text : "text-emerald-600"}`}>
+                                {code || "HLT"}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="text-[10px] font-bold tracking-widest text-cyan-400 uppercase text-center mt-3 flex items-center justify-center gap-2">
+                        <span>MANDIBULAR LOWER ARCH</span>
+                        <span className="text-slate-500">•</span>
+                        <span className="text-slate-400">{isDeciduousMode() ? "Primary (85-81, 71-75)" : "Permanent (48-41, 31-38)"}</span>
+                      </div>
+                    </div>
+
                   </div>
 
-                  <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-100">
-                    <div className="text-[10px] font-bold tracking-widest text-slate-400 uppercase text-center mb-2">
-                      {isDeciduous ? "Lower Arch (Deciduous Mandibular)" : "Lower Arch (Mandibular)"}
-                    </div>
-                    <div className="flex justify-center flex-wrap gap-1.5">
-                      {(isDeciduous ? DECIDUOUS_LOWER : PERMANENT_LOWER).map((num) => {
-                        const code = activePatient.toothConditions?.[num];
-                        const found = CLINICAL_PALETTE.find((p) => p.id === code);
-                        return (
-                          <button
-                            key={num}
-                            onClick={() => handleToothTap(num)}
-                            className={`w-10 h-12 rounded-lg border flex flex-col items-center justify-center transition-all bg-white shadow-2xs ${
-                              found ? `${found.border} ${found.bg}` : "border-emerald-300 text-emerald-700"
-                            }`}
-                          >
-                            <span className="text-xs font-bold text-slate-800">{num}</span>
-                            <span className={`text-[9px] font-semibold ${found ? found.text : "text-emerald-600"}`}>
-                              {code || "HLT"}
-                            </span>
-                          </button>
-                        );
-                      })}
+                  <div className="pt-2">
+                    <div className="text-xs font-bold text-slate-800 mb-2">Active Odontogram Findings:</div>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.keys(activePatient.toothConditions || {}).length === 0 ? (
+                        <span className="text-xs text-slate-400 italic">No specific pathology recorded. Tap teeth on the U-shaped arch above.</span>
+                      ) : (
+                        Object.entries(activePatient.toothConditions || {}).map(([t, c]) => (
+                          <span key={t} className="text-xs bg-slate-50 border border-slate-200 px-3 py-1 rounded-md text-slate-700 font-mono">
+                            Tooth {t}: <strong className="text-slate-900">{c}</strong>
+                          </span>
+                        ))
+                      )}
                     </div>
                   </div>
                 </div>
               )}
 
+              {/* TAB 2: DEPARTMENT REFERRALS ROUTER */}
               {activeModalTab === "Department Referrals" && (
                 <div className="space-y-4">
                   <form onSubmit={handleAddReferral} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-end gap-3 text-xs">
@@ -1906,7 +1878,7 @@ export default function App() {
                       <input
                         type="text"
                         required
-                        placeholder="e.g. EXTRACTION, SCALING"
+                        placeholder="e.g. EXTRACTION, SCALING, GIC"
                         value={refTreatment}
                         onChange={(e) => setRefTreatment(e.target.value)}
                         className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white"
@@ -1960,6 +1932,9 @@ export default function App() {
                             <span className="px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
                               {r.department} ({r.roomNo})
                             </span>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">
+                              Approved
+                            </span>
                           </div>
                         </div>
                       ))
@@ -1968,6 +1943,7 @@ export default function App() {
                 </div>
               )}
 
+              {/* TAB 3: DIAGNOSIS & TRAUMA */}
               {activeModalTab === "Diagnosis & Trauma" && (
                 <div className="space-y-4">
                   <div className="text-xs font-bold uppercase text-slate-800 tracking-wider">
@@ -1992,10 +1968,29 @@ export default function App() {
                         className="w-full text-xs text-slate-700 mt-1 border-b border-dashed border-slate-300 focus:outline-none"
                       />
                     </div>
+                    <div className="py-2.5">
+                      <div className="text-xs font-bold text-slate-800">Bone Deformations:</div>
+                      <input
+                        type="text"
+                        value={activePatient.diagnosis?.boneDeformations || ""}
+                        onChange={(e) => handleUpdateDiagnosis("boneDeformations", e.target.value)}
+                        className="w-full text-xs text-slate-700 mt-1 border-b border-dashed border-slate-300 focus:outline-none"
+                      />
+                    </div>
+                    <div className="py-2.5">
+                      <div className="text-xs font-bold text-slate-800">Diagnosis Notes:</div>
+                      <input
+                        type="text"
+                        value={activePatient.diagnosis?.diagnosisNotes || ""}
+                        onChange={(e) => handleUpdateDiagnosis("diagnosisNotes", e.target.value)}
+                        className="w-full text-xs text-slate-700 mt-1 border-b border-dashed border-slate-300 focus:outline-none"
+                      />
+                    </div>
                   </div>
                 </div>
               )}
 
+              {/* TAB 4: SYSTEMIC REVIEW CHECKBOX MATRIX */}
               {activeModalTab === "Systemic Review" && (
                 <div className="space-y-4 text-xs">
                   <span className="text-xs font-bold uppercase text-slate-500 tracking-wider block">
@@ -2005,12 +2000,12 @@ export default function App() {
                     {[
                       { id: "hypertension", label: "Hypertension (BP)" },
                       { id: "diabetes", label: "Diabetes Mellitus" },
-                      { id: "thyroid", label: "Thyroid" },
+                      { id: "thyroid", label: "Thyroid (Thyroxine)" },
                       { id: "cardiac", label: "Heart Disease" },
                       { id: "allergy", label: "Drug Allergies" },
                       { id: "bleeding", label: "Bleeding Diathesis" },
-                      { id: "respiratory", label: "Asthma" },
-                      { id: "epilepsy", label: "Epilepsy" }
+                      { id: "respiratory", label: "Asthma / Respiratory" },
+                      { id: "epilepsy", label: "Epileptic Seizures" }
                     ].map((item) => (
                       <label key={item.id} className="p-3 rounded-xl border border-slate-200 bg-slate-50/50 flex items-center gap-2 cursor-pointer hover:bg-slate-50">
                         <input
@@ -2023,9 +2018,30 @@ export default function App() {
                       </label>
                     ))}
                   </div>
+
+                  <div className="pt-2 border-t border-slate-100">
+                    <span className="text-xs font-bold uppercase text-slate-500 tracking-wider block mb-2">
+                      PERSONAL HABITS & HYGIENE
+                    </span>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="p-3 rounded-xl border border-slate-200 bg-white">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">Brushing Habits</span>
+                        <span className="font-bold text-slate-800">Once Daily (Mixed)</span>
+                      </div>
+                      <div className="p-3 rounded-xl border border-slate-200 bg-white">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">Habits</span>
+                        <span className="font-bold text-slate-800">No Tobacco / Betel</span>
+                      </div>
+                      <div className="p-3 rounded-xl border border-slate-200 bg-white">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">Dietary</span>
+                        <span className="font-bold text-slate-800">Mixed Diet</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
+              {/* TAB 5: PRESCRIPTIONS & WHATSAPP ENGINE */}
               {activeModalTab === "Prescriptions" && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -2069,13 +2085,14 @@ export default function App() {
                           <th className="p-3">Dosage</th>
                           <th className="p-3">Frequency</th>
                           <th className="p-3">Duration</th>
+                          <th className="p-3">Instruction</th>
                           <th className="p-3 text-center">Action</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {(activePatient.prescriptions || []).length === 0 ? (
                           <tr>
-                            <td colSpan={5} className="p-4 text-center text-slate-400 italic">
+                            <td colSpan={6} className="p-4 text-center text-slate-400 italic">
                               No medications prescribed yet. Tap presets above to add.
                             </td>
                           </tr>
@@ -2087,10 +2104,18 @@ export default function App() {
                                 <div className="text-[10px] text-slate-400">{p.generic}</div>
                               </td>
                               <td className="p-3 font-medium text-slate-700">{p.dosage}</td>
-                              <td className="p-3"><span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-mono font-bold text-[11px]">{p.frequency}</span></td>
+                              <td className="p-3">
+                                <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-mono font-bold text-[11px]">
+                                  {p.frequency}
+                                </span>
+                              </td>
                               <td className="p-3 font-medium text-slate-700">{p.duration}</td>
+                              <td className="p-3 text-slate-600">{p.instruction}</td>
                               <td className="p-3 text-center">
-                                <button onClick={() => handleRemovePrescription(p.id)} className="text-rose-500 hover:text-rose-700">
+                                <button
+                                  onClick={() => handleRemovePrescription(p.id)}
+                                  className="text-rose-500 hover:text-rose-700"
+                                >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                               </td>
@@ -2103,6 +2128,7 @@ export default function App() {
                 </div>
               )}
 
+              {/* TAB 6: MEDICAL HISTORY */}
               {activeModalTab === "Medical History" && (
                 <div className="space-y-4">
                   <div className="text-xs font-bold uppercase text-slate-800 tracking-wider">
@@ -2110,25 +2136,33 @@ export default function App() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="border border-slate-200 rounded-xl p-4 bg-white">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Conditions</div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                        Conditions
+                      </div>
                       <input
                         type="text"
                         value={activePatient.conditions || ""}
                         onChange={(e) => {
                           const val = e.target.value;
-                          setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? { ...p, conditions: val } : p)));
+                          setPatients((prev) =>
+                            prev.map((p) => (p.id === activePatient.id ? { ...p, conditions: val } : p))
+                          );
                         }}
                         className="w-full text-sm font-medium text-slate-800 border-b border-slate-200 focus:outline-none"
                       />
                     </div>
                     <div className="border border-rose-100 rounded-xl p-4 bg-rose-50/40">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-rose-500 mb-1">Allergies</div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-rose-500 mb-1">
+                        Allergies
+                      </div>
                       <input
                         type="text"
                         value={activePatient.allergies || "NKDA"}
                         onChange={(e) => {
                           const val = e.target.value;
-                          setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? { ...p, allergies: val } : p)));
+                          setPatients((prev) =>
+                            prev.map((p) => (p.id === activePatient.id ? { ...p, allergies: val } : p))
+                          );
                         }}
                         className="w-full text-sm font-bold text-rose-700 border-b border-rose-200 bg-transparent focus:outline-none"
                       />
@@ -2138,6 +2172,7 @@ export default function App() {
               )}
             </div>
 
+            {/* Modal Bottom Actions */}
             <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100 text-xs">
               <button
                 type="button"
@@ -2175,7 +2210,11 @@ export default function App() {
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-sm font-bold text-slate-900">Add New Patient</h3>
-              <button type="button" onClick={() => setIsAddPatientOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <button
+                type="button"
+                onClick={() => setIsAddPatientOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -2200,7 +2239,7 @@ export default function App() {
                   required
                   value={newPatientForm.age}
                   onChange={(e) => setNewPatientForm({ ...newPatientForm, age: e.target.value })}
-                  placeholder="e.g. 46"
+                  placeholder="e.g. 46 (or 8 for pediatric)"
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                 />
               </div>
@@ -2220,20 +2259,53 @@ export default function App() {
             </div>
 
             <div>
+              <label className="block font-semibold text-slate-600 mb-1">Area / Locality</label>
+              <input
+                type="text"
+                value={newPatientForm.area}
+                onChange={(e) => setNewPatientForm({ ...newPatientForm, area: e.target.value })}
+                placeholder="e.g. Sowripalayam, Coimbatore"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+              />
+            </div>
+
+            <div>
               <label className="block font-semibold text-slate-600 mb-1">WhatsApp Phone *</label>
               <input
                 type="tel"
                 required
                 value={newPatientForm.phone}
                 onChange={(e) => setNewPatientForm({ ...newPatientForm, phone: e.target.value })}
-                placeholder="9043205927"
+                placeholder="7708827021"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
               />
             </div>
 
+            <div>
+              <label className="block font-semibold text-rose-600 mb-1">Medical Alert (High Risk)</label>
+              <input
+                type="text"
+                value={newPatientForm.medicalAlert}
+                onChange={(e) => setNewPatientForm({ ...newPatientForm, medicalAlert: e.target.value })}
+                placeholder="e.g. Hypertensive on medication 3 yrs / Thyroid (Thyroxine)"
+                className="w-full px-3 py-2 border border-rose-200 bg-rose-50/40 rounded-lg text-rose-800 font-medium focus:outline-none"
+              />
+            </div>
+
             <div className="pt-2 flex justify-end gap-2">
-              <button type="button" onClick={() => setIsAddPatientOpen(false)} className="px-3 py-1.5 rounded-lg border text-slate-600">Cancel</button>
-              <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-semibold">Register & Open Odontogram</button>
+              <button
+                type="button"
+                onClick={() => setIsAddPatientOpen(false)}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold"
+              >
+                Register & Open Odontogram
+              </button>
             </div>
           </form>
         </div>
@@ -2248,25 +2320,112 @@ export default function App() {
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-sm font-bold text-slate-900">Book Chair-side Appointment</h3>
-              <button type="button" onClick={() => setIsAddApptOpen(false)} className="text-slate-400"><X className="w-4 h-4" /></button>
+              <button
+                type="button"
+                onClick={() => setIsAddApptOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
+
             <div>
               <label className="block font-semibold text-slate-600 mb-1">Patient Name *</label>
-              <input type="text" required value={newApptForm.patientName} onChange={(e) => setNewApptForm({ ...newApptForm, patientName: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+              <input
+                type="text"
+                required
+                value={newApptForm.patientName}
+                onChange={(e) => setNewApptForm({ ...newApptForm, patientName: e.target.value })}
+                placeholder="Patient Full Name"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+              />
             </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block font-semibold text-slate-600 mb-1">Mobile *</label>
-                <input type="tel" required value={newApptForm.phone} onChange={(e) => setNewApptForm({ ...newApptForm, phone: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                <input
+                  type="tel"
+                  required
+                  value={newApptForm.phone}
+                  onChange={(e) => setNewApptForm({ ...newApptForm, phone: e.target.value })}
+                  placeholder="10-digit number"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
               </div>
+
               <div>
-                <label className="block font-semibold text-slate-600 mb-1">Date</label>
-                <input type="date" value={newApptForm.date} onChange={(e) => setNewApptForm({ ...newApptForm, date: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                <label className="block font-semibold text-slate-600 mb-1">Age</label>
+                <input
+                  type="number"
+                  value={newApptForm.age}
+                  onChange={(e) => setNewApptForm({ ...newApptForm, age: e.target.value })}
+                  placeholder="Age"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
               </div>
             </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Date</label>
+                <input
+                  type="date"
+                  value={newApptForm.date}
+                  onChange={(e) => setNewApptForm({ ...newApptForm, date: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Time Slot</label>
+                <input
+                  type="time"
+                  value={newApptForm.time}
+                  onChange={(e) => setNewApptForm({ ...newApptForm, time: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Operatory Chair</label>
+              <select
+                value={newApptForm.chair}
+                onChange={(e) => setNewApptForm({ ...newApptForm, chair: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+              >
+                <option>Chair 1 (Main Operatory)</option>
+                <option>Chair 2 (Pediatric / Perio)</option>
+                <option>Chair 3 (Prosthodontics)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Planned Procedure</label>
+              <input
+                type="text"
+                value={newApptForm.procedure}
+                onChange={(e) => setNewApptForm({ ...newApptForm, procedure: e.target.value })}
+                placeholder="e.g. Composite Restoration #16"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+              />
+            </div>
+
             <div className="pt-2 flex justify-end gap-2">
-              <button type="button" onClick={() => setIsAddApptOpen(false)} className="px-3 py-1.5 rounded-lg border">Cancel</button>
-              <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-semibold">Schedule Appointment</button>
+              <button
+                type="button"
+                onClick={() => setIsAddApptOpen(false)}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold"
+              >
+                Schedule Appointment
+              </button>
             </div>
           </form>
         </div>
@@ -2280,20 +2439,92 @@ export default function App() {
             className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-xl text-xs"
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
-              <h3 className="text-sm font-bold text-slate-900">Generate Invoice</h3>
-              <button type="button" onClick={() => setIsAddInvoiceOpen(false)} className="text-slate-400"><X className="w-4 h-4" /></button>
+              <h3 className="text-sm font-bold text-slate-900">Generate Dental Insurance Invoice</h3>
+              <button
+                type="button"
+                onClick={() => setIsAddInvoiceOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
+
             <div>
               <label className="block font-semibold text-slate-600 mb-1">Patient Name *</label>
-              <input type="text" required value={newInvoiceForm.patientName} onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, patientName: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+              <input
+                type="text"
+                required
+                value={newInvoiceForm.patientName}
+                onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, patientName: e.target.value })}
+                placeholder="Patient Full Name"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+              />
             </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Insurance / TPA</label>
+                <input
+                  type="text"
+                  value={newInvoiceForm.provider}
+                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, provider: e.target.value })}
+                  placeholder="e.g. Star Health / Self Pay"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Claim Status</label>
+                <select
+                  value={newInvoiceForm.status}
+                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, status: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                >
+                  <option>Pre-Auth Approved</option>
+                  <option>Pre-Auth Submitted</option>
+                  <option>Claim Settled</option>
+                  <option>Self-Pay Completed</option>
+                </select>
+              </div>
+            </div>
+
             <div>
-              <label className="block font-semibold text-slate-600 mb-1">Amount (₹) *</label>
-              <input type="number" required value={newInvoiceForm.amount} onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, amount: e.target.value })} className="w-full px-3 py-2 border rounded-lg font-bold" />
+              <label className="block font-semibold text-slate-600 mb-1">Treatment Description</label>
+              <input
+                type="text"
+                value={newInvoiceForm.treatment}
+                onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, treatment: e.target.value })}
+                placeholder="e.g. Root Canal Therapy + Zirconia Crown"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+              />
             </div>
+
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Total Bill Amount (₹) *</label>
+              <input
+                type="number"
+                required
+                value={newInvoiceForm.amount}
+                onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, amount: e.target.value })}
+                placeholder="e.g. 5500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 font-bold focus:outline-none"
+              />
+            </div>
+
             <div className="pt-2 flex justify-end gap-2">
-              <button type="button" onClick={() => setIsAddInvoiceOpen(false)} className="px-3 py-1.5 rounded-lg border">Cancel</button>
-              <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-semibold">Generate Invoice</button>
+              <button
+                type="button"
+                onClick={() => setIsAddInvoiceOpen(false)}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold"
+              >
+                Generate Invoice
+              </button>
             </div>
           </form>
         </div>
@@ -2308,15 +2539,90 @@ export default function App() {
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-sm font-bold text-slate-900">Add Stock Item</h3>
-              <button type="button" onClick={() => setIsAddStockOpen(false)} className="text-slate-400"><X className="w-4 h-4" /></button>
+              <button
+                type="button"
+                onClick={() => setIsAddStockOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
+
             <div>
               <label className="block font-semibold text-slate-600 mb-1">Item Name *</label>
-              <input type="text" required value={newStockForm.name} onChange={(e) => setNewStockForm({ ...newStockForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+              <input
+                type="text"
+                required
+                value={newStockForm.name}
+                onChange={(e) => setNewStockForm({ ...newStockForm, name: e.target.value })}
+                placeholder="e.g. Composite Resin Syringes"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+              />
             </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Category</label>
+                <select
+                  value={newStockForm.category}
+                  onChange={(e) => setNewStockForm({ ...newStockForm, category: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                >
+                  <option>Restorative</option>
+                  <option>Surgical</option>
+                  <option>Materials</option>
+                  <option>Medications</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Unit of Measure</label>
+                <input
+                  type="text"
+                  value={newStockForm.unit}
+                  onChange={(e) => setNewStockForm({ ...newStockForm, unit: e.target.value })}
+                  placeholder="e.g. Syringes, Boxes, Strips"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Quantity on Hand</label>
+                <input
+                  type="number"
+                  value={newStockForm.quantity}
+                  onChange={(e) => setNewStockForm({ ...newStockForm, quantity: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Min. Threshold</label>
+                <input
+                  type="number"
+                  value={newStockForm.minThreshold}
+                  onChange={(e) => setNewStockForm({ ...newStockForm, minThreshold: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
+              </div>
+            </div>
+
             <div className="pt-2 flex justify-end gap-2">
-              <button type="button" onClick={() => setIsAddStockOpen(false)} className="px-3 py-1.5 rounded-lg border">Cancel</button>
-              <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-semibold">Save Consumable</button>
+              <button
+                type="button"
+                onClick={() => setIsAddStockOpen(false)}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold"
+              >
+                Save Consumable
+              </button>
             </div>
           </form>
         </div>
@@ -2330,16 +2636,77 @@ export default function App() {
             className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-xl text-xs"
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
-              <h3 className="text-sm font-bold text-slate-900">Add Staff Member</h3>
-              <button type="button" onClick={() => setIsAddEmpOpen(false)} className="text-slate-400"><X className="w-4 h-4" /></button>
+              <h3 className="text-sm font-bold text-slate-900">Add Staff Member / Consultant</h3>
+              <button
+                type="button"
+                onClick={() => setIsAddEmpOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
+
             <div>
               <label className="block font-semibold text-slate-600 mb-1">Staff / Role Name *</label>
-              <input type="text" required value={newEmpForm.name} onChange={(e) => setNewEmpForm({ ...newEmpForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+              <input
+                type="text"
+                required
+                value={newEmpForm.name}
+                onChange={(e) => setNewEmpForm({ ...newEmpForm, name: e.target.value })}
+                placeholder="e.g. Dr. Anandha Krishnan / Clinical Specialist A"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+              />
             </div>
+
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Department / Specialty</label>
+              <input
+                type="text"
+                value={newEmpForm.dept}
+                onChange={(e) => setNewEmpForm({ ...newEmpForm, dept: e.target.value })}
+                placeholder="e.g. Radiology & Diagnosis Lead"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Shift Timings</label>
+                <input
+                  type="text"
+                  value={newEmpForm.shift}
+                  onChange={(e) => setNewEmpForm({ ...newEmpForm, shift: e.target.value })}
+                  placeholder="e.g. Morning (09:00 - 14:00)"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Contact Phone</label>
+                <input
+                  type="text"
+                  value={newEmpForm.contact}
+                  onChange={(e) => setNewEmpForm({ ...newEmpForm, contact: e.target.value })}
+                  placeholder="+91 98401 00001"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
+              </div>
+            </div>
+
             <div className="pt-2 flex justify-end gap-2">
-              <button type="button" onClick={() => setIsAddEmpOpen(false)} className="px-3 py-1.5 rounded-lg border">Cancel</button>
-              <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-semibold">Save Staff</button>
+              <button
+                type="button"
+                onClick={() => setIsAddEmpOpen(false)}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold"
+              >
+                Save Staff
+              </button>
             </div>
           </form>
         </div>
@@ -2351,7 +2718,9 @@ export default function App() {
           <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-sm p-6 text-center space-y-4 shadow-xl">
             <div className="flex items-center justify-between border-b pb-2 border-slate-100">
               <span className="text-xs font-bold text-slate-700">Instant UPI Payment</span>
-              <button onClick={() => setActiveUpiQrInvoice(null)} className="text-slate-400"><X className="w-4 h-4" /></button>
+              <button onClick={() => setActiveUpiQrInvoice(null)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
             <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 inline-block mx-auto">
@@ -2363,8 +2732,12 @@ export default function App() {
 
             <div>
               <div className="text-xl font-bold text-slate-900">₹{activeUpiQrInvoice.total}</div>
-              <div className="text-xs text-slate-500 mt-0.5">{activeUpiQrInvoice.patient} • {activeUpiQrInvoice.id}</div>
+              <div className="text-xs text-slate-500 mt-0.5">
+                {activeUpiQrInvoice.patient} • {activeUpiQrInvoice.id}
+              </div>
             </div>
+
+            <p className="text-[11px] text-slate-400">Scan with Google Pay, PhonePe, or Paytm at chair-side.</p>
 
             <button
               onClick={() => {
