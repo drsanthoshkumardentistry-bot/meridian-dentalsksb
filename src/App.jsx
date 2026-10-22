@@ -1,5 +1,5 @@
 /* ==============================================================================
- * MERIDIAN DENTAL OS - COMMERCIAL HEALTHCARE PRODUCTION SUITE
+ * MERIDENT OS - COMMERCIAL HEALTHCARE PRODUCTION SUITE
  * Preserves exact original UI styling, typography, layout, and color palette.
  * Enhanced with Institutional Hospital EHR, Inter-Department Referrals & Systemic Alerts.
  * File: src/App.jsx
@@ -120,7 +120,7 @@ const PRESET_MEDICATIONS = [
 ];
 
 export default function App() {
-  const CLINIC_ID = "meridian_main_clinic";
+  const CLINIC_ID = "merident_main_clinic";
 
   // Firebase authentication gate
   const [authUser, setAuthUser] = useState(null);
@@ -180,7 +180,7 @@ export default function App() {
   // --- PERSISTENT DATA STORES ---
   const [patients, setPatients] = useState(() => {
     try {
-      const stored = localStorage.getItem("meridian_patients");
+      const stored = localStorage.getItem("merident_patients");
       return stored ? JSON.parse(stored) : [];
     } catch {
       return [];
@@ -189,7 +189,7 @@ export default function App() {
 
   const [appointments, setAppointments] = useState(() => {
     try {
-      const stored = localStorage.getItem("meridian_appointments");
+      const stored = localStorage.getItem("merident_appointments");
       return stored ? JSON.parse(stored) : [];
     } catch {
       return [];
@@ -198,7 +198,7 @@ export default function App() {
 
   const [invoices, setInvoices] = useState(() => {
     try {
-      const stored = localStorage.getItem("meridian_invoices");
+      const stored = localStorage.getItem("merident_invoices");
       return stored ? JSON.parse(stored) : [];
     } catch {
       return [];
@@ -207,7 +207,7 @@ export default function App() {
 
   const [inventory, setInventory] = useState(() => {
     try {
-      const stored = localStorage.getItem("meridian_inventory");
+      const stored = localStorage.getItem("merident_inventory");
       return stored ? JSON.parse(stored) : [];
     } catch {
       return [];
@@ -216,7 +216,7 @@ export default function App() {
 
   const [employees, setEmployees] = useState(() => {
     try {
-      const stored = localStorage.getItem("meridian_employees");
+      const stored = localStorage.getItem("merident_employees");
       return stored ? JSON.parse(stored) : [
         { id: "EMP-01", name: "Dr. A. Khan", role: "Orthodontist", license: "LIC: DCI/TN/12345", active: true, licenseExpiry: "2026-11-20" },
         { id: "EMP-02", name: "Ms. B. Sharma", role: "Hygienist", license: "LIC: DCI/TN/12346", active: false, licenseExpiry: "2026-11-15" },
@@ -234,28 +234,28 @@ export default function App() {
   // Practice Profile
   const [practiceProfile, setPracticeProfile] = useState(() => {
     try {
-      const stored = localStorage.getItem("meridian_profile");
+      const stored = localStorage.getItem("merident_profile");
       return stored ? JSON.parse(stored) : {
-        name: "Meridian Dental Clinic",
+        name: "MeriDent Clinic",
         tagline: "Advanced Dental Care & Implant Center",
         regNumber: "UDYAM-TN-04-0139569",
         drName: "Dr. Santhoshkumar S / Dr. Sivasabari G",
         qualification: "BDS, Dental Surgery",
         phone: "9840100001",
-        email: "contact@meridiandental.in",
-        upiId: "meridianclinic@upi",
+        email: "contact@merident.in",
+        upiId: "meridentclinic@upi",
         address: "Coimbatore, Tamil Nadu, India"
       };
     } catch {
       return {
-        name: "Meridian Dental Clinic",
+        name: "MeriDent Clinic",
         tagline: "Advanced Dental Care & Implant Center",
         regNumber: "UDYAM-TN-04-0139569",
         drName: "Dr. Santhoshkumar S / Dr. Sivasabari G",
         qualification: "BDS, Dental Surgery",
         phone: "9840100001",
-        email: "contact@meridiandental.in",
-        upiId: "meridianclinic@upi",
+        email: "contact@merident.in",
+        upiId: "meridentclinic@upi",
         address: "Coimbatore, Tamil Nadu, India"
       };
     }
@@ -280,27 +280,27 @@ export default function App() {
 
   // Save changes to localStorage
   useEffect(() => {
-    localStorage.setItem("meridian_patients", JSON.stringify(patients));
+    localStorage.setItem("merident_patients", JSON.stringify(patients));
   }, [patients]);
 
   useEffect(() => {
-    localStorage.setItem("meridian_appointments", JSON.stringify(appointments));
+    localStorage.setItem("merident_appointments", JSON.stringify(appointments));
   }, [appointments]);
 
   useEffect(() => {
-    localStorage.setItem("meridian_invoices", JSON.stringify(invoices));
+    localStorage.setItem("merident_invoices", JSON.stringify(invoices));
   }, [invoices]);
 
   useEffect(() => {
-    localStorage.setItem("meridian_inventory", JSON.stringify(inventory));
+    localStorage.setItem("merident_inventory", JSON.stringify(inventory));
   }, [inventory]);
 
   useEffect(() => {
-    localStorage.setItem("meridian_employees", JSON.stringify(employees));
+    localStorage.setItem("merident_employees", JSON.stringify(employees));
   }, [employees]);
 
   useEffect(() => {
-    localStorage.setItem("meridian_profile", JSON.stringify(practiceProfile));
+    localStorage.setItem("merident_profile", JSON.stringify(practiceProfile));
   }, [practiceProfile]);
 
   const showToast = (msg) => {
@@ -610,7 +610,7 @@ export default function App() {
       `⚠️ *Patient Care Advice:*\n` +
       `• Please take prescribed medications strictly on time.\n` +
       `• In case of persistent swelling or drug allergy, contact clinic immediately.\n\n` +
-      `_Powered by Meridian Dental OS (Udyam: ${practiceProfile.regNumber})_`
+      `_Powered by MeriDent OS (Udyam: ${practiceProfile.regNumber})_`
     );
 
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank", "noopener,noreferrer");
@@ -674,7 +674,7 @@ export default function App() {
       `🔬 *Procedure:* ${appt.procedure}\n` +
       `----------------------------------------\n` +
       `📍 Please arrive 10 minutes prior to chair setup.\n\n` +
-      `_Meridian Dental OS_`
+      `_MeriDent OS_`
     );
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank", "noopener,noreferrer");
   };
@@ -823,7 +823,7 @@ export default function App() {
       <div className="min-h-screen bg-[#0b1329] flex items-center justify-center p-6 text-white">
         <div className="text-center">
           <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-cyan-300/30 border-t-cyan-300" />
-          <p className="text-sm text-slate-300">Checking your Meridian Dental OS session…</p>
+          <p className="text-sm text-slate-300">Checking your MeriDent OS session…</p>
         </div>
       </div>
     );
@@ -838,7 +838,7 @@ export default function App() {
             <HeartPulse className="h-7 w-7" />
           </div>
           <div className="text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-cyan-300">Meridian Dental OS</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-cyan-300">MeriDent OS</p>
             <h1 className="mt-3 text-2xl font-bold tracking-tight">Welcome back</h1>
             <p className="mt-2 text-sm leading-6 text-slate-400">Sign in with your Google account to access the clinical practice dashboard.</p>
           </div>
@@ -885,7 +885,7 @@ export default function App() {
           <div className="p-5 flex items-center justify-between border-b border-slate-800/80">
             <div>
               <div className="text-base font-bold text-white tracking-wide flex items-center gap-2">
-                Meridian Dental
+                MeriDent
               </div>
               <div className="text-[11px] text-slate-400 font-normal">
                 Practice Management OS
@@ -966,7 +966,7 @@ export default function App() {
             >
               <Menu className="w-6 h-6" />
             </button>
-            <div className="text-lg font-bold text-slate-900">Meridian Dental</div>
+            <div className="text-lg font-bold text-slate-900">MeriDent</div>
           </div>
 
           <div className="flex items-center gap-4">
@@ -1652,7 +1652,7 @@ export default function App() {
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
                 <div>
                   <h1 className="text-2xl font-bold tracking-tight text-slate-900">Clinical Overview</h1>
-                  <p className="text-sm text-slate-500 mt-1">Meridian Dental Clinical Workspace</p>
+                  <p className="text-sm text-slate-500 mt-1">MeriDent Clinical Workspace</p>
                 </div>
                 <button onClick={() => setActiveNav("Appointments Diary")} className="text-sm font-semibold text-blue-600 hover:text-blue-800">
                   View today's diary ›
