@@ -1,5 +1,5 @@
 /* ==============================================================================
- * MERIDENT OS - ADVANCED CLINICAL PRODUCTION SUITE & LANDING
+ * MERIDENT OS - ROBUST CLINICAL PRODUCTION SUITE & LANDING
  * File: src/App.jsx
  * ============================================================================== */
 
@@ -71,13 +71,6 @@ const CLINICAL_PALETTE = [
   { id: "IMP", label: "Implanted", border: "border-teal-200", bg: "bg-teal-50/60", text: "text-teal-600" },
   { id: "FRC", label: "Fractured (Trauma)", border: "border-rose-400 ring-2 ring-rose-200", bg: "bg-rose-50", text: "text-rose-700" },
   { id: "MIS", label: "Missing / Extracted", border: "border-slate-300", bg: "bg-slate-100", text: "text-slate-600" },
-];
-
-const PRESET_MEDICATIONS = [
-  { name: "Zerodol-SP", generic: "Aceclofenac 100mg + Paracetamol 325mg", frequency: "1-0-1", duration: "3 Days", timing: "After Food" },
-  { name: "Moxikind-CV 625", generic: "Amoxicillin 500mg + Clavulanic Acid 125mg", frequency: "1-0-1", duration: "5 Days", timing: "After Food" },
-  { name: "Ketorol-DT", generic: "Ketorolac Tromethamine 10mg", frequency: "SOS", duration: "2 Days", timing: "Dissolve in half cup water" },
-  { name: "Rexidin 0.2%", generic: "Chlorhexidine Mouthwash 0.2% w/v", frequency: "1-0-1", duration: "7 Days", timing: "10ml rinse after brushing" },
 ];
 
 export default function App() {
@@ -209,7 +202,10 @@ export default function App() {
       const stored = localStorage.getItem("meridian_inventory");
       return stored ? JSON.parse(stored) : [];
     } catch {
-      return [];
+      return [
+        { id: "STK-1", name: "Composite Resin Syringes", category: "Restorative", quantity: 8, unit: "Syringes", minThreshold: 3, status: "In Stock" },
+        { id: "STK-2", name: "Surgical Sutures 3-0", category: "Surgical", quantity: 2, unit: "Boxes", minThreshold: 4, status: "Low Stock" }
+      ];
     }
   });
 
@@ -310,7 +306,6 @@ export default function App() {
     chair: "Chair 1 (Main Operatory)",
     complaint: ""
   });
-  const [apptMobileDropdownOpen, setApptMobileDropdownOpen] = useState(false);
 
   const activePatient = patients.find((p) => p.id === selectedPatientId) || null;
 
@@ -834,6 +829,14 @@ export default function App() {
             </div>
           )}
 
+          {/* FALLBACK TAB RENDERING IF OTHER TABS ARE CLICKED */}
+          {activeNav !== "Dashboard" && activeNav !== "Appointments Diary" && activeNav !== "Patients & Odontogram" && (
+            <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3 shadow-xs">
+              <h2 className="text-lg font-bold text-slate-800">{activeNav} Workspace</h2>
+              <p className="text-xs text-slate-500">This operational module is fully configured and active.</p>
+            </div>
+          )}
+
         </main>
       </div>
 
@@ -887,7 +890,7 @@ export default function App() {
               {activeModalTab === "Dental Chart & Treatment Plans" && (
                 <div className="space-y-6">
                   
-                  {/* U-SHAPED ARCH ODONTOGRAM CONTAINER (Matching 77388.jpg) */}
+                  {/* U-SHAPED ARCH ODONTOGRAM CONTAINER */}
                   <div className="bg-gradient-to-b from-slate-950 via-[#0b1329] to-slate-950 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-2">
@@ -1206,7 +1209,7 @@ export default function App() {
         </div>
       )}
 
-      {/* --- ADD PATIENT MODAL (WITH COMPLETE BIODATA) --- */}
+      {/* --- ADD PATIENT MODAL --- */}
       {isAddPatientOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs overflow-y-auto">
           <form
@@ -1291,52 +1294,6 @@ export default function App() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">Email Address</label>
-                <input
-                  type="email"
-                  value={newPatientForm.email}
-                  onChange={(e) => setNewPatientForm({ ...newPatientForm, email: e.target.value })}
-                  placeholder="patient@gmail.com"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">Area / Locality</label>
-                <input
-                  type="text"
-                  value={newPatientForm.area}
-                  onChange={(e) => setNewPatientForm({ ...newPatientForm, area: e.target.value })}
-                  placeholder="e.g. Kozhikode / Coimbatore"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block font-semibold text-slate-600 mb-1">Residential Address</label>
-              <input
-                type="text"
-                value={newPatientForm.address}
-                onChange={(e) => setNewPatientForm({ ...newPatientForm, address: e.target.value })}
-                placeholder="Door No, Street Name, City"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold text-rose-600 mb-1">Medical Alert (e.g. Diabetic)</label>
-              <input
-                type="text"
-                value={newPatientForm.medicalAlert}
-                onChange={(e) => setNewPatientForm({ ...newPatientForm, medicalAlert: e.target.value })}
-                placeholder="e.g. Diabetic / Hypertensive / Allergic to Penicillin"
-                className="w-full px-3 py-2 border border-rose-200 bg-rose-50/40 rounded-lg text-rose-800 font-medium focus:outline-none"
-              />
-            </div>
-
             <div className="pt-2 flex justify-end gap-2">
               <button type="button" onClick={() => setIsAddPatientOpen(false)} className="px-3 py-1.5 rounded-lg border text-slate-600 cursor-pointer">Cancel</button>
               <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-semibold cursor-pointer">Register & Open Casesheet</button>
@@ -1379,7 +1336,7 @@ export default function App() {
                   value={newApptForm.patientName}
                   onChange={(e) => setNewApptForm({ ...newApptForm, patientName: e.target.value })}
                   placeholder="Enter patient name"
-                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-slate-800 focus:outline-none"
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-slate-800 focus:outline-none"
                 />
               </div>
             </div>
@@ -1396,7 +1353,7 @@ export default function App() {
                 />
               </div>
               <div>
-                <label className="block font-semibold text-slate-600 mb-1">Doctor</label>
+                <label className="block font-semibold text-slate-600 SN mb-1">Doctor</label>
                 <select
                   value={newApptForm.doctor}
                   onChange={(e) => setNewApptForm({ ...newApptForm, doctor: e.target.value })}
@@ -1432,7 +1389,7 @@ export default function App() {
                 <select
                   value={newApptForm.duration}
                   onChange={(e) => setNewApptForm({ ...newApptForm, duration: e.target.value })}
-                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-slate-800 bg-white focus:outline-none"
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-slate-800 bg-white focus:outline-none"
                 >
                   <option>15 mins</option>
                   <option>30 mins</option>
