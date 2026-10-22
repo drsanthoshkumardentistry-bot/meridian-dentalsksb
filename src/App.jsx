@@ -1,5 +1,5 @@
 /* ==============================================================================
- * MERIDENT OS - ROBUST CLINICAL PRODUCTION SUITE & LANDING
+ * MERIDIAN DENTAL OS - COMMERCIAL HEALTHCARE PRODUCTION SUITE & LANDING
  * File: src/App.jsx
  * ============================================================================== */
 
@@ -11,6 +11,7 @@ import {
   Plus,
   Trash2,
   Share2,
+  Eye,
   Upload,
   Calendar,
   Users,
@@ -21,37 +22,50 @@ import {
   UserCheck,
   Send,
   CheckCircle2,
+  Clock,
+  ChevronRight,
+  ExternalLink,
   ShieldCheck,
+  AlertCircle,
   QrCode,
-  Ruler,
-  User,
-  LogOut,
+  Download,
+  FileSpreadsheet,
+  Settings,
+  Baby,
   Activity,
-  ArrowRight,
-  MessageCircle,
-  TrendingUp,
-  BarChart3,
-  Lock,
-  Cloud,
+  Layers,
+  Ruler,
+  Phone,
   FileText,
-  AlertTriangle,
-  Clock
+  User,
+  HeartPulse,
+  LogIn,
+  LogOut,
+  ArrowUpRight,
+  ShieldAlert,
+  ClipboardCheck,
+  AlertTriangle
 } from "lucide-react";
 
+// Safe dynamic import from ./firebase
 import * as FirebaseModule from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import {
   collection,
   doc,
-  getDoc,
   setDoc,
+  getDoc,
+  getDocs,
   onSnapshot,
-  serverTimestamp
+  serverTimestamp,
+  addDoc,
+  deleteDoc
 } from "firebase/firestore";
 import LandingPage from "./components/landingpage";
 
 const auth = FirebaseModule.auth;
 const db = FirebaseModule.db;
+const storage = FirebaseModule.storage;
 const firebaseConfigured = Boolean(auth && FirebaseModule.firebaseConfigured !== false);
 const loginWithGoogle = FirebaseModule.loginWithGoogle || (async () => {});
 const logoutUser = FirebaseModule.logoutUser || (async () => {});
@@ -59,30 +73,62 @@ const logoutUser = FirebaseModule.logoutUser || (async () => {});
 // --- DENTITION SCHEMAS (FDI TWO-DIGIT SYSTEM) ---
 const PERMANENT_UPPER = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
 const PERMANENT_LOWER = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
+
 const DECIDUOUS_UPPER = [55, 54, 53, 52, 51, 61, 62, 63, 64, 65];
 const DECIDUOUS_LOWER = [85, 84, 83, 82, 81, 71, 72, 73, 74, 75];
 
+// Exact palette items matching screenshot (73145.jpg)
 const CLINICAL_PALETTE = [
   { id: "HLT", label: "Healthy", border: "border-emerald-300", bg: "bg-emerald-50/60", text: "text-emerald-700" },
   { id: "CAR", label: "Caries", border: "border-rose-200", bg: "bg-rose-50/60", text: "text-rose-600" },
   { id: "RES", label: "Restored", border: "border-sky-200", bg: "bg-sky-50/60", text: "text-sky-600" },
   { id: "RCT", label: "RCT Done", border: "border-purple-200", bg: "bg-purple-50/60", text: "text-purple-600" },
   { id: "CRW", label: "Crown", border: "border-amber-200", bg: "bg-amber-50/60", text: "text-amber-600" },
+  { id: "BRG", label: "Bridging (Under Cr...", border: "border-indigo-200", bg: "bg-indigo-50/60", text: "text-indigo-600" },
   { id: "IMP", label: "Implanted", border: "border-teal-200", bg: "bg-teal-50/60", text: "text-teal-600" },
   { id: "FRC", label: "Fractured (Trauma)", border: "border-rose-400 ring-2 ring-rose-200", bg: "bg-rose-50", text: "text-rose-700" },
+  { id: "SPC", label: "Spacing", border: "border-cyan-200", bg: "bg-cyan-50/60", text: "text-cyan-600" },
+  { id: "ATT", label: "Attrited", border: "border-orange-200", bg: "bg-orange-50/60", text: "text-orange-600" },
+  { id: "MAL", label: "Malaligned (Under...", border: "border-fuchsia-200", bg: "bg-fuchsia-50/60", text: "text-fuchsia-600" },
+  { id: "PRM", label: "Paramolar", border: "border-pink-200", bg: "bg-pink-50/60", text: "text-pink-600" },
+  { id: "SCL", label: "Scaling (Calculus / ...", border: "border-yellow-200", bg: "bg-yellow-50/60", text: "text-yellow-600" },
+  { id: "DEF", label: "Deformities", border: "border-purple-200", bg: "bg-purple-50/60", text: "text-purple-600" },
+  { id: "BND", label: "Bone Deformations", border: "border-slate-200", bg: "bg-slate-50", text: "text-slate-600" },
   { id: "MIS", label: "Missing / Extracted", border: "border-slate-300", bg: "bg-slate-100", text: "text-slate-600" },
+];
+
+// Institutional Dental Specialty Referral Departments
+const DENTAL_DEPARTMENTS = [
+  { id: "omfs", code: "OMFS", name: "Oral & Maxillofacial Surgery", room: "Room 2" },
+  { id: "perio", code: "PERIO", name: "Periodontics & Implantology", room: "Room 3" },
+  { id: "cons", code: "CONS", name: "Conservative Dentistry & Endodontics", room: "Room 4" },
+  { id: "ortho", code: "ORTHO", name: "Orthodontics & Dentofacial", room: "Room 5" },
+  { id: "pedo", code: "PEDO", name: "Pediatric & Preventive Dentistry", room: "Room 6" },
+  { id: "prostho", code: "PROSTHO", name: "Prosthodontics & Crown-Bridge", room: "Room 7" },
+  { id: "omr", code: "OMR", name: "Oral Medicine & Radiology", room: "Room 1" },
+  { id: "phd", code: "PHD", name: "Public Health Dentistry", room: "Room 8" }
+];
+
+const PRESET_MEDICATIONS = [
+  { name: "Zerodol-SP", generic: "Aceclofenac 100mg + Paracetamol 325mg + Serratiopeptidase 15mg", frequency: "1-0-1", duration: "3 Days", timing: "After Food" },
+  { name: "Moxikind-CV 625", generic: "Amoxicillin 500mg + Clavulanic Acid 125mg", frequency: "1-0-1", duration: "5 Days", timing: "After Food" },
+  { name: "Ketorol-DT", generic: "Ketorolac Tromethamine 10mg (Dispersible)", frequency: "SOS", duration: "2 Days", timing: "Dissolve in half cup water" },
+  { name: "Metrogyl 400", generic: "Metronidazole 400mg", frequency: "1-1-1", duration: "3 Days", timing: "After Food" },
+  { name: "Rexidin 0.2%", generic: "Chlorhexidine Gluconate 0.2% w/v Mouthwash", frequency: "1-0-1", duration: "7 Days", timing: "10ml rinse for 1 min after brushing" },
+  { name: "Kenacort 0.1%", generic: "Triamcinolone Acetonide 0.1% Oral Paste", frequency: "0-0-1", duration: "5 Days", timing: "Apply thinly at bedtime over ulcer" },
 ];
 
 export default function App() {
   const CLINIC_ID = "meridian_main_clinic";
 
-  const [viewMode, setViewMode] = useState("landing");
+  const [viewMode, setViewMode] = useState("landing"); // "landing" | "dashboard"
   const [authUser, setAuthUser] = useState(null);
   const [isApproved, setIsApproved] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState("");
   const [loginBusy, setLoginBusy] = useState(false);
 
+  // Check database user approval status
   const checkUserApproval = async (user) => {
     if (!db) return true;
     try {
@@ -128,8 +174,8 @@ export default function App() {
         setAuthError("");
       },
       (error) => {
-        console.error("Auth error:", error);
-        setAuthError("Could not verify login session.");
+        console.error("Authentication state error:", error);
+        setAuthError("Could not verify your login. Please refresh and try again.");
         setAuthLoading(false);
       }
     );
@@ -147,7 +193,7 @@ export default function App() {
         setViewMode("dashboard");
       }
     } catch (error) {
-      setAuthError(error?.message || "Google sign-in failed.");
+      setAuthError(error?.message || "Google sign-in failed. Please try again.");
     } finally {
       setLoginBusy(false);
     }
@@ -159,12 +205,14 @@ export default function App() {
       setAuthUser(null);
       setIsApproved(false);
       setViewMode("landing");
+      setAuthError("");
     } catch (error) {
-      console.error(error);
+      setAuthError("Unable to log out. Please try again.");
     }
   };
 
-  const [activeNav, setActiveNav] = useState("Dashboard");
+  // Navigation State
+  const [activeNav, setActiveNav] = useState("Patients & Odontogram");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [toastMessage, setToastMessage] = useState(null);
@@ -202,54 +250,87 @@ export default function App() {
       const stored = localStorage.getItem("meridian_inventory");
       return stored ? JSON.parse(stored) : [];
     } catch {
-      return [
-        { id: "STK-1", name: "Composite Resin Syringes", category: "Restorative", quantity: 8, unit: "Syringes", minThreshold: 3, status: "In Stock" },
-        { id: "STK-2", name: "Surgical Sutures 3-0", category: "Surgical", quantity: 2, unit: "Boxes", minThreshold: 4, status: "Low Stock" }
-      ];
+      return [];
     }
   });
 
+  const [employees, setEmployees] = useState(() => {
+    try {
+      const stored = localStorage.getItem("meridian_employees");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Practice Profile
   const [practiceProfile, setPracticeProfile] = useState(() => {
     try {
       const stored = localStorage.getItem("meridian_profile");
       return stored ? JSON.parse(stored) : {
-        name: "MeriDent Clinic",
+        name: "Meridian Dental Clinic",
         tagline: "Advanced Dental Care & Implant Center",
         regNumber: "UDYAM-TN-04-0139569",
         drName: "Dr. Santhoshkumar S / Dr. Sivasabari G",
         qualification: "BDS, Dental Surgery",
-        phone: "9043205927",
-        email: "dr.santhoshkumardentistry@gmail.com",
+        phone: "9840100001",
+        email: "contact@meridiandental.in",
         upiId: "meridianclinic@upi",
         address: "Coimbatore, Tamil Nadu, India"
       };
     } catch {
       return {
-        name: "MeriDent Clinic",
+        name: "Meridian Dental Clinic",
         tagline: "Advanced Dental Care & Implant Center",
         regNumber: "UDYAM-TN-04-0139569",
         drName: "Dr. Santhoshkumar S / Dr. Sivasabari G",
         qualification: "BDS, Dental Surgery",
-        phone: "9043205927",
-        email: "dr.santhoshkumardentistry@gmail.com",
+        phone: "9840100001",
+        email: "contact@meridiandental.in",
         upiId: "meridianclinic@upi",
         address: "Coimbatore, Tamil Nadu, India"
       };
     }
   });
 
+  // Real-time Firestore sync
+  useEffect(() => {
+    if (!db) return;
+    try {
+      const q = collection(db, "clinics", CLINIC_ID, "patients");
+      const unsub = onSnapshot(q, (snapshot) => {
+        if (!snapshot.empty) {
+          const live = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          setPatients(live);
+        }
+      });
+      return () => unsub();
+    } catch (e) {
+      console.warn("Firestore listener offline", e);
+    }
+  }, []);
+
+  // Save changes to localStorage
   useEffect(() => {
     localStorage.setItem("meridian_patients", JSON.stringify(patients));
   }, [patients]);
+
   useEffect(() => {
     localStorage.setItem("meridian_appointments", JSON.stringify(appointments));
   }, [appointments]);
+
   useEffect(() => {
     localStorage.setItem("meridian_invoices", JSON.stringify(invoices));
   }, [invoices]);
+
   useEffect(() => {
     localStorage.setItem("meridian_inventory", JSON.stringify(inventory));
   }, [inventory]);
+
+  useEffect(() => {
+    localStorage.setItem("meridian_employees", JSON.stringify(employees));
+  }, [employees]);
+
   useEffect(() => {
     localStorage.setItem("meridian_profile", JSON.stringify(practiceProfile));
   }, [practiceProfile]);
@@ -259,63 +340,104 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  // --- MODAL STATES ---
   const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
   const [isChartModalOpen, setIsChartModalOpen] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState(null);
-  const [activeModalTab, setActiveModalTab] = useState("Dental Chart & Treatment Plans");
+  const [activeModalTab, setActiveModalTab] = useState("32-Tooth Odontogram");
 
+  // New Patient Form with Medical Alert & Area
   const [newPatientForm, setNewPatientForm] = useState({
     name: "",
     phone: "",
     age: "",
     gender: "Male",
     area: "",
-    bloodGroup: "O+",
-    email: "",
-    address: "",
     conditions: "None reported",
     allergies: "NKDA",
     medicalAlert: "",
-    recallStatus: true
   });
 
-  const [isDeciduousOverride, setIsDeciduousOverride] = useState(null);
+  // Odontogram Screen Local State
+  const [isDeciduous, setIsDeciduous] = useState(false);
   const [activePaletteStatus, setActivePaletteStatus] = useState("FRC");
 
-  const [treatmentPlans, setTreatmentPlans] = useState([]);
-  const [newPlanForm, setNewPlanForm] = useState({
-    tooth: "18",
-    name: "CROWN LENGTHENING",
-    diagnosis: "Reversible pulpitis",
-    price: "1500"
+  // Inter-Departmental Referrals State
+  const [refTreatment, setRefTreatment] = useState("");
+  const [refTooth, setRefTooth] = useState("");
+  const [refDept, setRefDept] = useState("CONS");
+
+  // Systemic Screening Checkboxes
+  const [systemicChecks, setSystemicChecks] = useState({
+    hypertension: false,
+    diabetes: false,
+    thyroid: false,
+    cardiac: false,
+    bleeding: false,
+    allergy: false,
+    respiratory: false,
+    epilepsy: false,
   });
 
-  const [rgvReports, setRgvReports] = useState([]);
-  const [newRgvNote, setNewRgvNote] = useState("");
+  // OPG Workstation State
+  const [opgSelectedPatientId, setOpgSelectedPatientId] = useState(null);
+  const [isNegativeInverted, setIsNegativeInverted] = useState(false);
+  const [rulerActive, setRulerActive] = useState(false);
+  const [rulerPoints, setRulerPoints] = useState([]);
+  const fileInputRef = useRef(null);
+  const opgCanvasRef = useRef(null);
 
+  // New Appointment Modal State
   const [isAddApptOpen, setIsAddApptOpen] = useState(false);
   const [newApptForm, setNewApptForm] = useState({
-    mobile: "",
+    patientId: "",
     patientName: "",
+    phone: "",
     age: "",
-    doctor: "Dr. Santhoshkumar S",
     date: new Date().toISOString().split("T")[0],
-    time: "10:00 AM",
-    amPm: "AM",
-    duration: "15 Mins",
+    time: "10:30",
     chair: "Chair 1 (Main Operatory)",
-    complaint: ""
+    doctor: practiceProfile.drName,
+    procedure: "Root Canal Therapy (Access)",
+    status: "Confirmed",
+  });
+
+  // New Invoice Modal State
+  const [isAddInvoiceOpen, setIsAddInvoiceOpen] = useState(false);
+  const [activeUpiQrInvoice, setActiveUpiQrInvoice] = useState(null);
+  const [newInvoiceForm, setNewInvoiceForm] = useState({
+    patientName: "",
+    provider: "National Health TPA",
+    claimId: `CLM-${Date.now().toString().slice(-6)}`,
+    status: "Pre-Auth Approved",
+    treatment: "Root Canal Therapy & Crown",
+    amount: "5500",
+  });
+
+  // New Stock Modal State
+  const [isAddStockOpen, setIsAddStockOpen] = useState(false);
+  const [newStockForm, setNewStockForm] = useState({
+    name: "",
+    category: "Restorative",
+    quantity: 10,
+    unit: "Syringes",
+    minThreshold: 5,
+  });
+
+  // New Employee Modal State
+  const [isAddEmpOpen, setIsAddEmpOpen] = useState(false);
+  const [newEmpForm, setNewEmpForm] = useState({
+    name: "",
+    role: "Clinical Specialist A",
+    dept: "Restorative & Surgical Lead",
+    shift: "Morning (09:00 - 14:00)",
+    contact: "+91 98401 00001",
+    active: true,
   });
 
   const activePatient = patients.find((p) => p.id === selectedPatientId) || null;
 
-  const isDeciduousMode = () => {
-    if (isDeciduousOverride !== null) return isDeciduousOverride;
-    const ageNum = parseInt(activePatient?.age, 10);
-    if (!isNaN(ageNum) && ageNum < 12) return true;
-    return false;
-  };
-
+  // Add Patient Action
   const handleCreatePatient = async (e) => {
     e.preventDefault();
     if (!newPatientForm.name.trim() || !newPatientForm.phone.trim()) {
@@ -327,9 +449,24 @@ export default function App() {
       ...newPatientForm,
       registeredDate: new Date().toLocaleDateString("en-IN"),
       toothConditions: {},
+      opgImage: null,
+      diagnosis: {
+        trauma: "No acute trauma recorded.",
+        impaction: "None charted.",
+        boneDeformations: "Normal bone crest height.",
+        diagnosisNotes: "No diagnostic notes entered.",
+      },
       prescriptions: [],
       referrals: [],
     };
+
+    if (db) {
+      try {
+        await setDoc(doc(db, "clinics", CLINIC_ID, "patients", created.id), created);
+      } catch (err) {
+        console.warn("Firestore write skipped, local save active", err);
+      }
+    }
 
     setPatients([created, ...patients]);
     setNewPatientForm({
@@ -338,21 +475,17 @@ export default function App() {
       age: "",
       gender: "Male",
       area: "",
-      bloodGroup: "O+",
-      email: "",
-      address: "",
       conditions: "None reported",
       allergies: "NKDA",
       medicalAlert: "",
-      recallStatus: true
     });
     setIsAddPatientOpen(false);
     setSelectedPatientId(created.id);
-    setIsDeciduousOverride(null);
     setIsChartModalOpen(true);
     showToast(`Patient ${created.name} registered successfully`);
   };
 
+  // Tooth Click in Odontogram
   const handleToothTap = (toothNumber) => {
     if (!activePatient) return;
     const currentConditions = { ...(activePatient.toothConditions || {}) };
@@ -361,60 +494,289 @@ export default function App() {
     } else {
       currentConditions[toothNumber] = activePaletteStatus;
     }
+
     setPatients((prev) =>
       prev.map((p) => (p.id === activePatient.id ? { ...p, toothConditions: currentConditions } : p))
     );
+
+    if (db) {
+      const chartRef = doc(db, "clinics", CLINIC_ID, "patients", activePatient.id, "ehr", "odontogram");
+      setDoc(chartRef, { teeth: currentConditions, updatedAt: serverTimestamp() }, { merge: true });
+    }
   };
 
-  const addTreatmentPlan = (e) => {
-    e.preventDefault();
-    const tp = {
-      id: "TP-" + Date.now().toString().slice(-4),
-      tooth: newPlanForm.tooth,
-      stage: "Treatment Plans",
-      name: newPlanForm.name,
-      diagnosis: newPlanForm.diagnosis,
-      price: newPlanForm.price,
-      qty: 1,
-      doctor: "Dr. Santhoshkumar S",
-      date: new Date().toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })
+  // Update Diagnostic Fields in Realtime
+  const handleUpdateDiagnosis = (field, value) => {
+    if (!activePatient) return;
+    const updatedDiag = {
+      ...(activePatient.diagnosis || {}),
+      [field]: value,
     };
-    setTreatmentPlans([tp, ...treatmentPlans]);
-    showToast("Treatment plan added successfully");
+    setPatients((prev) =>
+      prev.map((p) => (p.id === activePatient.id ? { ...p, diagnosis: updatedDiag } : p))
+    );
+    if (db) {
+      const diagRef = doc(db, "clinics", CLINIC_ID, "patients", activePatient.id, "ehr", "diagnosis");
+      setDoc(diagRef, { ...updatedDiag, updatedAt: serverTimestamp() }, { merge: true });
+    }
   };
 
-  const movePlanStage = (id, nextStage) => {
-    setTreatmentPlans(prev => prev.map(item => item.id === id ? { ...item, stage: nextStage } : item));
-    showToast(`Moved treatment to ${nextStage}`);
+  // Add Department Referral
+  const handleAddReferral = (e) => {
+    e.preventDefault();
+    if (!refTreatment.trim() || !activePatient) return;
+    const deptObj = DENTAL_DEPARTMENTS.find((d) => d.code === refDept) || { name: refDept, room: "OPD" };
+    const newRef = {
+      id: "REF-" + Date.now().toString().slice(-4),
+      treatment: refTreatment.trim(),
+      toothRegion: refTooth.trim() || "U/L",
+      department: deptObj.name,
+      roomNo: deptObj.room,
+      status: "Approved",
+      date: new Date().toLocaleDateString("en-IN"),
+    };
+
+    setPatients((prev) =>
+      prev.map((p) => (p.id === activePatient.id ? { ...p, referrals: [...(p.referrals || []), newRef] } : p))
+    );
+
+    setRefTreatment("");
+    setRefTooth("");
+    showToast(`Referral to ${deptObj.code} added`);
   };
 
-  const deletePlan = (id) => {
-    setTreatmentPlans(prev => prev.filter(item => item.id !== id));
-    showToast("Treatment plan removed");
+  // Add Prescription to Patient
+  const handleAddPrescription = (med) => {
+    if (!activePatient) return;
+    const newRxItem = {
+      id: Date.now(),
+      drug: med.name || med.drug,
+      generic: med.generic,
+      dosage: med.dosage || "1 Tab",
+      frequency: med.frequency,
+      duration: med.duration,
+      instruction: med.timing || med.instruction || "After food",
+    };
+    setPatients((prev) =>
+      prev.map((p) => {
+        if (p.id === activePatient.id) {
+          return {
+            ...p,
+            prescriptions: [...(p.prescriptions || []), newRxItem],
+          };
+        }
+        return p;
+      })
+    );
+    showToast(`Added ${newRxItem.drug} to prescription slip`);
   };
 
+  const handleRemovePrescription = (rxId) => {
+    if (!activePatient) return;
+    setPatients((prev) =>
+      prev.map((p) => {
+        if (p.id === activePatient.id) {
+          return {
+            ...p,
+            prescriptions: (p.prescriptions || []).filter((x) => x.id !== rxId),
+          };
+        }
+        return p;
+      })
+    );
+  };
+
+  // WhatsApp Clinical Notifier / Rx Dispatcher
+  const dispatchPatientWhatsApp = () => {
+    if (!activePatient) return;
+    let cleanPhone = activePatient.phone.replace(/[^0-9]/g, "");
+    if (cleanPhone.length === 10) cleanPhone = "91" + cleanPhone;
+
+    if (!cleanPhone || cleanPhone.length < 10) {
+      showToast("Invalid phone number for WhatsApp dispatch");
+      return;
+    }
+
+    const chartedList = Object.entries(activePatient.toothConditions || {})
+      .map(([tooth, code]) => {
+        const found = CLINICAL_PALETTE.find((p) => p.id === code);
+        return `#${tooth} (${found ? found.label : code})`;
+      })
+      .join(", ") || "General Oral Examination";
+
+    const rxList = (activePatient.prescriptions || [])
+      .map((p, idx) => `${idx + 1}. *${p.drug}* - ${p.frequency} (${p.duration})\n   Instruction: ${p.instruction}`)
+      .join("\n\n");
+
+    const message = encodeURIComponent(
+      `🦷 *${practiceProfile.name.toUpperCase()}*\n` +
+      `📍 ${practiceProfile.address} | 📞 ${practiceProfile.phone}\n` +
+      `----------------------------------------\n` +
+      `👤 *Patient:* ${activePatient.name} (Age: ${activePatient.age || "N/A"} Yrs / ${activePatient.gender})\n` +
+      (activePatient.medicalAlert ? `⚠️ *Medical Alert:* ${activePatient.medicalAlert}\n` : "") +
+      `📅 *Date:* ${activePatient.registeredDate}\n` +
+      `🩺 *Doctor:* ${practiceProfile.drName}\n` +
+      `----------------------------------------\n` +
+      `📋 *FDI Odontogram Findings:*\n${chartedList}\n\n` +
+      (rxList ? `💊 *Medications Prescribed:*\n${rxList}\n\n` : "") +
+      `----------------------------------------\n` +
+      `⚠️ *Patient Care Advice:*\n` +
+      `• Please take prescribed medications strictly on time.\n` +
+      `• In case of persistent swelling or drug allergy, contact clinic immediately.\n\n` +
+      `_Powered by Meridian Dental OS (Udyam: ${practiceProfile.regNumber})_`
+    );
+
+    window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank", "noopener,noreferrer");
+    showToast("WhatsApp message dispatched!");
+  };
+
+  // OPG Upload for Selected Patient
+  const handleOpgFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target.result;
+      const targetId = opgSelectedPatientId || selectedPatientId || (patients[0] && patients[0].id);
+      if (!targetId) {
+        showToast("Please register or select a patient first");
+        return;
+      }
+      setPatients((prev) =>
+        prev.map((p) => {
+          if (p.id === targetId) {
+            return { ...p, opgImage: dataUrl };
+          }
+          return p;
+        })
+      );
+      showToast("OPG Radiograph film uploaded & linked to patient");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Appointment Booking Action
   const handleCreateAppointment = (e) => {
     e.preventDefault();
-    if (!newApptForm.patientName.trim() || !newApptForm.mobile.trim()) {
-      showToast("Patient Name and Mobile Number are required");
+    if (!newApptForm.patientName.trim() || !newApptForm.phone.trim()) {
+      showToast("Patient Name and Phone are required");
       return;
     }
     const appt = {
       id: "APT-" + Date.now().toString().slice(-4),
-      patientName: newApptForm.patientName,
-      phone: newApptForm.mobile,
-      age: newApptForm.age,
-      date: newApptForm.date,
-      time: `${newApptForm.time} ${newApptForm.amPm}`,
-      chair: newApptForm.chair,
-      procedure: newApptForm.complaint || "Routine Consultation",
-      status: "Confirmed",
-      recallStatus: true
+      ...newApptForm,
     };
     setAppointments([appt, ...appointments]);
     setIsAddApptOpen(false);
-    setNewApptForm({ mobile: "", patientName: "", age: "", doctor: "Dr. Santhoshkumar S", date: new Date().toISOString().split("T")[0], time: "10:00 AM", amPm: "AM", duration: "15 Mins", chair: "Chair 1 (Main Operatory)", complaint: "" });
-    showToast(`Appointment booked for ${appt.patientName}`);
+    showToast(`Appointment booked for ${appt.patientName} on ${appt.date}`);
+  };
+
+  const sendAppointmentWhatsApp = (appt) => {
+    let cleanPhone = appt.phone.replace(/[^0-9]/g, "");
+    if (cleanPhone.length === 10) cleanPhone = "91" + cleanPhone;
+
+    const message = encodeURIComponent(
+      `🦷 *APPOINTMENT CONFIRMATION*\n` +
+      `🏥 *${practiceProfile.name}*\n` +
+      `----------------------------------------\n` +
+      `👤 *Patient:* ${appt.patientName} (Age: ${appt.age || "N/A"})\n` +
+      `📅 *Date:* ${appt.date}\n` +
+      `⏰ *Time Slot:* ${appt.time}\n` +
+      `💺 *Operatory:* ${appt.chair}\n` +
+      `🩺 *Attending Doctor:* ${appt.doctor}\n` +
+      `🔬 *Procedure:* ${appt.procedure}\n` +
+      `----------------------------------------\n` +
+      `📍 Please arrive 10 minutes prior to chair setup.\n\n` +
+      `_Meridian Dental OS_`
+    );
+    window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank", "noopener,noreferrer");
+  };
+
+  const handleCreateInvoice = (e) => {
+    e.preventDefault();
+    if (!newInvoiceForm.patientName.trim()) {
+      showToast("Patient Name is required");
+      return;
+    }
+    const inv = {
+      id: `INV-2026-${Math.floor(100 + Math.random() * 900)}`,
+      patient: newInvoiceForm.patientName,
+      provider: newInvoiceForm.provider,
+      claimId: newInvoiceForm.claimId,
+      status: newInvoiceForm.status,
+      treatment: newInvoiceForm.treatment,
+      total: parseFloat(newInvoiceForm.amount || 0).toLocaleString("en-IN"),
+      rawAmount: newInvoiceForm.amount,
+      date: new Date().toLocaleDateString("en-IN"),
+    };
+    setInvoices([inv, ...invoices]);
+    setIsAddInvoiceOpen(false);
+    showToast(`Invoice ${inv.id} generated for ₹${inv.total}`);
+  };
+
+  const handleStockAdjust = (stockId, delta) => {
+    setInventory((prev) =>
+      prev.map((item) => {
+        if (item.id === stockId) {
+          const nextQty = Math.max(0, item.quantity + delta);
+          return {
+            ...item,
+            quantity: nextQty,
+            status: nextQty <= item.minThreshold ? "Low Stock" : "In Stock",
+          };
+        }
+        return item;
+      })
+    );
+  };
+
+  const handleCreateStock = (e) => {
+    e.preventDefault();
+    if (!newStockForm.name.trim()) return;
+    const item = {
+      id: "STK-" + Date.now().toString().slice(-4),
+      name: newStockForm.name,
+      category: newStockForm.category,
+      quantity: parseInt(newStockForm.quantity || 0, 10),
+      unit: newStockForm.unit,
+      minThreshold: parseInt(newStockForm.minThreshold || 0, 10),
+      status: parseInt(newStockForm.quantity || 0, 10) <= parseInt(newStockForm.minThreshold || 0, 10) ? "Low Stock" : "In Stock",
+    };
+    setInventory([...inventory, item]);
+    setIsAddStockOpen(false);
+    showToast(`Added ${item.name} to stock`);
+  };
+
+  const handleCreateEmp = (e) => {
+    e.preventDefault();
+    if (!newEmpForm.name.trim()) return;
+    const emp = {
+      id: "EMP-0" + (employees.length + 1),
+      ...newEmpForm,
+    };
+    setEmployees([...employees, emp]);
+    setIsAddEmpOpen(false);
+    showToast(`Staff member ${emp.name} added to roster`);
+  };
+
+  const calculateDistanceMm = () => {
+    if (rulerPoints.length !== 2) return null;
+    const dx = rulerPoints[1].x - rulerPoints[0].x;
+    const dy = rulerPoints[1].y - rulerPoints[0].y;
+    const px = Math.sqrt(dx * dx + dy * dy);
+    return (px * 0.08).toFixed(1);
+  };
+
+  const handleOpgCanvasClick = (e) => {
+    if (!rulerActive) return;
+    const rect = opgCanvasRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    if (rulerPoints.length === 2) {
+      setRulerPoints([{ x, y }]);
+    } else {
+      setRulerPoints([...rulerPoints, { x, y }]);
+    }
   };
 
   const filteredPatients = patients.filter((p) =>
@@ -422,66 +784,72 @@ export default function App() {
     p.phone.includes(searchQuery)
   );
 
-  const todayKey = new Date().toLocaleDateString("en-IN");
-  const todayAppointments = appointments.filter((a) => a.date === todayKey).length;
+  const currentOpgPatient = patients.find((p) => p.id === (opgSelectedPatientId || (patients[0] && patients[0].id))) || null;
+
+  const dashboardDays = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() - (6 - index));
+    return date;
+  });
+
+  const dashboardDateKey = (value) => {
+    if (!value) return "";
+    const parts = String(value).split(/[\\/.-]/);
+    if (parts.length === 3 && parts[0].length <= 2) {
+      const [day, month, year] = parts;
+      return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    }
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return "";
+    return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}-${String(parsed.getDate()).padStart(2, "0")}`;
+  };
+
+  const dashboardPatientSeries = dashboardDays.map((date) => {
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    return {
+      label: date.toLocaleDateString("en-IN", { weekday: "short" }),
+      value: patients.filter((patient) => dashboardDateKey(patient.registeredDate) === key).length,
+    };
+  });
+
+  const dashboardRevenueSeries = dashboardDays.map((date) => {
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    return {
+      label: date.toLocaleDateString("en-IN", { weekday: "short" }),
+      value: invoices.filter((invoice) => dashboardDateKey(invoice.date) === key)
+        .reduce((sum, invoice) => sum + Number(invoice.rawAmount ?? String(invoice.total || "0").replace(/,/g, "")), 0),
+    };
+  });
+
+  const totalBilledRevenue = invoices.reduce(
+    (sum, invoice) => sum + Number(invoice.rawAmount ?? String(invoice.total || "0").replace(/,/g, "")), 0
+  );
+
+  const todayKey = dashboardDateKey(new Date().toLocaleDateString("en-IN"));
+  const todayAppointments = appointments.filter((appointment) => dashboardDateKey(appointment.date) === todayKey).length;
   const lowStockCount = inventory.filter((item) => item.status === "Low Stock" || Number(item.quantity) <= Number(item.minThreshold)).length;
-  const totalBilledRevenue = invoices.reduce((sum, inv) => sum + Number(inv.rawAmount || 0), 0);
 
   if (authLoading) {
     return (
       <div className="min-h-screen bg-[#0b1329] flex items-center justify-center p-6 text-white">
         <div className="text-center">
           <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-cyan-300/30 border-t-cyan-300" />
-          <p className="text-sm text-slate-300">Checking your MeriDent OS session…</p>
+          <p className="text-sm text-slate-300">Checking your Meridian Dental OS session…</p>
         </div>
       </div>
     );
   }
 
-  // --- PENDING APPROVAL GATE SCREEN ---
-  if (authUser && !isApproved) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-5 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-900/40 via-slate-950 to-indigo-950/60" />
-        <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/90 p-8 shadow-2xl backdrop-blur-xl text-center space-y-5">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-400 text-slate-950 font-bold">
-            <AlertTriangle className="h-7 w-7" />
-          </div>
-          <div>
-            <span className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Authorization Gate</span>
-            <h1 className="mt-2 text-2xl font-bold tracking-tight">Approval Pending</h1>
-            <p className="mt-2 text-xs leading-5 text-slate-400">
-              Your Google account (<strong className="text-white">{authUser.email}</strong>) has been registered. Access to the MeriDent OS clinical suite requires approval from the platform administrator.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-800 px-4 py-3 text-xs font-semibold text-white transition hover:bg-slate-700 cursor-pointer"
-          >
-            <LogOut className="h-4 w-4" /> Sign Out / Switch Account
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // =========================================================================
-  // VIEW 1: PROFESSIONAL LANDING PAGE
-  // =========================================================================
+  // --- VIEW ROUTING: LANDING PAGE VS DASHBOARD SUITE ---
   if (viewMode === "landing" || !authUser) {
     return (
-      <div>
-        <LandingPage 
-          onLoginClick={authUser && isApproved ? () => setViewMode("dashboard") : handleGoogleLogin} 
-        />
-      </div>
+      <LandingPage
+        onLoginClick={handleGoogleLogin}
+      />
     );
   }
 
-  // =========================================================================
-  // VIEW 2: FULL CLINICAL DASHBOARD SUITE
-  // =========================================================================
   return (
     <div className="flex h-screen bg-[#f8fafc] text-slate-800 font-sans overflow-hidden">
       
@@ -509,7 +877,7 @@ export default function App() {
               />
               <div>
                 <div className="text-base font-bold text-white tracking-wide">
-                  MeriDent
+                  Meridian Dental
                 </div>
                 <div className="text-[11px] text-slate-400 font-normal">
                   Practice Management OS
@@ -520,7 +888,7 @@ export default function App() {
               <button
                 onClick={() => setViewMode("landing")}
                 title="Back to Landing Page"
-                className="text-xs text-blue-400 hover:text-white px-2 py-1 rounded bg-slate-800 cursor-pointer"
+                className="text-xs text-blue-400 hover:text-white px-2 py-1 rounded bg-slate-800"
               >
                 Home
               </button>
@@ -552,7 +920,7 @@ export default function App() {
                     setActiveNav(item.label);
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all ${
                     isActive
                       ? "bg-[#1d4ed8] text-white shadow-sm"
                       : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
@@ -568,7 +936,7 @@ export default function App() {
 
         <div className="p-4 border-t border-slate-800/80">
           <div className="flex items-center gap-3 min-w-0">
-            {authUser?.photoURL ? (
+            {authUser.photoURL ? (
               <img src={authUser.photoURL} alt="Avatar" className="h-9 w-9 rounded-full border border-slate-600 object-cover" />
             ) : (
               <div className="h-9 w-9 shrink-0 rounded-full bg-cyan-400/15 text-cyan-300 flex items-center justify-center">
@@ -576,14 +944,14 @@ export default function App() {
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <div className="truncate text-xs font-semibold text-white">{authUser?.displayName || "Dr. Santhoshkumar S"}</div>
-              <div className="truncate text-[11px] text-slate-400">{authUser?.email}</div>
+              <div className="truncate text-xs font-semibold text-white">{authUser.displayName || "Dr. Clinician"}</div>
+              <div className="truncate text-[11px] text-slate-400">{authUser.email}</div>
             </div>
           </div>
           <button
             type="button"
             onClick={handleLogout}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-300 transition hover:bg-rose-500/10 hover:text-rose-200 cursor-pointer"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-300 transition hover:bg-rose-500/10 hover:text-rose-200"
           >
             <LogOut className="h-4 w-4" /> Sign out
           </button>
@@ -591,8 +959,8 @@ export default function App() {
       </aside>
 
       {/* --- WORKSPACE --- */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto bg-slate-50">
-        <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -607,7 +975,7 @@ export default function App() {
                 className="w-7 h-7 rounded-lg object-cover" 
                 onError={(e) => { e.target.style.display = 'none'; }}
               />
-              <div className="text-lg font-bold text-slate-900">MeriDent</div>
+              <div className="text-lg font-bold text-slate-900">Meridian Dental</div>
             </div>
           </div>
 
@@ -623,18 +991,12 @@ export default function App() {
               />
             </div>
             <button 
-              onClick={() => setIsAddApptOpen(true)}
-              className="text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1.5 rounded-lg shadow-xs flex items-center gap-1 cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" /> Add Appointment
-            </button>
-            <button 
               onClick={() => setViewMode("landing")}
-              className="text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg border border-slate-300 cursor-pointer"
+              className="text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg border border-slate-300"
             >
               View Landing Page
             </button>
-            <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-xs">
+            <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-semibold">
               S
             </div>
           </div>
@@ -648,24 +1010,24 @@ export default function App() {
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">Patient Records</h1>
-                  <p className="text-xs text-slate-500">U-Shaped Arch Odontogram, Staged Treatment Plans & RGV Reports</p>
+                  <p className="text-xs text-slate-500">FDI 32-Tooth Odontogram, Trauma, Rx & History</p>
                 </div>
                 <button
                   onClick={() => setIsAddPatientOpen(true)}
-                  className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
                 >
                   <Plus className="w-4 h-4" /> Add Patient
                 </button>
               </div>
 
               {filteredPatients.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3 shadow-xs">
+                <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
                   <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
                     <Users className="w-6 h-6" />
                   </div>
                   <h3 className="text-sm font-bold text-slate-800">No Patient Records Yet</h3>
                   <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    Click "Add Patient" to register a clinical case sheet with comprehensive biodata and U-shaped dental charting.
+                    Click "Add Patient" to register a clinical case sheet with dental odontogram and systemic review.
                   </p>
                 </div>
               ) : (
@@ -677,7 +1039,6 @@ export default function App() {
                         key={p.id}
                         onClick={() => {
                           setSelectedPatientId(p.id);
-                          setIsDeciduousOverride(null);
                           setIsChartModalOpen(true);
                         }}
                         className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex items-center justify-between cursor-pointer hover:border-blue-300 transition-all"
@@ -688,7 +1049,7 @@ export default function App() {
                             <span className="text-xs font-semibold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-100">
                               Age: {p.age || "N/A"} Yrs
                             </span>
-                            <span className="text-[10px] text-slate-400 font-normal">({p.gender} | Blood: {p.bloodGroup || "O+"})</span>
+                            <span className="text-[10px] text-slate-400 font-normal">({p.gender})</span>
                             {p.medicalAlert && (
                               <span className="text-[10px] font-bold bg-rose-50 text-rose-700 px-2 py-0.5 rounded border border-rose-200">
                                 ALERT: {p.medicalAlert}
@@ -696,7 +1057,10 @@ export default function App() {
                             )}
                           </div>
                           <div className="text-xs text-slate-400 mt-1">
-                            {p.phone} • Email: {p.email || "N/A"} • Area: {p.area || "Coimbatore"}
+                            {p.phone} • {p.area || "Coimbatore"} • Registered: {p.registeredDate}
+                          </div>
+                          <div className="text-xs text-slate-500 mt-0.5">
+                            Conditions: <span className="font-medium text-slate-700">{p.conditions || "None reported"}</span>
                           </div>
                         </div>
 
@@ -716,7 +1080,7 @@ export default function App() {
                                 showToast(`Removed ${p.name}`);
                               }
                             }}
-                            className="p-1 text-slate-400 hover:text-rose-500 rounded cursor-pointer"
+                            className="p-1 text-slate-400 hover:text-rose-500 rounded"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -729,24 +1093,191 @@ export default function App() {
             </div>
           )}
 
+          {/* TAB 2: OPG & DIAGNOSIS STUDIO */}
+          {activeNav === "OPG & Diagnosis Studio" && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h1 className="text-xl font-bold text-slate-900">OPG & Diagnosis Studio</h1>
+                  <p className="text-xs text-slate-500">Side-by-Side Panoramic Radiograph & Clinical Findings Workstation</p>
+                </div>
+                <div>
+                  {patients.length > 0 && (
+                    <select
+                      value={opgSelectedPatientId || (currentOpgPatient ? currentOpgPatient.id : "")}
+                      onChange={(e) => setOpgSelectedPatientId(e.target.value)}
+                      className="text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-700 font-semibold focus:outline-none"
+                    >
+                      {patients.map((p) => (
+                        <option key={p.id} value={p.id}>{p.name} ({p.age}y)</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                <div className="bg-[#0b1329] rounded-2xl p-5 text-white flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <div className="text-sm font-bold">Baseline Panoramic OPG</div>
+                        <div className="text-[11px] text-slate-400">
+                          Patient: {currentOpgPatient ? currentOpgPatient.name : "None"}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <input type="file" ref={fileInputRef} onChange={handleOpgFileChange} accept="image/*" className="hidden" />
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5"
+                        >
+                          <Upload className="w-3.5 h-3.5" /> Insert Film
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsNegativeInverted(!isNegativeInverted)}
+                          className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium flex items-center gap-1.5"
+                        >
+                          <Sun className="w-3.5 h-3.5" /> {isNegativeInverted ? "Normal" : "Invert Negative"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setRulerActive(!rulerActive); setRulerPoints([]); }}
+                          className={`px-2 py-1.5 rounded-lg text-xs font-medium border ${rulerActive ? "bg-amber-500 text-white border-amber-400" : "bg-slate-800 text-slate-300"}`}
+                        >
+                          <Ruler className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div
+                      ref={opgCanvasRef}
+                      onClick={handleOpgCanvasClick}
+                      className={`w-full h-80 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center overflow-hidden relative ${
+                        rulerActive ? "cursor-crosshair" : "cursor-default"
+                      }`}
+                    >
+                      {currentOpgPatient && currentOpgPatient.opgImage ? (
+                        <>
+                          <img
+                            src={currentOpgPatient.opgImage}
+                            alt="OPG Film"
+                            className={`w-full h-full object-cover ${isNegativeInverted ? "filter invert contrast-125" : ""}`}
+                          />
+                          <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                            {rulerPoints.map((pt, idx) => (
+                              <circle key={idx} cx={pt.x} cy={pt.y} r="4" fill="#f59e0b" stroke="#ffffff" strokeWidth="1.5" />
+                            ))}
+                            {rulerPoints.length === 2 && (
+                              <>
+                                <line x1={rulerPoints[0].x} y1={rulerPoints[0].y} x2={rulerPoints[1].x} y2={rulerPoints[1].y} stroke="#f59e0b" strokeWidth="2" strokeDasharray="4 2" />
+                                <text x={(rulerPoints[0].x + rulerPoints[1].x) / 2 + 10} y={(rulerPoints[0].y + rulerPoints[1].y) / 2 - 10} fill="#f59e0b" fontSize="12" fontWeight="bold">
+                                  {calculateDistanceMm()} mm (WL)
+                                </text>
+                              </>
+                            )}
+                          </svg>
+                        </>
+                      ) : (
+                        <div className="text-center p-6 text-slate-500">
+                          <Upload className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                          <p className="text-xs text-slate-400">No OPG film uploaded for this patient.</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-slate-400 pt-3 border-t border-slate-800">
+                    <span>{rulerActive ? `Caliper Mode: ${calculateDistanceMm() || 0} mm` : "High-Contrast Diagnostic View"}</span>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <div className="text-xs font-bold text-slate-800 tracking-wider uppercase flex items-center gap-2">
+                      <Sun className="w-4 h-4 text-blue-600" /> Diagnostic Entry Pane
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-rose-600 mb-1">Trauma Findings</label>
+                      <input
+                        type="text"
+                        value={currentOpgPatient?.diagnosis?.trauma || ""}
+                        onChange={(e) => handleUpdateDiagnosis("trauma", e.target.value)}
+                        placeholder="Crown fracture, luxation..."
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Impaction Classification</label>
+                      <input
+                        type="text"
+                        value={currentOpgPatient?.diagnosis?.impaction || ""}
+                        onChange={(e) => handleUpdateDiagnosis("impaction", e.target.value)}
+                        placeholder="Angulation, depth..."
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Bone Deformations & Height</label>
+                      <input
+                        type="text"
+                        value={currentOpgPatient?.diagnosis?.boneDeformations || ""}
+                        onChange={(e) => handleUpdateDiagnosis("boneDeformations", e.target.value)}
+                        placeholder="Horizontal bone loss..."
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Diagnosis & Treatment Plan</label>
+                      <textarea
+                        rows={3}
+                        value={currentOpgPatient?.diagnosis?.diagnosisNotes || ""}
+                        onChange={(e) => handleUpdateDiagnosis("diagnosisNotes", e.target.value)}
+                        placeholder="Type formal clinical diagnosis..."
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-4">
+                    <button
+                      type="button"
+                      onClick={() => showToast("Diagnostic findings saved successfully")}
+                      className="w-full py-2.5 bg-[#1d4ed8] hover:bg-blue-700 text-white font-semibold text-xs rounded-lg flex items-center justify-center gap-1.5"
+                    >
+                      <CheckCircle2 className="w-4 h-4" /> Save Diagnostic Findings
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* TAB 3: APPOINTMENTS DIARY */}
           {activeNav === "Appointments Diary" && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">Appointments Diary</h1>
-                  <p className="text-xs text-slate-500">Chair-side scheduling & consultation calendar</p>
+                  <p className="text-xs text-slate-500">Chair-side scheduling & automated WhatsApp alerts</p>
                 </div>
                 <button
                   onClick={() => setIsAddApptOpen(true)}
-                  className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
                 >
-                  <Plus className="w-4 h-4" /> Add New Appointment
+                  <Plus className="w-4 h-4" /> Book Appointment
                 </button>
               </div>
 
               {appointments.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3 shadow-xs">
+                <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
                   <Calendar className="w-10 h-10 text-blue-600 mx-auto" />
                   <h3 className="text-sm font-bold text-slate-800">No Appointments Scheduled</h3>
                 </div>
@@ -755,11 +1286,11 @@ export default function App() {
                   <table className="w-full text-left text-xs">
                     <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-b border-slate-200">
                       <tr>
-                        <th className="p-3.5">Patient / Mobile</th>
-                        <th className="p-3.5">Date & Time</th>
-                        <th className="p-3.5">Doctor</th>
-                        <th className="p-3.5">Patient Complaint</th>
-                        <th className="p-3.5 text-center">Re-Call Status</th>
+                        <th className="p-3.5">ID / Patient</th>
+                        <th className="p-3.5">Date & Slot</th>
+                        <th className="p-3.5">Operatory Chair</th>
+                        <th className="p-3.5">Procedure</th>
+                        <th className="p-3.5">Status</th>
                         <th className="p-3.5 text-center">Action</th>
                       </tr>
                     </thead>
@@ -773,19 +1304,23 @@ export default function App() {
                           <td className="p-3.5 font-medium">{appt.date} at <strong>{appt.time}</strong></td>
                           <td className="p-3.5 text-slate-600">{appt.chair}</td>
                           <td className="p-3.5 font-semibold text-blue-700">{appt.procedure}</td>
-                          <td className="p-3.5 text-center">
-                            <input 
-                              type="checkbox" 
-                              defaultChecked={appt.recallStatus} 
-                              className="rounded text-blue-600 cursor-pointer" 
-                            />
+                          <td className="p-3.5">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              {appt.status}
+                            </span>
                           </td>
-                          <td className="p-3.5 text-center">
+                          <td className="p-3.5 text-center space-x-2">
+                            <button
+                              onClick={() => sendAppointmentWhatsApp(appt)}
+                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-semibold inline-flex items-center gap-1"
+                            >
+                              <Send className="w-3 h-3" /> WhatsApp
+                            </button>
                             <button
                               onClick={() => setAppointments(appointments.filter((x) => x.id !== appt.id))}
-                              className="p-1 text-slate-400 hover:text-rose-500 rounded cursor-pointer"
+                              className="p-1 text-slate-400 hover:text-rose-500"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-3.5 h-3.5 inline" />
                             </button>
                           </td>
                         </tr>
@@ -797,388 +1332,762 @@ export default function App() {
             </div>
           )}
 
+          {/* TAB 4: DENTAL INSURANCE & INVOICES */}
+          {activeNav === "Dental Insurance & Invoices" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-xl font-bold text-slate-900">Dental Insurance & Invoices</h1>
+                  <p className="text-xs text-slate-500">Pre-Auth Claims, Co-pay & Instant UPI Billing</p>
+                </div>
+                <button
+                  onClick={() => setIsAddInvoiceOpen(true)}
+                  className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                >
+                  <Plus className="w-4 h-4" /> New Insurance Invoice
+                </button>
+              </div>
+
+              {invoices.length === 0 ? (
+                <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
+                  <DollarSign className="w-10 h-10 text-blue-600 mx-auto" />
+                  <h3 className="text-sm font-bold text-slate-800">No Invoices Generated Yet</h3>
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-b border-slate-200">
+                      <tr>
+                        <th className="p-4">Invoice / Claim ID</th>
+                        <th className="p-4">Patient</th>
+                        <th className="p-4">Provider</th>
+                        <th className="p-4">Status</th>
+                        <th className="p-4">Total (₹)</th>
+                        <th className="p-4 text-center">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {invoices.map((inv) => (
+                        <tr key={inv.id} className="hover:bg-slate-50/60">
+                          <td className="p-4">
+                            <div className="font-bold text-blue-700">{inv.id}</div>
+                            <div className="text-[10px] text-slate-400">Claim: {inv.claimId}</div>
+                          </td>
+                          <td className="p-4 font-semibold">{inv.patient}</td>
+                          <td className="p-4 text-slate-600">{inv.provider}</td>
+                          <td className="p-4">
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                              {inv.status}
+                            </span>
+                          </td>
+                          <td className="p-4 font-bold text-sm">₹{inv.total}</td>
+                          <td className="p-4 text-center">
+                            <button
+                              onClick={() => setActiveUpiQrInvoice(inv)}
+                              className="px-3 py-1.5 bg-slate-100 hover:bg-blue-50 border border-slate-200 text-slate-800 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5"
+                            >
+                              <QrCode className="w-3.5 h-3.5" /> UPI QR
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 5: STOCK MAINTENANCE */}
+          {activeNav === "Stock Maintenance" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-xl font-bold text-slate-900">Stock Maintenance</h1>
+                  <p className="text-xs text-slate-500">Operatory Consumables, Materials & Medications</p>
+                </div>
+                <button
+                  onClick={() => setIsAddStockOpen(true)}
+                  className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                >
+                  <Plus className="w-4 h-4" /> Add Stock Item
+                </button>
+              </div>
+
+              {inventory.length === 0 ? (
+                <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
+                  <Package className="w-10 h-10 text-blue-600 mx-auto" />
+                  <h3 className="text-sm font-bold text-slate-800">Inventory Empty</h3>
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-b border-slate-200">
+                      <tr>
+                        <th className="p-3.5">Item Name</th>
+                        <th className="p-3.5">Category</th>
+                        <th className="p-3.5">Quantity on Hand</th>
+                        <th className="p-3.5">Status</th>
+                        <th className="p-3.5 text-center">Quick Adjust</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {inventory.map((item) => (
+                        <tr key={item.id} className="hover:bg-slate-50/60">
+                          <td className="p-3.5 font-bold text-slate-900">{item.name}</td>
+                          <td className="p-3.5 text-slate-600">{item.category}</td>
+                          <td className="p-3.5">
+                            <span className="font-bold text-sm">{item.quantity}</span> {item.unit}
+                          </td>
+                          <td className="p-3.5">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              item.status === "Low Stock" ? "bg-amber-100 text-amber-800 border border-amber-300" : "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                            }`}>
+                              {item.status}
+                            </span>
+                          </td>
+                          <td className="p-3.5 text-center space-x-1.5">
+                            <button onClick={() => handleStockAdjust(item.id, -1)} className="px-2 py-1 bg-slate-100 rounded font-semibold text-slate-700">-1</button>
+                            <button onClick={() => handleStockAdjust(item.id, 5)} className="px-2 py-1 bg-blue-50 text-blue-700 rounded font-semibold">+5</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 6: EMPLOYEE ROLES & ROSTER */}
+          {activeNav === "Employee Roles & Roster" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-xl font-bold text-slate-900">Employee Roles & Roster</h1>
+                  <p className="text-xs text-slate-500">Operatory Staff Allocation & Duty Timings</p>
+                </div>
+                <button
+                  onClick={() => setIsAddEmpOpen(true)}
+                  className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                >
+                  <Plus className="w-4 h-4" /> Add Staff Member
+                </button>
+              </div>
+
+              {employees.length === 0 ? (
+                <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
+                  <Briefcase className="w-10 h-10 text-blue-600 mx-auto" />
+                  <h3 className="text-sm font-bold text-slate-800">No Staff Added</h3>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {employees.map((emp) => (
+                    <div key={emp.id} className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">{emp.id}</span>
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Active</span>
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-slate-900">{emp.name || emp.role}</div>
+                        <div className="text-xs text-slate-500">{emp.dept}</div>
+                      </div>
+                      <div className="text-xs text-slate-600 space-y-1 pt-2 border-t border-slate-100">
+                        <div>Shift: <strong className="text-slate-800">{emp.shift}</strong></div>
+                        <div>Contact: <span className="font-mono text-slate-700">{emp.contact}</span></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 7: PRACTICE PROFILE */}
+          {activeNav === "Practice Profile" && (
+            <div className="max-w-3xl bg-white rounded-2xl border border-slate-200 p-6 md:p-8 space-y-6">
+              <div>
+                <h1 className="text-xl font-bold text-slate-900">Practice Profile & Legal Registration</h1>
+                <p className="text-xs text-slate-500">Government micro-enterprise credentials, state grant registry, and digital prescription headers</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div>
+                  <label className="block font-semibold text-slate-600 mb-1">Clinic Name</label>
+                  <input
+                    type="text"
+                    value={practiceProfile.name}
+                    onChange={(e) => setPracticeProfile({ ...practiceProfile, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-600 mb-1">Udyam Registration Number</label>
+                  <input
+                    type="text"
+                    value={practiceProfile.regNumber}
+                    onChange={(e) => setPracticeProfile({ ...practiceProfile, regNumber: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 font-mono font-bold text-indigo-700 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-600 mb-1">Lead Dental Surgeons</label>
+                  <input
+                    type="text"
+                    value={practiceProfile.drName}
+                    onChange={(e) => setPracticeProfile({ ...practiceProfile, drName: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-600 mb-1">Qualifications</label>
+                  <input
+                    type="text"
+                    value={practiceProfile.qualification}
+                    onChange={(e) => setPracticeProfile({ ...practiceProfile, qualification: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-600 mb-1">Official Contact Number</label>
+                  <input
+                    type="text"
+                    value={practiceProfile.phone}
+                    onChange={(e) => setPracticeProfile({ ...practiceProfile, phone: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-600 mb-1">Clinic UPI ID (for QR Billing)</label>
+                  <input
+                    type="text"
+                    value={practiceProfile.upiId}
+                    onChange={(e) => setPracticeProfile({ ...practiceProfile, upsId: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 font-mono focus:outline-none"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block font-semibold text-slate-600 mb-1">Clinic Address</label>
+                  <input
+                    type="text"
+                    value={practiceProfile.address}
+                    onChange={(e) => setPracticeProfile({ ...practiceProfile, address: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-xs text-emerald-700 font-semibold flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4" /> Cloud Persistence Active
+                </span>
+                <button
+                  onClick={() => showToast("Practice credentials saved")}
+                  className="px-4 py-2 bg-[#1d4ed8] text-white rounded-lg text-xs font-semibold shadow-sm hover:bg-blue-700"
+                >
+                  Update Profile
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* TAB 8: DASHBOARD OVERVIEW */}
           {activeNav === "Dashboard" && (
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
                 <div>
                   <h1 className="text-2xl font-bold tracking-tight text-slate-900">Clinical Overview</h1>
-                  <p className="text-xs text-slate-500 mt-1">MeriDent Dental Clinical Workspace</p>
+                  <p className="text-sm text-slate-500 mt-1">Meridian Dental Clinical Workspace</p>
                 </div>
-                <button onClick={() => setActiveNav("Appointments Diary")} className="text-xs font-semibold text-blue-600 hover:text-blue-800 cursor-pointer">
-                  View Today's Diary ›
+                <button onClick={() => setActiveNav("Appointments Diary")} className="text-sm font-semibold text-blue-600 hover:text-blue-800">
+                  View today's diary ›
                 </button>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                 {[
-                  { title: "Patients", value: patients.length, icon: <Users className="w-5 h-5" />, tone: "bg-blue-50 text-blue-600" },
-                  { title: "Visits Today", value: todayAppointments, icon: <Calendar className="w-5 h-5" />, tone: "bg-indigo-50 text-indigo-600" },
-                  { title: "Collected", value: `₹${totalBilledRevenue.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`, icon: <DollarSign className="w-5 h-5" />, tone: "bg-emerald-50 text-emerald-600" },
-                  { title: "Low Stock Alerts", value: lowStockCount, icon: <Package className="w-5 h-5" />, tone: "bg-amber-50 text-amber-600" },
+                  { title: "Patients", value: patients.length, note: "Registered patient records", icon: <Users className="w-5 h-5" />, tone: "bg-blue-50 text-blue-600" },
+                  { title: "Visits Today", value: todayAppointments, note: `${appointments.length} total appointments`, icon: <Calendar className="w-5 h-5" />, tone: "bg-indigo-50 text-indigo-600" },
+                  { title: "Revenue / Billing", value: `₹${totalBilledRevenue.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`, note: "Total recorded invoice value", icon: <DollarSign className="w-5 h-5" />, tone: "bg-emerald-50 text-emerald-600" },
+                  { title: "Low Stock Alerts", value: lowStockCount, note: "Items at or below threshold", icon: <Package className="w-5 h-5" />, tone: "bg-amber-50 text-amber-600" },
                 ].map((card) => (
-                  <div key={card.title} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex items-center justify-between">
-                    <div>
-                      <div className="text-xs font-medium text-slate-500">{card.title}</div>
-                      <div className="text-2xl font-bold text-slate-900 mt-1">{card.value}</div>
+                  <div key={card.title} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
+                    <div className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center ${card.tone}`}>{card.icon}</div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-slate-500">{card.title}</div>
+                      <div className="text-2xl font-bold text-slate-900 mt-0.5 break-words">{card.value}</div>
+                      <div className="text-xs text-slate-400 mt-1">{card.note}</div>
                     </div>
-                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${card.tone}`}>{card.icon}</div>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
 
-          {/* FALLBACK TAB RENDERING IF OTHER TABS ARE CLICKED */}
-          {activeNav !== "Dashboard" && activeNav !== "Appointments Diary" && activeNav !== "Patients & Odontogram" && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3 shadow-xs">
-              <h2 className="text-lg font-bold text-slate-800">{activeNav} Workspace</h2>
-              <p className="text-xs text-slate-500">This operational module is fully configured and active.</p>
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+                <section className="xl:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 md:p-6 shadow-sm">
+                  <div className="flex items-start justify-between gap-3 mb-5">
+                    <div>
+                      <h2 className="text-base font-bold text-slate-900">Patient Registration</h2>
+                      <p className="text-xs text-slate-500 mt-1">New patients over the last 7 days</p>
+                    </div>
+                    <span className="text-xs rounded-full bg-blue-50 text-blue-700 px-3 py-1 font-semibold">Weekly trend</span>
+                  </div>
+                  <div className="h-56 flex items-end gap-3 sm:gap-5 border-b border-slate-200 px-1">
+                    {dashboardPatientSeries.map((day, index) => {
+                      const max = Math.max(1, ...dashboardPatientSeries.map((item) => item.value));
+                      const height = day.value ? Math.max(8, (day.value / max) * 145) : 2;
+                      return (
+                        <div key={`${day.label}-${index}`} className="flex-1 h-full flex flex-col justify-end items-center gap-2">
+                          <span className="text-xs font-semibold text-slate-600">{day.value || ""}</span>
+                          <div className={`w-full max-w-12 rounded-t-lg transition-all ${day.value ? "bg-blue-500" : "bg-slate-100"}`} style={{ height: `${height}px` }} />
+                          <span className="text-xs text-slate-400 pb-2">{day.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                <section className="bg-white rounded-2xl border border-slate-200 p-5 md:p-6 shadow-sm">
+                  <div className="mb-5">
+                    <h2 className="text-base font-bold text-slate-900">Revenue / Billing</h2>
+                    <p className="text-xs text-slate-500 mt-1">Invoice value recorded over 7 days</p>
+                  </div>
+                  <div className="h-56 flex items-end gap-3 border-b border-slate-200 px-1">
+                    {dashboardRevenueSeries.map((day, index) => {
+                      const max = Math.max(1, ...dashboardRevenueSeries.map((item) => item.value));
+                      const height = day.value ? Math.max(8, (day.value / max) * 145) : 2;
+                      return (
+                        <div key={`${day.label}-${index}`} className="flex-1 h-full flex flex-col justify-end items-center gap-2 min-w-0">
+                          <span className="text-[10px] font-semibold text-slate-600 truncate max-w-full">
+                            {day.value ? `₹${day.value.toLocaleString("en-IN", { maximumFractionDigits: 0 })}` : ""}
+                          </span>
+                          <div className={`w-full rounded-t-lg transition-all ${day.value ? "bg-emerald-500" : "bg-slate-100"}`} style={{ height: `${height}px` }} />
+                          <span className="text-xs text-slate-400 pb-2">{day.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              </div>
             </div>
           )}
 
         </main>
       </div>
 
-      {/* ======================================================== */}
-      {/* PATIENT CASESHEET MODAL (WITH U-SHAPED ARCH ODONTOGRAM)  */}
-      {/* ======================================================== */}
+      {/* --- PATIENT CASESHEET MODAL --- */}
       {isChartModalOpen && activePatient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-5xl p-6 md:p-7 relative max-h-[94vh] flex flex-col justify-between overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl p-6 md:p-7 relative max-h-[92vh] flex flex-col justify-between overflow-y-auto">
             
             <div>
-              <div className="flex items-start justify-between pb-3 border-b border-slate-100 mb-4">
+              <div className="flex items-start justify-between pb-3">
                 <div>
                   <div className="text-xl font-bold text-slate-900 flex items-center gap-3">
                     {activePatient.name}
-                    <span className="text-xs font-semibold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-100">
-                      Age: {activePatient.age || "N/A"} Yrs ({activePatient.gender || "Female"} | Blood: {activePatient.bloodGroup || "O+"})
-                    </span>
+                    <div className="flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-md text-xs font-medium text-slate-700 border border-slate-200">
+                      <span>Age:</span>
+                      <input
+                        type="number"
+                        value={activePatient.age || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setPatients((prev) =>
+                            prev.map((p) => (p.id === activePatient.id ? { ...p, age: val } : p))
+                          );
+                        }}
+                        placeholder="24"
+                        className="w-10 bg-transparent text-xs font-bold text-blue-700 focus:outline-none"
+                      />
+                      <span>Yrs ({activePatient.gender || "Female"})</span>
+                    </div>
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">{activePatient.phone} • Email: {activePatient.email || "N/A"} • Area: {activePatient.area || "Coimbatore"}</div>
+                  <div className="text-xs text-slate-400 mt-0.5">{activePatient.phone} • {activePatient.area || "Coimbatore"}</div>
                 </div>
 
-                <button onClick={() => setIsChartModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
+                <button
+                  onClick={() => setIsChartModalOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 p-1"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Navigation Tabs */}
-              <div className="flex flex-wrap items-center gap-2 mb-6">
+              {activePatient.medicalAlert && (
+                <div className="mb-4 p-3 px-4 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-pulse" />
+                    <span className="text-xs font-bold text-rose-800">
+                      MEDICAL ALERT: {activePatient.medicalAlert}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold text-rose-600 uppercase">
+                    Verify Vitals Prior to Infiltration
+                  </span>
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center gap-2 mt-2 mb-6">
                 {[
-                  "Dental Chart & Treatment Plans",
-                  "RGV Reports & Notes",
-                  "Systemic & Medical History"
+                  "32-Tooth Odontogram",
+                  "Department Referrals",
+                  "Diagnosis & Trauma",
+                  "Systemic Review",
+                  "Prescriptions",
+                  "Medical History",
                 ].map((tab) => {
                   const isActive = activeModalTab === tab;
                   return (
                     <button
                       key={tab}
                       onClick={() => setActiveModalTab(tab)}
-                      className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
-                        isActive ? "bg-[#1d4ed8] text-white shadow-sm font-semibold" : "text-slate-600 hover:bg-slate-100"
+                      className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        isActive
+                          ? "bg-[#1d4ed8] text-white shadow-sm font-semibold"
+                          : "text-slate-600 hover:bg-slate-100"
                       }`}
                     >
-                      {tab}
+                      {tab === "32-Tooth Odontogram" && isDeciduous ? "20-Tooth Deciduous" : tab}
                     </button>
                   );
                 })}
               </div>
 
-              {/* TAB 1: DENTAL CHART & TREATMENT PLANS (U-Shaped Arch Odontogram + 3 Stage Columns) */}
-              {activeModalTab === "Dental Chart & Treatment Plans" && (
-                <div className="space-y-6">
-                  
-                  {/* U-SHAPED ARCH ODONTOGRAM CONTAINER */}
-                  <div className="bg-gradient-to-b from-slate-950 via-[#0b1329] to-slate-950 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
-                        U-Shaped Arch Odontogram (FDI 32 / 20 Mapping)
+              {activeModalTab === "32-Tooth Odontogram" && (
+                <div className="space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-1 gap-2">
+                    <div className="text-[11px] font-bold text-slate-800 tracking-wider uppercase">
+                      CLINICAL ODONTOGRAM PALETTE (SELECT STATUS, THEN TAP TOOTH)
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] text-slate-400">
+                        {isDeciduous ? "Pediatric Primary FDI (20)" : "Adult Upper & Lower FDI (32)"}
                       </span>
                       <button
-                        onClick={() => setIsDeciduousOverride(isDeciduousOverride === null ? !isDeciduousMode() : !isDeciduousOverride)}
-                        className="px-3 py-1 rounded-md text-[11px] font-bold bg-blue-900/60 text-cyan-300 border border-blue-700/50 cursor-pointer"
+                        onClick={() => setIsDeciduous(!isDeciduous)}
+                        className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200"
                       >
-                        {isDeciduousMode() ? "Switch to Adult (32)" : "Switch to Deciduous (20)"}
+                        {isDeciduous ? "Switch to Adult (32)" : "Switch to Deciduous (20)"}
                       </button>
                     </div>
+                  </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-1.5 pt-2">
-                      {CLINICAL_PALETTE.map((item) => {
-                        const isSelected = activePaletteStatus === item.id;
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                    {CLINICAL_PALETTE.map((item) => {
+                      const isSelected = activePaletteStatus === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => setActivePaletteStatus(item.id)}
+                          className={`px-2.5 py-1.5 rounded-lg text-xs text-left truncate font-medium border transition-all ${
+                            item.border
+                          } ${item.bg} ${item.text} ${
+                            isSelected ? "ring-2 ring-blue-500 font-bold scale-[1.02]" : "hover:opacity-90"
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-100">
+                    <div className="text-[10px] font-bold tracking-widest text-slate-400 uppercase text-center mb-2">
+                      {isDeciduous ? "Upper Arch (Deciduous Maxillary)" : "Upper Arch (Maxillary)"}
+                    </div>
+                    <div className="flex justify-center flex-wrap gap-1.5">
+                      {(isDeciduous ? DECIDUOUS_UPPER : PERMANENT_UPPER).map((num) => {
+                        const code = activePatient.toothConditions?.[num];
+                        const found = CLINICAL_PALETTE.find((p) => p.id === code);
                         return (
                           <button
-                            key={item.id}
-                            onClick={() => setActivePaletteStatus(item.id)}
-                            className={`px-2 py-1.5 rounded-lg text-[11px] text-left truncate font-medium border transition-all cursor-pointer ${item.border} ${item.bg} ${item.text} ${
-                              isSelected ? "ring-2 ring-cyan-400 font-bold scale-[1.02]" : "hover:opacity-90"
+                            key={num}
+                            onClick={() => handleToothTap(num)}
+                            className={`w-10 h-12 rounded-lg border flex flex-col items-center justify-center transition-all bg-white shadow-2xs ${
+                              found ? `${found.border} ${found.bg}` : "border-emerald-300 text-emerald-700"
                             }`}
                           >
-                            {item.label}
+                            <span className="text-xs font-bold text-slate-800">{num}</span>
+                            <span className={`text-[9px] font-semibold ${found ? found.text : "text-emerald-600"}`}>
+                              {code || "HLT"}
+                            </span>
                           </button>
                         );
                       })}
                     </div>
-
-                    {/* Maxillary Upper U-Arch */}
-                    <div className="pt-3">
-                      <div className="text-[10px] font-bold tracking-widest text-cyan-300 uppercase text-center mb-2">MAXILLARY UPPER ARCH</div>
-                      <div className="max-w-xl mx-auto px-6 py-4 rounded-t-[6rem] border-t-2 border-x-2 border-cyan-500/40 bg-slate-900/50 backdrop-blur-sm flex justify-center items-center gap-1.5 sm:gap-2 flex-wrap">
-                        {(isDeciduousMode() ? DECIDUOUS_UPPER : PERMANENT_UPPER).map((num, idx, arr) => {
-                          const code = activePatient.toothConditions?.[num];
-                          const found = CLINICAL_PALETTE.find((p) => p.id === code);
-                          const mid = arr.length / 2;
-                          const offsetClass = Math.abs(idx - mid + 0.5) > 4 ? "translate-y-3" : Math.abs(idx - mid + 0.5) > 2 ? "translate-y-1.5" : "translate-y-0";
-                          return (
-                            <button
-                              key={num}
-                              onClick={() => handleToothTap(num)}
-                              className={`w-9 h-11 sm:w-10 sm:h-12 rounded-xl border flex flex-col items-center justify-center transition-all bg-white shadow-sm transform ${offsetClass} hover:scale-110 hover:z-10 cursor-pointer ${
-                                found ? `${found.border}${found.bg}` : "border-emerald-400 text-emerald-800"
-                              }`}
-                            >
-                              <span className="text-[11px] sm:text-xs font-black text-slate-900">{num}</span>
-                              <span className={`text-[8px] sm:text-[9px] font-bold ${found ? found.text : "text-emerald-700"}`}>
-                                {code || "HLT"}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Occlusal Plane Divider */}
-                    <div className="relative flex items-center justify-center my-1">
-                      <div className="w-2/3 h-[1px] bg-cyan-500/30"></div>
-                      <span className="absolute px-3 bg-[#0b1329] text-[9px] font-mono tracking-widest text-slate-400 uppercase">
-                        MIDLINE
-                      </span>
-                    </div>
-
-                    {/* Mandibular Lower U-Arch */}
-                    <div className="pb-2">
-                      <div className="max-w-xl mx-auto px-6 py-4 rounded-b-[6rem] border-b-2 border-x-2 border-cyan-500/40 bg-slate-900/50 backdrop-blur-sm flex justify-center items-center gap-1.5 sm:gap-2 flex-wrap">
-                        {(isDeciduousMode() ? DECIDUOUS_LOWER : PERMANENT_LOWER).map((num, idx, arr) => {
-                          const code = activePatient.toothConditions?.[num];
-                          const found = CLINICAL_PALETTE.find((p) => p.id === code);
-                          const mid = arr.length / 2;
-                          const offsetClass = Math.abs(idx - mid + 0.5) > 4 ? "-translate-y-3" : Math.abs(idx - mid + 0.5) > 2 ? "-translate-y-1.5" : "translate-y-0";
-                          return (
-                            <button
-                              key={num}
-                              onClick={() => handleToothTap(num)}
-                              className={`w-9 h-11 sm:w-10 sm:h-12 rounded-xl border flex flex-col items-center justify-center transition-all bg-white shadow-sm transform ${offsetClass} hover:scale-110 hover:z-10 cursor-pointer ${
-                                found ? `${found.border}${found.bg}` : "border-emerald-400 text-emerald-800"
-                              }`}
-                            >
-                              <span className="text-[11px] sm:text-xs font-black text-slate-900">{num}</span>
-                              <span className={`text-[8px] sm:text-[9px] font-bold ${found ? found.text : "text-emerald-700"}`}>
-                                {code || "HLT"}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <div className="text-[10px] font-bold tracking-widest text-cyan-300 uppercase text-center mt-3">MANDIBULAR LOWER ARCH</div>
-                    </div>
                   </div>
 
-                  {/* Add Staged Treatment Plan Form */}
-                  <form onSubmit={addTreatmentPlan} className="bg-white p-4 rounded-2xl border border-slate-200 flex flex-wrap items-end gap-3 text-xs shadow-xs">
-                    <div>
-                      <label className="font-bold text-slate-600 block mb-1">Tooth #</label>
+                  <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-100">
+                    <div className="text-[10px] font-bold tracking-widest text-slate-400 uppercase text-center mb-2">
+                      {isDeciduous ? "Lower Arch (Deciduous Mandibular)" : "Lower Arch (Mandibular)"}
+                    </div>
+                    <div className="flex justify-center flex-wrap gap-1.5">
+                      {(isDeciduous ? DECIDUOUS_LOWER : PERMANENT_LOWER).map((num) => {
+                        const code = activePatient.toothConditions?.[num];
+                        const found = CLINICAL_PALETTE.find((p) => p.id === code);
+                        return (
+                          <button
+                            key={num}
+                            onClick={() => handleToothTap(num)}
+                            className={`w-10 h-12 rounded-lg border flex flex-col items-center justify-center transition-all bg-white shadow-2xs ${
+                              found ? `${found.border} ${found.bg}` : "border-emerald-300 text-emerald-700"
+                            }`}
+                          >
+                            <span className="text-xs font-bold text-slate-800">{num}</span>
+                            <span className={`text-[9px] font-semibold ${found ? found.text : "text-emerald-600"}`}>
+                              {code || "HLT"}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeModalTab === "Department Referrals" && (
+                <div className="space-y-4">
+                  <form onSubmit={handleAddReferral} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-end gap-3 text-xs">
+                    <div className="flex-1 min-w-[140px]">
+                      <label className="font-bold text-slate-600 block mb-1">Treatment Directive</label>
                       <input
                         type="text"
-                        value={newPlanForm.tooth}
-                        onChange={(e) => setNewPlanForm({...newPlanForm, tooth: e.target.value})}
-                        className="w-16 px-3 py-1.5 bg-slate-50 border rounded-lg font-bold"
+                        required
+                        placeholder="e.g. EXTRACTION, SCALING"
+                        value={refTreatment}
+                        onChange={(e) => setRefTreatment(e.target.value)}
+                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white"
                       />
                     </div>
-                    <div className="flex-1 min-w-[180px]">
-                      <label className="font-bold text-slate-600 block mb-1">Treatment Name</label>
+                    <div className="w-28">
+                      <label className="font-bold text-slate-600 block mb-1">Tooth / Region</label>
                       <input
                         type="text"
-                        value={newPlanForm.name}
-                        onChange={(e) => setNewPlanForm({...newPlanForm, name: e.target.value})}
-                        className="w-full px-3 py-1.5 bg-slate-50 border rounded-lg font-bold"
+                        placeholder="e.g. 18 or 46"
+                        value={refTooth}
+                        onChange={(e) => setRefTooth(e.target.value)}
+                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white"
                       />
                     </div>
-                    <div className="w-40">
-                      <label className="font-bold text-slate-600 block mb-1">Diagnosis Suggestion</label>
-                      <input
-                        type="text"
-                        value={newPlanForm.diagnosis}
-                        onChange={(e) => setNewPlanForm({...newPlanForm, diagnosis: e.target.value})}
-                        className="w-full px-3 py-1.5 bg-slate-50 border rounded-lg"
-                      />
+                    <div className="w-44">
+                      <label className="font-bold text-slate-600 block mb-1">Department</label>
+                      <select
+                        value={refDept}
+                        onChange={(e) => setRefDept(e.target.value)}
+                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white"
+                      >
+                        {DENTAL_DEPARTMENTS.map((d) => (
+                          <option key={d.id} value={d.code}>{d.code} ({d.room})</option>
+                        ))}
+                      </select>
                     </div>
-                    <div>
-                      <label className="font-bold text-slate-600 block mb-1">Price (₹)</label>
-                      <input
-                        type="number"
-                        value={newPlanForm.price}
-                        onChange={(e) => setNewPlanForm({...newPlanForm, price: e.target.value})}
-                        className="w-24 px-3 py-1.5 bg-slate-50 border rounded-lg font-bold"
-                      />
-                    </div>
-                    <button type="submit" className="px-4 py-1.5 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 cursor-pointer">
-                      + Add Treatment Plan
+                    <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-bold">
+                      + Add Referral
                     </button>
                   </form>
 
-                  {/* 3 Columns: Treatment Plans | In Progress | Completed */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    
-                    {/* Column 1: Treatment Plans */}
-                    <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider text-amber-800 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">Treatment Plans</span>
-                        <span className="text-xs font-bold text-slate-500">{treatmentPlans.filter(x => x.stage === "Treatment Plans").length}</span>
+                  <div className="space-y-2">
+                    {(activePatient.referrals || []).length === 0 ? (
+                      <div className="p-6 text-center text-xs text-slate-400 bg-slate-50 rounded-xl">
+                        No specialty referrals queued. Route directives to OMFS, Perio, Cons, or Prostho above.
                       </div>
-                      <div className="space-y-3">
-                        {treatmentPlans.filter(x => x.stage === "Treatment Plans").map(tp => (
-                          <div key={tp.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-2 text-xs">
-                            <div className="flex justify-between text-[11px] text-slate-400">
-                              <span>{tp.date}</span>
-                              <span className="font-mono font-bold text-blue-600">Tooth #{tp.tooth}</span>
-                            </div>
-                            <div className="font-bold text-slate-900">{tp.name}</div>
-                            <div className="text-slate-500">Diagnosis: <strong className="text-slate-700">{tp.diagnosis}</strong></div>
-                            <div className="flex justify-between items-center pt-2 border-t border-slate-100">
-                              <span className="font-black text-slate-900">₹{tp.price}</span>
-                              <span className="text-slate-600">Dr. {tp.doctor}</span>
-                            </div>
-                            <div className="pt-2 flex gap-2">
-                              <button onClick={() => movePlanStage(tp.id, "In Progress")} className="flex-1 py-1 bg-blue-50 text-blue-700 font-bold rounded hover:bg-blue-100 cursor-pointer">Move to In Progress →</button>
-                              <button onClick={() => deletePlan(tp.id)} className="p-1 text-rose-500 hover:bg-rose-50 rounded cursor-pointer"><Trash2 className="w-4 h-4"/></button>
+                    ) : (
+                      activePatient.referrals.map((r, i) => (
+                        <div key={r.id || i} className="p-3 rounded-xl border border-slate-200 bg-white flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-3">
+                            <span className="w-6 h-6 rounded-md bg-slate-100 flex items-center justify-center font-bold text-slate-700">
+                              {i + 1}
+                            </span>
+                            <div>
+                              <span className="font-bold text-slate-900 uppercase">{r.treatment}</span>
+                              <span className="text-slate-400 font-mono ml-2">Tooth/Arch: <strong>{r.toothRegion}</strong></span>
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Column 2: In Progress */}
-                    <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider text-blue-800 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">In Progress</span>
-                        <span className="text-xs font-bold text-slate-500">{treatmentPlans.filter(x => x.stage === "In Progress").length}</span>
-                      </div>
-                      <div className="space-y-3">
-                        {treatmentPlans.filter(x => x.stage === "In Progress").map(tp => (
-                          <div key={tp.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-2 text-xs">
-                            <div className="flex justify-between text-[11px] text-slate-400">
-                              <span>{tp.date}</span>
-                              <span className="font-mono font-bold text-blue-600">Tooth #{tp.tooth}</span>
-                            </div>
-                            <div className="font-bold text-slate-900">{tp.name}</div>
-                            <div className="text-slate-500">Diagnosis: <strong className="text-slate-700">{tp.diagnosis}</strong></div>
-                            <div className="flex justify-between items-center pt-2 border-t border-slate-100">
-                              <span className="font-black text-slate-900">₹{tp.price}</span>
-                              <span className="text-slate-600">Dr. {tp.doctor}</span>
-                            </div>
-                            <div className="pt-2 flex gap-2">
-                              <button onClick={() => movePlanStage(tp.id, "Completed")} className="flex-1 py-1 bg-emerald-600 text-white font-bold rounded hover:bg-emerald-700 cursor-pointer">Mark as Completed ✓</button>
-                              <button onClick={() => deletePlan(tp.id)} className="p-1 text-rose-500 hover:bg-rose-50 rounded cursor-pointer"><Trash2 className="w-4 h-4"/></button>
-                            </div>
+                          <div className="flex items-center gap-2">
+                            <span className="px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
+                              {r.department} ({r.roomNo})
+                            </span>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Column 3: Completed */}
-                    <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">Completed</span>
-                        <span className="text-xs font-bold text-slate-500">{treatmentPlans.filter(x => x.stage === "Completed").length}</span>
-                      </div>
-                      <div className="space-y-3">
-                        {treatmentPlans.filter(x => x.stage === "Completed").map(tp => (
-                          <div key={tp.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-2 text-xs opacity-90">
-                            <div className="flex justify-between text-[11px] text-slate-400">
-                              <span>{tp.date}</span>
-                              <span className="font-mono font-bold text-emerald-600">Tooth #{tp.tooth}</span>
-                            </div>
-                            <div className="font-bold text-slate-900">{tp.name}</div>
-                            <div className="text-slate-500">Diagnosis: <strong className="text-slate-700">{tp.diagnosis}</strong></div>
-                            <div className="flex justify-between items-center pt-2 border-t border-slate-100">
-                              <span className="font-black text-slate-900">₹{tp.price}</span>
-                              <span className="text-emerald-700 font-bold">Completed</span>
-                            </div>
-                            <div className="pt-2">
-                              <button onClick={() => deletePlan(tp.id)} className="w-full py-1 bg-rose-50 text-rose-600 font-bold rounded hover:bg-rose-100 cursor-pointer">Delete Treatment Record</button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 2: RGV REPORTS & NOTES */}
-              {activeModalTab === "RGV Reports & Notes" && (
-                <div className="space-y-4 text-xs">
-                  <h3 className="font-bold text-slate-900 uppercase">RGV Radiograph Reports & Clinical Notes</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    {rgvReports.map((r) => (
-                      <div key={r.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-center">
-                        <div className="h-28 bg-slate-900 rounded-lg flex items-center justify-center text-cyan-400 font-mono text-xs">
-                          [ X-Ray Film ]
                         </div>
-                        <div className="font-bold text-slate-900">{r.title}</div>
-                        <div className="text-[10px] text-slate-500">{r.note}</div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="pt-4 flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Add diagnostic RGV note..."
-                      value={newRgvNote}
-                      onChange={(e) => setNewRgvNote(e.target.value)}
-                      className="flex-1 px-3 py-2 border rounded-lg"
-                    />
-                    <button
-                      onClick={() => {
-                        if(!newRgvNote.trim()) return;
-                        setRgvReports([...rgvReports, { id: Date.now(), title: "Uploaded Scan", note: newRgvNote, date: "Today" }]);
-                        setNewRgvNote("");
-                        showToast("RGV Note saved");
-                      }}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold cursor-pointer"
-                    >
-                      Save Note
-                    </button>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
 
-              {/* TAB 3: SYSTEMIC & MEDICAL HISTORY */}
-              {activeModalTab === "Systemic & Medical History" && (
-                <div className="space-y-4 text-xs">
-                  <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-5 h-5 text-rose-600" />
-                      <div>
-                        <div className="font-bold text-rose-900">Systemic Alert: Diabetic & Hypertensive Screening</div>
-                        <div className="text-[11px] text-rose-700">Enables automated warning flags before surgical extractions or local anesthesia.</div>
-                      </div>
+              {activeModalTab === "Diagnosis & Trauma" && (
+                <div className="space-y-4">
+                  <div className="text-xs font-bold uppercase text-slate-800 tracking-wider">
+                    Radiology & Diagnostic Record
+                  </div>
+                  <div className="border border-slate-200 rounded-xl p-4 divide-y divide-slate-100 bg-white">
+                    <div className="py-2.5">
+                      <div className="text-xs font-bold text-rose-600">Trauma Evaluation:</div>
+                      <input
+                        type="text"
+                        value={activePatient.diagnosis?.trauma || ""}
+                        onChange={(e) => handleUpdateDiagnosis("trauma", e.target.value)}
+                        className="w-full text-xs text-slate-700 mt-1 border-b border-dashed border-slate-300 focus:outline-none"
+                      />
+                    </div>
+                    <div className="py-2.5">
+                      <div className="text-xs font-bold text-indigo-700">Impaction Status:</div>
+                      <input
+                        type="text"
+                        value={activePatient.diagnosis?.impaction || ""}
+                        onChange={(e) => handleUpdateDiagnosis("impaction", e.target.value)}
+                        className="w-full text-xs text-slate-700 mt-1 border-b border-dashed border-slate-300 focus:outline-none"
+                      />
                     </div>
                   </div>
+                </div>
+              )}
+
+              {activeModalTab === "Systemic Review" && (
+                <div className="space-y-4 text-xs">
+                  <span className="text-xs font-bold uppercase text-slate-500 tracking-wider block">
+                    SYSTEMIC CONDITIONS & MEDICAL SCREENING
+                  </span>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {["Diabetic", "Cardiac Disease", "Asthma", "Thyroid", "Bleeding Diathesis", "Epilepsy"].map(cond => (
-                      <label key={cond} className="p-3 rounded-xl border bg-slate-50 flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" className="rounded text-blue-600" />
-                        <span className="font-semibold text-slate-700">{cond}</span>
+                    {[
+                      { id: "hypertension", label: "Hypertension (BP)" },
+                      { id: "diabetes", label: "Diabetes Mellitus" },
+                      { id: "thyroid", label: "Thyroid" },
+                      { id: "cardiac", label: "Heart Disease" },
+                      { id: "allergy", label: "Drug Allergies" },
+                      { id: "bleeding", label: "Bleeding Diathesis" },
+                      { id: "respiratory", label: "Asthma" },
+                      { id: "epilepsy", label: "Epilepsy" }
+                    ].map((item) => (
+                      <label key={item.id} className="p-3 rounded-xl border border-slate-200 bg-slate-50/50 flex items-center gap-2 cursor-pointer hover:bg-slate-50">
+                        <input
+                          type="checkbox"
+                          checked={systemicChecks[item.id]}
+                          onChange={(e) => setSystemicChecks({ ...systemicChecks, [item.id]: e.target.checked })}
+                          className="rounded text-blue-600 focus:ring-0"
+                        />
+                        <span className="font-semibold text-slate-700">{item.label}</span>
                       </label>
                     ))}
                   </div>
                 </div>
               )}
 
+              {activeModalTab === "Prescriptions" && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs font-bold uppercase text-slate-800 tracking-wider">
+                      Prescriptions Slip
+                    </div>
+                    <button
+                      type="button"
+                      onClick={dispatchPatientWhatsApp}
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                      <Send className="w-3.5 h-3.5" /> Dispatch WhatsApp Prescription
+                    </button>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1.5">
+                      Quick-Select Dental Presets:
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {PRESET_MEDICATIONS.map((med) => (
+                        <button
+                          key={med.name}
+                          type="button"
+                          onClick={() => handleAddPrescription(med)}
+                          className="px-2.5 py-1 text-xs bg-slate-50 hover:bg-blue-50 border border-slate-200 text-slate-700 hover:text-blue-700 rounded-lg flex items-center gap-1"
+                        >
+                          <Plus className="w-3 h-3 text-blue-600" />
+                          <span className="font-semibold">{med.name}</span>
+                          <span className="text-[10px] text-slate-400">({med.frequency})</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border border-slate-200 rounded-xl overflow-hidden">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-b border-slate-200">
+                        <tr>
+                          <th className="p-3">Drug & Generic Name</th>
+                          <th className="p-3">Dosage</th>
+                          <th className="p-3">Frequency</th>
+                          <th className="p-3">Duration</th>
+                          <th className="p-3 text-center">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {(activePatient.prescriptions || []).length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="p-4 text-center text-slate-400 italic">
+                              No medications prescribed yet. Tap presets above to add.
+                            </td>
+                          </tr>
+                        ) : (
+                          activePatient.prescriptions.map((p) => (
+                            <tr key={p.id}>
+                              <td className="p-3">
+                                <div className="font-bold text-slate-800">{p.drug}</div>
+                                <div className="text-[10px] text-slate-400">{p.generic}</div>
+                              </td>
+                              <td className="p-3 font-medium text-slate-700">{p.dosage}</td>
+                              <td className="p-3"><span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-mono font-bold text-[11px]">{p.frequency}</span></td>
+                              <td className="p-3 font-medium text-slate-700">{p.duration}</td>
+                              <td className="p-3 text-center">
+                                <button onClick={() => handleRemovePrescription(p.id)} className="text-rose-500 hover:text-rose-700">
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {activeModalTab === "Medical History" && (
+                <div className="space-y-4">
+                  <div className="text-xs font-bold uppercase text-slate-800 tracking-wider">
+                    Systemic Screening & Allergies
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="border border-slate-200 rounded-xl p-4 bg-white">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Conditions</div>
+                      <input
+                        type="text"
+                        value={activePatient.conditions || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? { ...p, conditions: val } : p)));
+                        }}
+                        className="w-full text-sm font-medium text-slate-800 border-b border-slate-200 focus:outline-none"
+                      />
+                    </div>
+                    <div className="border border-rose-100 rounded-xl p-4 bg-rose-50/40">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-rose-500 mb-1">Allergies</div>
+                      <input
+                        type="text"
+                        value={activePatient.allergies || "NKDA"}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? { ...p, allergies: val } : p)));
+                        }}
+                        className="w-full text-sm font-bold text-rose-700 border-b border-rose-200 bg-transparent focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100 text-xs">
@@ -1191,7 +2100,7 @@ export default function App() {
                     showToast("Patient chart deleted");
                   }
                 }}
-                className="text-rose-600 hover:text-rose-800 font-medium flex items-center gap-1.5 cursor-pointer"
+                className="text-rose-600 hover:text-rose-800 font-medium flex items-center gap-1.5"
               >
                 <Trash2 className="w-3.5 h-3.5" /> Delete Chart
               </button>
@@ -1199,7 +2108,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setIsChartModalOpen(false)}
-                className="text-slate-600 hover:text-slate-900 font-semibold cursor-pointer"
+                className="text-slate-600 hover:text-slate-900 font-semibold"
               >
                 Close Window
               </button>
@@ -1211,14 +2120,14 @@ export default function App() {
 
       {/* --- ADD PATIENT MODAL --- */}
       {isAddPatientOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
           <form
             onSubmit={handleCreatePatient}
-            className="bg-white rounded-2xl border border-slate-200 w-full max-w-lg p-6 space-y-4 shadow-xl text-xs max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-xl text-xs"
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
-              <h3 className="text-sm font-bold text-slate-900">Add New Patient (Biodata & Medical History)</h3>
-              <button type="button" onClick={() => setIsAddPatientOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+              <h3 className="text-sm font-bold text-slate-900">Add New Patient</h3>
+              <button type="button" onClick={() => setIsAddPatientOpen(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -1230,7 +2139,7 @@ export default function App() {
                 required
                 value={newPatientForm.name}
                 onChange={(e) => setNewPatientForm({ ...newPatientForm, name: e.target.value })}
-                placeholder="e.g. Harshad M"
+                placeholder="e.g. Nirmala J"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
               />
             </div>
@@ -1243,7 +2152,7 @@ export default function App() {
                   required
                   value={newPatientForm.age}
                   onChange={(e) => setNewPatientForm({ ...newPatientForm, age: e.target.value })}
-                  placeholder="e.g. 35"
+                  placeholder="e.g. 46"
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                 />
               </div>
@@ -1253,50 +2162,30 @@ export default function App() {
                 <select
                   value={newPatientForm.gender}
                   onChange={(e) => setNewPatientForm({ ...newPatientForm, gender: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none bg-white"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                 >
-                  <option>Male</option>
                   <option>Female</option>
+                  <option>Male</option>
                   <option>Pediatric</option>
                 </select>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">WhatsApp Phone *</label>
-                <input
-                  type="tel"
-                  required
-                  value={newPatientForm.phone}
-                  onChange={(e) => setNewPatientForm({ ...newPatientForm, phone: e.target.value })}
-                  placeholder="9995960143"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">Blood Group</label>
-                <select
-                  value={newPatientForm.bloodGroup}
-                  onChange={(e) => setNewPatientForm({ ...newPatientForm, bloodGroup: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none bg-white"
-                >
-                  <option>O+</option>
-                  <option>O-</option>
-                  <option>A+</option>
-                  <option>A-</option>
-                  <option>B+</option>
-                  <option>B-</option>
-                  <option>AB+</option>
-                  <option>AB-</option>
-                </select>
-              </div>
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">WhatsApp Phone *</label>
+              <input
+                type="tel"
+                required
+                value={newPatientForm.phone}
+                onChange={(e) => setNewPatientForm({ ...newPatientForm, phone: e.target.value })}
+                placeholder="9043205927"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+              />
             </div>
 
             <div className="pt-2 flex justify-end gap-2">
-              <button type="button" onClick={() => setIsAddPatientOpen(false)} className="px-3 py-1.5 rounded-lg border text-slate-600 cursor-pointer">Cancel</button>
-              <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-semibold cursor-pointer">Register & Open Casesheet</button>
+              <button type="button" onClick={() => setIsAddPatientOpen(false)} className="px-3 py-1.5 rounded-lg border text-slate-600">Cancel</button>
+              <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-semibold">Register & Open Odontogram</button>
             </div>
           </form>
         </div>
@@ -1304,128 +2193,141 @@ export default function App() {
 
       {/* --- ADD APPOINTMENT MODAL --- */}
       {isAddApptOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
           <form
             onSubmit={handleCreateAppointment}
-            className="bg-white rounded-3xl border border-slate-200 w-full max-w-lg p-6 space-y-4 shadow-2xl text-xs"
+            className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-xl text-xs"
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
-              <h3 className="text-base font-bold text-slate-900">Add New Appointment</h3>
-              <button type="button" onClick={() => setIsAddApptOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
-                <X className="w-5 h-5" />
-              </button>
+              <h3 className="text-sm font-bold text-slate-900">Book Chair-side Appointment</h3>
+              <button type="button" onClick={() => setIsAddApptOpen(false)} className="text-slate-400"><X className="w-4 h-4" /></button>
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Patient Name *</label>
+              <input type="text" required value={newApptForm.patientName} onChange={(e) => setNewApptForm({ ...newApptForm, patientName: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block font-semibold text-slate-600 mb-1">Mobile Number *</label>
-                <input
-                  type="tel"
-                  required
-                  value={newApptForm.mobile}
-                  onChange={(e) => setNewApptForm({ ...newApptForm, mobile: e.target.value })}
-                  placeholder="Enter mobile number"
-                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-slate-800 focus:outline-none"
-                />
+                <label className="block font-semibold text-slate-600 mb-1">Mobile *</label>
+                <input type="tel" required value={newApptForm.phone} onChange={(e) => setNewApptForm({ ...newApptForm, phone: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
               </div>
               <div>
-                <label className="block font-semibold text-slate-600 mb-1">Patient Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={newApptForm.patientName}
-                  onChange={(e) => setNewApptForm({ ...newApptForm, patientName: e.target.value })}
-                  placeholder="Enter patient name"
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-slate-800 focus:outline-none"
-                />
+                <label className="block font-semibold text-slate-600 mb-1">Date</label>
+                <input type="date" value={newApptForm.date} onChange={(e) => setNewApptForm({ ...newApptForm, date: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
               </div>
             </div>
+            <div className="pt-2 flex justify-end gap-2">
+              <button type="button" onClick={() => setIsAddApptOpen(false)} className="px-3 py-1.5 rounded-lg border">Cancel</button>
+              <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-semibold">Schedule Appointment</button>
+            </div>
+          </form>
+        </div>
+      )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">Age</label>
-                <input
-                  type="number"
-                  value={newApptForm.age}
-                  onChange={(e) => setNewApptForm({ ...newApptForm, age: e.target.value })}
-                  placeholder="Enter patient age"
-                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-slate-800 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block font-semibold text-slate-600 SN mb-1">Doctor</label>
-                <select
-                  value={newApptForm.doctor}
-                  onChange={(e) => setNewApptForm({ ...newApptForm, doctor: e.target.value })}
-                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-slate-800 bg-white focus:outline-none"
-                >
-                  <option>Dr. Santhoshkumar S</option>
-                  <option>Dr. Sivasabari G</option>
-                  <option>Dr. Arjun</option>
-                </select>
-              </div>
+      {/* --- ADD INVOICE MODAL --- */}
+      {isAddInvoiceOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+          <form
+            onSubmit={handleCreateInvoice}
+            className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-xl text-xs"
+          >
+            <div className="flex items-center justify-between border-b pb-3 border-slate-100">
+              <h3 className="text-sm font-bold text-slate-900">Generate Invoice</h3>
+              <button type="button" onClick={() => setIsAddInvoiceOpen(false)} className="text-slate-400"><X className="w-4 h-4" /></button>
+            </div>
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Patient Name *</label>
+              <input type="text" required value={newInvoiceForm.patientName} onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, patientName: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Amount (₹) *</label>
+              <input type="number" required value={newInvoiceForm.amount} onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, amount: e.target.value })} className="w-full px-3 py-2 border rounded-lg font-bold" />
+            </div>
+            <div className="pt-2 flex justify-end gap-2">
+              <button type="button" onClick={() => setIsAddInvoiceOpen(false)} className="px-3 py-1.5 rounded-lg border">Cancel</button>
+              <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-semibold">Generate Invoice</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* --- ADD STOCK ITEM MODAL --- */}
+      {isAddStockOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+          <form
+            onSubmit={handleCreateStock}
+            className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-xl text-xs"
+          >
+            <div className="flex items-center justify-between border-b pb-3 border-slate-100">
+              <h3 className="text-sm font-bold text-slate-900">Add Stock Item</h3>
+              <button type="button" onClick={() => setIsAddStockOpen(false)} className="text-slate-400"><X className="w-4 h-4" /></button>
+            </div>
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Item Name *</label>
+              <input type="text" required value={newStockForm.name} onChange={(e) => setNewStockForm({ ...newStockForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            <div className="pt-2 flex justify-end gap-2">
+              <button type="button" onClick={() => setIsAddStockOpen(false)} className="px-3 py-1.5 rounded-lg border">Cancel</button>
+              <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-semibold">Save Consumable</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* --- ADD EMPLOYEE MODAL --- */}
+      {isAddEmpOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+          <form
+            onSubmit={handleCreateEmp}
+            className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-xl text-xs"
+          >
+            <div className="flex items-center justify-between border-b pb-3 border-slate-100">
+              <h3 className="text-sm font-bold text-slate-900">Add Staff Member</h3>
+              <button type="button" onClick={() => setIsAddEmpOpen(false)} className="text-slate-400"><X className="w-4 h-4" /></button>
+            </div>
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Staff / Role Name *</label>
+              <input type="text" required value={newEmpForm.name} onChange={(e) => setNewEmpForm({ ...newEmpForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            <div className="pt-2 flex justify-end gap-2">
+              <button type="button" onClick={() => setIsAddEmpOpen(false)} className="px-3 py-1.5 rounded-lg border">Cancel</button>
+              <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-semibold">Save Staff</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* --- UPI QR MODAL --- */}
+      {activeUpiQrInvoice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-sm p-6 text-center space-y-4 shadow-xl">
+            <div className="flex items-center justify-between border-b pb-2 border-slate-100">
+              <span className="text-xs font-bold text-slate-700">Instant UPI Payment</span>
+              <button onClick={() => setActiveUpiQrInvoice(null)} className="text-slate-400"><X className="w-4 h-4" /></button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">Date & Time Slot</label>
-                <div className="flex gap-2">
-                  <input
-                    type="date"
-                    value={newApptForm.date}
-                    onChange={(e) => setNewApptForm({ ...newApptForm, date: e.target.value })}
-                    className="flex-1 px-3 py-2.5 border border-slate-300 rounded-xl text-slate-800 focus:outline-none"
-                  />
-                  <input
-                    type="text"
-                    value={newApptForm.time}
-                    onChange={(e) => setNewApptForm({ ...newApptForm, time: e.target.value })}
-                    className="w-24 px-3 py-2.5 border border-slate-300 rounded-xl text-slate-800 focus:outline-none"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">Duration</label>
-                <select
-                  value={newApptForm.duration}
-                  onChange={(e) => setNewApptForm({ ...newApptForm, duration: e.target.value })}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-slate-800 bg-white focus:outline-none"
-                >
-                  <option>15 mins</option>
-                  <option>30 mins</option>
-                  <option>45 mins</option>
-                  <option>60 mins</option>
-                </select>
+            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 inline-block mx-auto">
+              <div className="w-44 h-44 bg-white p-2 border border-slate-200 rounded-lg flex flex-col items-center justify-center shadow-xs">
+                <QrCode className="w-32 h-32 text-slate-900" />
+                <span className="text-[10px] text-slate-500 font-mono mt-1 font-semibold">{practiceProfile.upiId}</span>
               </div>
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-600 mb-1">Patient Complaint / Procedure</label>
-              <input
-                type="text"
-                value={newApptForm.complaint}
-                onChange={(e) => setNewApptForm({ ...newApptForm, complaint: e.target.value })}
-                placeholder="Search & Select or type complaint..."
-                className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-slate-800 focus:outline-none"
-              />
+              <div className="text-xl font-bold text-slate-900">₹{activeUpiQrInvoice.total}</div>
+              <div className="text-xs text-slate-500 mt-0.5">{activeUpiQrInvoice.patient} • {activeUpiQrInvoice.id}</div>
             </div>
 
-            <div className="pt-3 flex justify-end gap-3 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setIsAddApptOpen(false)}
-                className="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 font-semibold cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-6 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 font-bold shadow-md cursor-pointer"
-              >
-                Save Appointment
-              </button>
-            </div>
-          </form>
+            <button
+              onClick={() => {
+                setActiveUpiQrInvoice(null);
+                showToast("Payment marked as received via UPI");
+              }}
+              className="w-full py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold"
+            >
+              Confirm Payment Received
+            </button>
+          </div>
         </div>
       )}
 
