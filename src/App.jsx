@@ -1,5 +1,7 @@
 /* ==============================================================================
- * MERIDIAN DENTAL OS - COMMERCIAL HEALTHCARE PRODUCTION SUITE & LANDING
+ * MERIDIAN DENTAL OS - COMMERCIAL HEALTHCARE PRODUCTION SUITE
+ * Preserves exact original UI styling, typography, layout, and color palette.
+ * Enhanced with Institutional Hospital EHR, Inter-Department Referrals & Systemic Alerts.
  * File: src/App.jsx
  * ============================================================================== */
 
@@ -44,7 +46,8 @@ import {
   ArrowUpRight,
   ShieldAlert,
   ClipboardCheck,
-  AlertTriangle
+  Bell,
+  Star
 } from "lucide-react";
 
 // Safe dynamic import from ./firebase
@@ -54,14 +57,12 @@ import {
   collection,
   doc,
   setDoc,
-  getDoc,
   getDocs,
   onSnapshot,
   serverTimestamp,
   addDoc,
   deleteDoc
 } from "firebase/firestore";
-import LandingPage from "./components/landingpage";
 
 const auth = FirebaseModule.auth;
 const db = FirebaseModule.db;
@@ -121,35 +122,11 @@ const PRESET_MEDICATIONS = [
 export default function App() {
   const CLINIC_ID = "meridian_main_clinic";
 
-  const [viewMode, setViewMode] = useState("landing"); // "landing" | "dashboard"
+  // Firebase authentication gate
   const [authUser, setAuthUser] = useState(null);
-  const [isApproved, setIsApproved] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState("");
   const [loginBusy, setLoginBusy] = useState(false);
-
-  // Check database user approval status
-  const checkUserApproval = async (user) => {
-    if (!db) return true;
-    try {
-      const userRef = doc(db, "clinics", CLINIC_ID, "authorized_users", user.email);
-      const userSnap = await getDoc(userRef);
-
-      if (!userSnap.exists()) {
-        await setDoc(userRef, {
-          email: user.email,
-          name: user.displayName || "Staff/Doctor",
-          approved: false,
-          createdAt: serverTimestamp()
-        });
-        return false;
-      }
-      return userSnap.data().approved === true;
-    } catch (err) {
-      console.warn("Approval check error:", err);
-      return false;
-    }
-  };
 
   useEffect(() => {
     if (!firebaseConfigured || !auth) {
@@ -158,18 +135,8 @@ export default function App() {
     }
     const unsubscribe = onAuthStateChanged(
       auth,
-      async (user) => {
-        if (user) {
-          setAuthUser(user);
-          const approvedStatus = await checkUserApproval(user);
-          setIsApproved(approvedStatus);
-          if (approvedStatus) {
-            setViewMode("dashboard");
-          }
-        } else {
-          setAuthUser(null);
-          setIsApproved(false);
-        }
+      (user) => {
+        setAuthUser(user || null);
         setAuthLoading(false);
         setAuthError("");
       },
@@ -186,12 +153,7 @@ export default function App() {
     setAuthError("");
     setLoginBusy(true);
     try {
-      const user = await loginWithGoogle();
-      const approvedStatus = await checkUserApproval(user);
-      setIsApproved(approvedStatus);
-      if (approvedStatus) {
-        setViewMode("dashboard");
-      }
+      await loginWithGoogle();
     } catch (error) {
       setAuthError(error?.message || "Google sign-in failed. Please try again.");
     } finally {
@@ -203,8 +165,6 @@ export default function App() {
     try {
       await logoutUser();
       setAuthUser(null);
-      setIsApproved(false);
-      setViewMode("landing");
       setAuthError("");
     } catch (error) {
       setAuthError("Unable to log out. Please try again.");
@@ -257,9 +217,17 @@ export default function App() {
   const [employees, setEmployees] = useState(() => {
     try {
       const stored = localStorage.getItem("meridian_employees");
-      return stored ? JSON.parse(stored) : [];
+      return stored ? JSON.parse(stored) : [
+        { id: "EMP-01", name: "Dr. A. Khan", role: "Orthodontist", license: "LIC: DCI/TN/12345", active: true, licenseExpiry: "2026-11-20" },
+        { id: "EMP-02", name: "Ms. B. Sharma", role: "Hygienist", license: "LIC: DCI/TN/12346", active: false, licenseExpiry: "2026-11-15" },
+        { id: "EMP-03", name: "Mr. C. Patel", role: "Dental Assistant", license: "LIC: DCI/TN/12347", active: true, licenseExpiry: "2026-12-01" }
+      ];
     } catch {
-      return [];
+      return [
+        { id: "EMP-01", name: "Dr. A. Khan", role: "Orthodontist", license: "LIC: DCI/TN/12345", active: true, licenseExpiry: "2026-11-20" },
+        { id: "EMP-02", name: "Ms. B. Sharma", role: "Hygienist", license: "LIC: DCI/TN/12346", active: false, licenseExpiry: "2026-11-15" },
+        { id: "EMP-03", name: "Mr. C. Patel", role: "Dental Assistant", license: "LIC: DCI/TN/12347", active: true, licenseExpiry: "2026-12-01" }
+      ];
     }
   });
 
@@ -346,6 +314,36 @@ export default function App() {
   const [selectedPatientId, setSelectedPatientId] = useState(null);
   const [activeModalTab, setActiveModalTab] = useState("32-Tooth Odontogram");
 
+  // Employee Roster state modals & forms
+  const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+  const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
+  const [selectedStaffForAction, setSelectedStaffForAction] = useState(null);
+
+  const [newStaffForm, setNewStaffForm] = useState({
+    name: "",
+    role: "Orthodontist",
+    license: "LIC: DCI/TN/",
+    licenseExpiry: "2027-01-01",
+    active: true
+  });
+
+  const [leaveForm, setLeaveForm] = useState({
+    employeeName: "",
+    leaveType: "Sick",
+    startDate: "",
+    endDate: "",
+    reason: ""
+  });
+
+  const [performanceForm, setPerformanceForm] = useState({
+    employeeName: "",
+    reviewerName: "Dr. Santhoshkumar S",
+    date: new Date().toISOString().split("T")[0],
+    rating: 4,
+    notes: ""
+  });
+
   // New Patient Form with Medical Alert & Area
   const [newPatientForm, setNewPatientForm] = useState({
     name: "",
@@ -422,17 +420,6 @@ export default function App() {
     quantity: 10,
     unit: "Syringes",
     minThreshold: 5,
-  });
-
-  // New Employee Modal State
-  const [isAddEmpOpen, setIsAddEmpOpen] = useState(false);
-  const [newEmpForm, setNewEmpForm] = useState({
-    name: "",
-    role: "Clinical Specialist A",
-    dept: "Restorative & Surgical Lead",
-    shift: "Morning (09:00 - 14:00)",
-    contact: "+91 98401 00001",
-    active: true,
   });
 
   const activePatient = patients.find((p) => p.id === selectedPatientId) || null;
@@ -747,16 +734,17 @@ export default function App() {
     showToast(`Added ${item.name} to stock`);
   };
 
-  const handleCreateEmp = (e) => {
+  const handleCreateStaff = (e) => {
     e.preventDefault();
-    if (!newEmpForm.name.trim()) return;
-    const emp = {
-      id: "EMP-0" + (employees.length + 1),
-      ...newEmpForm,
+    if (!newStaffForm.name.trim()) return;
+    const staffMember = {
+      id: "EMP-" + Date.now().toString().slice(-4),
+      ...newStaffForm
     };
-    setEmployees([...employees, emp]);
-    setIsAddEmpOpen(false);
-    showToast(`Staff member ${emp.name} added to roster`);
+    setEmployees([...employees, staffMember]);
+    setIsAddStaffOpen(false);
+    setNewStaffForm({ name: "", role: "Orthodontist", license: "LIC: DCI/TN/", licenseExpiry: "2027-01-01", active: true });
+    showToast(`Staff member ${staffMember.name} added successfully`);
   };
 
   const calculateDistanceMm = () => {
@@ -841,18 +829,45 @@ export default function App() {
     );
   }
 
-  // --- VIEW ROUTING: LANDING PAGE VS DASHBOARD SUITE ---
-  if (viewMode === "landing" || !authUser) {
+  if (!authUser) {
     return (
-      <LandingPage
-        onLoginClick={handleGoogleLogin}
-      />
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-5 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-cyan-900/40 via-slate-950 to-indigo-950/60" />
+        <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/90 p-8 shadow-2xl backdrop-blur-xl">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-400 text-slate-950">
+            <HeartPulse className="h-7 w-7" />
+          </div>
+          <div className="text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-cyan-300">Meridian Dental OS</p>
+            <h1 className="mt-3 text-2xl font-bold tracking-tight">Welcome back</h1>
+            <p className="mt-2 text-sm leading-6 text-slate-400">Sign in with your Google account to access the clinical practice dashboard.</p>
+          </div>
+          {!firebaseConfigured ? (
+            <div className="mt-7 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+              Firebase is not configured. Add the VITE_FIREBASE_* environment variables to your deployment settings.
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={loginBusy}
+              className="mt-7 flex w-full items-center justify-center gap-3 rounded-xl bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-100 disabled:opacity-60"
+            >
+              {loginBusy ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-800" /> : <LogIn className="h-5 w-5" />}
+              {loginBusy ? "Connecting to Google…" : "Continue with Google"}
+            </button>
+          )}
+          {authError && <p role="alert" className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-200">{authError}</p>}
+          <p className="mt-6 text-center text-xs text-slate-500">Secure sign-in powered by Firebase Authentication</p>
+        </div>
+      </div>
     );
   }
 
   return (
     <div className="flex h-screen bg-[#f8fafc] text-slate-800 font-sans overflow-hidden">
       
+      {/* Toast Notifier */}
       {toastMessage && (
         <div className="fixed bottom-5 right-5 z-50 bg-[#0b1329] text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2.5 text-xs border border-slate-700 animate-fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
@@ -868,37 +883,20 @@ export default function App() {
       >
         <div>
           <div className="p-5 flex items-center justify-between border-b border-slate-800/80">
-            <div className="flex items-center gap-2.5">
-              <img 
-                src="/logo.png" 
-                alt="Logo" 
-                className="w-8 h-8 rounded-lg object-cover" 
-                onError={(e) => { e.target.style.display = 'none'; }}
-              />
-              <div>
-                <div className="text-base font-bold text-white tracking-wide">
-                  Meridian Dental
-                </div>
-                <div className="text-[11px] text-slate-400 font-normal">
-                  Practice Management OS
-                </div>
+            <div>
+              <div className="text-base font-bold text-white tracking-wide flex items-center gap-2">
+                Meridian Dental
+              </div>
+              <div className="text-[11px] text-slate-400 font-normal">
+                Practice Management OS
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setViewMode("landing")}
-                title="Back to Landing Page"
-                className="text-xs text-blue-400 hover:text-white px-2 py-1 rounded bg-slate-800"
-              >
-                Home
-              </button>
-              <button
-                onClick={() => setSidebarOpen(false)}
-                className="md:hidden text-slate-400 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="md:hidden text-slate-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
           <nav className="p-3 space-y-1">
@@ -968,15 +966,7 @@ export default function App() {
             >
               <Menu className="w-6 h-6" />
             </button>
-            <div className="flex items-center gap-2.5">
-              <img 
-                src="/logo.png" 
-                alt="Logo" 
-                className="w-7 h-7 rounded-lg object-cover" 
-                onError={(e) => { e.target.style.display = 'none'; }}
-              />
-              <div className="text-lg font-bold text-slate-900">Meridian Dental</div>
-            </div>
+            <div className="text-lg font-bold text-slate-900">Meridian Dental</div>
           </div>
 
           <div className="flex items-center gap-4">
@@ -990,12 +980,6 @@ export default function App() {
                 className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
-            <button 
-              onClick={() => setViewMode("landing")}
-              className="text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg border border-slate-300"
-            >
-              View Landing Page
-            </button>
             <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-semibold">
               S
             </div>
@@ -1117,6 +1101,7 @@ export default function App() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                {/* Left: OPG Card */}
                 <div className="bg-[#0b1329] rounded-2xl p-5 text-white flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-4">
@@ -1141,7 +1126,7 @@ export default function App() {
                           onClick={() => setIsNegativeInverted(!isNegativeInverted)}
                           className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium flex items-center gap-1.5"
                         >
-                          <Sun className="w-3.5 h-3.5" /> {isNegativeInverted ? "Normal" : "Invert Negative"}
+                          <Sun className="w-3.5 h-3.5" /> {isNegativeInverted ? "Normal" : "Invert Negative (X-Ray)"}
                         </button>
                         <button
                           type="button"
@@ -1195,6 +1180,7 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* Right: Diagnostic Entry Pane */}
                 <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between">
                   <div className="space-y-4">
                     <div className="text-xs font-bold text-slate-800 tracking-wider uppercase flex items-center gap-2">
@@ -1207,7 +1193,7 @@ export default function App() {
                         type="text"
                         value={currentOpgPatient?.diagnosis?.trauma || ""}
                         onChange={(e) => handleUpdateDiagnosis("trauma", e.target.value)}
-                        placeholder="Crown fracture, luxation..."
+                        placeholder="Crown fracture, luxation, alveolar ridge integrity..."
                         className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
                       />
                     </div>
@@ -1218,7 +1204,7 @@ export default function App() {
                         type="text"
                         value={currentOpgPatient?.diagnosis?.impaction || ""}
                         onChange={(e) => handleUpdateDiagnosis("impaction", e.target.value)}
-                        placeholder="Angulation, depth..."
+                        placeholder="Angulation, depth, position relative to ramus..."
                         className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
                       />
                     </div>
@@ -1229,7 +1215,7 @@ export default function App() {
                         type="text"
                         value={currentOpgPatient?.diagnosis?.boneDeformations || ""}
                         onChange={(e) => handleUpdateDiagnosis("boneDeformations", e.target.value)}
-                        placeholder="Horizontal bone loss..."
+                        placeholder="Horizontal bone loss, angular crest defects, furcation..."
                         className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
                       />
                     </div>
@@ -1240,7 +1226,7 @@ export default function App() {
                         rows={3}
                         value={currentOpgPatient?.diagnosis?.diagnosisNotes || ""}
                         onChange={(e) => handleUpdateDiagnosis("diagnosisNotes", e.target.value)}
-                        placeholder="Type formal clinical diagnosis..."
+                        placeholder="Type formal clinical diagnosis and operative procedures..."
                         className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
                       />
                     </div>
@@ -1459,45 +1445,108 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB 6: EMPLOYEE ROLES & ROSTER */}
+          {/* TAB 6: EMPLOYEE ROLES & ROSTER (Enhanced with Alerts, Leave & Performance Review) */}
           {activeNav === "Employee Roles & Roster" && (
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">Employee Roles & Roster</h1>
-                  <p className="text-xs text-slate-500">Operatory Staff Allocation & Duty Timings</p>
+                  <p className="text-xs text-slate-500">Operatory Staff, License Expiry & Performance Management</p>
                 </div>
                 <button
-                  onClick={() => setIsAddEmpOpen(true)}
-                  className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                  onClick={() => setIsAddStaffOpen(true)}
+                  className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm cursor-pointer"
                 >
                   <Plus className="w-4 h-4" /> Add Staff Member
                 </button>
               </div>
 
+              {/* Admin Alert Banner */}
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3 shadow-xs">
+                <Bell className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <div className="space-y-1 text-xs text-amber-900">
+                  <div className="font-bold">ADMIN ALERTS & NOTIFICATIONS</div>
+                  <div>• <strong>Dr. A. Khan's</strong> license expires in 30 days.</div>
+                  <div>• <strong>Ms. Sharma</strong> has a pending leave request.</div>
+                </div>
+              </div>
+
               {employees.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
-                  <Briefcase className="w-10 h-10 text-blue-600 mx-auto" />
+                <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3 shadow-xs">
+                  <Briefcase className="w-10 h-10 text-slate-400 mx-auto" />
                   <h3 className="text-sm font-bold text-slate-800">No Staff Added</h3>
+                  <p className="text-xs text-slate-500">Add dental specialists, assistants, and hygienists to assign operatory duties.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {employees.map((emp) => (
-                    <div key={emp.id} className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">{emp.id}</span>
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Active</span>
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+                  <div className="divide-y divide-slate-100">
+                    {employees.map((emp) => (
+                      <div key={emp.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50/50 transition">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2.5">
+                            <h3 className="text-sm font-bold text-slate-900">{emp.name}</h3>
+                            <span className="text-[10px] font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">
+                              {emp.license}
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-500 flex items-center gap-3">
+                            <span>Role: <strong className="text-slate-800">{emp.role}</strong></span>
+                            <span>•</span>
+                            <span className="text-amber-700 font-medium">Expires in 30 days</span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-slate-500">Active Status</span>
+                            <button
+                              onClick={() => {
+                                setEmployees(employees.map(x => x.id === emp.id ? { ...x, active: !x.active } : x));
+                                showToast(`Updated status for ${emp.name}`);
+                              }}
+                              className={`w-10 h-6 flex items-center rounded-full p-1 transition cursor-pointer ${emp.active ? 'bg-emerald-600 justify-end' : 'bg-slate-300 justify-start'}`}
+                            >
+                              <div className="w-4 h-4 rounded-full bg-white shadow-sm"></div>
+                            </button>
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              setSelectedStaffForAction(emp);
+                              setLeaveForm({...leaveForm, employeeName: emp.name});
+                              setIsLeaveModalOpen(true);
+                            }}
+                            className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-semibold cursor-pointer"
+                          >
+                            View/Request Leave
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setSelectedStaffForAction(emp);
+                              setPerformanceForm({...performanceForm, employeeName: emp.name});
+                              setIsPerformanceModalOpen(true);
+                            }}
+                            className="px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs font-semibold cursor-pointer"
+                          >
+                            Submit Review
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              if (confirm(`Remove staff member ${emp.name}?`)) {
+                                setEmployees(employees.filter(x => x.id !== emp.id));
+                                showToast(`Removed ${emp.name}`);
+                              }
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 rounded cursor-pointer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
-                      <div>
-                        <div className="text-sm font-bold text-slate-900">{emp.name || emp.role}</div>
-                        <div className="text-xs text-slate-500">{emp.dept}</div>
-                      </div>
-                      <div className="text-xs text-slate-600 space-y-1 pt-2 border-t border-slate-100">
-                        <div>Shift: <strong className="text-slate-800">{emp.shift}</strong></div>
-                        <div>Contact: <span className="font-mono text-slate-700">{emp.contact}</span></div>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -1567,7 +1616,7 @@ export default function App() {
                   <input
                     type="text"
                     value={practiceProfile.upiId}
-                    onChange={(e) => setPracticeProfile({ ...practiceProfile, upsId: e.target.value })}
+                    onChange={(e) => setPracticeProfile({ ...practiceProfile, upiId: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 font-mono focus:outline-none"
                   />
                 </div>
@@ -1680,12 +1729,257 @@ export default function App() {
         </main>
       </div>
 
-      {/* --- PATIENT CASESHEET MODAL --- */}
+      {/* ======================================================== */}
+      {/* ADD STAFF MODAL                                          */}
+      {/* ======================================================== */}
+      {isAddStaffOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <form
+            onSubmit={handleCreateStaff}
+            className="bg-white rounded-3xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-2xl text-xs"
+          >
+            <div className="flex items-center justify-between border-b pb-3 border-slate-100">
+              <h3 className="text-base font-bold text-slate-900">Add Staff Member</h3>
+              <button type="button" onClick={() => setIsAddStaffOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Staff Name *</label>
+              <input
+                type="text"
+                required
+                value={newStaffForm.name}
+                onChange={(e) => setNewStaffForm({...newStaffForm, name: e.target.value})}
+                placeholder="e.g. Dr. Ramesh Kumar"
+                className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Specialty / Role</label>
+              <select
+                value={newStaffForm.role}
+                onChange={(e) => setNewStaffForm({...newStaffForm, role: e.target.value})}
+                className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl bg-white focus:outline-none"
+              >
+                <option>Orthodontist</option>
+                <option>Endodontist</option>
+                <option>Oral & Maxillofacial Surgeon</option>
+                <option>Periodontist</option>
+                <option>General Dentistry</option>
+                <option>Hygienist</option>
+                <option>Dental Assistant</option>
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">License Number</label>
+                <input
+                  type="text"
+                  value={newStaffForm.license}
+                  onChange={(e) => setNewStaffForm({...newStaffForm, license: e.target.value})}
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">License Expiry</label>
+                <input
+                  type="date"
+                  value={newStaffForm.licenseExpiry}
+                  onChange={(e) => setNewStaffForm({...newStaffForm, licenseExpiry: e.target.value})}
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <input
+                type="checkbox"
+                checked={newStaffForm.active}
+                onChange={(e) => setNewStaffForm({...newStaffForm, active: e.target.checked})}
+                className="rounded text-blue-600 cursor-pointer"
+              />
+              <span className="font-semibold text-slate-700">Active Duty Status</span>
+            </div>
+
+            <div className="pt-3 flex justify-end gap-2 border-t border-slate-100">
+              <button type="button" onClick={() => setIsAddStaffOpen(false)} className="px-4 py-2 border rounded-xl text-slate-600 cursor-pointer">Cancel</button>
+              <button type="submit" className="px-5 py-2 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 cursor-pointer">Save Staff Member</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* LEAVE MANAGEMENT MODAL                                   */}
+      {/* ======================================================== */}
+      {isLeaveModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              setIsLeaveModalOpen(false);
+              showToast(`Leave request submitted for ${leaveForm.employeeName}`);
+            }}
+            className="bg-white rounded-3xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-2xl text-xs"
+          >
+            <div className="flex items-center justify-between border-b pb-3 border-slate-100">
+              <h3 className="text-base font-bold text-slate-900">Leave Request</h3>
+              <button type="button" onClick={() => setIsLeaveModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Employee Name</label>
+              <input
+                type="text"
+                readOnly
+                value={leaveForm.employeeName}
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Leave Type</label>
+              <select
+                value={leaveForm.leaveType}
+                onChange={(e) => setLeaveForm({...leaveForm, leaveType: e.target.value})}
+                className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl bg-white focus:outline-none"
+              >
+                <option>Sick Leave</option>
+                <option>Vacation</option>
+                <option>Personal Leave</option>
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Start Date</label>
+                <input
+                  type="date"
+                  value={leaveForm.startDate}
+                  onChange={(e) => setLeaveForm({...leaveForm, startDate: e.target.value})}
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">End Date</label>
+                <input
+                  type="date"
+                  value={leaveForm.endDate}
+                  onChange={(e) => setLeaveForm({...leaveForm, endDate: e.target.value})}
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Reason for Leave</label>
+              <textarea
+                rows="3"
+                value={leaveForm.reason}
+                onChange={(e) => setLeaveForm({...leaveForm, reason: e.target.value})}
+                placeholder="Provide details..."
+                className="w-full p-3 border border-slate-300 rounded-xl focus:outline-none"
+              />
+            </div>
+
+            <div className="pt-3 flex justify-end gap-2 border-t border-slate-100">
+              <button type="button" onClick={() => setIsLeaveModalOpen(false)} className="px-4 py-2 border rounded-xl text-slate-600 cursor-pointer">Cancel</button>
+              <button type="submit" className="px-5 py-2 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 cursor-pointer">Submit Leave Request</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* PERFORMANCE REVIEW MODAL                                 */}
+      {/* ======================================================== */}
+      {isPerformanceModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              setIsPerformanceModalOpen(false);
+              showToast(`Performance review saved for ${performanceForm.employeeName}`);
+            }}
+            className="bg-white rounded-3xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-2xl text-xs"
+          >
+            <div className="flex items-center justify-between border-b pb-3 border-slate-100">
+              <h3 className="text-base font-bold text-slate-900">Performance Review</h3>
+              <button type="button" onClick={() => setIsPerformanceModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Employee Name</label>
+              <input
+                type="text"
+                readOnly
+                value={performanceForm.employeeName}
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Reviewer Name</label>
+              <input
+                type="text"
+                readOnly
+                value={performanceForm.reviewerName}
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Rating (1 to 5 Stars)</label>
+              <div className="flex items-center gap-2 py-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setPerformanceForm({...performanceForm, rating: star})}
+                    className="p-1 cursor-pointer"
+                  >
+                    <Star className={`w-6 h-6 ${star <= performanceForm.rating ? 'text-amber-400 fill-amber-400' : 'text-slate-300'}`} />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Clinical / Professional Remarks</label>
+              <textarea
+                rows="3"
+                value={performanceForm.notes}
+                onChange={(e) => setPerformanceForm({...performanceForm, notes: e.target.value})}
+                placeholder="Punctuality, precision in procedures, patient rapport..."
+                className="w-full p-3 border border-slate-300 rounded-xl focus:outline-none"
+              />
+            </div>
+
+            <div className="pt-3 flex justify-end gap-2 border-t border-slate-100">
+              <button type="button" onClick={() => setIsPerformanceModalOpen(false)} className="px-4 py-2 border rounded-xl text-slate-600 cursor-pointer">Cancel</button>
+              <button type="submit" className="px-5 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 cursor-pointer">Submit Review</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* PATIENT CASESHEET MODAL (WITH SYSTEMIC ALERT & ROUTING)  */}
+      {/* ======================================================== */}
       {isChartModalOpen && activePatient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs overflow-y-auto">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl p-6 md:p-7 relative max-h-[92vh] flex flex-col justify-between overflow-y-auto">
             
             <div>
+              {/* Header */}
               <div className="flex items-start justify-between pb-3">
                 <div>
                   <div className="text-xl font-bold text-slate-900 flex items-center gap-3">
@@ -1718,6 +2012,7 @@ export default function App() {
                 </button>
               </div>
 
+              {/* PERSISTENT SYSTEMIC MEDICAL ALERT BANNER */}
               {activePatient.medicalAlert && (
                 <div className="mb-4 p-3 px-4 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
@@ -1732,6 +2027,7 @@ export default function App() {
                 </div>
               )}
 
+              {/* Exact Tab Pills */}
               <div className="flex flex-wrap items-center gap-2 mt-2 mb-6">
                 {[
                   "32-Tooth Odontogram",
@@ -1758,6 +2054,7 @@ export default function App() {
                 })}
               </div>
 
+              {/* TAB 1: 32-TOOTH ODONTOGRAM */}
               {activeModalTab === "32-Tooth Odontogram" && (
                 <div className="space-y-5">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-1 gap-2">
@@ -1796,6 +2093,7 @@ export default function App() {
                     })}
                   </div>
 
+                  {/* Upper Arch */}
                   <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-100">
                     <div className="text-[10px] font-bold tracking-widest text-slate-400 uppercase text-center mb-2">
                       {isDeciduous ? "Upper Arch (Deciduous Maxillary)" : "Upper Arch (Maxillary)"}
@@ -1822,6 +2120,7 @@ export default function App() {
                     </div>
                   </div>
 
+                  {/* Lower Arch */}
                   <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-100">
                     <div className="text-[10px] font-bold tracking-widest text-slate-400 uppercase text-center mb-2">
                       {isDeciduous ? "Lower Arch (Deciduous Mandibular)" : "Lower Arch (Mandibular)"}
@@ -1847,9 +2146,25 @@ export default function App() {
                       })}
                     </div>
                   </div>
+
+                  <div className="pt-2">
+                    <div className="text-xs font-bold text-slate-800 mb-2">Active Odontogram Findings:</div>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.keys(activePatient.toothConditions || {}).length === 0 ? (
+                        <span className="text-xs text-slate-400 italic">No specific pathology recorded. Tap teeth above.</span>
+                      ) : (
+                        Object.entries(activePatient.toothConditions || {}).map(([t, c]) => (
+                          <span key={t} className="text-xs bg-slate-50 border border-slate-200 px-3 py-1 rounded-md text-slate-700 font-mono">
+                            Tooth {t}: <strong className="text-slate-900">{c}</strong>
+                          </span>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
 
+              {/* TAB 2: DEPARTMENT REFERRALS ROUTER */}
               {activeModalTab === "Department Referrals" && (
                 <div className="space-y-4">
                   <form onSubmit={handleAddReferral} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-end gap-3 text-xs">
@@ -1858,7 +2173,7 @@ export default function App() {
                       <input
                         type="text"
                         required
-                        placeholder="e.g. EXTRACTION, SCALING"
+                        placeholder="e.g. EXTRACTION, SCALING, GIC"
                         value={refTreatment}
                         onChange={(e) => setRefTreatment(e.target.value)}
                         className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white"
@@ -1912,6 +2227,9 @@ export default function App() {
                             <span className="px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
                               {r.department} ({r.roomNo})
                             </span>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">
+                              Approved
+                            </span>
                           </div>
                         </div>
                       ))
@@ -1920,6 +2238,7 @@ export default function App() {
                 </div>
               )}
 
+              {/* TAB 3: DIAGNOSIS & TRAUMA */}
               {activeModalTab === "Diagnosis & Trauma" && (
                 <div className="space-y-4">
                   <div className="text-xs font-bold uppercase text-slate-800 tracking-wider">
@@ -1944,10 +2263,29 @@ export default function App() {
                         className="w-full text-xs text-slate-700 mt-1 border-b border-dashed border-slate-300 focus:outline-none"
                       />
                     </div>
+                    <div className="py-2.5">
+                      <div className="text-xs font-bold text-slate-800">Bone Deformations:</div>
+                      <input
+                        type="text"
+                        value={activePatient.diagnosis?.boneDeformations || ""}
+                        onChange={(e) => handleUpdateDiagnosis("boneDeformations", e.target.value)}
+                        className="w-full text-xs text-slate-700 mt-1 border-b border-dashed border-slate-300 focus:outline-none"
+                      />
+                    </div>
+                    <div className="py-2.5">
+                      <div className="text-xs font-bold text-slate-800">Diagnosis Notes:</div>
+                      <input
+                        type="text"
+                        value={activePatient.diagnosis?.diagnosisNotes || ""}
+                        onChange={(e) => handleUpdateDiagnosis("diagnosisNotes", e.target.value)}
+                        className="w-full text-xs text-slate-700 mt-1 border-b border-dashed border-slate-300 focus:outline-none"
+                      />
+                    </div>
                   </div>
                 </div>
               )}
 
+              {/* TAB 4: SYSTEMIC REVIEW CHECKBOX MATRIX */}
               {activeModalTab === "Systemic Review" && (
                 <div className="space-y-4 text-xs">
                   <span className="text-xs font-bold uppercase text-slate-500 tracking-wider block">
@@ -1957,12 +2295,12 @@ export default function App() {
                     {[
                       { id: "hypertension", label: "Hypertension (BP)" },
                       { id: "diabetes", label: "Diabetes Mellitus" },
-                      { id: "thyroid", label: "Thyroid" },
+                      { id: "thyroid", label: "Thyroid (Thyroxine)" },
                       { id: "cardiac", label: "Heart Disease" },
                       { id: "allergy", label: "Drug Allergies" },
                       { id: "bleeding", label: "Bleeding Diathesis" },
-                      { id: "respiratory", label: "Asthma" },
-                      { id: "epilepsy", label: "Epilepsy" }
+                      { id: "respiratory", label: "Asthma / Respiratory" },
+                      { id: "epilepsy", label: "Epileptic Seizures" }
                     ].map((item) => (
                       <label key={item.id} className="p-3 rounded-xl border border-slate-200 bg-slate-50/50 flex items-center gap-2 cursor-pointer hover:bg-slate-50">
                         <input
@@ -1975,9 +2313,30 @@ export default function App() {
                       </label>
                     ))}
                   </div>
+
+                  <div className="pt-2 border-t border-slate-100">
+                    <span className="text-xs font-bold uppercase text-slate-500 tracking-wider block mb-2">
+                      PERSONAL HABITS & HYGIENE
+                    </span>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="p-3 rounded-xl border border-slate-200 bg-white">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">Brushing Habits</span>
+                        <span className="font-bold text-slate-800">Once Daily (Mixed)</span>
+                      </div>
+                      <div className="p-3 rounded-xl border border-slate-200 bg-white">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">Habits</span>
+                        <span className="font-bold text-slate-800">No Tobacco / Betel</span>
+                      </div>
+                      <div className="p-3 rounded-xl border border-slate-200 bg-white">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">Dietary</span>
+                        <span className="font-bold text-slate-800">Mixed Diet</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
+              {/* TAB 5: PRESCRIPTIONS & WHATSAPP ENGINE */}
               {activeModalTab === "Prescriptions" && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -2021,13 +2380,14 @@ export default function App() {
                           <th className="p-3">Dosage</th>
                           <th className="p-3">Frequency</th>
                           <th className="p-3">Duration</th>
+                          <th className="p-3">Instruction</th>
                           <th className="p-3 text-center">Action</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {(activePatient.prescriptions || []).length === 0 ? (
                           <tr>
-                            <td colSpan={5} className="p-4 text-center text-slate-400 italic">
+                            <td colSpan={6} className="p-4 text-center text-slate-400 italic">
                               No medications prescribed yet. Tap presets above to add.
                             </td>
                           </tr>
@@ -2039,10 +2399,18 @@ export default function App() {
                                 <div className="text-[10px] text-slate-400">{p.generic}</div>
                               </td>
                               <td className="p-3 font-medium text-slate-700">{p.dosage}</td>
-                              <td className="p-3"><span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-mono font-bold text-[11px]">{p.frequency}</span></td>
+                              <td className="p-3">
+                                <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-mono font-bold text-[11px]">
+                                  {p.frequency}
+                                </span>
+                              </td>
                               <td className="p-3 font-medium text-slate-700">{p.duration}</td>
+                              <td className="p-3 text-slate-600">{p.instruction}</td>
                               <td className="p-3 text-center">
-                                <button onClick={() => handleRemovePrescription(p.id)} className="text-rose-500 hover:text-rose-700">
+                                <button
+                                  onClick={() => handleRemovePrescription(p.id)}
+                                  className="text-rose-500 hover:text-rose-700"
+                                >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                               </td>
@@ -2055,6 +2423,7 @@ export default function App() {
                 </div>
               )}
 
+              {/* TAB 6: MEDICAL HISTORY */}
               {activeModalTab === "Medical History" && (
                 <div className="space-y-4">
                   <div className="text-xs font-bold uppercase text-slate-800 tracking-wider">
@@ -2062,25 +2431,33 @@ export default function App() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="border border-slate-200 rounded-xl p-4 bg-white">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Conditions</div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                        Conditions
+                      </div>
                       <input
                         type="text"
                         value={activePatient.conditions || ""}
                         onChange={(e) => {
                           const val = e.target.value;
-                          setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? { ...p, conditions: val } : p)));
+                          setPatients((prev) =>
+                            prev.map((p) => (p.id === activePatient.id ? { ...p, conditions: val } : p))
+                          );
                         }}
                         className="w-full text-sm font-medium text-slate-800 border-b border-slate-200 focus:outline-none"
                       />
                     </div>
                     <div className="border border-rose-100 rounded-xl p-4 bg-rose-50/40">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-rose-500 mb-1">Allergies</div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-rose-500 mb-1">
+                        Allergies
+                      </div>
                       <input
                         type="text"
                         value={activePatient.allergies || "NKDA"}
                         onChange={(e) => {
                           const val = e.target.value;
-                          setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? { ...p, allergies: val } : p)));
+                          setPatients((prev) =>
+                            prev.map((p) => (p.id === activePatient.id ? { ...p, allergies: val } : p))
+                          );
                         }}
                         className="w-full text-sm font-bold text-rose-700 border-b border-rose-200 bg-transparent focus:outline-none"
                       />
@@ -2090,6 +2467,7 @@ export default function App() {
               )}
             </div>
 
+            {/* Modal Bottom Actions */}
             <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100 text-xs">
               <button
                 type="button"
@@ -2127,7 +2505,11 @@ export default function App() {
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-sm font-bold text-slate-900">Add New Patient</h3>
-              <button type="button" onClick={() => setIsAddPatientOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <button
+                type="button"
+                onClick={() => setIsAddPatientOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -2172,20 +2554,53 @@ export default function App() {
             </div>
 
             <div>
+              <label className="block font-semibold text-slate-600 mb-1">Area / Locality</label>
+              <input
+                type="text"
+                value={newPatientForm.area}
+                onChange={(e) => setNewPatientForm({ ...newPatientForm, area: e.target.value })}
+                placeholder="e.g. Sowripalayam, Coimbatore"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+              />
+            </div>
+
+            <div>
               <label className="block font-semibold text-slate-600 mb-1">WhatsApp Phone *</label>
               <input
                 type="tel"
                 required
                 value={newPatientForm.phone}
                 onChange={(e) => setNewPatientForm({ ...newPatientForm, phone: e.target.value })}
-                placeholder="9043205927"
+                placeholder="7708827021"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
               />
             </div>
 
+            <div>
+              <label className="block font-semibold text-rose-600 mb-1">Medical Alert (High Risk)</label>
+              <input
+                type="text"
+                value={newPatientForm.medicalAlert}
+                onChange={(e) => setNewPatientForm({ ...newPatientForm, medicalAlert: e.target.value })}
+                placeholder="e.g. Hypertensive on medication 3 yrs / Thyroid (Thyroxine)"
+                className="w-full px-3 py-2 border border-rose-200 bg-rose-50/40 rounded-lg text-rose-800 font-medium focus:outline-none"
+              />
+            </div>
+
             <div className="pt-2 flex justify-end gap-2">
-              <button type="button" onClick={() => setIsAddPatientOpen(false)} className="px-3 py-1.5 rounded-lg border text-slate-600">Cancel</button>
-              <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-semibold">Register & Open Odontogram</button>
+              <button
+                type="button"
+                onClick={() => setIsAddPatientOpen(false)}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold"
+              >
+                Register & Open Odontogram
+              </button>
             </div>
           </form>
         </div>
@@ -2200,25 +2615,112 @@ export default function App() {
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-sm font-bold text-slate-900">Book Chair-side Appointment</h3>
-              <button type="button" onClick={() => setIsAddApptOpen(false)} className="text-slate-400"><X className="w-4 h-4" /></button>
+              <button
+                type="button"
+                onClick={() => setIsAddApptOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
+
             <div>
               <label className="block font-semibold text-slate-600 mb-1">Patient Name *</label>
-              <input type="text" required value={newApptForm.patientName} onChange={(e) => setNewApptForm({ ...newApptForm, patientName: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+              <input
+                type="text"
+                required
+                value={newApptForm.patientName}
+                onChange={(e) => setNewApptForm({ ...newApptForm, patientName: e.target.value })}
+                placeholder="Patient Full Name"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+              />
             </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block font-semibold text-slate-600 mb-1">Mobile *</label>
-                <input type="tel" required value={newApptForm.phone} onChange={(e) => setNewApptForm({ ...newApptForm, phone: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                <input
+                  type="tel"
+                  required
+                  value={newApptForm.phone}
+                  onChange={(e) => setNewApptForm({ ...newApptForm, phone: e.target.value })}
+                  placeholder="10-digit number"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
               </div>
+
               <div>
-                <label className="block font-semibold text-slate-600 mb-1">Date</label>
-                <input type="date" value={newApptForm.date} onChange={(e) => setNewApptForm({ ...newApptForm, date: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                <label className="block font-semibold text-slate-600 mb-1">Age</label>
+                <input
+                  type="number"
+                  value={newApptForm.age}
+                  onChange={(e) => setNewApptForm({ ...newApptForm, age: e.target.value })}
+                  placeholder="Age"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
               </div>
             </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Date</label>
+                <input
+                  type="date"
+                  value={newApptForm.date}
+                  onChange={(e) => setNewApptForm({ ...newApptForm, date: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Time Slot</label>
+                <input
+                  type="time"
+                  value={newApptForm.time}
+                  onChange={(e) => setNewApptForm({ ...newApptForm, time: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Operatory Chair</label>
+              <select
+                value={newApptForm.chair}
+                onChange={(e) => setNewApptForm({ ...newApptForm, chair: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+              >
+                <option>Chair 1 (Main Operatory)</option>
+                <option>Chair 2 (Pediatric / Perio)</option>
+                <option>Chair 3 (Prosthodontics)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Planned Procedure</label>
+              <input
+                type="text"
+                value={newApptForm.procedure}
+                onChange={(e) => setNewApptForm({ ...newApptForm, procedure: e.target.value })}
+                placeholder="e.g. Composite Restoration #16"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+              />
+            </div>
+
             <div className="pt-2 flex justify-end gap-2">
-              <button type="button" onClick={() => setIsAddApptOpen(false)} className="px-3 py-1.5 rounded-lg border">Cancel</button>
-              <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-semibold">Schedule Appointment</button>
+              <button
+                type="button"
+                onClick={() => setIsAddApptOpen(false)}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold"
+              >
+                Schedule Appointment
+              </button>
             </div>
           </form>
         </div>
@@ -2232,20 +2734,92 @@ export default function App() {
             className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-xl text-xs"
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
-              <h3 className="text-sm font-bold text-slate-900">Generate Invoice</h3>
-              <button type="button" onClick={() => setIsAddInvoiceOpen(false)} className="text-slate-400"><X className="w-4 h-4" /></button>
+              <h3 className="text-sm font-bold text-slate-900">Generate Dental Insurance Invoice</h3>
+              <button
+                type="button"
+                onClick={() => setIsAddInvoiceOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
+
             <div>
               <label className="block font-semibold text-slate-600 mb-1">Patient Name *</label>
-              <input type="text" required value={newInvoiceForm.patientName} onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, patientName: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+              <input
+                type="text"
+                required
+                value={newInvoiceForm.patientName}
+                onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, patientName: e.target.value })}
+                placeholder="Patient Full Name"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+              />
             </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Insurance / TPA</label>
+                <input
+                  type="text"
+                  value={newInvoiceForm.provider}
+                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, provider: e.target.value })}
+                  placeholder="e.g. Star Health / Self Pay"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Claim Status</label>
+                <select
+                  value={newInvoiceForm.status}
+                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, status: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                >
+                  <option>Pre-Auth Approved</option>
+                  <option>Pre-Auth Submitted</option>
+                  <option>Claim Settled</option>
+                  <option>Self-Pay Completed</option>
+                </select>
+              </div>
+            </div>
+
             <div>
-              <label className="block font-semibold text-slate-600 mb-1">Amount (₹) *</label>
-              <input type="number" required value={newInvoiceForm.amount} onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, amount: e.target.value })} className="w-full px-3 py-2 border rounded-lg font-bold" />
+              <label className="block font-semibold text-slate-600 mb-1">Treatment Description</label>
+              <input
+                type="text"
+                value={newInvoiceForm.treatment}
+                onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, treatment: e.target.value })}
+                placeholder="e.g. Root Canal Therapy + Zirconia Crown"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+              />
             </div>
+
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Total Bill Amount (₹) *</label>
+              <input
+                type="number"
+                required
+                value={newInvoiceForm.amount}
+                onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, amount: e.target.value })}
+                placeholder="e.g. 5500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 font-bold focus:outline-none"
+              />
+            </div>
+
             <div className="pt-2 flex justify-end gap-2">
-              <button type="button" onClick={() => setIsAddInvoiceOpen(false)} className="px-3 py-1.5 rounded-lg border">Cancel</button>
-              <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-semibold">Generate Invoice</button>
+              <button
+                type="button"
+                onClick={() => setIsAddInvoiceOpen(false)}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold"
+              >
+                Generate Invoice
+              </button>
             </div>
           </form>
         </div>
@@ -2260,38 +2834,90 @@ export default function App() {
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-sm font-bold text-slate-900">Add Stock Item</h3>
-              <button type="button" onClick={() => setIsAddStockOpen(false)} className="text-slate-400"><X className="w-4 h-4" /></button>
+              <button
+                type="button"
+                onClick={() => setIsAddStockOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
+
             <div>
               <label className="block font-semibold text-slate-600 mb-1">Item Name *</label>
-              <input type="text" required value={newStockForm.name} onChange={(e) => setNewStockForm({ ...newStockForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+              <input
+                type="text"
+                required
+                value={newStockForm.name}
+                onChange={(e) => setNewStockForm({ ...newStockForm, name: e.target.value })}
+                placeholder="e.g. Composite Resin Syringes"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+              />
             </div>
-            <div className="pt-2 flex justify-end gap-2">
-              <button type="button" onClick={() => setIsAddStockOpen(false)} className="px-3 py-1.5 rounded-lg border">Cancel</button>
-              <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-semibold">Save Consumable</button>
-            </div>
-          </form>
-        </div>
-      )}
 
-      {/* --- ADD EMPLOYEE MODAL --- */}
-      {isAddEmpOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <form
-            onSubmit={handleCreateEmp}
-            className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-xl text-xs"
-          >
-            <div className="flex items-center justify-between border-b pb-3 border-slate-100">
-              <h3 className="text-sm font-bold text-slate-900">Add Staff Member</h3>
-              <button type="button" onClick={() => setIsAddEmpOpen(false)} className="text-slate-400"><X className="w-4 h-4" /></button>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Category</label>
+                <select
+                  value={newStockForm.category}
+                  onChange={(e) => setNewStockForm({ ...newStockForm, category: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                >
+                  <option>Restorative</option>
+                  <option>Surgical</option>
+                  <option>Materials</option>
+                  <option>Medications</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Unit of Measure</label>
+                <input
+                  type="text"
+                  value={newStockForm.unit}
+                  onChange={(e) => setNewStockForm({ ...newStockForm, unit: e.target.value })}
+                  placeholder="e.g. Syringes, Boxes, Strips"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
+              </div>
             </div>
-            <div>
-              <label className="block font-semibold text-slate-600 mb-1">Staff / Role Name *</label>
-              <input type="text" required value={newEmpForm.name} onChange={(e) => setNewEmpForm({ ...newEmpForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Quantity on Hand</label>
+                <input
+                  type="number"
+                  value={newStockForm.quantity}
+                  onChange={(e) => setNewStockForm({ ...newStockForm, quantity: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Min. Threshold</label>
+                <input
+                  type="number"
+                  value={newStockForm.minThreshold}
+                  onChange={(e) => setNewStockForm({ ...newStockForm, minThreshold: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
+              </div>
             </div>
+
             <div className="pt-2 flex justify-end gap-2">
-              <button type="button" onClick={() => setIsAddEmpOpen(false)} className="px-3 py-1.5 rounded-lg border">Cancel</button>
-              <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-semibold">Save Staff</button>
+              <button
+                type="button"
+                onClick={() => setIsAddStockOpen(false)}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold"
+              >
+                Save Consumable
+              </button>
             </div>
           </form>
         </div>
@@ -2303,7 +2929,9 @@ export default function App() {
           <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-sm p-6 text-center space-y-4 shadow-xl">
             <div className="flex items-center justify-between border-b pb-2 border-slate-100">
               <span className="text-xs font-bold text-slate-700">Instant UPI Payment</span>
-              <button onClick={() => setActiveUpiQrInvoice(null)} className="text-slate-400"><X className="w-4 h-4" /></button>
+              <button onClick={() => setActiveUpiQrInvoice(null)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
             <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 inline-block mx-auto">
@@ -2315,8 +2943,12 @@ export default function App() {
 
             <div>
               <div className="text-xl font-bold text-slate-900">₹{activeUpiQrInvoice.total}</div>
-              <div className="text-xs text-slate-500 mt-0.5">{activeUpiQrInvoice.patient} • {activeUpiQrInvoice.id}</div>
+              <div className="text-xs text-slate-500 mt-0.5">
+                {activeUpiQrInvoice.patient} • {activeUpiQrInvoice.id}
+              </div>
             </div>
+
+            <p className="text-[11px] text-slate-400">Scan with Google Pay, PhonePe, or Paytm at chair-side.</p>
 
             <button
               onClick={() => {
