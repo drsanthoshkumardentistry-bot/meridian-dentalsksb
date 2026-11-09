@@ -4,57 +4,74 @@
  * ============================================================================== */
 
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { 
-  getAuth, 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  signOut 
-} from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
+import {
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager
+} from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
+const env = import.meta.env;
+
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyFakeKeyPlaceholder",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "meridian-dental-os.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "meridian-dental-os",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "meridian-dental-os.appspot.com",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "1234567890",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:1234567890:web:abcdef"
+  apiKey: env.VITE_FIREBASE_API_KEY,
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: env.VITE_FIREBASE_APP_ID
 };
 
-// Singleton initialization to prevent hot-reload duplicates
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+// The app only talks to Firebase when the real project keys are present.
+// Without them the UI shows a clear "not configured" message instead of failing silently.
+export const firebaseConfigured = Boolean(
+  firebaseConfig.apiKey &&
+    firebaseConfig.authDomain &&
+    firebaseConfig.projectId &&
+    firebaseConfig.appId
+);
 
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+let app = null;
+let authInstance = null;
+let dbInstance = null;
+let storageInstance = null;
+let googleProvider = null;
 
-// Configure Google Provider with account selection prompt
-const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({
-  prompt: "select_account" // Forces Google to show the account picker every time
-});
+if (firebaseConfigured) {
+  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  authInstance = getAuth(app);
+
+  // Offline-first: reads and writes keep working without internet and sync later.
+  try {
+    dbInstance = initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+    });
+  } catch (error) {
+    // Already initialized (hot reload) or unsupported browser: fall back to the default instance.
+    dbInstance = getFirestore(app);
+  }
+
+  storageInstance = getStorage(app);
+
+  googleProvider = new GoogleAuthProvider();
+  googleProvider.setCustomParameters({ prompt: "select_account" });
+}
+
+export const auth = authInstance;
+export const db = dbInstance;
+export const storage = storageInstance;
 
 export const loginWithGoogle = async () => {
-  try {
-    const result = await signInWithPopup(auth, googleProvider);
-    return result.user;
-  } catch (error) {
-    console.error("Google login failed:", error);
-    throw error;
+  if (!authInstance || !googleProvider) {
+    throw new Error("Firebase is not configured. Add the VITE_FIREBASE_* environment variables.");
   }
+  const result = await signInWithPopup(authInstance, googleProvider);
+  return result.user;
 };
 
 export const logoutUser = async () => {
-  try {
-    await signOut(auth);
-  } catch (error) {
-    console.error("Sign-out failed:", error);
-    throw error;
-  }
+  if (!authInstance) return;
+  await signOut(authInstance);
 };
-
-// Required configuration safety flag
-export const firebaseConfigured = true;
-
-export default app;

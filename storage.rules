@@ -1,9 +1,9 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    match /clinics/{clinicId}/patients/{patientId}/radiographs/{fileName} {
-      // Allows upload and viewing of images
-      allow read, write: if true;
+    // Radiographs and files: only the owning account may read or write
+    match /clinics/{clinicId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == clinicId;
     }
   }
 }

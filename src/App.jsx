@@ -53,16 +53,8 @@ import {
 // Safe dynamic import from ./firebase
 import * as FirebaseModule from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import {
-  collection,
-  doc,
-  setDoc,
-  getDocs,
-  onSnapshot,
-  serverTimestamp,
-  addDoc,
-  deleteDoc
-} from "firebase/firestore";
+import { collection, doc, setDoc, onSnapshot, deleteDoc } from "firebase/firestore";
+import LandingPage from "./components/landingpage";
 
 const auth = FirebaseModule.auth;
 const db = FirebaseModule.db;
@@ -119,11 +111,321 @@ const PRESET_MEDICATIONS = [
   { name: "Kenacort 0.1%", generic: "Triamcinolone Acetonide 0.1% Oral Paste", frequency: "0-0-1", duration: "5 Days", timing: "Apply thinly at bedtime over ulcer" },
 ];
 
+// ---------------------------------------------------------------------------
+// Cloud sync helpers: every record is stored under clinics/{uid}/..., one
+// Firestore document per record, with offline support and safe IDs.
+// ---------------------------------------------------------------------------
+const newId = (prefix) =>
+  `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
+
+const byIdDesc = (a, b) => String(b.id).localeCompare(String(a.id));
+
+const stableStringify = (value) =>
+  JSON.stringify(value, (key, val) =>
+    val && typeof val === "object" && !Array.isArray(val)
+      ? Object.keys(val)
+          .sort()
+          .reduce((acc, k) => {
+            acc[k] = val[k];
+            return acc;
+          }, {})
+      : val
+  );
+
+const cleanForCloud = (value) => JSON.parse(JSON.stringify(value));
+
+const SYNC_FAILED = "__sync_failed__";
+const SYNC_DELETING = "__sync_deleting__";
+
+function useCloudCollection({ clinicId, ready, name, items, setItems, sortFn, onError }) {
+  const synced = useRef(new Map());
+  const itemsRef = useRef(items);
+  const [loaded, setLoaded] = useState(false);
+  const [retryTick, setRetryTick] = useState(0);
+
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+
+  // Listen to this clinic's collection
+  useEffect(() => {
+    synced.current = new Map();
+    setLoaded(false);
+    if (!db || !clinicId || !ready) return undefined;
+
+    let first = true;
+    const unsubscribe = onSnapshot(
+      collection(db, "clinics", clinicId, name),
+      (snapshot) => {
+        const remote = new Map();
+        snapshot.docs.forEach((d) => {
+          const data = d.data();
+          const id = String(data.id ?? d.id);
+          remote.set(id, { ...data, id: data.id ?? d.id });
+        });
+
+        const local = itemsRef.current;
+        const localById = new Map(local.map((it) => [String(it.id), it]));
+        const next = [];
+
+        remote.forEach((remoteItem, id) => {
+          const known = synced.current.get(id);
+          const localItem = localById.get(id);
+          if (localItem === undefined && known !== undefined) {
+            // Deleted on this device and the delete is still in flight: do not bring it back
+            return;
+          }
+          if (
+            localItem !== undefined &&
+            known !== undefined &&
+            stableStringify(cleanForCloud(localItem)) !== known
+          ) {
+            // Unsaved local edits: keep them
+            next.push(localItem);
+            return;
+          }
+          synced.current.set(id, stableStringify(remoteItem));
+          next.push(remoteItem);
+        });
+
+        local.forEach((localItem) => {
+          const id = String(localItem.id);
+          if (remote.has(id)) return;
+          // Keep items that were never uploaded yet; drop items deleted on another device
+          if (first || !synced.current.has(id)) next.push(localItem);
+        });
+
+        first = false;
+        setItems(sortFn ? [...next].sort(sortFn) : next);
+        setLoaded(true);
+      },
+      (error) => {
+        if (onError) onError(error);
+      }
+    );
+    return () => unsubscribe();
+  }, [clinicId, ready, name]);
+
+  // Save changes (debounced) and propagate deletions
+  useEffect(() => {
+    if (!db || !clinicId || !ready || !loaded) return undefined;
+
+    const timer = setTimeout(() => {
+      const currentIds = new Set();
+
+      items.forEach((item) => {
+        if (item === null || item === undefined || item.id === null || item.id === undefined) return;
+        const id = String(item.id);
+        currentIds.add(id);
+        const clean = cleanForCloud(item);
+        const json = stableStringify(clean);
+        if (synced.current.get(id) === json) return;
+        synced.current.set(id, json);
+        setDoc(doc(db, "clinics", clinicId, name, id), clean).catch((error) => {
+          synced.current.set(id, SYNC_FAILED);
+          if (onError) onError(error);
+          setTimeout(() => setRetryTick((t) => t + 1), 10000);
+        });
+      });
+
+      Array.from(synced.current.entries()).forEach(([id, value]) => {
+        if (currentIds.has(id) || value === SYNC_DELETING) return;
+        synced.current.set(id, SYNC_DELETING);
+        deleteDoc(doc(db, "clinics", clinicId, name, id))
+          .then(() => synced.current.delete(id))
+          .catch((error) => {
+            synced.current.delete(id);
+            if (onError) onError(error);
+          });
+      });
+    }, 700);
+
+    return () => clearTimeout(timer);
+  }, [items, loaded, retryTick, clinicId, ready, name]);
+}
+
+function useCloudDoc({ clinicId, ready, name, value, setValue, onError }) {
+  const syncedJson = useRef(null);
+  const valueRef = useRef(value);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
+
+  useEffect(() => {
+    syncedJson.current = null;
+    setLoaded(false);
+    if (!db || !clinicId || !ready) return undefined;
+
+    const unsubscribe = onSnapshot(
+      doc(db, "clinics", clinicId, "store", name),
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const remote = snapshot.data();
+          const remoteJson = stableStringify(remote);
+          const dirty =
+            syncedJson.current !== null &&
+            stableStringify(cleanForCloud(valueRef.current)) !== syncedJson.current;
+          if (!dirty && remoteJson !== syncedJson.current) {
+            syncedJson.current = remoteJson;
+            setValue(remote);
+          }
+        }
+        setLoaded(true);
+      },
+      (error) => {
+        if (onError) onError(error);
+      }
+    );
+    return () => unsubscribe();
+  }, [clinicId, ready, name]);
+
+  useEffect(() => {
+    if (!db || !clinicId || !ready || !loaded) return undefined;
+    const clean = cleanForCloud(value);
+    const json = stableStringify(clean);
+    if (json === syncedJson.current) return undefined;
+    const timer = setTimeout(() => {
+      syncedJson.current = json;
+      setDoc(doc(db, "clinics", clinicId, "store", name), clean).catch((error) => {
+        syncedJson.current = SYNC_FAILED;
+        if (onError) onError(error);
+      });
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [value, loaded, clinicId, ready, name]);
+}
+
+// ---------------------------------------------------------------------------
+// Data entry helpers: required demographics, validation and shared form pieces
+// ---------------------------------------------------------------------------
+const INDIAN_STATES = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana",
+  "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
+  "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana",
+  "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands", "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry",
+];
+const BLOOD_GROUPS = ["Unknown", "A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
+const LANGUAGES = ["English", "Tamil", "Hindi", "Telugu", "Malayalam", "Kannada"];
+const REFERRAL_SOURCES = ["Walk-in", "Doctor referral", "Friend / family", "Google / website", "Social media", "Camp / school", "Other"];
+const GUARDIAN_RELATIONS = ["Mother", "Father", "Guardian", "Other"];
+const TOBACCO_OPTIONS = ["Not recorded", "None", "Smoking", "Smokeless tobacco", "Betel quid / areca nut", "More than one"];
+const ALCOHOL_OPTIONS = ["Not recorded", "None", "Occasional", "Regular"];
+const BRUSHING_OPTIONS = ["Not recorded", "Not daily", "Once daily", "Twice daily", "More than twice"];
+const DIET_OPTIONS = ["Not recorded", "Vegetarian", "Mixed", "Eggetarian", "Vegan"];
+const PAYMENT_MODES = ["Cash", "UPI", "Card", "Net banking", "Insurance / TPA"];
+const VISIT_TYPES = ["New patient", "Follow-up", "Review", "Emergency"];
+const COUNCIL_NAMES = ["Dental Council of India", "Tamil Nadu Dental Council", "Karnataka State Dental Council", "Kerala State Dental Council", "Andhra Pradesh State Dental Council", "Telangana State Dental Council", "Maharashtra State Dental Council", "Other State Dental Council"];
+
+const digitsOnly = (value) => String(value || "").replace(/\D/g, "");
+const normalizePhone = (value) => {
+  const d = digitsOnly(value);
+  return d.length === 12 && d.startsWith("91") ? d.slice(2) : d;
+};
+const isValidMobile = (value) => /^[6-9]\d{9}$/.test(normalizePhone(value));
+const isValidPincode = (value) => /^[1-9]\d{5}$/.test(String(value || "").trim());
+const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(value || "").trim());
+const isValidGstin = (value) => /^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(String(value || "").trim().toUpperCase());
+const isValidAbha = (value) => digitsOnly(value).length === 14;
+
+const ageFromDob = (dob) => {
+  if (!dob) return "";
+  const birth = new Date(dob);
+  if (Number.isNaN(birth.getTime())) return "";
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const beforeBirthday =
+    now.getMonth() < birth.getMonth() || (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate());
+  if (beforeBirthday) age -= 1;
+  return age >= 0 && age <= 120 ? String(age) : "";
+};
+
+const patientLocation = (p) => [p.area, p.city].filter(Boolean).join(", ");
+
+const licenseStatus = (expiry) => {
+  if (!expiry) return { label: "Expiry not set", tone: "text-slate-500" };
+  const end = new Date(expiry);
+  if (Number.isNaN(end.getTime())) return { label: "Expiry not set", tone: "text-slate-500" };
+  const days = Math.ceil((end.getTime() - Date.now()) / 86400000);
+  if (days < 0) return { label: `Expired ${Math.abs(days)} days ago`, tone: "text-rose-700 font-semibold" };
+  if (days <= 60) return { label: `Expires in ${days} days`, tone: "text-amber-700 font-medium" };
+  return { label: `Valid until ${end.toLocaleDateString("en-IN")}`, tone: "text-emerald-700" };
+};
+
+const EMPTY_PATIENT_FORM = {
+  name: "", phone: "", dob: "", age: "", gender: "",
+  area: "", city: "", pincode: "", email: "",
+  guardianName: "", guardianRelation: "Mother", guardianPhone: "",
+  bloodGroup: "Unknown", occupation: "", language: "English", referredBy: "Walk-in",
+  emergencyName: "", emergencyPhone: "", abhaNumber: "",
+  pregnancy: "Not applicable", chiefComplaint: "",
+  conditions: "None reported", allergies: "NKDA", medicalAlert: "",
+  consentTreatment: false, consentWhatsapp: true,
+};
+
+// Returns the first problem found, or an empty string when the form is valid
+const validatePatientForm = (f) => {
+  if (!f.name.trim()) return "Full name is required";
+  if (!isValidMobile(f.phone)) return "Enter a valid 10-digit Indian mobile number";
+  const age = Number(f.age);
+  if (f.age === "" || Number.isNaN(age) || age < 0 || age > 120) return "Enter a valid age (0 to 120)";
+  if (!f.gender) return "Please select a gender";
+  if (f.pincode && !isValidPincode(f.pincode)) return "Pincode must be 6 digits";
+  if (f.email && !isValidEmail(f.email)) return "Enter a valid email address";
+  if (age < 18 && !f.guardianName.trim()) return "Guardian name is required for patients under 18";
+  if (f.guardianPhone && !isValidMobile(f.guardianPhone)) return "Guardian phone must be a valid 10-digit mobile number";
+  if (f.emergencyPhone && !isValidMobile(f.emergencyPhone)) return "Emergency contact phone must be a valid 10-digit mobile number";
+  if (f.abhaNumber && !isValidAbha(f.abhaNumber)) return "ABHA number must have 14 digits";
+  if (!f.consentTreatment) return "Consent for examination, treatment and record keeping is required";
+  return "";
+};
+
+const fieldInputClass = "w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500 bg-white";
+
+function Field({ label, required, hint, className = "", children }) {
+  return (
+    <div className={className}>
+      <label className="block font-semibold text-slate-600 mb-1">
+        {label}
+        {required ? " *" : ""}
+      </label>
+      {children}
+      {hint ? <p className="text-[10px] text-slate-400 mt-1">{hint}</p> : null}
+    </div>
+  );
+}
+
+function SectionTitle({ children }) {
+  return <div className="text-[10px] font-bold uppercase tracking-wider text-blue-700 pt-1">{children}</div>;
+}
+
+const DEFAULT_EMPLOYEES = [];
+const DEFAULT_PROFILE = {
+  name: "My Dental Clinic",
+  tagline: "",
+  regNumber: "",
+  drName: "",
+  qualification: "",
+  phone: "",
+  email: "",
+  upiId: "",
+  address: "",
+  city: "",
+  pincode: "",
+  state: "",
+  gstin: "",
+  dentalCouncil: "",
+  councilRegNumber: ""
+};
+
 export default function App() {
-  const CLINIC_ID = "merident_main_clinic";
 
   // Firebase authentication gate
   const [authUser, setAuthUser] = useState(null);
+  // Every signed-in account gets its own isolated clinic workspace
+  const CLINIC_ID = authUser?.uid || null;
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState("");
   const [loginBusy, setLoginBusy] = useState(false);
@@ -177,131 +479,92 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [toastMessage, setToastMessage] = useState(null);
 
-  // --- PERSISTENT DATA STORES ---
-  const [patients, setPatients] = useState(() => {
-    try {
-      const stored = localStorage.getItem("merident_patients");
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
+  // --- PERSISTENT DATA STORES (isolated per signed-in account) ---
+  const [patients, setPatients] = useState([]);
+  const [appointments, setAppointments] = useState([]);
+  const [invoices, setInvoices] = useState([]);
+  const [inventory, setInventory] = useState([]);
+  const [employees, setEmployees] = useState(DEFAULT_EMPLOYEES);
+  const [practiceProfile, setPracticeProfile] = useState(DEFAULT_PROFILE);
+  const [hydratedFor, setHydratedFor] = useState(null);
 
-  const [appointments, setAppointments] = useState(() => {
-    try {
-      const stored = localStorage.getItem("merident_appointments");
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  const [invoices, setInvoices] = useState(() => {
-    try {
-      const stored = localStorage.getItem("merident_invoices");
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  const [inventory, setInventory] = useState(() => {
-    try {
-      const stored = localStorage.getItem("merident_inventory");
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  const [employees, setEmployees] = useState(() => {
-    try {
-      const stored = localStorage.getItem("merident_employees");
-      return stored ? JSON.parse(stored) : [
-        { id: "EMP-01", name: "Dr. A. Khan", role: "Orthodontist", license: "LIC: DCI/TN/12345", active: true, licenseExpiry: "2026-11-20" },
-        { id: "EMP-02", name: "Ms. B. Sharma", role: "Hygienist", license: "LIC: DCI/TN/12346", active: false, licenseExpiry: "2026-11-15" },
-        { id: "EMP-03", name: "Mr. C. Patel", role: "Dental Assistant", license: "LIC: DCI/TN/12347", active: true, licenseExpiry: "2026-12-01" }
-      ];
-    } catch {
-      return [
-        { id: "EMP-01", name: "Dr. A. Khan", role: "Orthodontist", license: "LIC: DCI/TN/12345", active: true, licenseExpiry: "2026-11-20" },
-        { id: "EMP-02", name: "Ms. B. Sharma", role: "Hygienist", license: "LIC: DCI/TN/12346", active: false, licenseExpiry: "2026-11-15" },
-        { id: "EMP-03", name: "Mr. C. Patel", role: "Dental Assistant", license: "LIC: DCI/TN/12347", active: true, licenseExpiry: "2026-12-01" }
-      ];
-    }
-  });
-
-  // Practice Profile
-  const [practiceProfile, setPracticeProfile] = useState(() => {
-    try {
-      const stored = localStorage.getItem("merident_profile");
-      return stored ? JSON.parse(stored) : {
-        name: "MeriDent Clinic",
-        tagline: "Advanced Dental Care & Implant Center",
-        regNumber: "UDYAM-TN-04-0139569",
-        drName: "Dr. Santhoshkumar S / Dr. Sivasabari G",
-        qualification: "BDS, Dental Surgery",
-        phone: "9840100001",
-        email: "contact@merident.in",
-        upiId: "meridentclinic@upi",
-        address: "Coimbatore, Tamil Nadu, India"
-      };
-    } catch {
-      return {
-        name: "MeriDent Clinic",
-        tagline: "Advanced Dental Care & Implant Center",
-        regNumber: "UDYAM-TN-04-0139569",
-        drName: "Dr. Santhoshkumar S / Dr. Sivasabari G",
-        qualification: "BDS, Dental Surgery",
-        phone: "9840100001",
-        email: "contact@merident.in",
-        upiId: "meridentclinic@upi",
-        address: "Coimbatore, Tamil Nadu, India"
-      };
-    }
-  });
-
-  // Real-time Firestore sync
+  // Load this account's local cache when the signed-in user changes; reset on sign-out
   useEffect(() => {
-    if (!db) return;
-    try {
-      const q = collection(db, "clinics", CLINIC_ID, "patients");
-      const unsub = onSnapshot(q, (snapshot) => {
-        if (!snapshot.empty) {
-          const live = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          setPatients(live);
-        }
-      });
-      return () => unsub();
-    } catch (e) {
-      console.warn("Firestore listener offline", e);
+    if (!CLINIC_ID) {
+      setPatients([]);
+      setAppointments([]);
+      setInvoices([]);
+      setInventory([]);
+      setEmployees(DEFAULT_EMPLOYEES);
+      setPracticeProfile(DEFAULT_PROFILE);
+      setHydratedFor(null);
+      return;
     }
-  }, []);
+    const load = (name, fallback) => {
+      try {
+        const stored = localStorage.getItem(`merident_${CLINIC_ID}_${name}`);
+        return stored ? JSON.parse(stored) : fallback;
+      } catch {
+        return fallback;
+      }
+    };
+    setPatients(load("patients", []));
+    setAppointments(load("appointments", []));
+    setInvoices(load("invoices", []));
+    setInventory(load("inventory", []));
+    setEmployees(load("employees", DEFAULT_EMPLOYEES));
+    setPracticeProfile(load("profile", DEFAULT_PROFILE));
+    setHydratedFor(CLINIC_ID);
+  }, [CLINIC_ID]);
+
+  // Real-time, offline-capable cloud sync (only this account's clinic)
+  const cloudReady = Boolean(db && CLINIC_ID && hydratedFor === CLINIC_ID);
+  const lastSyncToastAt = useRef(0);
+  const reportSyncError = (error) => {
+    console.warn("Cloud sync issue", error);
+    const now = Date.now();
+    if (now - lastSyncToastAt.current > 30000) {
+      lastSyncToastAt.current = now;
+      showToast("Cloud sync issue. Your changes are kept and will retry automatically.");
+    }
+  };
+  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "patients", items: patients, setItems: setPatients, sortFn: byIdDesc, onError: reportSyncError });
+  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "appointments", items: appointments, setItems: setAppointments, sortFn: byIdDesc, onError: reportSyncError });
+  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "invoices", items: invoices, setItems: setInvoices, sortFn: byIdDesc, onError: reportSyncError });
+  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "inventory", items: inventory, setItems: setInventory, onError: reportSyncError });
+  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "employees", items: employees, setItems: setEmployees, onError: reportSyncError });
+  useCloudDoc({ clinicId: CLINIC_ID, ready: cloudReady, name: "profile", value: practiceProfile, setValue: setPracticeProfile, onError: reportSyncError });
 
   // Save changes to localStorage
   useEffect(() => {
-    localStorage.setItem("merident_patients", JSON.stringify(patients));
-  }, [patients]);
+    if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
+    localStorage.setItem(`merident_${CLINIC_ID}_patients`, JSON.stringify(patients));
+  }, [patients, hydratedFor]);
 
   useEffect(() => {
-    localStorage.setItem("merident_appointments", JSON.stringify(appointments));
-  }, [appointments]);
+    if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
+    localStorage.setItem(`merident_${CLINIC_ID}_appointments`, JSON.stringify(appointments));
+  }, [appointments, hydratedFor]);
 
   useEffect(() => {
-    localStorage.setItem("merident_invoices", JSON.stringify(invoices));
-  }, [invoices]);
+    if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
+    localStorage.setItem(`merident_${CLINIC_ID}_invoices`, JSON.stringify(invoices));
+  }, [invoices, hydratedFor]);
 
   useEffect(() => {
-    localStorage.setItem("merident_inventory", JSON.stringify(inventory));
-  }, [inventory]);
+    if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
+    localStorage.setItem(`merident_${CLINIC_ID}_inventory`, JSON.stringify(inventory));
+  }, [inventory, hydratedFor]);
 
   useEffect(() => {
-    localStorage.setItem("merident_employees", JSON.stringify(employees));
-  }, [employees]);
+    if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
+    localStorage.setItem(`merident_${CLINIC_ID}_employees`, JSON.stringify(employees));
+  }, [employees, hydratedFor]);
 
   useEffect(() => {
-    localStorage.setItem("merident_profile", JSON.stringify(practiceProfile));
-  }, [practiceProfile]);
+    if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
+    localStorage.setItem(`merident_${CLINIC_ID}_profile`, JSON.stringify(practiceProfile));
+  }, [practiceProfile, hydratedFor]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -322,9 +585,12 @@ export default function App() {
 
   const [newStaffForm, setNewStaffForm] = useState({
     name: "",
-    role: "Orthodontist",
-    license: "LIC: DCI/TN/",
-    licenseExpiry: "2027-01-01",
+    role: "General Dentistry",
+    license: "",
+    licenseExpiry: "",
+    phone: "",
+    qualification: "",
+    shift: "Full day",
     active: true
   });
 
@@ -338,23 +604,14 @@ export default function App() {
 
   const [performanceForm, setPerformanceForm] = useState({
     employeeName: "",
-    reviewerName: "Dr. Santhoshkumar S",
+    reviewerName: "",
     date: new Date().toISOString().split("T")[0],
     rating: 4,
     notes: ""
   });
 
   // New Patient Form with Medical Alert & Area
-  const [newPatientForm, setNewPatientForm] = useState({
-    name: "",
-    phone: "",
-    age: "",
-    gender: "Male",
-    area: "",
-    conditions: "None reported",
-    allergies: "NKDA",
-    medicalAlert: "",
-  });
+  const [newPatientForm, setNewPatientForm] = useState({ ...EMPTY_PATIENT_FORM });
 
   // Odontogram Screen Local State
   const [isDeciduous, setIsDeciduous] = useState(false);
@@ -365,17 +622,6 @@ export default function App() {
   const [refTooth, setRefTooth] = useState("");
   const [refDept, setRefDept] = useState("CONS");
 
-  // Systemic Screening Checkboxes
-  const [systemicChecks, setSystemicChecks] = useState({
-    hypertension: false,
-    diabetes: false,
-    thyroid: false,
-    cardiac: false,
-    bleeding: false,
-    allergy: false,
-    respiratory: false,
-    epilepsy: false,
-  });
 
   // OPG Workstation State
   const [opgSelectedPatientId, setOpgSelectedPatientId] = useState(null);
@@ -395,8 +641,9 @@ export default function App() {
     date: new Date().toISOString().split("T")[0],
     time: "10:30",
     chair: "Chair 1 (Main Operatory)",
-    doctor: practiceProfile.drName,
-    procedure: "Root Canal Therapy (Access)",
+    doctor: "",
+    procedure: "",
+    visitType: "New patient",
     status: "Confirmed",
   });
 
@@ -404,12 +651,14 @@ export default function App() {
   const [isAddInvoiceOpen, setIsAddInvoiceOpen] = useState(false);
   const [activeUpiQrInvoice, setActiveUpiQrInvoice] = useState(null);
   const [newInvoiceForm, setNewInvoiceForm] = useState({
+    patientId: "",
     patientName: "",
-    provider: "National Health TPA",
-    claimId: `CLM-${Date.now().toString().slice(-6)}`,
-    status: "Pre-Auth Approved",
-    treatment: "Root Canal Therapy & Crown",
-    amount: "5500",
+    paymentMode: "Cash",
+    provider: "Self Pay",
+    claimId: "",
+    status: "Self-Pay Completed",
+    treatment: "",
+    amount: "",
   });
 
   // New Stock Modal State
@@ -424,16 +673,35 @@ export default function App() {
 
   const activePatient = patients.find((p) => p.id === selectedPatientId) || null;
 
+  const updateActivePatient = (changes) => {
+    if (!activePatient) return;
+    setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? { ...p, ...changes } : p)));
+  };
+
   // Add Patient Action
-  const handleCreatePatient = async (e) => {
+  const handleCreatePatient = (e) => {
     e.preventDefault();
-    if (!newPatientForm.name.trim() || !newPatientForm.phone.trim()) {
-      showToast("Please provide Patient Name and Phone Number");
+    const problem = validatePatientForm(newPatientForm);
+    if (problem) {
+      showToast(problem);
       return;
     }
+    const { consentTreatment, consentWhatsapp, ...formFields } = newPatientForm;
     const created = {
-      id: "P-" + Date.now().toString().slice(-5),
-      ...newPatientForm,
+      id: newId("P"),
+      ...formFields,
+      name: newPatientForm.name.trim(),
+      phone: normalizePhone(newPatientForm.phone),
+      guardianPhone: newPatientForm.guardianPhone ? normalizePhone(newPatientForm.guardianPhone) : "",
+      emergencyPhone: newPatientForm.emergencyPhone ? normalizePhone(newPatientForm.emergencyPhone) : "",
+      abhaNumber: digitsOnly(newPatientForm.abhaNumber),
+      consent: {
+        treatment: Boolean(consentTreatment),
+        whatsapp: Boolean(consentWhatsapp),
+        recordedAt: new Date().toISOString(),
+      },
+      systemic: {},
+      habits: {},
       registeredDate: new Date().toLocaleDateString("en-IN"),
       toothConditions: {},
       opgImage: null,
@@ -447,25 +715,8 @@ export default function App() {
       referrals: [],
     };
 
-    if (db) {
-      try {
-        await setDoc(doc(db, "clinics", CLINIC_ID, "patients", created.id), created);
-      } catch (err) {
-        console.warn("Firestore write skipped, local save active", err);
-      }
-    }
-
     setPatients([created, ...patients]);
-    setNewPatientForm({
-      name: "",
-      phone: "",
-      age: "",
-      gender: "Male",
-      area: "",
-      conditions: "None reported",
-      allergies: "NKDA",
-      medicalAlert: "",
-    });
+    setNewPatientForm({ ...EMPTY_PATIENT_FORM });
     setIsAddPatientOpen(false);
     setSelectedPatientId(created.id);
     setIsChartModalOpen(true);
@@ -486,10 +737,6 @@ export default function App() {
       prev.map((p) => (p.id === activePatient.id ? { ...p, toothConditions: currentConditions } : p))
     );
 
-    if (db) {
-      const chartRef = doc(db, "clinics", CLINIC_ID, "patients", activePatient.id, "ehr", "odontogram");
-      setDoc(chartRef, { teeth: currentConditions, updatedAt: serverTimestamp() }, { merge: true });
-    }
   };
 
   // Update Diagnostic Fields in Realtime
@@ -502,10 +749,6 @@ export default function App() {
     setPatients((prev) =>
       prev.map((p) => (p.id === activePatient.id ? { ...p, diagnosis: updatedDiag } : p))
     );
-    if (db) {
-      const diagRef = doc(db, "clinics", CLINIC_ID, "patients", activePatient.id, "ehr", "diagnosis");
-      setDoc(diagRef, { ...updatedDiag, updatedAt: serverTimestamp() }, { merge: true });
-    }
   };
 
   // Add Department Referral
@@ -514,7 +757,7 @@ export default function App() {
     if (!refTreatment.trim() || !activePatient) return;
     const deptObj = DENTAL_DEPARTMENTS.find((d) => d.code === refDept) || { name: refDept, room: "OPD" };
     const newRef = {
-      id: "REF-" + Date.now().toString().slice(-4),
+      id: newId("REF"),
       treatment: refTreatment.trim(),
       toothRegion: refTooth.trim() || "U/L",
       department: deptObj.name,
@@ -576,6 +819,10 @@ export default function App() {
   // WhatsApp Clinical Notifier / Rx Dispatcher
   const dispatchPatientWhatsApp = () => {
     if (!activePatient) return;
+    if (activePatient.consent && activePatient.consent.whatsapp === false) {
+      showToast("This patient has not agreed to WhatsApp messages");
+      return;
+    }
     let cleanPhone = activePatient.phone.replace(/[^0-9]/g, "");
     if (cleanPhone.length === 10) cleanPhone = "91" + cleanPhone;
 
@@ -602,7 +849,8 @@ export default function App() {
       `👤 *Patient:* ${activePatient.name} (Age: ${activePatient.age || "N/A"} Yrs / ${activePatient.gender})\n` +
       (activePatient.medicalAlert ? `⚠️ *Medical Alert:* ${activePatient.medicalAlert}\n` : "") +
       `📅 *Date:* ${activePatient.registeredDate}\n` +
-      `🩺 *Doctor:* ${practiceProfile.drName}\n` +
+      `🩺 *Doctor:* ${practiceProfile.drName}${practiceProfile.qualification ? `, ${practiceProfile.qualification}` : ""}\n` +
+      (practiceProfile.councilRegNumber ? `🪪 *Reg. No:* ${practiceProfile.councilRegNumber}\n` : "") +
       `----------------------------------------\n` +
       `📋 *FDI Odontogram Findings:*\n${chartedList}\n\n` +
       (rxList ? `💊 *Medications Prescribed:*\n${rxList}\n\n` : "") +
@@ -610,50 +858,97 @@ export default function App() {
       `⚠️ *Patient Care Advice:*\n` +
       `• Please take prescribed medications strictly on time.\n` +
       `• In case of persistent swelling or drug allergy, contact clinic immediately.\n\n` +
-      `_Powered by MeriDent OS (Udyam: ${practiceProfile.regNumber})_`
+      `_Sent via MeriDent_`
     );
 
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank", "noopener,noreferrer");
     showToast("WhatsApp message dispatched!");
   };
 
-  // OPG Upload for Selected Patient
-  const handleOpgFileChange = (e) => {
+  // OPG Upload for Selected Patient (compressed so it fits in the patient record)
+  const compressImageToDataUrl = (file) =>
+    new Promise((resolve, reject) => {
+      const objectUrl = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const attempts = [
+          { dim: 1600, quality: 0.72 },
+          { dim: 1280, quality: 0.6 },
+          { dim: 1000, quality: 0.5 },
+        ];
+        let result = "";
+        for (const { dim, quality } of attempts) {
+          const scale = Math.min(1, dim / Math.max(img.width, img.height));
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.max(1, Math.round(img.width * scale));
+          canvas.height = Math.max(1, Math.round(img.height * scale));
+          canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+          result = canvas.toDataURL("image/jpeg", quality);
+          if (result.length < 700000) break;
+        }
+        URL.revokeObjectURL(objectUrl);
+        if (result.length >= 900000) {
+          reject(new Error("Image is too large"));
+        } else {
+          resolve(result);
+        }
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Could not read image"));
+      };
+      img.src = objectUrl;
+    });
+
+  const handleOpgFileChange = async (e) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target.result;
-      const targetId = opgSelectedPatientId || selectedPatientId || (patients[0] && patients[0].id);
-      if (!targetId) {
-        showToast("Please register or select a patient first");
-        return;
-      }
-      setPatients((prev) =>
-        prev.map((p) => {
-          if (p.id === targetId) {
-            return { ...p, opgImage: dataUrl };
-          }
-          return p;
-        })
-      );
-      showToast("OPG Radiograph film uploaded & linked to patient");
-    };
-    reader.readAsDataURL(file);
+    if (!file.type.startsWith("image/")) {
+      showToast("Please choose an image file (JPG or PNG)");
+      return;
+    }
+    const targetId = opgSelectedPatientId || selectedPatientId || (patients[0] && patients[0].id);
+    if (!targetId) {
+      showToast("Please register or select a patient first");
+      return;
+    }
+    try {
+      const dataUrl = await compressImageToDataUrl(file);
+      setPatients((prev) => prev.map((p) => (p.id === targetId ? { ...p, opgImage: dataUrl } : p)));
+      showToast("OPG radiograph uploaded & linked to patient");
+    } catch (err) {
+      showToast("Could not use this image. Try a smaller JPG or PNG.");
+    }
   };
 
   // Appointment Booking Action
   const handleCreateAppointment = (e) => {
     e.preventDefault();
-    if (!newApptForm.patientName.trim() || !newApptForm.phone.trim()) {
-      showToast("Patient Name and Phone are required");
+    if (!newApptForm.patientName.trim()) {
+      showToast("Patient name is required");
+      return;
+    }
+    if (!isValidMobile(newApptForm.phone)) {
+      showToast("Enter a valid 10-digit mobile number");
+      return;
+    }
+    if (!newApptForm.date || !newApptForm.time) {
+      showToast("Choose a date and time");
+      return;
+    }
+    if (!newApptForm.doctor.trim()) {
+      showToast("Choose the attending doctor");
       return;
     }
     const appt = {
-      id: "APT-" + Date.now().toString().slice(-4),
+      id: newId("APT"),
       ...newApptForm,
+      phone: normalizePhone(newApptForm.phone),
+      procedure: newApptForm.procedure.trim() || "Consultation",
     };
     setAppointments([appt, ...appointments]);
+    setNewApptForm((f) => ({ ...f, patientId: "", patientName: "", phone: "", age: "", procedure: "" }));
     setIsAddApptOpen(false);
     showToast(`Appointment booked for ${appt.patientName} on ${appt.date}`);
   };
@@ -685,18 +980,41 @@ export default function App() {
       showToast("Patient Name is required");
       return;
     }
+    if (!(parseFloat(newInvoiceForm.amount) > 0)) {
+      showToast("Enter a bill amount greater than zero");
+      return;
+    }
+    if (!newInvoiceForm.treatment.trim()) {
+      showToast("Describe the treatment billed");
+      return;
+    }
     const inv = {
-      id: `INV-2026-${Math.floor(100 + Math.random() * 900)}`,
-      patient: newInvoiceForm.patientName,
-      provider: newInvoiceForm.provider,
-      claimId: newInvoiceForm.claimId,
-      status: newInvoiceForm.status,
+      id: `INV-${new Date().getFullYear()}-${Date.now().toString(36).slice(-5).toUpperCase()}`,
+      patientId: newInvoiceForm.patientId || "",
+      patient: newInvoiceForm.patientName.trim(),
+      paymentMode: newInvoiceForm.paymentMode,
+      provider: newInvoiceForm.paymentMode === "Insurance / TPA" ? newInvoiceForm.provider : "Self Pay",
+      claimId:
+        newInvoiceForm.paymentMode === "Insurance / TPA"
+          ? newInvoiceForm.claimId.trim() || `CLM-${Date.now().toString(36).slice(-6).toUpperCase()}`
+          : "",
+      status: newInvoiceForm.paymentMode === "Insurance / TPA" ? newInvoiceForm.status : "Self-Pay Completed",
       treatment: newInvoiceForm.treatment,
       total: parseFloat(newInvoiceForm.amount || 0).toLocaleString("en-IN"),
       rawAmount: newInvoiceForm.amount,
       date: new Date().toLocaleDateString("en-IN"),
     };
     setInvoices([inv, ...invoices]);
+    setNewInvoiceForm({
+      patientId: "",
+      patientName: "",
+      paymentMode: "Cash",
+      provider: "Self Pay",
+      claimId: "",
+      status: "Self-Pay Completed",
+      treatment: "",
+      amount: "",
+    });
     setIsAddInvoiceOpen(false);
     showToast(`Invoice ${inv.id} generated for ₹${inv.total}`);
   };
@@ -721,7 +1039,7 @@ export default function App() {
     e.preventDefault();
     if (!newStockForm.name.trim()) return;
     const item = {
-      id: "STK-" + Date.now().toString().slice(-4),
+      id: newId("STK"),
       name: newStockForm.name,
       category: newStockForm.category,
       quantity: parseInt(newStockForm.quantity || 0, 10),
@@ -736,14 +1054,22 @@ export default function App() {
 
   const handleCreateStaff = (e) => {
     e.preventDefault();
-    if (!newStaffForm.name.trim()) return;
+    if (!newStaffForm.name.trim()) {
+      showToast("Staff name is required");
+      return;
+    }
+    if (!isValidMobile(newStaffForm.phone)) {
+      showToast("Enter a valid 10-digit staff mobile number");
+      return;
+    }
     const staffMember = {
-      id: "EMP-" + Date.now().toString().slice(-4),
-      ...newStaffForm
+      id: newId("EMP"),
+      ...newStaffForm,
+      phone: normalizePhone(newStaffForm.phone)
     };
     setEmployees([...employees, staffMember]);
     setIsAddStaffOpen(false);
-    setNewStaffForm({ name: "", role: "Orthodontist", license: "LIC: DCI/TN/", licenseExpiry: "2027-01-01", active: true });
+    setNewStaffForm({ name: "", role: "Orthodontist", license: "", licenseExpiry: "", phone: "", qualification: "", shift: "Full day", active: true });
     showToast(`Staff member ${staffMember.name} added successfully`);
   };
 
@@ -818,6 +1144,53 @@ export default function App() {
   const todayAppointments = appointments.filter((appointment) => dashboardDateKey(appointment.date) === todayKey).length;
   const lowStockCount = inventory.filter((item) => item.status === "Low Stock" || Number(item.quantity) <= Number(item.minThreshold)).length;
 
+  const doctorOptions = Array.from(
+    new Set([practiceProfile.drName, ...employees.filter((e) => e.active !== false).map((e) => e.name)].filter(Boolean))
+  );
+
+  // Small renderers for the "Patient Details" tab (plain functions, not components)
+  const patientField = (field, label, opts = {}) => (
+    <Field label={label} required={opts.required} hint={opts.hint} className={opts.className || ""}>
+      <input
+        type={opts.type || "text"}
+        value={activePatient ? activePatient[field] ?? "" : ""}
+        onChange={(e) => updateActivePatient({ [field]: e.target.value })}
+        placeholder={opts.placeholder || ""}
+        className={fieldInputClass}
+      />
+    </Field>
+  );
+  const patientSelect = (field, label, options, opts = {}) => {
+    const current = activePatient ? activePatient[field] ?? "" : "";
+    const list = current && !options.includes(current) ? [...options, current] : options;
+    return (
+      <Field label={label} required={opts.required} className={opts.className || ""}>
+        <select value={current} onChange={(e) => updateActivePatient({ [field]: e.target.value })} className={fieldInputClass}>
+          {opts.blank ? <option value="">Select</option> : null}
+          {list.map((o) => (
+            <option key={o} value={o}>{o}</option>
+          ))}
+        </select>
+      </Field>
+    );
+  };
+  const habitSelect = (key, label, options) => {
+    const habits = (activePatient && activePatient.habits) || {};
+    return (
+      <Field label={label}>
+        <select
+          value={habits[key] || "Not recorded"}
+          onChange={(e) => updateActivePatient({ habits: { ...habits, [key]: e.target.value } })}
+          className={fieldInputClass}
+        >
+          {options.map((o) => (
+            <option key={o} value={o}>{o}</option>
+          ))}
+        </select>
+      </Field>
+    );
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-[#0b1329] flex items-center justify-center p-6 text-white">
@@ -831,36 +1204,12 @@ export default function App() {
 
   if (!authUser) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-5 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-cyan-900/40 via-slate-950 to-indigo-950/60" />
-        <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/90 p-8 shadow-2xl backdrop-blur-xl">
-          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-400 text-slate-950">
-            <HeartPulse className="h-7 w-7" />
-          </div>
-          <div className="text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-cyan-300">MeriDent OS</p>
-            <h1 className="mt-3 text-2xl font-bold tracking-tight">Welcome back</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-400">Sign in with your Google account to access the clinical practice dashboard.</p>
-          </div>
-          {!firebaseConfigured ? (
-            <div className="mt-7 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
-              Firebase is not configured. Add the VITE_FIREBASE_* environment variables to your deployment settings.
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              disabled={loginBusy}
-              className="mt-7 flex w-full items-center justify-center gap-3 rounded-xl bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-100 disabled:opacity-60"
-            >
-              {loginBusy ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-800" /> : <LogIn className="h-5 w-5" />}
-              {loginBusy ? "Connecting to Google…" : "Continue with Google"}
-            </button>
-          )}
-          {authError && <p role="alert" className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-200">{authError}</p>}
-          <p className="mt-6 text-center text-xs text-slate-500">Secure sign-in powered by Firebase Authentication</p>
-        </div>
-      </div>
+      <LandingPage
+        onLoginClick={handleGoogleLogin}
+        loginBusy={loginBusy}
+        authError={authError}
+        firebaseConfigured={firebaseConfigured}
+      />
     );
   }
 
@@ -874,6 +1223,17 @@ export default function App() {
           <span>{toastMessage}</span>
         </div>
       )}
+
+      <datalist id="patient-options">
+        {patients.map((pt) => (
+          <option key={pt.id} value={pt.name} />
+        ))}
+      </datalist>
+      <datalist id="doctor-options">
+        {doctorOptions.map((name) => (
+          <option key={name} value={name} />
+        ))}
+      </datalist>
 
       {/* --- SIDEBAR --- */}
       <aside
@@ -1041,7 +1401,7 @@ export default function App() {
                             )}
                           </div>
                           <div className="text-xs text-slate-400 mt-1">
-                            {p.phone} • {p.area || "Coimbatore"} • Registered: {p.registeredDate}
+                            {p.phone}{patientLocation(p) ? ` • ${patientLocation(p)}` : ""} • Registered: {p.registeredDate}
                           </div>
                           <div className="text-xs text-slate-500 mt-0.5">
                             Conditions: <span className="font-medium text-slate-700">{p.conditions || "None reported"}</span>
@@ -1093,7 +1453,7 @@ export default function App() {
                       className="text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-700 font-semibold focus:outline-none"
                     >
                       {patients.map((p) => (
-                        <option key={p.id} value={p.id}>{p.name} ({p.age}y)</option>
+                        <option key={p.id} value={p.id}>{p.name}{p.age ? ` (${p.age}y)` : ""}</option>
                       ))}
                     </select>
                   )}
@@ -1357,10 +1717,13 @@ export default function App() {
                         <tr key={inv.id} className="hover:bg-slate-50/60">
                           <td className="p-4">
                             <div className="font-bold text-blue-700">{inv.id}</div>
-                            <div className="text-[10px] text-slate-400">Claim: {inv.claimId}</div>
+                            {inv.claimId ? <div className="text-[10px] text-slate-400">Claim: {inv.claimId}</div> : null}
                           </td>
                           <td className="p-4 font-semibold">{inv.patient}</td>
-                          <td className="p-4 text-slate-600">{inv.provider}</td>
+                          <td className="p-4 text-slate-600">
+                            {inv.provider}
+                            {inv.paymentMode ? <div className="text-[10px] text-slate-400">{inv.paymentMode}</div> : null}
+                          </td>
                           <td className="p-4">
                             <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
                               {inv.status}
@@ -1492,8 +1855,13 @@ export default function App() {
                           <div className="text-xs text-slate-500 flex items-center gap-3">
                             <span>Role: <strong className="text-slate-800">{emp.role}</strong></span>
                             <span>•</span>
-                            <span className="text-amber-700 font-medium">Expires in 30 days</span>
+                            <span className={licenseStatus(emp.licenseExpiry).tone}>{licenseStatus(emp.licenseExpiry).label}</span>
                           </div>
+                          {[emp.qualification, emp.phone ? `+91 ${emp.phone}` : "", emp.shift].filter(Boolean).length > 0 ? (
+                            <div className="text-xs text-slate-500">
+                              {[emp.qualification, emp.phone ? `+91 ${emp.phone}` : "", emp.shift].filter(Boolean).join(" • ")}
+                            </div>
+                          ) : null}
                         </div>
 
                         <div className="flex flex-wrap items-center gap-3">
@@ -1557,7 +1925,7 @@ export default function App() {
             <div className="max-w-3xl bg-white rounded-2xl border border-slate-200 p-6 md:p-8 space-y-6">
               <div>
                 <h1 className="text-xl font-bold text-slate-900">Practice Profile & Legal Registration</h1>
-                <p className="text-xs text-slate-500">Government micro-enterprise credentials, state grant registry, and digital prescription headers</p>
+                <p className="text-xs text-slate-500">Clinic details used on prescriptions, invoices, and patient messages</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
@@ -1630,6 +1998,89 @@ export default function App() {
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                   />
                 </div>
+
+                <Field label="City">
+                  <input
+                    type="text"
+                    value={practiceProfile.city || ""}
+                    onChange={(e) => setPracticeProfile({ ...practiceProfile, city: e.target.value })}
+                    className={fieldInputClass}
+                  />
+                </Field>
+
+                <Field label="Pincode">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={practiceProfile.pincode || ""}
+                    onChange={(e) => setPracticeProfile({ ...practiceProfile, pincode: digitsOnly(e.target.value) })}
+                    className={fieldInputClass}
+                  />
+                  {practiceProfile.pincode && !isValidPincode(practiceProfile.pincode) ? (
+                    <p className="text-[10px] text-rose-600 mt-1">Pincode must be 6 digits.</p>
+                  ) : null}
+                </Field>
+
+                <Field label="State" hint="Used for GST place of supply.">
+                  <select
+                    value={practiceProfile.state || ""}
+                    onChange={(e) => setPracticeProfile({ ...practiceProfile, state: e.target.value })}
+                    className={fieldInputClass}
+                  >
+                    <option value="">Select state</option>
+                    {INDIAN_STATES.map((st) => (
+                      <option key={st} value={st}>{st}</option>
+                    ))}
+                  </select>
+                </Field>
+
+                <Field label="Clinic Email">
+                  <input
+                    type="email"
+                    value={practiceProfile.email || ""}
+                    onChange={(e) => setPracticeProfile({ ...practiceProfile, email: e.target.value })}
+                    className={fieldInputClass}
+                  />
+                  {practiceProfile.email && !isValidEmail(practiceProfile.email) ? (
+                    <p className="text-[10px] text-rose-600 mt-1">Check the email address.</p>
+                  ) : null}
+                </Field>
+
+                <Field label="Dental Council" hint="Shown on prescriptions with your registration number.">
+                  <select
+                    value={practiceProfile.dentalCouncil || ""}
+                    onChange={(e) => setPracticeProfile({ ...practiceProfile, dentalCouncil: e.target.value })}
+                    className={fieldInputClass}
+                  >
+                    <option value="">Select council</option>
+                    {COUNCIL_NAMES.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </Field>
+
+                <Field label="Dental Council Registration No.">
+                  <input
+                    type="text"
+                    value={practiceProfile.councilRegNumber || ""}
+                    onChange={(e) => setPracticeProfile({ ...practiceProfile, councilRegNumber: e.target.value })}
+                    className={`${fieldInputClass} font-mono`}
+                  />
+                </Field>
+
+                <Field label="GSTIN (optional)" hint="Only if your clinic is GST registered.">
+                  <input
+                    type="text"
+                    maxLength={15}
+                    value={practiceProfile.gstin || ""}
+                    onChange={(e) => setPracticeProfile({ ...practiceProfile, gstin: e.target.value.toUpperCase() })}
+                    className={`${fieldInputClass} font-mono`}
+                  />
+                  {practiceProfile.gstin && !isValidGstin(practiceProfile.gstin) ? (
+                    <p className="text-[10px] text-rose-600 mt-1">GSTIN must be 15 characters in the standard format.</p>
+                  ) : null}
+                </Field>
               </div>
 
               <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
@@ -1776,10 +2227,48 @@ export default function App() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
+                <label className="block font-semibold text-slate-600 mb-1">Mobile *</label>
+                <input
+                  type="tel"
+                  required
+                  value={newStaffForm.phone}
+                  onChange={(e) => setNewStaffForm({...newStaffForm, phone: e.target.value})}
+                  placeholder="10-digit number"
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Qualification</label>
+                <input
+                  type="text"
+                  value={newStaffForm.qualification}
+                  onChange={(e) => setNewStaffForm({...newStaffForm, qualification: e.target.value})}
+                  placeholder="e.g. BDS, MDS"
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Shift</label>
+              <select
+                value={newStaffForm.shift}
+                onChange={(e) => setNewStaffForm({...newStaffForm, shift: e.target.value})}
+                className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl bg-white focus:outline-none"
+              >
+                <option>Morning</option>
+                <option>Evening</option>
+                <option>Full day</option>
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
                 <label className="block font-semibold text-slate-600 mb-1">License Number</label>
                 <input
                   type="text"
                   value={newStaffForm.license}
+                  placeholder="Council registration no."
                   onChange={(e) => setNewStaffForm({...newStaffForm, license: e.target.value})}
                   className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none"
                 />
@@ -2001,7 +2490,7 @@ export default function App() {
                       <span>Yrs ({activePatient.gender || "Female"})</span>
                     </div>
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">{activePatient.phone} • {activePatient.area || "Coimbatore"}</div>
+                  <div className="text-xs text-slate-400 mt-0.5">{activePatient.phone}{patientLocation(activePatient) ? ` • ${patientLocation(activePatient)}` : ""}</div>
                 </div>
 
                 <button
@@ -2036,6 +2525,7 @@ export default function App() {
                   "Systemic Review",
                   "Prescriptions",
                   "Medical History",
+                  "Patient Details",
                 ].map((tab) => {
                   const isActive = activeModalTab === tab;
                   return (
@@ -2305,8 +2795,8 @@ export default function App() {
                       <label key={item.id} className="p-3 rounded-xl border border-slate-200 bg-slate-50/50 flex items-center gap-2 cursor-pointer hover:bg-slate-50">
                         <input
                           type="checkbox"
-                          checked={systemicChecks[item.id]}
-                          onChange={(e) => setSystemicChecks({ ...systemicChecks, [item.id]: e.target.checked })}
+                          checked={Boolean((activePatient.systemic || {})[item.id])}
+                          onChange={(e) => updateActivePatient({ systemic: { ...(activePatient.systemic || {}), [item.id]: e.target.checked } })}
                           className="rounded text-blue-600 focus:ring-0"
                         />
                         <span className="font-semibold text-slate-700">{item.label}</span>
@@ -2318,19 +2808,11 @@ export default function App() {
                     <span className="text-xs font-bold uppercase text-slate-500 tracking-wider block mb-2">
                       PERSONAL HABITS & HYGIENE
                     </span>
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="p-3 rounded-xl border border-slate-200 bg-white">
-                        <span className="text-slate-400 block text-[10px] font-bold uppercase">Brushing Habits</span>
-                        <span className="font-bold text-slate-800">Once Daily (Mixed)</span>
-                      </div>
-                      <div className="p-3 rounded-xl border border-slate-200 bg-white">
-                        <span className="text-slate-400 block text-[10px] font-bold uppercase">Habits</span>
-                        <span className="font-bold text-slate-800">No Tobacco / Betel</span>
-                      </div>
-                      <div className="p-3 rounded-xl border border-slate-200 bg-white">
-                        <span className="text-slate-400 block text-[10px] font-bold uppercase">Dietary</span>
-                        <span className="font-bold text-slate-800">Mixed Diet</span>
-                      </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {habitSelect("tobacco", "Tobacco / areca nut", TOBACCO_OPTIONS)}
+                      {habitSelect("alcohol", "Alcohol", ALCOHOL_OPTIONS)}
+                      {habitSelect("brushing", "Brushing", BRUSHING_OPTIONS)}
+                      {habitSelect("diet", "Diet", DIET_OPTIONS)}
                     </div>
                   </div>
                 </div>
@@ -2424,6 +2906,105 @@ export default function App() {
               )}
 
               {/* TAB 6: MEDICAL HISTORY */}
+              {/* TAB: PATIENT DETAILS (demographics, contacts, consent) */}
+              {activeModalTab === "Patient Details" && (
+                <div className="space-y-4 text-xs">
+                  <SectionTitle>Identity</SectionTitle>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {patientField("name", "Full name", { required: true })}
+                    <Field label="Mobile (WhatsApp)" required>
+                      <input
+                        type="tel"
+                        value={activePatient.phone || ""}
+                        onChange={(e) => updateActivePatient({ phone: e.target.value })}
+                        className={fieldInputClass}
+                      />
+                      {activePatient.phone && !isValidMobile(activePatient.phone) ? (
+                        <p className="text-[10px] text-rose-600 mt-1">Check the number: it should be a 10-digit Indian mobile.</p>
+                      ) : null}
+                    </Field>
+                    <Field label="Date of birth" hint="Optional. Updates age automatically.">
+                      <input
+                        type="date"
+                        value={activePatient.dob || ""}
+                        onChange={(e) => {
+                          const dob = e.target.value;
+                          updateActivePatient({ dob, ...(dob && ageFromDob(dob) !== "" ? { age: ageFromDob(dob) } : {}) });
+                        }}
+                        className={fieldInputClass}
+                      />
+                    </Field>
+                    {patientField("age", "Age (years)", { required: true, type: "number" })}
+                    {patientSelect("gender", "Gender", ["Female", "Male", "Other"], { required: true, blank: true })}
+                    {patientSelect("bloodGroup", "Blood group", BLOOD_GROUPS)}
+                    {patientField("occupation", "Occupation")}
+                    {patientSelect("language", "Preferred language", LANGUAGES)}
+                  </div>
+
+                  <SectionTitle>Address and contact</SectionTitle>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {patientField("area", "Area / locality")}
+                    {patientField("city", "City")}
+                    {patientField("pincode", "Pincode")}
+                    {patientField("email", "Email", { type: "email" })}
+                    {patientField("emergencyName", "Emergency contact name")}
+                    {patientField("emergencyPhone", "Emergency contact mobile", { type: "tel" })}
+                  </div>
+
+                  {Number(activePatient.age) < 18 && activePatient.age !== "" && activePatient.age !== undefined ? (
+                    <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-3 space-y-3">
+                      <SectionTitle>Parent / guardian (patient under 18)</SectionTitle>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {patientField("guardianName", "Guardian name", { required: true })}
+                        {patientSelect("guardianRelation", "Relation", GUARDIAN_RELATIONS)}
+                        {patientField("guardianPhone", "Guardian mobile", { type: "tel" })}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <SectionTitle>Clinical background</SectionTitle>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {activePatient.gender === "Female"
+                      ? patientSelect("pregnancy", "Pregnancy / breastfeeding", ["Not applicable", "Not pregnant", "Pregnant", "Breastfeeding"])
+                      : null}
+                    {patientField("chiefComplaint", "Chief complaint", { className: "sm:col-span-2" })}
+                    {patientSelect("referredBy", "How did they find the clinic", REFERRAL_SOURCES)}
+                    {patientField("abhaNumber", "ABHA number", { hint: "Optional. 14 digits." })}
+                  </div>
+
+                  <SectionTitle>Consent</SectionTitle>
+                  {activePatient.consent ? (
+                    <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 space-y-2">
+                      <div className="text-slate-600">
+                        Consent for examination, treatment and record keeping:{" "}
+                        <strong>{activePatient.consent.treatment ? "Recorded" : "Not recorded"}</strong>
+                        {activePatient.consent.recordedAt ? ` on ${new Date(activePatient.consent.recordedAt).toLocaleDateString("en-IN")}` : ""}
+                      </div>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={activePatient.consent.whatsapp !== false}
+                          onChange={(e) => updateActivePatient({ consent: { ...activePatient.consent, whatsapp: e.target.checked } })}
+                          className="rounded text-blue-600 focus:ring-0"
+                        />
+                        <span className="font-semibold text-slate-700">OK to send reminders and prescriptions on WhatsApp</span>
+                      </label>
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 flex items-center justify-between gap-3">
+                      <span className="text-amber-800">No consent on record (registered before consent capture).</span>
+                      <button
+                        type="button"
+                        onClick={() => updateActivePatient({ consent: { treatment: true, whatsapp: true, recordedAt: new Date().toISOString() } })}
+                        className="px-3 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-semibold hover:bg-blue-700"
+                      >
+                        Record consent now
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {activeModalTab === "Medical History" && (
                 <div className="space-y-4">
                   <div className="text-xs font-bold uppercase text-slate-800 tracking-wider">
@@ -2498,94 +3079,306 @@ export default function App() {
 
       {/* --- ADD PATIENT MODAL --- */}
       {isAddPatientOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs overflow-y-auto">
           <form
             onSubmit={handleCreatePatient}
-            className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-xl text-xs"
+            className="bg-white rounded-2xl border border-slate-200 w-full max-w-lg p-6 space-y-4 shadow-xl text-xs my-4"
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-sm font-bold text-slate-900">Add New Patient</h3>
-              <button
-                type="button"
-                onClick={() => setIsAddPatientOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
-              >
+              <button type="button" onClick={() => setIsAddPatientOpen(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div>
-              <label className="block font-semibold text-slate-600 mb-1">Full Name *</label>
+            <SectionTitle>Patient</SectionTitle>
+            <Field label="Full Name" required>
               <input
                 type="text"
                 required
                 value={newPatientForm.name}
                 onChange={(e) => setNewPatientForm({ ...newPatientForm, name: e.target.value })}
                 placeholder="e.g. Nirmala J"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                className={fieldInputClass}
               />
-            </div>
+            </Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">Age (Years) *</label>
+              <Field label="Date of Birth" hint="Optional. Fills the age automatically.">
+                <input
+                  type="date"
+                  max={new Date().toISOString().split("T")[0]}
+                  value={newPatientForm.dob}
+                  onChange={(e) => {
+                    const dob = e.target.value;
+                    const calculated = ageFromDob(dob);
+                    setNewPatientForm({ ...newPatientForm, dob, age: dob && calculated !== "" ? calculated : newPatientForm.age });
+                  }}
+                  className={fieldInputClass}
+                />
+              </Field>
+              <Field label="Age (Years)" required>
                 <input
                   type="number"
                   required
+                  min="0"
+                  max="120"
                   value={newPatientForm.age}
                   onChange={(e) => setNewPatientForm({ ...newPatientForm, age: e.target.value })}
                   placeholder="e.g. 46"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                  className={fieldInputClass}
                 />
-              </div>
+              </Field>
+            </div>
 
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">Gender</label>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Gender" required>
                 <select
+                  required
                   value={newPatientForm.gender}
                   onChange={(e) => setNewPatientForm({ ...newPatientForm, gender: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                  className={fieldInputClass}
                 >
+                  <option value="">Select</option>
                   <option>Female</option>
                   <option>Male</option>
-                  <option>Pediatric</option>
+                  <option>Other</option>
                 </select>
+              </Field>
+              <Field label="WhatsApp Phone" required>
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  required
+                  value={newPatientForm.phone}
+                  onChange={(e) => setNewPatientForm({ ...newPatientForm, phone: e.target.value })}
+                  placeholder="10-digit mobile"
+                  className={fieldInputClass}
+                />
+              </Field>
+            </div>
+
+            {newPatientForm.age !== "" && Number(newPatientForm.age) < 18 ? (
+              <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-3 space-y-3">
+                <SectionTitle>Parent / guardian (required under 18)</SectionTitle>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Guardian name" required>
+                    <input
+                      type="text"
+                      value={newPatientForm.guardianName}
+                      onChange={(e) => setNewPatientForm({ ...newPatientForm, guardianName: e.target.value })}
+                      className={fieldInputClass}
+                    />
+                  </Field>
+                  <Field label="Relation">
+                    <select
+                      value={newPatientForm.guardianRelation}
+                      onChange={(e) => setNewPatientForm({ ...newPatientForm, guardianRelation: e.target.value })}
+                      className={fieldInputClass}
+                    >
+                      {GUARDIAN_RELATIONS.map((r) => (
+                        <option key={r}>{r}</option>
+                      ))}
+                    </select>
+                  </Field>
+                </div>
+                <Field label="Guardian mobile" hint="Leave empty to use the patient's number.">
+                  <input
+                    type="tel"
+                    value={newPatientForm.guardianPhone}
+                    onChange={(e) => setNewPatientForm({ ...newPatientForm, guardianPhone: e.target.value })}
+                    className={fieldInputClass}
+                  />
+                </Field>
               </div>
+            ) : null}
+
+            <SectionTitle>Contact and address</SectionTitle>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Area / Locality">
+                <input
+                  type="text"
+                  value={newPatientForm.area}
+                  onChange={(e) => setNewPatientForm({ ...newPatientForm, area: e.target.value })}
+                  placeholder="e.g. Sowripalayam"
+                  className={fieldInputClass}
+                />
+              </Field>
+              <Field label="City">
+                <input
+                  type="text"
+                  value={newPatientForm.city}
+                  onChange={(e) => setNewPatientForm({ ...newPatientForm, city: e.target.value })}
+                  className={fieldInputClass}
+                />
+              </Field>
+              <Field label="Pincode">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={newPatientForm.pincode}
+                  onChange={(e) => setNewPatientForm({ ...newPatientForm, pincode: digitsOnly(e.target.value) })}
+                  className={fieldInputClass}
+                />
+              </Field>
+              <Field label="Email">
+                <input
+                  type="email"
+                  value={newPatientForm.email}
+                  onChange={(e) => setNewPatientForm({ ...newPatientForm, email: e.target.value })}
+                  className={fieldInputClass}
+                />
+              </Field>
             </div>
 
-            <div>
-              <label className="block font-semibold text-slate-600 mb-1">Area / Locality</label>
-              <input
-                type="text"
-                value={newPatientForm.area}
-                onChange={(e) => setNewPatientForm({ ...newPatientForm, area: e.target.value })}
-                placeholder="e.g. Sowripalayam, Coimbatore"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold text-slate-600 mb-1">WhatsApp Phone *</label>
-              <input
-                type="tel"
-                required
-                value={newPatientForm.phone}
-                onChange={(e) => setNewPatientForm({ ...newPatientForm, phone: e.target.value })}
-                placeholder="7708827021"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold text-rose-600 mb-1">Medical Alert (High Risk)</label>
+            <SectionTitle>Medical</SectionTitle>
+            <Field label="Medical Alert (High Risk)">
               <input
                 type="text"
                 value={newPatientForm.medicalAlert}
                 onChange={(e) => setNewPatientForm({ ...newPatientForm, medicalAlert: e.target.value })}
-                placeholder="e.g. Hypertensive on medication 3 yrs / Thyroid (Thyroxine)"
+                placeholder="e.g. Hypertensive on medication / Thyroid (Thyroxine)"
                 className="w-full px-3 py-2 border border-rose-200 bg-rose-50/40 rounded-lg text-rose-800 font-medium focus:outline-none"
               />
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Known conditions">
+                <input
+                  type="text"
+                  value={newPatientForm.conditions}
+                  onChange={(e) => setNewPatientForm({ ...newPatientForm, conditions: e.target.value })}
+                  className={fieldInputClass}
+                />
+              </Field>
+              <Field label="Drug allergies">
+                <input
+                  type="text"
+                  value={newPatientForm.allergies}
+                  onChange={(e) => setNewPatientForm({ ...newPatientForm, allergies: e.target.value })}
+                  className={fieldInputClass}
+                />
+              </Field>
             </div>
+
+            <details className="rounded-xl border border-slate-200 p-3">
+              <summary className="cursor-pointer font-semibold text-slate-700">More details (optional)</summary>
+              <div className="space-y-3 pt-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Blood group">
+                    <select
+                      value={newPatientForm.bloodGroup}
+                      onChange={(e) => setNewPatientForm({ ...newPatientForm, bloodGroup: e.target.value })}
+                      className={fieldInputClass}
+                    >
+                      {BLOOD_GROUPS.map((g) => (
+                        <option key={g}>{g}</option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="Occupation">
+                    <input
+                      type="text"
+                      value={newPatientForm.occupation}
+                      onChange={(e) => setNewPatientForm({ ...newPatientForm, occupation: e.target.value })}
+                      className={fieldInputClass}
+                    />
+                  </Field>
+                  <Field label="Preferred language">
+                    <select
+                      value={newPatientForm.language}
+                      onChange={(e) => setNewPatientForm({ ...newPatientForm, language: e.target.value })}
+                      className={fieldInputClass}
+                    >
+                      {LANGUAGES.map((l) => (
+                        <option key={l}>{l}</option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="How did they find the clinic">
+                    <select
+                      value={newPatientForm.referredBy}
+                      onChange={(e) => setNewPatientForm({ ...newPatientForm, referredBy: e.target.value })}
+                      className={fieldInputClass}
+                    >
+                      {REFERRAL_SOURCES.map((r) => (
+                        <option key={r}>{r}</option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="Emergency contact name">
+                    <input
+                      type="text"
+                      value={newPatientForm.emergencyName}
+                      onChange={(e) => setNewPatientForm({ ...newPatientForm, emergencyName: e.target.value })}
+                      className={fieldInputClass}
+                    />
+                  </Field>
+                  <Field label="Emergency contact mobile">
+                    <input
+                      type="tel"
+                      value={newPatientForm.emergencyPhone}
+                      onChange={(e) => setNewPatientForm({ ...newPatientForm, emergencyPhone: e.target.value })}
+                      className={fieldInputClass}
+                    />
+                  </Field>
+                </div>
+                {newPatientForm.gender === "Female" && Number(newPatientForm.age) >= 12 && Number(newPatientForm.age) <= 55 ? (
+                  <Field label="Pregnancy / breastfeeding" hint="Affects medicines and X-ray decisions.">
+                    <select
+                      value={newPatientForm.pregnancy}
+                      onChange={(e) => setNewPatientForm({ ...newPatientForm, pregnancy: e.target.value })}
+                      className={fieldInputClass}
+                    >
+                      {["Not applicable", "Not pregnant", "Pregnant", "Breastfeeding"].map((o) => (
+                        <option key={o}>{o}</option>
+                      ))}
+                    </select>
+                  </Field>
+                ) : null}
+                <Field label="ABHA number" hint="Optional. 14 digits. Do not enter Aadhaar numbers.">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={newPatientForm.abhaNumber}
+                    onChange={(e) => setNewPatientForm({ ...newPatientForm, abhaNumber: e.target.value })}
+                    className={fieldInputClass}
+                  />
+                </Field>
+                <Field label="Chief complaint">
+                  <input
+                    type="text"
+                    value={newPatientForm.chiefComplaint}
+                    onChange={(e) => setNewPatientForm({ ...newPatientForm, chiefComplaint: e.target.value })}
+                    placeholder="e.g. Pain in lower right back tooth"
+                    className={fieldInputClass}
+                  />
+                </Field>
+              </div>
+            </details>
+
+            <SectionTitle>Consent</SectionTitle>
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={newPatientForm.consentTreatment}
+                onChange={(e) => setNewPatientForm({ ...newPatientForm, consentTreatment: e.target.checked })}
+                className="mt-0.5 rounded text-blue-600 focus:ring-0"
+              />
+              <span className="text-slate-700">
+                The patient (or guardian) agrees to dental examination, treatment, and storage of this record. *
+              </span>
+            </label>
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={newPatientForm.consentWhatsapp}
+                onChange={(e) => setNewPatientForm({ ...newPatientForm, consentWhatsapp: e.target.checked })}
+                className="mt-0.5 rounded text-blue-600 focus:ring-0"
+              />
+              <span className="text-slate-700">OK to send appointment reminders and prescriptions on WhatsApp.</span>
+            </label>
+            <p className="text-[10px] text-slate-400">Only collect what you need. Never enter Aadhaar numbers.</p>
 
             <div className="pt-2 flex justify-end gap-2">
               <button
@@ -2595,10 +3388,7 @@ export default function App() {
               >
                 Cancel
               </button>
-              <button
-                type="submit"
-                className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold"
-              >
+              <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold">
                 Register & Open Odontogram
               </button>
             </div>
@@ -2630,7 +3420,18 @@ export default function App() {
                 type="text"
                 required
                 value={newApptForm.patientName}
-                onChange={(e) => setNewApptForm({ ...newApptForm, patientName: e.target.value })}
+                list="patient-options"
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const match = patients.find((pt) => pt.name.toLowerCase() === value.trim().toLowerCase());
+                  setNewApptForm({
+                    ...newApptForm,
+                    patientName: value,
+                    ...(match
+                      ? { patientId: match.id, phone: match.phone || "", age: match.age || "" }
+                      : { patientId: "" }),
+                  });
+                }}
                 placeholder="Patient Full Name"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
               />
@@ -2696,6 +3497,33 @@ export default function App() {
               </select>
             </div>
 
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Attending Doctor *</label>
+                <input
+                  type="text"
+                  required
+                  list="doctor-options"
+                  value={newApptForm.doctor}
+                  onChange={(e) => setNewApptForm({ ...newApptForm, doctor: e.target.value })}
+                  placeholder="Choose or type"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Visit Type</label>
+                <select
+                  value={newApptForm.visitType}
+                  onChange={(e) => setNewApptForm({ ...newApptForm, visitType: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none bg-white"
+                >
+                  {VISIT_TYPES.map((v) => (
+                    <option key={v}>{v}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
             <div>
               <label className="block font-semibold text-slate-600 mb-1">Planned Procedure</label>
               <input
@@ -2750,12 +3578,31 @@ export default function App() {
                 type="text"
                 required
                 value={newInvoiceForm.patientName}
-                onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, patientName: e.target.value })}
+                list="patient-options"
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const match = patients.find((pt) => pt.name.toLowerCase() === value.trim().toLowerCase());
+                  setNewInvoiceForm({ ...newInvoiceForm, patientName: value, patientId: match ? match.id : "" });
+                }}
                 placeholder="Patient Full Name"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
               />
             </div>
 
+            <div>
+              <label className="block font-semibold text-slate-600 mb-1">Payment Mode</label>
+              <select
+                value={newInvoiceForm.paymentMode}
+                onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, paymentMode: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none bg-white"
+              >
+                {PAYMENT_MODES.map((m) => (
+                  <option key={m}>{m}</option>
+                ))}
+              </select>
+            </div>
+
+            {newInvoiceForm.paymentMode === "Insurance / TPA" && (
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block font-semibold text-slate-600 mb-1">Insurance / TPA</label>
@@ -2781,7 +3628,18 @@ export default function App() {
                   <option>Self-Pay Completed</option>
                 </select>
               </div>
+              <div className="col-span-2">
+                <label className="block font-semibold text-slate-600 mb-1">Claim ID (optional)</label>
+                <input
+                  type="text"
+                  value={newInvoiceForm.claimId}
+                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, claimId: e.target.value })}
+                  placeholder="Leave empty to generate one"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
+              </div>
             </div>
+            )}
 
             <div>
               <label className="block font-semibold text-slate-600 mb-1">Treatment Description</label>
