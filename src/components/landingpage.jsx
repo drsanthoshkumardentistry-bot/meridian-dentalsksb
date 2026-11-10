@@ -709,6 +709,7 @@ export default function LandingPage({
       <footer className="bg-white border-t border-rule text-slate-500 py-10 px-5 text-center text-sm space-y-1.5">
         <p className="font-display font-bold text-ink text-base">MeriDent</p>
         <p>StartupTN ref: STN99974 | MSME Udyam: UDYAM-TN-04-0139569</p>
+        <p className="pt-1"><a href="/?page=privacy" className="underline hover:text-ink">Privacy Policy</a> <span aria-hidden="true">|</span> <a href="/?page=terms" className="underline hover:text-ink">Terms of Use</a></p>
         <p className="text-slate-500 pt-2">© 2026 MeriDent. All rights reserved.</p>
       </footer>
     </div>
