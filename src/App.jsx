@@ -5,6 +5,8 @@
  * File: src/App.jsx
  * ============================================================================== */
 
+import TreatmentPlans from "./components/TreatmentPlans.jsx";
+import { planToInvoiceItems, markPlanBilled } from "./plans.js";
 import React, { useState, useEffect, useRef } from "react";
 import {
   Menu,
@@ -1248,6 +1250,16 @@ export default function App() {
     };
   }, [upiUri]);
 
+  const closeInvoiceModal = () => {
+    if (newInvoiceForm.planId) {
+      setNewInvoiceForm({
+        patientId: "", patientName: "", paymentMode: "Cash", provider: "Self Pay", claimId: "",
+        status: "Self-Pay Completed", items: [blankInvoiceItem()], discount: "", advance: "",
+      });
+    }
+    setIsAddInvoiceOpen(false);
+  };
+
   const handleCreateInvoice = (e) => {
     e.preventDefault();
     if (!newInvoiceForm.patientName.trim()) {
@@ -1292,6 +1304,15 @@ export default function App() {
       date: today,
     };
     setInvoices([inv, ...invoices]);
+    if (newInvoiceForm.planId && newInvoiceForm.patientId) {
+      setPatients((prev) =>
+        prev.map((p) =>
+          p.id === newInvoiceForm.patientId
+            ? { ...p, plans: (p.plans || []).map((pl) => (pl.id === newInvoiceForm.planId ? markPlanBilled(pl, inv.id) : pl)) }
+            : p
+        )
+      );
+    }
     setNewInvoiceForm({
       patientId: "",
       patientName: "",
@@ -3116,6 +3137,7 @@ export default function App() {
                   "Diagnosis & Trauma",
                   "Systemic Review",
                   "Prescriptions",
+                  "Treatment Plan",
                   "Medical History",
                   "Patient Details",
                 ].map((tab) => {
@@ -3411,6 +3433,32 @@ export default function App() {
               )}
 
               {/* TAB 5: PRESCRIPTIONS & WHATSAPP ENGINE */}
+              {activeModalTab === "Treatment Plan" && (
+                <TreatmentPlans
+                  patient={activePatient}
+                  practiceProfile={practiceProfile}
+                  showToast={showToast}
+                  onChange={(plans) => updateActivePatient({ plans })}
+                  onBill={(plan) => {
+                    setNewInvoiceForm({
+                      patientId: activePatient.id,
+                      patientName: activePatient.name,
+                      paymentMode: "Cash",
+                      provider: "Self Pay",
+                      claimId: "",
+                      status: "Self-Pay Completed",
+                      items: planToInvoiceItems(plan, () => newId("LI")),
+                      discount: plan.discount || "",
+                      advance: "",
+                      planId: plan.id,
+                    });
+                    setIsChartModalOpen(false);
+                    setActiveNav("Dental Insurance & Invoices");
+                    setIsAddInvoiceOpen(true);
+                  }}
+                />
+              )}
+
               {activeModalTab === "Prescriptions" && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -4169,7 +4217,7 @@ export default function App() {
               <h3 className="text-sm font-bold text-slate-900">Generate Invoice</h3>
               <button
                 type="button"
-                onClick={() => setIsAddInvoiceOpen(false)}
+                onClick={closeInvoiceModal}
                 className="text-slate-400 hover:text-slate-600"
               >
                 <X className="w-4 h-4" />
@@ -4360,7 +4408,7 @@ export default function App() {
             <div className="pt-2 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setIsAddInvoiceOpen(false)}
+                onClick={closeInvoiceModal}
                 className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
               >
                 Cancel
