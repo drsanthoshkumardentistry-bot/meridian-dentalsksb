@@ -177,7 +177,7 @@ describe("demographics and required data", () => {
 
   it("invoices require amount and treatment, and self-pay hides insurance fields", async () => {
     await openApp();
-    nav("Dental Insurance & Invoices");
+    nav("Billing & Invoices");
     fireEvent.click(await screen.findByText("New Invoice"));
     const form = (await screen.findAllByText("Patient Name *"))[0].closest("form");
     type(form.querySelector('input[list="patient-options"]'), "Walk In");
@@ -205,7 +205,7 @@ describe("demographics and required data", () => {
 
   it("adds 18% GST for cosmetic work and takes part payments without overpaying", async () => {
     await openApp();
-    nav("Dental Insurance & Invoices");
+    nav("Billing & Invoices");
     fireEvent.click(await screen.findByText("New Invoice"));
     const form = (await screen.findAllByText("Patient Name *"))[0].closest("form");
     type(form.querySelector('input[list="patient-options"]'), "Smile Client");
@@ -233,7 +233,7 @@ describe("demographics and required data", () => {
 
   it("bills several treatments on one invoice, mixing exempt and 18% GST", async () => {
     await openApp();
-    nav("Dental Insurance & Invoices");
+    nav("Billing & Invoices");
     fireEvent.click(await screen.findByText("New Invoice"));
     const form = (await screen.findAllByText("Patient Name *"))[0].closest("form");
     type(form.querySelector('input[list="patient-options"]'), "Multi Client");
@@ -254,7 +254,7 @@ describe("demographics and required data", () => {
 
   it("rejects a second treatment row with no amount, and rows can be removed", async () => {
     await openApp();
-    nav("Dental Insurance & Invoices");
+    nav("Billing & Invoices");
     fireEvent.click(await screen.findByText("New Invoice"));
     const form = (await screen.findAllByText("Patient Name *"))[0].closest("form");
     type(form.querySelector('input[list="patient-options"]'), "Row Client");
@@ -380,7 +380,7 @@ describe("demographics and required data", () => {
       mk("INV/FRESH", 2, 100000), mk("INV/PAID", 3, 50000, 50000), mk("INV/OLD", 90, 250000),
     ]));
     await openApp();
-    nav("Dental Insurance & Invoices");
+    nav("Billing & Invoices");
     const panel = await screen.findByTestId("receivables");
     expect(within(panel).getByText("₹2,500.00").closest("button").textContent).toMatch(/Over 60 days/);
     expect(within(panel).getByText("₹1,000.00").closest("button").textContent).toMatch(/Up to 7 days/);
@@ -394,5 +394,57 @@ describe("demographics and required data", () => {
     fireEvent.click(within(panel).getByText("₹2,500.00").closest("button"));
     expect(screen.queryByText("INV/FRESH")).toBeNull();
     expect(screen.getByText("INV/OLD")).toBeTruthy();
+  });
+
+  it("billing screen: monthly summary, overdue flag, search, status filters and export", async () => {
+    const day = (d) => new Date(Date.now() - d * 86400000);
+    const ago = (d) => day(d).toLocaleDateString("en-IN");
+    const iso = (d) => { const x = day(d); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`; };
+    const mk = (id, patient, totalP, paidP, dueDate) => ({
+      id, patientId: "", patient, paymentMode: "Cash", provider: "Self Pay", claimId: "", status: "Self-Pay",
+      treatment: "Scaling", subtotalP: totalP, discountP: 0, taxableP: totalP, gstRate: 0, cgstP: 0, sgstP: 0, taxP: 0, totalP,
+      payments: paidP ? [{ date: ago(0), mode: "Cash", amountP: paidP }] : [], date: ago(0), ...(dueDate ? { dueDate } : {}),
+    });
+    localStorage.setItem(KEY("invoices"), JSON.stringify([
+      mk("INV/A", "Asha Rao", 100000, 100000),
+      mk("INV/B", "Bala Kumar", 100000, 40000),
+      mk("INV/C", "Chitra Menon", 50000, 0, iso(5)),
+    ]));
+    await openApp();
+    nav("Billing & Invoices");
+    const sum = await screen.findByTestId("billing-summary");
+    expect(within(sum).getByText("Billed this month").nextSibling.textContent).toBe("₹2,500.00");
+    expect(within(sum).getByText("Collected this month").nextSibling.textContent).toBe("₹1,400.00");
+    expect(within(sum).getByText("Outstanding (all time)").nextSibling.textContent).toBe("₹1,100.00");
+    expect(within(sum).getByText(/^Overdue \(1\)/).nextSibling.textContent).toBe("₹500.00");
+    expect(screen.getByText("Overdue by 5 days")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: /^Paid$/ }));
+    expect(screen.getByText("INV/A")).toBeTruthy();
+    expect(screen.queryByText("INV/B")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Part paid/ }));
+    expect(screen.getByText("INV/B")).toBeTruthy();
+    expect(screen.queryByText("INV/A")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Overdue \(1\)/ }));
+    expect(screen.getByText("INV/C")).toBeTruthy();
+    expect(screen.queryByText("INV/B")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: /All invoices/ }));
+    fireEvent.change(screen.getByLabelText("Search invoices"), { target: { value: "chitra" } });
+    expect(screen.getByText("INV/C")).toBeTruthy();
+    expect(screen.queryByText("INV/A")).toBeNull();
+    fireEvent.change(screen.getByLabelText("Search invoices"), { target: { value: "zzz" } });
+    expect(screen.getByText("No invoice matches your search.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Export list/ })).toBeTruthy();
+  });
+
+  it("invoice form can set a due date from a quick button", async () => {
+    await openApp();
+    nav("Billing & Invoices");
+    fireEvent.click(await screen.findByRole("button", { name: /^New Invoice$/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "7 days" }));
+    expect(screen.getByLabelText(/Payment due by/).value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    fireEvent.click(screen.getByRole("button", { name: "Clear" }));
+    expect(screen.getByLabelText(/Payment due by/).value).toBe("");
   });
 });
