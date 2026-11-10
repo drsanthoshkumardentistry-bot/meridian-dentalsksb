@@ -19,6 +19,8 @@ import {
   MessageCircle,
   Package,
   PhoneCall,
+  WifiOff,
+  Bell,
   ShieldCheck,
   Sun,
   TrendingUp,
@@ -47,14 +49,29 @@ const FEATURES = [
     text: "Book chair and doctor slots and send a WhatsApp confirmation with one tap."
   },
   {
+    icon: Bell,
+    title: "WhatsApp reminders & recall",
+    text: "See who to remind for tomorrow, who owes a balance, and who is due for a 6-month check-up. One tap opens WhatsApp with the message ready. Patients can opt out."
+  },
+  {
+    icon: BarChart3,
+    title: "GST billing & UPI QR",
+    text: "Invoices with GST where it applies (therapeutic care is exempt), part payments, a scannable UPI QR for the exact balance, and printable invoices and receipts."
+  },
+  {
+    icon: TrendingUp,
+    title: "Reports for your accountant",
+    text: "Daily collections by cash, UPI and card, plus a monthly GST summary. Download a spreadsheet or print a PDF."
+  },
+  {
     icon: FileText,
     title: "Prescriptions & referrals",
     text: "Add medicines from presets and share the prescription on WhatsApp. Refer patients between departments."
   },
   {
-    icon: BarChart3,
-    title: "Billing with UPI QR",
-    text: "Create invoices, show a UPI QR for payment, and track insurance claim status."
+    icon: WifiOff,
+    title: "Works with weak internet",
+    text: "Keep working when the connection drops. Your changes save on the device and sync to the cloud when you are back online."
   },
   {
     icon: Package,
@@ -64,19 +81,46 @@ const FEATURES = [
 ];
 
 const STEPS = [
-  { n: "1", title: "Sign in", text: "Continue with Google. Each clinic gets its own private workspace." },
+  { n: "1", title: "Sign in", text: "Continue with Google, or use your email and password. Each clinic gets its own private workspace." },
   { n: "2", title: "Add your data", text: "Register patients yourself, or ask us to help you move existing records." },
   { n: "3", title: "Set up your clinic", text: "Add your clinic details, doctors and chairs. We guide you on a call if you like." },
   { n: "4", title: "Start charting", text: "Open a patient and chart the first tooth in a few taps." }
 ];
 
 const COMING_NEXT = [
-  "GST-ready invoices",
-  "Automated recall reminders",
+  "Multi-item invoices",
   "Shareable treatment plans",
+  "Automatic WhatsApp sending",
+  "Radiograph cloud storage",
   "Lab order tracking",
-  "Staff logins with roles",
-  "Owner reports"
+  "Staff logins with roles"
+];
+
+const FAQS = [
+  {
+    q: "Is MeriDent free?",
+    a: "It is free during early access, with no credit card. We will announce simple pricing well before anything changes, and early clinics will hear from us first."
+  },
+  {
+    q: "Is my patients' data private?",
+    a: "Yes. Each clinic's records are kept in its own workspace, and other clinics cannot see them. You can export or delete your clinic's records any time by asking us."
+  },
+  {
+    q: "Does MeriDent send WhatsApp messages by itself?",
+    a: "Not yet. It shows who needs a reminder and opens WhatsApp with the message already written, so you tap Send. Patients who opt out are never listed."
+  },
+  {
+    q: "How does GST work on invoices?",
+    a: "You choose per invoice. Therapeutic dental care is shown as GST exempt. Cosmetic work is charged 18% GST, split into CGST and SGST. Please confirm your own GST position with your accountant."
+  },
+  {
+    q: "Will it work on my phone?",
+    a: "Yes. MeriDent runs in your phone or laptop browser. There is nothing to install."
+  },
+  {
+    q: "Can you move my existing records in?",
+    a: "Yes. Message us on WhatsApp and we will help you move your patient list across."
+  }
 ];
 
 export default function LandingPage({
@@ -152,6 +196,10 @@ export default function LandingPage({
               <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">Dental practice management</span>
             </div>
           </div>
+          <nav className="hidden md:flex items-center gap-6 text-xs font-semibold text-slate-600">
+            <a href="#features" className="hover:text-blue-700">Features</a>
+            <a href="#faq" className="hover:text-blue-700">FAQ</a>
+          </nav>
           <button
             type="button"
             onClick={onLoginClick}
@@ -176,8 +224,8 @@ export default function LandingPage({
           </h1>
 
           <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            Digital case sheets with a 32-tooth odontogram, an OPG viewer, appointments, billing with UPI QR and WhatsApp
-            sharing, built by dental students for Indian clinics.
+            Digital case sheets with a 32-tooth odontogram, an OPG viewer, appointments, GST billing with UPI QR, and
+            WhatsApp reminders, built by dental students for Indian clinics.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
@@ -318,7 +366,7 @@ export default function LandingPage({
                 <div className="grid grid-cols-3 gap-2 text-center text-xs">
                   <div className="bg-slate-50 p-3 rounded-xl">Patients<strong className="block text-blue-600 text-base">128</strong></div>
                   <div className="bg-slate-50 p-3 rounded-xl">Visits today<strong className="block text-blue-600 text-base">9</strong></div>
-                  <div className="bg-slate-50 p-3 rounded-xl">Low stock<strong className="block text-blue-600 text-base">2</strong></div>
+                  <div className="bg-slate-50 p-3 rounded-xl">Reminders due<strong className="block text-blue-600 text-base">4</strong></div>
                 </div>
               </div>
             </div>
@@ -328,7 +376,7 @@ export default function LandingPage({
       </section>
 
       {/* FEATURES */}
-      <section className="max-w-6xl mx-auto px-5 py-14 space-y-8">
+      <section id="features" className="max-w-6xl mx-auto px-5 py-14 space-y-8">
         <div className="text-center space-y-2">
           <h2 className="text-2xl sm:text-3xl font-black tracking-tight">What you can do today</h2>
           <p className="text-sm text-slate-600 max-w-xl mx-auto">Everything below is available in the app now.</p>
@@ -352,7 +400,7 @@ export default function LandingPage({
           <div className="space-y-3">
             <Users className="w-7 h-7 mx-auto text-cyan-300" />
             <h3 className="text-lg font-black">Keep patients informed</h3>
-            <p className="text-xs text-slate-300 leading-relaxed">Appointment diary and one-tap WhatsApp confirmations and prescriptions.</p>
+            <p className="text-xs text-slate-300 leading-relaxed">Appointment diary, reminders, recall and one-tap WhatsApp confirmations and prescriptions.</p>
           </div>
           <div className="space-y-3">
             <TrendingUp className="w-7 h-7 mx-auto text-cyan-300" />
@@ -362,7 +410,7 @@ export default function LandingPage({
           <div className="space-y-3">
             <BarChart3 className="w-7 h-7 mx-auto text-cyan-300" />
             <h3 className="text-lg font-black">Collect and track</h3>
-            <p className="text-xs text-slate-300 leading-relaxed">UPI QR billing, insurance claim status and consumable stock alerts.</p>
+            <p className="text-xs text-slate-300 leading-relaxed">GST invoices, part payments, UPI QR, daily collection reports and stock alerts.</p>
           </div>
         </div>
       </section>
@@ -408,7 +456,7 @@ export default function LandingPage({
           <div className="rounded-2xl border border-slate-200 p-6 space-y-2">
             <Lock className="w-5 h-5 text-blue-600" />
             <h3 className="font-bold text-sm">Private workspace</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">Each clinic's records are stored under its own Google account and are not shared with other clinics.</p>
+            <p className="text-xs text-slate-600 leading-relaxed">Each clinic's records are stored under its own sign-in and are not shared with other clinics. Only a verified email can open a workspace.</p>
           </div>
           <div className="rounded-2xl border border-slate-200 p-6 space-y-2">
             <Cloud className="w-5 h-5 text-blue-600" />
@@ -418,9 +466,33 @@ export default function LandingPage({
           <div className="rounded-2xl border border-slate-200 p-6 space-y-2">
             <ShieldCheck className="w-5 h-5 text-blue-600" />
             <h3 className="font-bold text-sm">Your data, your control</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">Ask us any time to export or delete your clinic's records.</p>
+            <p className="text-xs text-slate-600 leading-relaxed">Patients can opt out of WhatsApp messages, and you can ask us any time to export or delete your clinic's records.</p>
           </div>
         </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" className="max-w-3xl mx-auto px-5 pb-14 space-y-6">
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight">Questions clinics ask</h2>
+        </div>
+        <div className="space-y-3">
+          {FAQS.map(({ q, a }) => (
+            <details key={q} className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <summary className="cursor-pointer list-none flex items-center justify-between gap-3 text-sm font-bold text-slate-900">
+                <span>{q}</span>
+                <span className="text-blue-600 text-lg leading-none transition group-open:rotate-45" aria-hidden="true">+</span>
+              </summary>
+              <p className="mt-3 text-xs leading-relaxed text-slate-600">{a}</p>
+            </details>
+          ))}
+        </div>
+        <p className="text-center text-xs text-slate-500">
+          Still unsure?{" "}
+          <a href={DEMO_LINK} target="_blank" rel="noopener noreferrer" className="font-bold text-blue-700 hover:text-blue-900">
+            Ask us on WhatsApp
+          </a>
+        </p>
       </section>
 
       {/* FOUNDERS */}
