@@ -357,7 +357,7 @@ describe("demographics and required data", () => {
   it("invoice screen shows unpaid money by age and filters to unpaid, oldest first", async () => {
     const ago = (d) => new Date(Date.now() - d * 86400000).toLocaleDateString("en-IN");
     const mk = (id, d, totalP, paidP = 0) => ({
-      id, patientId: "", patient: id, paymentMode: "Cash", provider: "Self Pay", claimId: "", status: "Self-Pay",
+      id, patientId: "", patient: `Pt ${id}`, paymentMode: "Cash", provider: "Self Pay", claimId: "", status: "Self-Pay",
       treatment: "Scaling", subtotalP: totalP, discountP: 0, taxableP: totalP, gstRate: 0, cgstP: 0, sgstP: 0, taxP: 0, totalP,
       payments: paidP ? [{ date: ago(d), mode: "Cash", amountP: paidP }] : [], date: ago(d),
     });
