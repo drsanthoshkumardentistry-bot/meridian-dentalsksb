@@ -229,6 +229,72 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Network feed: posts, likes, comments and follows. Only verified dentists can read or write, and the
+    // author's name, qualification and specialty must match their verified profile.
+    match /connectPosts/{postId} {
+      allow read: if isVerified();
+      allow create: if isVerified()
+                    && request.auth.uid == request.resource.data.authorId
+                    && request.resource.data.keys().hasOnly(['authorId', 'authorName', 'authorQualification', 'authorSpecialty', 'type', 'title', 'body', 'tag', 'eventDate', 'venue', 'likeCount', 'commentCount', 'createdAt'])
+                    && request.resource.data.authorName == get(dentistDoc(request.auth.uid)).data.fullName
+                    && request.resource.data.authorSpecialty == get(dentistDoc(request.auth.uid)).data.specialty
+                    && request.resource.data.authorQualification == get(dentistDoc(request.auth.uid)).data.qualification
+                    && request.resource.data.type in ['case', 'question', 'update', 'event']
+                    && request.resource.data.title is string && request.resource.data.title.size() >= 3 && request.resource.data.title.size() <= 120
+                    && request.resource.data.body is string && request.resource.data.body.size() >= 10 && request.resource.data.body.size() <= 2000
+                    && request.resource.data.likeCount == 0 && request.resource.data.commentCount == 0
+                    && request.resource.data.createdAt == request.time;
+      // Anyone verified can change only a counter, by one, and a like counter only together with the like itself.
+      allow update: if isVerified()
+                    && ((request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likeCount'])
+                         && ((request.resource.data.likeCount == resource.data.likeCount + 1
+                              && !exists(/databases/$(database)/documents/connectPosts/$(postId)/likes/$(request.auth.uid))
+                              && existsAfter(/databases/$(database)/documents/connectPosts/$(postId)/likes/$(request.auth.uid)))
+                             || (request.resource.data.likeCount == resource.data.likeCount - 1
+                                 && exists(/databases/$(database)/documents/connectPosts/$(postId)/likes/$(request.auth.uid))
+                                 && !existsAfter(/databases/$(database)/documents/connectPosts/$(postId)/likes/$(request.auth.uid)))))
+                        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentCount'])
+                            && (request.resource.data.commentCount == resource.data.commentCount + 1
+                                || request.resource.data.commentCount == resource.data.commentCount - 1)));
+      allow delete: if (isVerified() && request.auth.uid == resource.data.authorId) || isAdmin();
+
+      match /likes/{likerId} {
+        allow get: if isVerified() && request.auth.uid == likerId;
+        allow list: if false;
+        allow create, delete: if isVerified() && request.auth.uid == likerId;
+      }
+      match /comments/{commentId} {
+        allow read: if isVerified();
+        allow create: if isVerified()
+                      && request.auth.uid == request.resource.data.authorId
+                      && request.resource.data.keys().hasOnly(['authorId', 'authorName', 'authorSpecialty', 'text', 'createdAt'])
+                      && request.resource.data.authorName == get(dentistDoc(request.auth.uid)).data.fullName
+                      && request.resource.data.authorSpecialty == get(dentistDoc(request.auth.uid)).data.specialty
+                      && request.resource.data.text is string && request.resource.data.text.size() >= 1 && request.resource.data.text.size() <= 800
+                      && request.resource.data.createdAt == request.time;
+        allow delete: if (isVerified() && request.auth.uid == resource.data.authorId) || isAdmin();
+      }
+    }
+
+    match /connectFollows/{followId} {
+      allow read: if isVerified() && resource.data.followerId == request.auth.uid;
+      allow create: if isVerified()
+                    && request.resource.data.followerId == request.auth.uid
+                    && request.resource.data.keys().hasOnly(['followerId', 'followeeId', 'createdAt'])
+                    && followId == request.auth.uid + '_' + request.resource.data.followeeId;
+      allow delete: if isVerified() && resource.data.followerId == request.auth.uid;
+    }
+
+    // Reports about a post or comment. Anyone verified can file one; only staff can read or clear them.
+    match /connectReports/{reportId} {
+      allow create: if isVerified()
+                    && request.resource.data.reporterId == request.auth.uid
+                    && request.resource.data.keys().hasOnly(['postId', 'commentId', 'reporterId', 'reason', 'createdAt'])
+                    && request.resource.data.reason is string && request.resource.data.reason.size() <= 200;
+      allow read, delete: if isAdmin();
+      allow update: if false;
+    }
+
     // Append-only audit log. Staff can read it; nobody can change or delete an entry.
     match /connectAudit/{entryId} {
       allow create: if isVerified() && request.resource.data.actorId == request.auth.uid;

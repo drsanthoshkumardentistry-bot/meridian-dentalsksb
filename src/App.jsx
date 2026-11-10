@@ -84,7 +84,16 @@ import {
   ClipboardCheck,
   Bell,
   Star,
-  BarChart3
+  BarChart3,
+  IndianRupee,
+  LayoutDashboard,
+  CalendarDays,
+  ScanSearch,
+  MessagesSquare,
+  UserCog,
+  Hospital,
+  Wallet,
+  UsersRound
 } from "lucide-react";
 
 // Safe dynamic import from ./firebase
@@ -1817,16 +1826,16 @@ export default function App() {
 
           <nav className="p-3 space-y-1">
             {navFor(role, [
-              { label: "Dashboard", icon: <Menu className="w-4 h-4" /> },
-              { label: "Appointments Diary", icon: <Calendar className="w-4 h-4" /> },
+              { label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
+              { label: "Appointments Diary", icon: <CalendarDays className="w-4 h-4" /> },
               { label: "Patients & Odontogram", icon: <Users className="w-4 h-4" /> },
-              { label: "OPG & Diagnosis Studio", icon: <Sun className="w-4 h-4" /> },
-              { label: "Billing & Invoices", icon: <DollarSign className="w-4 h-4" /> },
-              { label: "MeriDent Connect", icon: <Network className="w-4 h-4" /> },
+              { label: "OPG & Diagnosis Studio", icon: <ScanSearch className="w-4 h-4" /> },
+              { label: "Billing & Invoices", icon: <IndianRupee className="w-4 h-4" /> },
+              { label: "MeriDent Connect", icon: <MessagesSquare className="w-4 h-4" /> },
               { label: "Reports", icon: <BarChart3 className="w-4 h-4" /> },
               { label: "Stock Maintenance", icon: <Package className="w-4 h-4" /> },
-              { label: "Employee Roles & Roster", icon: <Briefcase className="w-4 h-4" /> },
-              { label: "Practice Profile", icon: <UserCheck className="w-4 h-4" /> },
+              { label: "Employee Roles & Roster", icon: <UserCog className="w-4 h-4" /> },
+              { label: "Practice Profile", icon: <Hospital className="w-4 h-4" /> },
             ]).map((item) => {
               const isActive = activeNav === item.label;
               return (
@@ -2093,7 +2102,7 @@ export default function App() {
                 <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between">
                   <div className="space-y-4">
                     <div className="text-xs font-bold text-slate-800 tracking-wider uppercase flex items-center gap-2">
-                      <Sun className="w-4 h-4 text-blue-600" /> Diagnostic Entry Pane
+                      <ScanSearch className="w-4 h-4 text-blue-600" /> Diagnostic Entry Pane
                     </div>
 
                     <div>
@@ -2535,7 +2544,7 @@ export default function App() {
 
               {invoices.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
-                  <DollarSign className="w-10 h-10 text-blue-600 mx-auto" />
+                  <IndianRupee className="w-10 h-10 text-blue-600 mx-auto" />
                   <h3 className="text-sm font-bold text-slate-800">No invoices yet</h3>
                   <p className="text-xs text-slate-500 max-w-sm mx-auto">Bill a visit with GST, take part payments and share a UPI QR for the balance.</p>
                   <button
@@ -3297,10 +3306,10 @@ export default function App() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                 {[
-                  { title: "Patients", value: patients.length, note: "Registered patient records", icon: <Users className="w-5 h-5" />, tone: "bg-blue-50 text-blue-600" },
-                  { title: "Visits Today", value: diarySum.today, note: diarySum.tomorrow ? `${diarySum.tomorrow} tomorrow` : "Active bookings today", icon: <Calendar className="w-5 h-5" />, tone: "bg-aqua-50 text-aqua-600" },
-                  { title: "Collected this month", value: `₹${formatINR(billing.collectedP)}`, note: `₹${formatINR(billing.billedP)} billed this month`, icon: <DollarSign className="w-5 h-5" />, tone: "bg-emerald-50 text-emerald-600" },
-                  { title: "Outstanding", value: `₹${formatINR(billing.outstandingP)}`, note: billing.overdueCount ? `${billing.overdueCount} overdue, ₹${formatINR(billing.overdueP)}` : "Unpaid balance across invoices", icon: <Package className="w-5 h-5" />, tone: billing.overdueCount ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600" },
+                  { title: "Patients", value: patients.length, note: "Registered patient records", icon: <UsersRound className="w-5 h-5" />, tone: "bg-blue-50 text-blue-600" },
+                  { title: "Visits Today", value: diarySum.today, note: diarySum.tomorrow ? `${diarySum.tomorrow} tomorrow` : "Active bookings today", icon: <CalendarDays className="w-5 h-5" />, tone: "bg-aqua-50 text-aqua-600" },
+                  { title: "Collected this month", value: `₹${formatINR(billing.collectedP)}`, note: `₹${formatINR(billing.billedP)} billed this month`, icon: <IndianRupee className="w-5 h-5" />, tone: "bg-emerald-50 text-emerald-600" },
+                  { title: "Outstanding", value: `₹${formatINR(billing.outstandingP)}`, note: billing.overdueCount ? `${billing.overdueCount} overdue, ₹${formatINR(billing.overdueP)}` : "Unpaid balance across invoices", icon: <Wallet className="w-5 h-5" />, tone: billing.overdueCount ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600" },
                 ].map((card) => (
                   <div key={card.title} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
                     <div className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center ${card.tone}`}>{card.icon}</div>
