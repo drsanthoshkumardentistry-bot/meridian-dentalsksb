@@ -584,12 +584,16 @@ export default function App() {
       return undefined;
     }
     setMembershipReady(false);
-    return watchMyMembership(
+    // If the answer is slow (first visit while offline), open the person's own clinic rather than wait forever.
+    // A real membership still takes over the moment it arrives.
+    const fallback = setTimeout(() => setMembershipReady(true), 4000);
+    const stop = watchMyMembership(
       db,
       authUser.email,
-      (m) => { setMembership(m); setMembershipReady(true); },
-      () => { setMembership(null); setMembershipReady(true); }
+      (m) => { clearTimeout(fallback); setMembership(m); setMembershipReady(true); },
+      () => { clearTimeout(fallback); setMembership(null); setMembershipReady(true); }
     );
+    return () => { clearTimeout(fallback); stop(); };
   }, [isVerified, authUser?.email]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -1741,7 +1745,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen bg-[#f8fafc] text-slate-800 font-sans overflow-hidden">
+    <div className="flex h-screen bg-sky-50 text-slate-800 font-sans overflow-hidden">
       
       {idleSecondsLeft !== null && (
         <IdleWarning secondsLeft={idleSecondsLeft} onStay={staySignedIn} onLogout={() => handleLogout()} />
@@ -1779,7 +1783,7 @@ export default function App() {
 
       {/* --- SIDEBAR --- */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-ink text-white flex flex-col justify-between transition-transform duration-300 md:static md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-ink to-[#0c2a5c] text-white flex flex-col justify-between transition-transform duration-300 md:static md:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -1834,7 +1838,7 @@ export default function App() {
                   }}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all ${
                     isActive
-                      ? "bg-[#1d4ed8] text-white shadow-sm"
+                      ? "bg-[#1d4ed8] text-white shadow-[inset_3px_0_0_#2cc4d6]"
                       : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
                   }`}
                 >
@@ -3264,8 +3268,8 @@ export default function App() {
 
           {/* TAB 8: DASHBOARD OVERVIEW */}
           {activeNav !== "Practice Profile" && (!practiceProfile.drName || !practiceProfile.state || !practiceProfile.councilRegNumber) && (
-            <div className="mt-5 rounded-2xl border border-blue-200 bg-blue-50 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="text-sm text-blue-900">
+            <div className="mt-5 mb-6 rounded-2xl border border-gold-500/40 bg-gold-50 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="text-sm text-gold-700">
                 <strong>Complete your clinic profile.</strong> Add the doctor name, state and Dental Council registration number so
                 prescriptions and invoices are correct.
               </div>
@@ -3294,7 +3298,7 @@ export default function App() {
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                 {[
                   { title: "Patients", value: patients.length, note: "Registered patient records", icon: <Users className="w-5 h-5" />, tone: "bg-blue-50 text-blue-600" },
-                  { title: "Visits Today", value: diarySum.today, note: diarySum.tomorrow ? `${diarySum.tomorrow} tomorrow` : "Active bookings today", icon: <Calendar className="w-5 h-5" />, tone: "bg-indigo-50 text-indigo-600" },
+                  { title: "Visits Today", value: diarySum.today, note: diarySum.tomorrow ? `${diarySum.tomorrow} tomorrow` : "Active bookings today", icon: <Calendar className="w-5 h-5" />, tone: "bg-aqua-50 text-aqua-600" },
                   { title: "Collected this month", value: `₹${formatINR(billing.collectedP)}`, note: `₹${formatINR(billing.billedP)} billed this month`, icon: <DollarSign className="w-5 h-5" />, tone: "bg-emerald-50 text-emerald-600" },
                   { title: "Outstanding", value: `₹${formatINR(billing.outstandingP)}`, note: billing.overdueCount ? `${billing.overdueCount} overdue, ₹${formatINR(billing.overdueP)}` : "Unpaid balance across invoices", icon: <Package className="w-5 h-5" />, tone: billing.overdueCount ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600" },
                 ].map((card) => (

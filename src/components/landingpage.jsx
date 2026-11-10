@@ -37,36 +37,53 @@ const DEMO_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
 )}`;
 
 /* Features grouped by where in the day they happen. Only things the app does today. */
+const TONES = {
+  blue: { head: "text-brand-700 border-brand-600", chip: "bg-mist text-brand-600" },
+  aqua: { head: "text-aqua-700 border-aqua-500", chip: "bg-aqua-50 text-aqua-600" },
+  navy: { head: "text-ink border-ink", chip: "bg-slate-100 text-ink" },
+  sky: { head: "text-brand-500 border-brand-500", chip: "bg-sky-200/60 text-brand-700" }
+};
+
 const FEATURE_GROUPS = [
   {
     heading: "At the chair",
+    tone: "blue",
     items: [
       { icon: Users, title: "32-tooth FDI odontogram", text: "Chart adult and primary teeth. A tooth can hold several findings at once, such as caries, a root canal and a crown, and each one can be removed on its own." },
       { icon: Sun, title: "OPG & diagnosis studio", text: "Open a panoramic film at full size, zoom in, adjust brightness and contrast, and invert the negative. Calibrate against an object of known length to measure in millimetres." },
       { icon: ClipboardList, title: "Treatment plans & estimates", text: "Price a plan tooth by tooth and send the patient a link on WhatsApp. They approve or decline from their phone, with no sign-in. Approved plans turn into an invoice." },
+      { icon: ClipboardList, title: "Draft visit notes from the chart", text: "One tap fills findings, advice and the next planned treatment from the patient's chart. You edit the note before you save it, and treatment done is left for you to write." },
+      { icon: ShieldCheck, title: "Caries risk & gum screening", text: "Tick risk factors to see low, moderate or high caries risk with a suggested recall. Score six sextants for a gum (BPE) screening. Both are saved on the patient." },
       { icon: FileText, title: "Prescriptions & referrals", text: "Add medicines from presets and share the prescription on WhatsApp. Refer patients between departments." }
     ]
   },
   {
     heading: "At the desk",
+    tone: "aqua",
     items: [
       { icon: Calendar, title: "Appointments diary", text: "Book by chair and doctor, with a warning before you double-book. See today and upcoming visits, and mark each one Completed, No show or Cancelled." },
       { icon: BarChart3, title: "GST billing & UPI QR", text: "Invoices with GST where it applies (therapeutic care is exempt), part payments, a scannable UPI QR for the exact balance, and printable invoices and receipts." },
       { icon: ReceiptText, title: "Multi-item invoices", text: "Bill several treatments on one invoice and mix GST-exempt and 18% work. Discounts are shared out fairly across the items." },
+      { icon: Users, title: "Walk-in queue & triage", text: "Give each walk-in a token, mark urgent cases to go first, see how long each person has waited, and call them in from the diary." },
+      { icon: Calendar, title: "Online booking page", text: "Switch on a link you can share on WhatsApp or Instagram. Patients send a request, you confirm it, and it lands in your diary with a WhatsApp confirmation ready." },
       { icon: Wallet, title: "Dues and overdue tracking", text: "Set a due date, see unpaid money by age, filter to overdue invoices, search by patient and export the list to a spreadsheet." }
     ]
   },
   {
     heading: "Running the clinic",
+    tone: "navy",
     items: [
       { icon: Package, title: "Stock with reorder and expiry alerts", text: "Set a reorder level and an expiry date for each item. See what is low or expiring, and send a reorder list to your supplier on WhatsApp." },
       { icon: Briefcase, title: "Staff roster, leave and reviews", text: "Track licence expiry, approve leave, and record performance reviews. Alerts come from your own saved dates." },
       { icon: LayoutDashboard, title: "Today at a glance", text: "A dashboard with today's schedule, money collected this month, what is outstanding, and a short list of what needs your attention." },
+      { icon: Network, title: "Branches", text: "Run several clinics from one account. Switch branch from the header, and compare patients, visits and billing side by side." },
+      { icon: Lock, title: "Team logins & activity log", text: "Give staff their own login as manager, dentist or receptionist. Each person accepts an invitation and sees only what their role allows. Owners and managers can see who changed what." },
       { icon: TrendingUp, title: "Reports for your accountant", text: "Daily collections by cash, UPI and card, plus a monthly GST summary. Download a spreadsheet or print a PDF." }
     ]
   },
   {
     heading: "Beyond your clinic",
+    tone: "sky",
     items: [
       { icon: Network, title: "MeriDent Connect", text: "A closed network of dentists verified by our team. Find a nearby specialist and send a consult request. Patient names are never shared, and case notes go only with recorded consent." },
       { icon: Bell, title: "WhatsApp reminders & recall", text: "See who to remind for tomorrow, who owes a balance, and who is due for a 6-month check-up. One tap opens WhatsApp with the message ready. Patients can opt out." },
@@ -86,7 +103,7 @@ const COMING_NEXT = [
   "Automatic WhatsApp sending",
   "Radiograph cloud storage",
   "Lab order tracking",
-  "Staff logins with roles"
+  "Moving records between branches"
 ];
 
 const FAQS = [
@@ -117,6 +134,10 @@ const FAQS = [
   {
     q: "What is MeriDent Connect?",
     a: "A closed network for dentists. Our team checks each dentist's registration before they can see the directory or send a request. You can find a nearby colleague and send a consult request. Patient names are never shared, and case notes are included only when consent is recorded."
+  },
+  {
+    q: "Can I run more than one branch or give my staff logins?",
+    a: "Yes. Add branches in Practice Profile and switch between them from the header. Invite staff by email as manager, dentist or receptionist. Each person accepts the invitation and sees only the screens their role allows. Branch limits hide other branches in the app, and moving records between branches is coming next."
   },
   {
     q: "Can you move my existing records in?",
@@ -356,11 +377,13 @@ export default function LandingPage({
       </header>
 
       {/* HERO */}
-      <section id="top" className="bg-enamel border-b border-rule">
-        <div className="max-w-6xl mx-auto px-5 pt-12 pb-16 lg:pt-20 lg:pb-24 grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-8 items-center">
+      <section id="top" className="relative overflow-hidden bg-gradient-to-b from-white via-sky-50 to-sky-100 border-b border-rule">
+        <div aria-hidden="true" className="pointer-events-none absolute -right-32 top-10 h-[520px] w-[520px] rounded-full bg-aqua-300/25 blur-3xl" />
+        <div aria-hidden="true" className="pointer-events-none absolute -left-40 bottom-0 h-[380px] w-[380px] rounded-full bg-brand-500/10 blur-3xl" />
+        <div className="relative max-w-6xl mx-auto px-5 pt-12 pb-16 lg:pt-20 lg:pb-24 grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-8 items-center">
           <div className="space-y-6">
-            <p className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 bg-mist border border-rule px-3 py-1 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-600" aria-hidden="true" />
+            <p className="inline-flex items-center gap-2 text-sm font-semibold text-aqua-700 bg-aqua-50 border border-aqua-100 px-3 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-aqua-500" aria-hidden="true" />
               Free during early access for dental clinics
             </p>
 
@@ -369,7 +392,7 @@ export default function LandingPage({
             </h1>
 
             <p className="text-base sm:text-lg text-slate-600 max-w-xl leading-relaxed">
-              MeriDent is a practice manager for Indian dental clinics: a 32-tooth odontogram, treatment plans patients can approve from their phone, GST invoices with a UPI QR, stock and staff, and WhatsApp reminders. It runs in your browser, so there is nothing to install.
+              MeriDent is a practice manager for Indian dental clinics: a 32-tooth odontogram, treatment plans patients can approve from their phone, GST invoices with a UPI QR, stock and staff, online booking, branches, and WhatsApp reminders. It runs in your browser, so there is nothing to install.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-1">
@@ -525,11 +548,11 @@ export default function LandingPage({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-14 gap-y-12">
           {FEATURE_GROUPS.map((group) => (
             <div key={group.heading}>
-              <h3 className="font-display font-bold text-xl text-brand-700 pb-3 border-b-2 border-brand-600">{group.heading}</h3>
+              <h3 className={`font-display font-bold text-xl pb-3 border-b-2 ${TONES[group.tone].head}`}>{group.heading}</h3>
               <ul className="divide-y divide-rule">
                 {group.items.map(({ icon: Icon, title, text }) => (
                   <li key={title} className="py-5 flex gap-3.5">
-                    <span className="mt-0.5 shrink-0 w-9 h-9 rounded-lg bg-mist text-brand-600 flex items-center justify-center">
+                    <span className={`mt-0.5 shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${TONES[group.tone].chip}`}>
                       <Icon className="w-[18px] h-[18px]" aria-hidden="true" />
                     </span>
                     <div>
@@ -545,7 +568,7 @@ export default function LandingPage({
       </section>
 
       {/* GETTING STARTED */}
-      <section id="start" className="bg-ink text-white">
+      <section id="start" className="bg-gradient-to-br from-ink via-ink to-[#0f2f6b] text-white">
         <div className="max-w-6xl mx-auto px-5 py-16 lg:py-20">
           <div className="max-w-2xl mb-10">
             <h2 className="font-display font-extrabold text-3xl sm:text-4xl tracking-[-0.02em] leading-tight">Getting started</h2>
@@ -553,8 +576,8 @@ export default function LandingPage({
           </div>
           <ol className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-6">
             {STEPS.map((step) => (
-              <li key={step.n} className="md:border-t md:border-blue-300/30 md:pt-5">
-                <span className="font-display font-extrabold text-4xl text-blue-300">{step.n}</span>
+              <li key={step.n} className="md:border-t md:border-aqua-300/40 md:pt-5">
+                <span className="font-display font-extrabold text-4xl text-aqua-300">{step.n}</span>
                 <h3 className="mt-2 font-display font-bold text-lg">{step.title}</h3>
                 <p className="mt-1.5 text-sm leading-relaxed text-blue-100/80">{step.text}</p>
               </li>
@@ -584,21 +607,21 @@ export default function LandingPage({
       <section className="max-w-6xl mx-auto px-5 pb-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
           <div className="flex gap-3.5">
-            <Lock className="w-5 h-5 mt-0.5 shrink-0 text-brand-600" aria-hidden="true" />
+            <Lock className="w-5 h-5 mt-0.5 shrink-0 text-aqua-600" aria-hidden="true" />
             <div>
               <h3 className="font-bold">Private workspace</h3>
               <p className="mt-1 text-sm text-slate-600 leading-relaxed">Each clinic's records are stored under its own sign-in and are not shared with other clinics. Only a verified email can open a workspace.</p>
             </div>
           </div>
           <div className="flex gap-3.5">
-            <Cloud className="w-5 h-5 mt-0.5 shrink-0 text-brand-600" aria-hidden="true" />
+            <Cloud className="w-5 h-5 mt-0.5 shrink-0 text-aqua-600" aria-hidden="true" />
             <div>
               <h3 className="font-bold">Cloud backup</h3>
               <p className="mt-1 text-sm text-slate-600 leading-relaxed">Your data is saved to the cloud and available on any device where you sign in.</p>
             </div>
           </div>
           <div className="flex gap-3.5">
-            <ShieldCheck className="w-5 h-5 mt-0.5 shrink-0 text-brand-600" aria-hidden="true" />
+            <ShieldCheck className="w-5 h-5 mt-0.5 shrink-0 text-aqua-600" aria-hidden="true" />
             <div>
               <h3 className="font-bold">Your data, your control</h3>
               <p className="mt-1 text-sm text-slate-600 leading-relaxed">Patients can opt out of WhatsApp messages, and you can ask us any time to export or delete your clinic's records.</p>
@@ -653,7 +676,7 @@ export default function LandingPage({
       </section>
 
       {/* FINAL CTA */}
-      <section className="bg-brand-600 text-white">
+      <section className="bg-gradient-to-r from-brand-700 via-brand-600 to-aqua-600 text-white">
         <div className="max-w-4xl mx-auto px-5 py-14 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <h2 className="font-display font-extrabold text-3xl tracking-[-0.02em] leading-tight">Try MeriDent with your clinic</h2>
           <button
