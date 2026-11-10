@@ -134,3 +134,19 @@ main h2 {
   font-family: "Bricolage Grotesque", Figtree, ui-sans-serif, system-ui, sans-serif;
   letter-spacing: -0.02em;
 }
+
+/* ---- Odontogram teeth ---- */
+.odo-tooth {
+  cursor: pointer;
+  outline: none;
+}
+.odo-tooth rect {
+  transition: filter 0.12s;
+}
+.odo-tooth:hover rect {
+  filter: brightness(0.94);
+}
+.odo-tooth:focus-visible rect {
+  stroke: #1d4ed8;
+  stroke-width: 3;
+}
