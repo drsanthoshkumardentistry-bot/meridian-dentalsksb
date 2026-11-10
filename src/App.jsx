@@ -1189,6 +1189,9 @@ export default function App() {
   const [diaryQuery, setDiaryQuery] = useState("");
   const visibleInvoices = invoiceView(invoices, { status: invoiceFilter, query: invoiceQuery });
   const billing = billingSummary(invoices);
+  const diarySum = diarySummary(appointments);
+  const stockSum = stockSummary(inventory);
+  const todaysVisits = diaryView(appointments, { view: "today" }).filter((a) => !["cancelled", "no show", "completed"].includes(String(a.status || "").toLowerCase()));
   const overdueList = invoiceView(invoices, { status: "overdue" });
 
   const sendInvoiceToPatient = (inv) => {
@@ -1483,12 +1486,8 @@ export default function App() {
     };
   });
 
-  const totalBilledRevenue = invoices.reduce((sum, invoice) => sum + normalizeInvoice(invoice).totalP / 100, 0);
-  const totalOutstanding = invoices.reduce((sum, invoice) => sum + balancePaise(normalizeInvoice(invoice)) / 100, 0);
 
   const todayKey = dashboardDateKey(new Date().toLocaleDateString("en-IN"));
-  const todayAppointments = appointments.filter((appointment) => dashboardDateKey(appointment.date) === todayKey).length;
-  const lowStockCount = inventory.filter((item) => { const st = stockState(item); return st.out || st.low; }).length;
 
   const doctorOptions = Array.from(
     new Set([practiceProfile.drName, ...employees.filter((e) => e.active !== false).map((e) => e.name)].filter(Boolean))
@@ -2945,9 +2944,9 @@ export default function App() {
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                 {[
                   { title: "Patients", value: patients.length, note: "Registered patient records", icon: <Users className="w-5 h-5" />, tone: "bg-blue-50 text-blue-600" },
-                  { title: "Visits Today", value: todayAppointments, note: `${appointments.length} total appointments`, icon: <Calendar className="w-5 h-5" />, tone: "bg-indigo-50 text-indigo-600" },
-                  { title: "Revenue / Billing", value: `₹${totalBilledRevenue.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`, note: "Total recorded invoice value", icon: <DollarSign className="w-5 h-5" />, tone: "bg-emerald-50 text-emerald-600" },
-                  { title: "Low Stock Alerts", value: lowStockCount, note: "Items at or below threshold", icon: <Package className="w-5 h-5" />, tone: "bg-amber-50 text-amber-600" },
+                  { title: "Visits Today", value: diarySum.today, note: diarySum.tomorrow ? `${diarySum.tomorrow} tomorrow` : "Active bookings today", icon: <Calendar className="w-5 h-5" />, tone: "bg-indigo-50 text-indigo-600" },
+                  { title: "Collected this month", value: `₹${formatINR(billing.collectedP)}`, note: `₹${formatINR(billing.billedP)} billed this month`, icon: <DollarSign className="w-5 h-5" />, tone: "bg-emerald-50 text-emerald-600" },
+                  { title: "Outstanding", value: `₹${formatINR(billing.outstandingP)}`, note: billing.overdueCount ? `${billing.overdueCount} overdue, ₹${formatINR(billing.overdueP)}` : "Unpaid balance across invoices", icon: <Package className="w-5 h-5" />, tone: billing.overdueCount ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600" },
                 ].map((card) => (
                   <div key={card.title} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
                     <div className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center ${card.tone}`}>{card.icon}</div>
@@ -2971,7 +2970,7 @@ export default function App() {
                   {[
                     { label: "Appointment reminders", count: dueApptReminders.length, to: "Appointments Diary" },
                     { label: "Patients due for recall", count: dueRecallList.length, to: "Appointments Diary" },
-                    { label: "Payments to chase", count: duePayReminders.length, to: "Appointments Diary" },
+                    { label: "Payments to chase", count: duePayReminders.length, to: "Billing & Invoices" },
                   ].map((a) => (
                     <button
                       key={a.label}
@@ -2987,6 +2986,57 @@ export default function App() {
                   ))}
                 </div>
               </section>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <section className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm" data-testid="today-schedule">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <h2 className="text-base font-bold text-slate-900">Today's schedule</h2>
+                    <button onClick={() => setActiveNav("Appointments Diary")} className="text-xs font-semibold text-blue-600 hover:text-blue-800">Open diary ›</button>
+                  </div>
+                  {todaysVisits.length === 0 ? (
+                    <p className="text-sm text-slate-500">No visits booked for the rest of today.</p>
+                  ) : (
+                    <ul className="divide-y divide-slate-100">
+                      {todaysVisits.slice(0, 6).map((a) => (
+                        <li key={a.id} className="py-2 flex items-center gap-3 text-sm">
+                          <span className="w-16 shrink-0 font-bold text-blue-700 tabular">{formatTime12(a.time)}</span>
+                          <span className="min-w-0 flex-1">
+                            <span className="font-semibold text-slate-900">{a.patientName}</span>
+                            <span className="text-slate-500"> · {a.procedure}</span>
+                          </span>
+                          <span className="text-xs text-slate-400 shrink-0">{String(a.chair || "").split(" (")[0]}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+
+                <section className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm" data-testid="attention">
+                  <h2 className="text-base font-bold text-slate-900 mb-3">Needs attention</h2>
+                  {(() => {
+                    const items = [
+                      { n: billing.overdueCount, text: `${billing.overdueCount} overdue ${billing.overdueCount === 1 ? "invoice" : "invoices"}, ₹${formatINR(billing.overdueP)}`, to: "Billing & Invoices" },
+                      { n: diarySum.needsUpdate, text: `${diarySum.needsUpdate} past ${diarySum.needsUpdate === 1 ? "visit has" : "visits have"} no outcome marked`, to: "Appointments Diary" },
+                      { n: stockSum.out + stockSum.low, text: `${stockSum.out + stockSum.low} ${stockSum.out + stockSum.low === 1 ? "item" : "items"} to reorder`, to: "Stock Maintenance" },
+                      { n: stockSum.expired + stockSum.expiring, text: `${stockSum.expired + stockSum.expiring} ${stockSum.expired + stockSum.expiring === 1 ? "item" : "items"} expired or expiring soon`, to: "Stock Maintenance" },
+                    ].filter((x) => x.n > 0);
+                    return items.length === 0 ? (
+                      <p className="text-sm text-slate-500">Nothing needs attention right now.</p>
+                    ) : (
+                      <ul className="space-y-2">
+                        {items.map((x) => (
+                          <li key={x.text}>
+                            <button onClick={() => setActiveNav(x.to)} className="w-full text-left flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50/60 hover:bg-amber-50 px-3 py-2 text-sm font-semibold text-slate-800">
+                              {x.text}
+                              <span className="text-amber-700">›</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                  })()}
+                </section>
+              </div>
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
                 <section className="xl:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 md:p-6 shadow-sm">
@@ -3014,8 +3064,8 @@ export default function App() {
 
                 <section className="bg-white rounded-2xl border border-slate-200 p-5 md:p-6 shadow-sm">
                   <div className="mb-5">
-                    <h2 className="text-base font-bold text-slate-900">Revenue / Billing</h2>
-                    <p className="text-xs text-slate-500 mt-1">Invoice value recorded over 7 days</p>
+                    <h2 className="text-base font-bold text-slate-900">Billed this week</h2>
+                    <p className="text-xs text-slate-500 mt-1">Invoice value raised over the last 7 days</p>
                   </div>
                   <div className="h-56 flex items-end gap-3 border-b border-slate-200 px-1">
                     {dashboardRevenueSeries.map((day, index) => {
