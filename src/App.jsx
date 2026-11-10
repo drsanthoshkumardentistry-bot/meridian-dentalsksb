@@ -59,6 +59,10 @@ import { AppLoading, VerifyEmailScreen, IdleWarning } from "./components/AuthScr
 import { friendlyAuthError, usesPasswordLogin } from "./authErrors";
 import QRCode from "qrcode";
 import {
+  dueAppointmentReminders, buildAppointmentReminder, duePaymentReminders, buildPaymentReminder,
+  whatsappLink, markAppointmentReminded, markInvoiceReminded, formatTime12,
+} from "./reminders";
+import {
   TAX_CATEGORIES, computeInvoiceTotals, nextInvoiceNumber, normalizeInvoice, addPayment,
   paidPaise, balancePaise, paymentStatus, buildUpiUri, isValidUpiId, buildInvoiceHtml, formatINR, toPaise,
 } from "./billing";
@@ -1118,6 +1122,36 @@ export default function App() {
     showToast(`Appointment booked for ${appt.patientName} on ${appt.date}`);
   };
 
+  // --- WhatsApp reminders (opens WhatsApp with the message ready; the clinic taps Send) ---
+  const dueApptReminders = dueAppointmentReminders(appointments);
+  const duePayReminders = duePaymentReminders(invoices.map(normalizeInvoice), patients);
+
+  const sendApptReminder = ({ appt, kind }) => {
+    const link = whatsappLink(
+      appt.phone,
+      buildAppointmentReminder({ clinicName: practiceProfile.name, appt, kind })
+    );
+    if (!link) {
+      showToast("This patient has no valid mobile number");
+      return;
+    }
+    window.open(link, "_blank", "noopener,noreferrer");
+    setAppointments((prev) => prev.map((a) => (a.id === appt.id ? markAppointmentReminded(a, kind) : a)));
+  };
+
+  const sendPayReminder = ({ inv, phone }) => {
+    const link = whatsappLink(
+      phone,
+      buildPaymentReminder({ clinicName: practiceProfile.name, inv, upiId: isValidUpiId(practiceProfile.upiId) ? practiceProfile.upiId : "" })
+    );
+    if (!link) {
+      showToast("This patient has no valid mobile number");
+      return;
+    }
+    window.open(link, "_blank", "noopener,noreferrer");
+    setInvoices((prev) => prev.map((i) => (i.id === inv.id ? markInvoiceReminded(i) : i)));
+  };
+
   const sendAppointmentWhatsApp = (appt) => {
     let cleanPhone = appt.phone.replace(/[^0-9]/g, "");
     if (cleanPhone.length === 10) cleanPhone = "91" + cleanPhone;
@@ -1866,6 +1900,51 @@ export default function App() {
                 </button>
               </div>
 
+              {(dueApptReminders.length > 0 || duePayReminders.length > 0) && (
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-3" data-testid="reminders-panel">
+                  <div className="text-xs font-bold text-blue-900">
+                    Reminders to send ({dueApptReminders.length + duePayReminders.length})
+                  </div>
+                  <div className="space-y-2">
+                    {dueApptReminders.map((d) => (
+                      <div key={`${d.appt.id}-${d.kind}`} className="flex items-center justify-between gap-3 bg-white rounded-lg border border-blue-100 px-3 py-2 text-xs">
+                        <div>
+                          <div className="font-semibold text-slate-900">{d.appt.patientName}</div>
+                          <div className="text-[11px] text-slate-500">
+                            {d.kind === "sameDay" ? "Today" : "Tomorrow"} at {formatTime12(d.appt.time)} · {d.appt.procedure}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => sendApptReminder(d)}
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-semibold inline-flex items-center gap-1 whitespace-nowrap"
+                        >
+                          <Send className="w-3 h-3" /> Remind
+                        </button>
+                      </div>
+                    ))}
+                    {duePayReminders.map((d) => (
+                      <div key={`${d.inv.id}-pay`} className="flex items-center justify-between gap-3 bg-white rounded-lg border border-blue-100 px-3 py-2 text-xs">
+                        <div>
+                          <div className="font-semibold text-slate-900">{d.inv.patient}</div>
+                          <div className="text-[11px] text-slate-500">
+                            Payment due ₹{formatINR(balancePaise(d.inv))} · {d.inv.id}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => sendPayReminder(d)}
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-semibold inline-flex items-center gap-1 whitespace-nowrap"
+                        >
+                          <Send className="w-3 h-3" /> Remind
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-blue-800/70">
+                    WhatsApp opens with the message ready. Tap Send there, then come back for the next one.
+                  </p>
+                </div>
+              )}
+
               {appointments.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
                   <Calendar className="w-10 h-10 text-blue-600 mx-auto" />
@@ -1898,6 +1977,9 @@ export default function App() {
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                               {appt.status}
                             </span>
+                            {appt.reminders && (appt.reminders.dayBefore || appt.reminders.sameDay) ? (
+                              <div className="text-[10px] text-slate-400 mt-1">Reminder sent</div>
+                            ) : null}
                           </td>
                           <td className="p-3.5 text-center space-x-2">
                             <button
