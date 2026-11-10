@@ -8,6 +8,8 @@
 import { AGING_BUCKETS, agingSummary, filterInvoices, invoiceAgeDays } from "./receivables.js";
 import { toggleFinding, normalizeConditions, chartedCount as chartedTeeth } from "./odontogram.js";
 import { billingSummary, invoiceView, invoicesCsv, buildInvoiceMessage, isOverdue, daysOverdue, dueDateIn } from "./billingView.js";
+import { adjustStock, buildStockItem, stockState, stockSummary, stockView, buildReorderMessage } from "./stock.js";
+import { APPT_STATUSES, findClash, diarySummary, diaryView, withStatus, needsUpdate } from "./diary.js";
 import OpgViewer from "./components/OpgViewer.jsx";
 import Connect from "./components/Connect.jsx";
 import { bindApi } from "./connect/api.js";
@@ -72,7 +74,7 @@ import { AppLoading, VerifyEmailScreen, IdleWarning } from "./components/AuthScr
 import { friendlyAuthError, usesPasswordLogin } from "./authErrors";
 import QRCode from "qrcode";
 import {
-  dueAppointmentReminders, buildAppointmentReminder, duePaymentReminders, buildPaymentReminder,
+  dateKey, dueAppointmentReminders, buildAppointmentReminder, duePaymentReminders, buildPaymentReminder,
   whatsappLink, markAppointmentReminded, markInvoiceReminded, formatTime12,
   dueRecalls, buildRecallMessage, markPatientRecalled, RECALL_OPTIONS, DEFAULT_RECALL_MONTHS,
 } from "./reminders";
@@ -366,7 +368,7 @@ const TOBACCO_OPTIONS = ["Not recorded", "None", "Smoking", "Smokeless tobacco",
 const ALCOHOL_OPTIONS = ["Not recorded", "None", "Occasional", "Regular"];
 const BRUSHING_OPTIONS = ["Not recorded", "Not daily", "Once daily", "Twice daily", "More than twice"];
 const DIET_OPTIONS = ["Not recorded", "Vegetarian", "Mixed", "Eggetarian", "Vegan"];
-const PAYMENT_MODES = ["Cash", "UPI", "Card", "Net banking", "Insurance / TPA"];
+const PAYMENT_MODES = ["Cash", "UPI", "Card", "Net banking"];
 const VISIT_TYPES = ["New patient", "Follow-up", "Review", "Emergency"];
 const COUNCIL_NAMES = ["Dental Council of India", "Tamil Nadu Dental Council", "Karnataka State Dental Council", "Kerala State Dental Council", "Andhra Pradesh State Dental Council", "Telangana State Dental Council", "Maharashtra State Dental Council", "Other State Dental Council"];
 
@@ -789,7 +791,7 @@ export default function App() {
   const [performanceForm, setPerformanceForm] = useState({
     employeeName: "",
     reviewerName: "",
-    date: new Date().toISOString().split("T")[0],
+    date: dateKey(),
     rating: 4,
     notes: ""
   });
@@ -817,7 +819,7 @@ export default function App() {
     patientName: "",
     phone: "",
     age: "",
-    date: new Date().toISOString().split("T")[0],
+    date: dateKey(),
     time: "10:30",
     chair: "Chair 1 (Main Operatory)",
     doctor: "",
@@ -833,9 +835,6 @@ export default function App() {
     patientId: "",
     patientName: "",
     paymentMode: "Cash",
-    provider: "Self Pay",
-    claimId: "",
-    status: "Self-Pay Completed",
     items: [blankInvoiceItem()],
     discount: "",
     advance: "",
@@ -852,7 +851,11 @@ export default function App() {
     quantity: 10,
     unit: "Syringes",
     minThreshold: 5,
+    expiry: "",
   });
+  const [stockQuery, setStockQuery] = useState("");
+  const [stockViewId, setStockViewId] = useState("all");
+  const [stockQty, setStockQty] = useState({});
 
   const activePatient = patients.find((p) => p.id === selectedPatientId) || null;
 
@@ -1124,6 +1127,15 @@ export default function App() {
       showToast("Choose the attending doctor");
       return;
     }
+    const clash = findClash(appointments, newApptForm);
+    if (clash) {
+      showToast(
+        clash.reason === "chair"
+          ? `${clash.appt.chair} is already booked at ${formatTime12(clash.appt.time)} for ${clash.appt.patientName}. Pick another time or chair.`
+          : `${clash.appt.doctor} is already booked at ${formatTime12(clash.appt.time)} for ${clash.appt.patientName}. Pick another time or doctor.`
+      );
+      return;
+    }
     const appt = {
       id: newId("APT"),
       ...newApptForm,
@@ -1173,8 +1185,13 @@ export default function App() {
   const connectApi = useMemo(() => bindApi(db, CLINIC_ID), [CLINIC_ID]);
   const aging = agingSummary(invoices);
   const [invoiceQuery, setInvoiceQuery] = useState("");
+  const [diaryViewId, setDiaryViewId] = useState("upcoming");
+  const [diaryQuery, setDiaryQuery] = useState("");
   const visibleInvoices = invoiceView(invoices, { status: invoiceFilter, query: invoiceQuery });
   const billing = billingSummary(invoices);
+  const diarySum = diarySummary(appointments);
+  const stockSum = stockSummary(inventory);
+  const todaysVisits = diaryView(appointments, { view: "today" }).filter((a) => !["cancelled", "no show", "completed"].includes(String(a.status || "").toLowerCase()));
   const overdueList = invoiceView(invoices, { status: "overdue" });
 
   const sendInvoiceToPatient = (inv) => {
@@ -1279,8 +1296,8 @@ export default function App() {
   const closeInvoiceModal = () => {
     if (newInvoiceForm.planId) {
       setNewInvoiceForm({
-        patientId: "", patientName: "", paymentMode: "Cash", provider: "Self Pay", claimId: "",
-        status: "Self-Pay Completed", items: [blankInvoiceItem()], discount: "", advance: "",
+        patientId: "", patientName: "", paymentMode: "Cash",
+        items: [blankInvoiceItem()], discount: "", advance: "", dueDate: "",
       });
     }
     setIsAddInvoiceOpen(false);
@@ -1312,19 +1329,15 @@ export default function App() {
       return;
     }
     const today = new Date().toLocaleDateString("en-IN");
-    const isInsurance = newInvoiceForm.paymentMode === "Insurance / TPA";
     const inv = {
       id: nextInvoiceNumber(invoices),
       patientId: newInvoiceForm.patientId || "",
       patient: newInvoiceForm.patientName.trim(),
       paymentMode: newInvoiceForm.paymentMode,
-      provider: isInsurance ? newInvoiceForm.provider : "Self Pay",
-      claimId: isInsurance ? newInvoiceForm.claimId.trim() || `CLM-${Date.now().toString(36).slice(-6).toUpperCase()}` : "",
-      status: isInsurance ? newInvoiceForm.status : "Self-Pay",
       treatment: totals.lines.map((l) => l.description).join(", "),
       taxCategory: new Set(totals.lines.map((l) => l.taxCategory)).size === 1 ? totals.lines[0].taxCategory : "mixed",
       ...totals,
-      payments: advanceP > 0 ? [{ date: today, mode: isInsurance ? "Cash" : newInvoiceForm.paymentMode, amountP: advanceP }] : [],
+      payments: advanceP > 0 ? [{ date: today, mode: newInvoiceForm.paymentMode, amountP: advanceP }] : [],
       total: (totals.totalP / 100).toLocaleString("en-IN"),
       rawAmount: String(totals.totalP / 100),
       date: today,
@@ -1344,9 +1357,6 @@ export default function App() {
       patientId: "",
       patientName: "",
       paymentMode: "Cash",
-      provider: "Self Pay",
-      claimId: "",
-      status: "Self-Pay Completed",
       items: [blankInvoiceItem()],
       discount: "",
       advance: "",
@@ -1382,36 +1392,34 @@ export default function App() {
   };
 
   const handleStockAdjust = (stockId, delta) => {
-    setInventory((prev) =>
-      prev.map((item) => {
-        if (item.id === stockId) {
-          const nextQty = Math.max(0, item.quantity + delta);
-          return {
-            ...item,
-            quantity: nextQty,
-            status: nextQty <= item.minThreshold ? "Low Stock" : "In Stock",
-          };
-        }
-        return item;
-      })
-    );
+    setInventory((prev) => prev.map((item) => (item.id === stockId ? adjustStock(item, delta) : item)));
   };
 
   const handleCreateStock = (e) => {
     e.preventDefault();
-    if (!newStockForm.name.trim()) return;
-    const item = {
-      id: newId("STK"),
-      name: newStockForm.name,
-      category: newStockForm.category,
-      quantity: parseInt(newStockForm.quantity || 0, 10),
-      unit: newStockForm.unit,
-      minThreshold: parseInt(newStockForm.minThreshold || 0, 10),
-      status: parseInt(newStockForm.quantity || 0, 10) <= parseInt(newStockForm.minThreshold || 0, 10) ? "Low Stock" : "In Stock",
-    };
-    setInventory([...inventory, item]);
+    const built = buildStockItem(newStockForm, newId("STK"));
+    if (!built.ok) {
+      showToast(built.error);
+      return;
+    }
+    setInventory([...inventory, built.item]);
+    setNewStockForm({ name: "", category: "Restorative", quantity: 10, unit: "Syringes", minThreshold: 5, expiry: "" });
     setIsAddStockOpen(false);
-    showToast(`Added ${item.name} to stock`);
+    showToast(`Added ${built.item.name} to stock`);
+  };
+
+  const handleRemoveStock = (item) => {
+    if (!confirm(`Remove ${item.name} from stock?`)) return;
+    setInventory((prev) => prev.filter((x) => x.id !== item.id));
+  };
+
+  const sendReorderList = () => {
+    const text = buildReorderMessage({ clinicName: practiceProfile.name, items: inventory });
+    if (!text) {
+      showToast("Nothing needs reordering right now");
+      return;
+    }
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
   };
 
   const handleCreateStaff = (e) => {
@@ -1478,12 +1486,8 @@ export default function App() {
     };
   });
 
-  const totalBilledRevenue = invoices.reduce((sum, invoice) => sum + normalizeInvoice(invoice).totalP / 100, 0);
-  const totalOutstanding = invoices.reduce((sum, invoice) => sum + balancePaise(normalizeInvoice(invoice)) / 100, 0);
 
   const todayKey = dashboardDateKey(new Date().toLocaleDateString("en-IN"));
-  const todayAppointments = appointments.filter((appointment) => dashboardDateKey(appointment.date) === todayKey).length;
-  const lowStockCount = inventory.filter((item) => item.status === "Low Stock" || Number(item.quantity) <= Number(item.minThreshold)).length;
 
   const doctorOptions = Array.from(
     new Set([practiceProfile.drName, ...employees.filter((e) => e.active !== false).map((e) => e.name)].filter(Boolean))
@@ -2029,69 +2033,127 @@ export default function App() {
               {appointments.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
                   <Calendar className="w-10 h-10 text-blue-600 mx-auto" />
-                  <h3 className="text-sm font-bold text-slate-800">No Appointments Scheduled</h3>
+                  <h3 className="text-sm font-bold text-slate-800">No appointments yet</h3>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto">Book a visit to see today's list, get reminders ready to send, and avoid double-booking a chair.</p>
                 </div>
-              ) : (
-                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-b border-slate-200">
-                      <tr>
-                        <th className="p-3.5">ID / Patient</th>
-                        <th className="p-3.5">Date & Slot</th>
-                        <th className="p-3.5">Operatory Chair</th>
-                        <th className="p-3.5">Procedure</th>
-                        <th className="p-3.5">Status</th>
-                        <th className="p-3.5 text-center">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {appointments.map((appt) => (
-                        <tr key={appt.id} className="hover:bg-slate-50/60">
-                          <td className="p-3.5">
-                            <div className="font-bold text-slate-900">{appt.patientName}</div>
-                            <div className="text-[10px] text-slate-400">{appt.phone}</div>
-                          </td>
-                          <td className="p-3.5 font-medium">{appt.date} at <strong>{appt.time}</strong></td>
-                          <td className="p-3.5 text-slate-600">{appt.chair}</td>
-                          <td className="p-3.5 font-semibold text-blue-700">{appt.procedure}</td>
-                          <td className="p-3.5">
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              {appt.status}
-                            </span>
-                            {appt.reminders && (appt.reminders.dayBefore || appt.reminders.sameDay) ? (
-                              <div className="text-[10px] text-slate-400 mt-1">Reminder sent</div>
-                            ) : null}
-                          </td>
-                          <td className="p-3.5 text-center space-x-2">
-                            <button
-                              onClick={() => sendAppointmentWhatsApp(appt)}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-semibold inline-flex items-center gap-1"
-                            >
-                              <Send className="w-3 h-3" /> WhatsApp
-                            </button>
-                            <button
-                              onClick={() => setAppointments(appointments.filter((x) => x.id !== appt.id))}
-                              className="p-1 text-slate-400 hover:text-rose-500"
-                            >
-                              <Trash2 className="w-3.5 h-3.5 inline" />
-                            </button>
-                          </td>
+              ) : (() => {
+                const dsum = diarySummary(appointments);
+                const rows = diaryView(appointments, { view: diaryViewId, query: diaryQuery });
+                return (
+                <>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-testid="diary-summary">
+                    {[
+                      { label: "Today", value: dsum.today, tone: "text-slate-900" },
+                      { label: "Tomorrow", value: dsum.tomorrow, tone: "text-slate-900" },
+                      { label: "Upcoming", value: dsum.upcoming, tone: "text-slate-900" },
+                      { label: "Needs a status", value: dsum.needsUpdate, tone: dsum.needsUpdate ? "text-amber-600" : "text-slate-900" },
+                    ].map((c) => (
+                      <div key={c.label} className="bg-white border border-slate-200 rounded-xl p-4">
+                        <div className="text-[11px] font-semibold text-slate-500">{c.label}</div>
+                        <div className={`text-lg font-bold mt-1 tabular ${c.tone}`}>{c.value}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 text-xs" role="group" aria-label="Show appointments">
+                    {[["today", "Today"], ["upcoming", "Upcoming"], ["past", "Past"], ["update", `Needs a status (${dsum.needsUpdate})`], ["all", "All"]].map(([id, label]) => (
+                      <button
+                        key={id}
+                        type="button"
+                        aria-pressed={diaryViewId === id}
+                        onClick={() => setDiaryViewId(id)}
+                        className={`px-3 py-1.5 rounded-full border font-semibold ${diaryViewId === id ? "bg-ink text-white border-ink" : "bg-white text-slate-700 border-slate-200 hover:bg-blue-50"}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                    <input
+                      type="search"
+                      aria-label="Search appointments"
+                      value={diaryQuery}
+                      onChange={(e) => setDiaryQuery(e.target.value)}
+                      placeholder="Search patient, phone or doctor"
+                      className="ml-auto w-full sm:w-64 px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto shadow-xs">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-b border-slate-200">
+                        <tr>
+                          <th className="p-3.5">Patient</th>
+                          <th className="p-3.5">Date & time</th>
+                          <th className="p-3.5">Chair</th>
+                          <th className="p-3.5">Procedure</th>
+                          <th className="p-3.5">Status</th>
+                          <th className="p-3.5 text-center">Action</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {rows.length === 0 && (
+                          <tr><td colSpan={6} className="p-8 text-center text-slate-500">{diaryQuery ? "No appointment matches your search." : "No appointments in this view."}</td></tr>
+                        )}
+                        {rows.map((appt) => (
+                          <tr key={appt.id} className="hover:bg-slate-50/60">
+                            <td className="p-3.5">
+                              <div className="font-bold text-slate-900">{appt.patientName}</div>
+                              <div className="text-[10px] text-slate-400">{appt.phone}</div>
+                            </td>
+                            <td className="p-3.5 font-medium">
+                              {appt.date === dateKey() ? "Today" : new Date(appt.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} at <strong>{formatTime12(appt.time)}</strong>
+                              {appt.doctor ? <div className="text-[10px] text-slate-400">{appt.doctor}</div> : null}
+                            </td>
+                            <td className="p-3.5 text-slate-600">{appt.chair}</td>
+                            <td className="p-3.5 font-semibold text-blue-700">{appt.procedure}</td>
+                            <td className="p-3.5">
+                              <select
+                                aria-label={`Status for ${appt.patientName}`}
+                                value={APPT_STATUSES.includes(appt.status) ? appt.status : "Confirmed"}
+                                onChange={(e) => setAppointments((prev) => prev.map((x) => (x.id === appt.id ? withStatus(x, e.target.value) : x)))}
+                                className={`px-2 py-1 rounded-lg border text-[11px] font-bold bg-white ${
+                                  appt.status === "Completed" ? "border-emerald-300 text-emerald-700" : appt.status === "Cancelled" || appt.status === "No show" ? "border-rose-300 text-rose-700" : "border-blue-200 text-blue-700"
+                                }`}
+                              >
+                                {APPT_STATUSES.map((st) => (<option key={st}>{st}</option>))}
+                              </select>
+                              {needsUpdate(appt) ? <div className="text-[10px] font-semibold text-amber-600 mt-1">Mark the outcome</div> : null}
+                              {appt.reminders && (appt.reminders.dayBefore || appt.reminders.sameDay) ? (
+                                <div className="text-[10px] text-slate-400 mt-1">Reminder sent</div>
+                              ) : null}
+                            </td>
+                            <td className="p-3.5 text-center space-x-2 whitespace-nowrap">
+                              <button
+                                onClick={() => sendAppointmentWhatsApp(appt)}
+                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-semibold inline-flex items-center gap-1"
+                              >
+                                <Send className="w-3 h-3" /> WhatsApp
+                              </button>
+                              <button
+                                aria-label={`Delete appointment for ${appt.patientName}`}
+                                onClick={() => { if (confirm(`Delete the appointment for ${appt.patientName}? To keep a record, set its status to Cancelled instead.`)) setAppointments(appointments.filter((x) => x.id !== appt.id)); }}
+                                className="p-1 text-slate-400 hover:text-rose-500"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 inline" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+                );
+              })()}
             </div>
           )}
 
-          {/* TAB 4: DENTAL INSURANCE & INVOICES */}
+          {/* TAB 4: BILLING & INVOICES */}
           {activeNav === "Billing & Invoices" && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">Billing & Invoices</h1>
-                  <p className="text-xs text-slate-500">GST invoices, part payments, insurance claims and UPI collection</p>
+                  <p className="text-xs text-slate-500">GST invoices, part payments and UPI collection</p>
                 </div>
                 <button
                   onClick={() => setIsAddInvoiceOpen(true)}
@@ -2171,12 +2233,12 @@ export default function App() {
                     aria-label="Search invoices"
                     value={invoiceQuery}
                     onChange={(e) => setInvoiceQuery(e.target.value)}
-                    placeholder="Search patient, invoice or claim"
+                    placeholder="Search patient, invoice or treatment"
                     className="ml-auto w-full sm:w-64 px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none"
                   />
                   <button
                     type="button"
-                    onClick={() => downloadCsv(invoicesCsv(visibleInvoices), `invoices-${new Date().toISOString().slice(0, 10)}.csv`)}
+                    onClick={() => downloadCsv(invoicesCsv(visibleInvoices), `invoices-${dateKey()}.csv`)}
                     className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-blue-50 rounded-lg font-semibold text-slate-800 inline-flex items-center gap-1.5"
                   >
                     <Download className="w-3.5 h-3.5" /> Export list
@@ -2205,9 +2267,9 @@ export default function App() {
                   <table className="w-full text-left text-xs">
                     <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-b border-slate-200">
                       <tr>
-                        <th className="p-4">Invoice / Claim ID</th>
+                        <th className="p-4">Invoice</th>
                         <th className="p-4">Patient</th>
-                        <th className="p-4">Provider</th>
+                        <th className="p-4">Payment</th>
                         <th className="p-4">Status</th>
                         <th className="p-4">Total (₹)</th>
                         <th className="p-4">Balance (₹)</th>
@@ -2224,15 +2286,14 @@ export default function App() {
                         <tr key={inv.id} className="hover:bg-slate-50/60">
                           <td className="p-4">
                             <div className="font-bold text-blue-700">{inv.id}</div>
-                            {inv.claimId ? <div className="text-[10px] text-slate-400">Claim: {inv.claimId}</div> : null}
                             {balancePaise(inv) > 0 && invoiceAgeDays(inv) !== null ? (
                               <div className="text-[10px] text-slate-400">{invoiceAgeDays(inv)} {invoiceAgeDays(inv) === 1 ? "day" : "days"} old</div>
                             ) : null}
                           </td>
                           <td className="p-4 font-semibold">{inv.patient}</td>
                           <td className="p-4 text-slate-600">
-                            {inv.provider}
-                            {inv.paymentMode ? <div className="text-[10px] text-slate-400">{inv.paymentMode}</div> : null}
+                            {inv.paymentMode || "Cash"}
+                            {inv.treatment ? <div className="text-[10px] text-slate-400 max-w-[14rem] truncate">{inv.treatment}</div> : null}
                           </td>
                           <td className="p-4">
                             <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
@@ -2243,7 +2304,6 @@ export default function App() {
                             ) : balancePaise(inv) > 0 && inv.dueDate ? (
                               <div className="text-[10px] text-slate-500 mt-1">Due {new Date(inv.dueDate).toLocaleDateString("en-IN")}</div>
                             ) : null}
-                            {inv.status && inv.claimId ? <div className="text-[10px] text-slate-400 mt-1">{inv.status}</div> : null}
                           </td>
                           <td className="p-4 font-bold text-sm">
                             ₹{formatINR(inv.totalP)}
@@ -2369,7 +2429,7 @@ export default function App() {
                     <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-y border-slate-200">
                       <tr>
                         <th className="p-3">Date</th>
-                        {MODE_KEYS.map((m) => (
+                        {[...MODE_KEYS, ...(reportCollections.totals.byMode.Other > 0 ? ["Other"] : [])].map((m) => (
                           <th key={m} className="p-3 text-right">{m}</th>
                         ))}
                         <th className="p-3 text-right">Total (₹)</th>
@@ -2379,7 +2439,7 @@ export default function App() {
                       {reportCollections.days.map((d) => (
                         <tr key={d.date}>
                           <td className="p-3 font-semibold">{d.date}</td>
-                          {MODE_KEYS.map((m) => (
+                          {[...MODE_KEYS, ...(reportCollections.totals.byMode.Other > 0 ? ["Other"] : [])].map((m) => (
                             <td key={m} className="p-3 text-right text-slate-600">{d.byMode[m] ? formatINR(d.byMode[m]) : "–"}</td>
                           ))}
                           <td className="p-3 text-right font-bold">{formatINR(d.totalP)}</td>
@@ -2387,7 +2447,7 @@ export default function App() {
                       ))}
                       <tr className="bg-slate-50 font-bold">
                         <td className="p-3">Total</td>
-                        {MODE_KEYS.map((m) => (
+                        {[...MODE_KEYS, ...(reportCollections.totals.byMode.Other > 0 ? ["Other"] : [])].map((m) => (
                           <td key={m} className="p-3 text-right">{formatINR(reportCollections.totals.byMode[m])}</td>
                         ))}
                         <td className="p-3 text-right">{formatINR(reportCollections.totals.totalP)}</td>
@@ -2423,65 +2483,145 @@ export default function App() {
           )}
 
           {/* TAB 5: STOCK MAINTENANCE */}
-          {activeNav === "Stock Maintenance" && (
+          {activeNav === "Stock Maintenance" && (() => {
+            const sum = stockSummary(inventory);
+            const rows = stockView(inventory, { view: stockViewId, query: stockQuery });
+            return (
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">Stock Maintenance</h1>
-                  <p className="text-xs text-slate-500">Operatory Consumables, Materials & Medications</p>
+                  <p className="text-xs text-slate-500">Consumables, materials and medicines: reorder levels and expiry dates</p>
                 </div>
-                <button
-                  onClick={() => setIsAddStockOpen(true)}
-                  className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
-                >
-                  <Plus className="w-4 h-4" /> Add Stock Item
-                </button>
+                <div className="flex gap-2">
+                  {inventory.length > 0 && (
+                    <button onClick={sendReorderList} className="px-3 py-2 bg-white border border-slate-200 hover:bg-emerald-50 rounded-lg text-xs font-semibold text-slate-800">
+                      Send reorder list
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setIsAddStockOpen(true)}
+                    className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                  >
+                    <Plus className="w-4 h-4" /> Add Stock Item
+                  </button>
+                </div>
               </div>
 
               {inventory.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
                   <Package className="w-10 h-10 text-blue-600 mx-auto" />
-                  <h3 className="text-sm font-bold text-slate-800">Inventory Empty</h3>
+                  <h3 className="text-sm font-bold text-slate-800">No stock items yet</h3>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto">Add the materials you use. Set a reorder level to be warned before you run out, and an expiry date to be warned before it lapses.</p>
                 </div>
               ) : (
-                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-b border-slate-200">
-                      <tr>
-                        <th className="p-3.5">Item Name</th>
-                        <th className="p-3.5">Category</th>
-                        <th className="p-3.5">Quantity on Hand</th>
-                        <th className="p-3.5">Status</th>
-                        <th className="p-3.5 text-center">Quick Adjust</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {inventory.map((item) => (
-                        <tr key={item.id} className="hover:bg-slate-50/60">
-                          <td className="p-3.5 font-bold text-slate-900">{item.name}</td>
-                          <td className="p-3.5 text-slate-600">{item.category}</td>
-                          <td className="p-3.5">
-                            <span className="font-bold text-sm">{item.quantity}</span> {item.unit}
-                          </td>
-                          <td className="p-3.5">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                              item.status === "Low Stock" ? "bg-amber-100 text-amber-800 border border-amber-300" : "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                            }`}>
-                              {item.status}
-                            </span>
-                          </td>
-                          <td className="p-3.5 text-center space-x-1.5">
-                            <button onClick={() => handleStockAdjust(item.id, -1)} className="px-2 py-1 bg-slate-100 rounded font-semibold text-slate-700">-1</button>
-                            <button onClick={() => handleStockAdjust(item.id, 5)} className="px-2 py-1 bg-blue-50 text-blue-700 rounded font-semibold">+5</button>
-                          </td>
+                <>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-testid="stock-summary">
+                    {[
+                      { label: "Items", value: sum.total, tone: "text-slate-900" },
+                      { label: "Out of stock", value: sum.out, tone: sum.out ? "text-rose-600" : "text-slate-900" },
+                      { label: "Running low", value: sum.low, tone: sum.low ? "text-amber-600" : "text-slate-900" },
+                      { label: "Expired or expiring", value: sum.expired + sum.expiring, tone: sum.expired ? "text-rose-600" : sum.expiring ? "text-amber-600" : "text-slate-900" },
+                    ].map((c) => (
+                      <div key={c.label} className="bg-white border border-slate-200 rounded-xl p-4">
+                        <div className="text-[11px] font-semibold text-slate-500">{c.label}</div>
+                        <div className={`text-lg font-bold mt-1 tabular ${c.tone}`}>{c.value}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 text-xs" role="group" aria-label="Show stock">
+                    {[["all", "All items"], ["reorder", `Needs reorder (${sum.out + sum.low})`], ["expiring", `Expiry (${sum.expired + sum.expiring})`]].map(([id, label]) => (
+                      <button
+                        key={id}
+                        type="button"
+                        aria-pressed={stockViewId === id}
+                        onClick={() => setStockViewId(id)}
+                        className={`px-3 py-1.5 rounded-full border font-semibold ${stockViewId === id ? "bg-ink text-white border-ink" : "bg-white text-slate-700 border-slate-200 hover:bg-blue-50"}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                    <input
+                      type="search"
+                      aria-label="Search stock"
+                      value={stockQuery}
+                      onChange={(e) => setStockQuery(e.target.value)}
+                      placeholder="Search item or category"
+                      className="ml-auto w-full sm:w-64 px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto shadow-xs">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-b border-slate-200">
+                        <tr>
+                          <th className="p-3.5">Item</th>
+                          <th className="p-3.5">Category</th>
+                          <th className="p-3.5">On hand</th>
+                          <th className="p-3.5">Status</th>
+                          <th className="p-3.5">Expiry</th>
+                          <th className="p-3.5 text-center">Update</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {rows.length === 0 && (
+                          <tr><td colSpan={6} className="p-8 text-center text-slate-500">{stockQuery ? "No item matches your search." : "Nothing needs attention here."}</td></tr>
+                        )}
+                        {rows.map((item) => {
+                          const st = stockState(item);
+                          const amount = stockQty[item.id] ?? "1";
+                          const n = Math.max(1, Math.floor(Number(amount)) || 1);
+                          return (
+                            <tr key={item.id} className="hover:bg-slate-50/60">
+                              <td className="p-3.5 font-bold text-slate-900">{item.name}</td>
+                              <td className="p-3.5 text-slate-600">{item.category}</td>
+                              <td className="p-3.5">
+                                <span className="font-bold text-sm tabular">{item.quantity}</span> {item.unit}
+                                <div className="text-[10px] text-slate-400">Reorder at {item.minThreshold}</div>
+                              </td>
+                              <td className="p-3.5">
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                  st.out ? "bg-rose-100 text-rose-800 border-rose-300" : st.low ? "bg-amber-100 text-amber-800 border-amber-300" : "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                }`}>
+                                  {st.out ? "Out of stock" : st.low ? "Low stock" : "In stock"}
+                                </span>
+                              </td>
+                              <td className="p-3.5">
+                                {st.days === null ? <span className="text-slate-400">Not set</span> : st.expired ? (
+                                  <span className="font-bold text-rose-600">Expired {Math.abs(st.days)} {Math.abs(st.days) === 1 ? "day" : "days"} ago</span>
+                                ) : st.expiringSoon ? (
+                                  <span className="font-bold text-amber-600">In {st.days} {st.days === 1 ? "day" : "days"}</span>
+                                ) : (
+                                  <span className="text-slate-600">{new Date(item.expiry).toLocaleDateString("en-IN")}</span>
+                                )}
+                              </td>
+                              <td className="p-3.5">
+                                <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    aria-label={`Amount for ${item.name}`}
+                                    value={amount}
+                                    onChange={(e) => setStockQty({ ...stockQty, [item.id]: e.target.value })}
+                                    className="w-14 px-2 py-1 border border-slate-300 rounded text-center"
+                                  />
+                                  <button onClick={() => handleStockAdjust(item.id, -n)} aria-label={`Use ${n} of ${item.name}`} className="px-2.5 py-1 bg-slate-100 rounded font-semibold text-slate-700 hover:bg-slate-200">Use</button>
+                                  <button onClick={() => handleStockAdjust(item.id, n)} aria-label={`Receive ${n} of ${item.name}`} className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded font-semibold hover:bg-blue-100">Receive</button>
+                                  <button onClick={() => handleRemoveStock(item)} aria-label={`Remove ${item.name}`} className="p-1 text-slate-400 hover:text-rose-600"><X className="w-3.5 h-3.5" /></button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </div>
-          )}
+            );
+          })()}
 
           {/* TAB 6: EMPLOYEE ROLES & ROSTER (Enhanced with Alerts, Leave & Performance Review) */}
           {activeNav === "Employee Roles & Roster" && (
@@ -2804,9 +2944,9 @@ export default function App() {
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                 {[
                   { title: "Patients", value: patients.length, note: "Registered patient records", icon: <Users className="w-5 h-5" />, tone: "bg-blue-50 text-blue-600" },
-                  { title: "Visits Today", value: todayAppointments, note: `${appointments.length} total appointments`, icon: <Calendar className="w-5 h-5" />, tone: "bg-indigo-50 text-indigo-600" },
-                  { title: "Revenue / Billing", value: `₹${totalBilledRevenue.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`, note: "Total recorded invoice value", icon: <DollarSign className="w-5 h-5" />, tone: "bg-emerald-50 text-emerald-600" },
-                  { title: "Low Stock Alerts", value: lowStockCount, note: "Items at or below threshold", icon: <Package className="w-5 h-5" />, tone: "bg-amber-50 text-amber-600" },
+                  { title: "Visits Today", value: diarySum.today, note: diarySum.tomorrow ? `${diarySum.tomorrow} tomorrow` : "Active bookings today", icon: <Calendar className="w-5 h-5" />, tone: "bg-indigo-50 text-indigo-600" },
+                  { title: "Collected this month", value: `₹${formatINR(billing.collectedP)}`, note: `₹${formatINR(billing.billedP)} billed this month`, icon: <DollarSign className="w-5 h-5" />, tone: "bg-emerald-50 text-emerald-600" },
+                  { title: "Outstanding", value: `₹${formatINR(billing.outstandingP)}`, note: billing.overdueCount ? `${billing.overdueCount} overdue, ₹${formatINR(billing.overdueP)}` : "Unpaid balance across invoices", icon: <Package className="w-5 h-5" />, tone: billing.overdueCount ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600" },
                 ].map((card) => (
                   <div key={card.title} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
                     <div className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center ${card.tone}`}>{card.icon}</div>
@@ -2830,7 +2970,7 @@ export default function App() {
                   {[
                     { label: "Appointment reminders", count: dueApptReminders.length, to: "Appointments Diary" },
                     { label: "Patients due for recall", count: dueRecallList.length, to: "Appointments Diary" },
-                    { label: "Payments to chase", count: duePayReminders.length, to: "Appointments Diary" },
+                    { label: "Payments to chase", count: duePayReminders.length, to: "Billing & Invoices" },
                   ].map((a) => (
                     <button
                       key={a.label}
@@ -2846,6 +2986,57 @@ export default function App() {
                   ))}
                 </div>
               </section>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <section className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm" data-testid="today-schedule">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <h2 className="text-base font-bold text-slate-900">Today's schedule</h2>
+                    <button onClick={() => setActiveNav("Appointments Diary")} className="text-xs font-semibold text-blue-600 hover:text-blue-800">Open diary ›</button>
+                  </div>
+                  {todaysVisits.length === 0 ? (
+                    <p className="text-sm text-slate-500">No visits booked for the rest of today.</p>
+                  ) : (
+                    <ul className="divide-y divide-slate-100">
+                      {todaysVisits.slice(0, 6).map((a) => (
+                        <li key={a.id} className="py-2 flex items-center gap-3 text-sm">
+                          <span className="w-16 shrink-0 font-bold text-blue-700 tabular">{formatTime12(a.time)}</span>
+                          <span className="min-w-0 flex-1">
+                            <span className="font-semibold text-slate-900">{a.patientName}</span>
+                            <span className="text-slate-500"> · {a.procedure}</span>
+                          </span>
+                          <span className="text-xs text-slate-400 shrink-0">{String(a.chair || "").split(" (")[0]}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+
+                <section className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm" data-testid="attention">
+                  <h2 className="text-base font-bold text-slate-900 mb-3">Needs attention</h2>
+                  {(() => {
+                    const items = [
+                      { n: billing.overdueCount, text: `${billing.overdueCount} overdue ${billing.overdueCount === 1 ? "invoice" : "invoices"}, ₹${formatINR(billing.overdueP)}`, to: "Billing & Invoices" },
+                      { n: diarySum.needsUpdate, text: `${diarySum.needsUpdate} past ${diarySum.needsUpdate === 1 ? "visit has" : "visits have"} no outcome marked`, to: "Appointments Diary" },
+                      { n: stockSum.out + stockSum.low, text: `${stockSum.out + stockSum.low} ${stockSum.out + stockSum.low === 1 ? "item" : "items"} to reorder`, to: "Stock Maintenance" },
+                      { n: stockSum.expired + stockSum.expiring, text: `${stockSum.expired + stockSum.expiring} ${stockSum.expired + stockSum.expiring === 1 ? "item" : "items"} expired or expiring soon`, to: "Stock Maintenance" },
+                    ].filter((x) => x.n > 0);
+                    return items.length === 0 ? (
+                      <p className="text-sm text-slate-500">Nothing needs attention right now.</p>
+                    ) : (
+                      <ul className="space-y-2">
+                        {items.map((x) => (
+                          <li key={x.text}>
+                            <button onClick={() => setActiveNav(x.to)} className="w-full text-left flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50/60 hover:bg-amber-50 px-3 py-2 text-sm font-semibold text-slate-800">
+                              {x.text}
+                              <span className="text-amber-700">›</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                  })()}
+                </section>
+              </div>
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
                 <section className="xl:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 md:p-6 shadow-sm">
@@ -2873,8 +3064,8 @@ export default function App() {
 
                 <section className="bg-white rounded-2xl border border-slate-200 p-5 md:p-6 shadow-sm">
                   <div className="mb-5">
-                    <h2 className="text-base font-bold text-slate-900">Revenue / Billing</h2>
-                    <p className="text-xs text-slate-500 mt-1">Invoice value recorded over 7 days</p>
+                    <h2 className="text-base font-bold text-slate-900">Billed this week</h2>
+                    <p className="text-xs text-slate-500 mt-1">Invoice value raised over the last 7 days</p>
                   </div>
                   <div className="h-56 flex items-end gap-3 border-b border-slate-200 px-1">
                     {dashboardRevenueSeries.map((day, index) => {
@@ -3465,9 +3656,6 @@ export default function App() {
                       patientId: activePatient.id,
                       patientName: activePatient.name,
                       paymentMode: "Cash",
-                      provider: "Self Pay",
-                      claimId: "",
-                      status: "Self-Pay Completed",
                       items: planToInvoiceItems(plan, () => newId("LI")),
                       discount: plan.discount || "",
                       advance: "",
@@ -3780,7 +3968,7 @@ export default function App() {
               <Field label="Date of Birth" hint="Optional. Fills the age automatically.">
                 <input
                   type="date"
-                  max={new Date().toISOString().split("T")[0]}
+                  max={dateKey()}
                   value={newPatientForm.dob}
                   onChange={(e) => {
                     const dob = e.target.value;
@@ -4275,45 +4463,6 @@ export default function App() {
               </select>
             </div>
 
-            {newInvoiceForm.paymentMode === "Insurance / TPA" && (
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">Insurance / TPA</label>
-                <input
-                  type="text"
-                  value={newInvoiceForm.provider}
-                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, provider: e.target.value })}
-                  placeholder="e.g. Star Health / Self Pay"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">Claim Status</label>
-                <select
-                  value={newInvoiceForm.status}
-                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, status: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-                >
-                  <option>Pre-Auth Approved</option>
-                  <option>Pre-Auth Submitted</option>
-                  <option>Claim Settled</option>
-                  <option>Self-Pay Completed</option>
-                </select>
-              </div>
-              <div className="col-span-2">
-                <label className="block font-semibold text-slate-600 mb-1">Claim ID (optional)</label>
-                <input
-                  type="text"
-                  value={newInvoiceForm.claimId}
-                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, claimId: e.target.value })}
-                  placeholder="Leave empty to generate one"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-                />
-              </div>
-            </div>
-            )}
-
             <div className="space-y-2">
               <label className="block font-semibold text-slate-600">Treatments billed</label>
               {newInvoiceForm.items.map((it, idx) => {
@@ -4536,7 +4685,7 @@ export default function App() {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-600 mb-1">Min. Threshold</label>
+                <label className="block font-semibold text-slate-600 mb-1">Reorder level</label>
                 <input
                   type="number"
                   value={newStockForm.minThreshold}
@@ -4544,6 +4693,17 @@ export default function App() {
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                 />
               </div>
+            </div>
+
+            <div>
+              <label htmlFor="stock-expiry" className="block font-semibold text-slate-600 mb-1">Expiry date (optional)</label>
+              <input
+                id="stock-expiry"
+                type="date"
+                value={newStockForm.expiry}
+                onChange={(e) => setNewStockForm({ ...newStockForm, expiry: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+              />
             </div>
 
             <div className="pt-2 flex justify-end gap-2">
@@ -4558,7 +4718,7 @@ export default function App() {
                 type="submit"
                 className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold"
               >
-                Save Consumable
+                Save item
               </button>
             </div>
           </form>

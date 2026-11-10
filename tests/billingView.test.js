@@ -37,13 +37,13 @@ describe("billingSummary", () => {
 describe("search and views", () => {
   const list = [
     paid(inv({ id: "A", patient: "Asha Devi", totalP: 100000 }), 100000),
-    paid(inv({ id: "B", patient: "Ravi", totalP: 100000, claimId: "CLM-XYZ", provider: "Star Health" }), 30000),
+    paid(inv({ id: "B", patient: "Ravi", totalP: 100000, treatment: "Root canal", paymentMode: "UPI" }), 30000),
     inv({ id: "C", patient: "Meena", totalP: 100000, dueDate: "2026-11-01" })
   ];
-  it("searches id, patient, claim and provider", () => {
+  it("searches id, patient, treatment and payment mode", () => {
     expect(searchInvoices(list, "asha").map((i) => i.id)).toEqual(["A"]);
-    expect(searchInvoices(list, "clm-xyz").map((i) => i.id)).toEqual(["B"]);
-    expect(searchInvoices(list, "star").map((i) => i.id)).toEqual(["B"]);
+    expect(searchInvoices(list, "root").map((i) => i.id)).toEqual(["B"]);
+    expect(searchInvoices(list, "upi").map((i) => i.id)).toEqual(["B"]);
     expect(searchInvoices(list, "  ").length).toBe(3);
   });
   it("filters by payment state", () => {

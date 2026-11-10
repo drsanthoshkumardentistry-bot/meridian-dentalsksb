@@ -61,3 +61,31 @@ describe("Dashboard today's actions", () => {
     expect(await screen.findByTestId("reminders-panel")).toBeTruthy();
   });
 });
+
+describe("Dashboard schedule and attention list", () => {
+  it("lists today's remaining visits and what needs attention, linking to the right screen", async () => {
+    const today = dateKey();
+    localStorage.setItem(KEY("appointments"), JSON.stringify([
+      { id: "A1", patientName: "Morning Mani", phone: "9876543210", date: today, time: "09:00", chair: "Chair 1 (Main Operatory)", doctor: "Dr T", procedure: "Scaling", status: "Confirmed", reminders: { dayBefore: "x", sameDay: "x" } },
+      { id: "A2", patientName: "Cancelled Chitra", phone: "9876543210", date: today, time: "11:00", chair: "Chair 2 (Pediatric / Perio)", doctor: "Dr T", procedure: "RCT", status: "Cancelled" },
+      { id: "A3", patientName: "Old Omar", phone: "9876543210", date: dateKey(addDays(new Date(), -4)), time: "11:00", chair: "Chair 1 (Main Operatory)", doctor: "Dr T", procedure: "Filling", status: "Confirmed" },
+    ]));
+    localStorage.setItem(KEY("inventory"), JSON.stringify([
+      { id: "S1", name: "Gloves", category: "Materials", unit: "Boxes", quantity: 0, minThreshold: 3, status: "Low Stock" },
+    ]));
+    await openDashboard();
+    const sched = await screen.findByTestId("today-schedule");
+    expect(within(sched).getByText("Morning Mani")).toBeTruthy();
+    expect(within(sched).queryByText("Cancelled Chitra")).toBeNull();
+    const att = screen.getByTestId("attention");
+    expect(within(att).getByText(/1 past visit has no outcome marked/)).toBeTruthy();
+    expect(within(att).getByText(/1 item to reorder/)).toBeTruthy();
+    fireEvent.click(within(att).getByText(/1 item to reorder/));
+    expect(await screen.findByTestId("stock-summary")).toBeTruthy();
+  });
+
+  it("says nothing needs attention on an empty clinic", async () => {
+    await openDashboard();
+    expect(within(await screen.findByTestId("attention")).getByText("Nothing needs attention right now.")).toBeTruthy();
+  });
+});

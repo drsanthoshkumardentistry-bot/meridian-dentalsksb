@@ -49,12 +49,12 @@ export const billingSummary = (invoices = [], now = new Date()) => {
   return { billedP, collectedP, outstandingP, overdueP, overdueCount };
 };
 
-/** Case-insensitive match on invoice number, patient, claim, provider and treatment. */
+/** Case-insensitive match on invoice number, patient, treatment and payment mode. */
 export const searchInvoices = (invoices = [], query = "") => {
   const q = String(query).trim().toLowerCase();
   if (!q) return invoices;
   return invoices.filter((i) =>
-    [i.id, i.patient, i.claimId, i.provider, i.treatment, i.paymentMode].some((f) => String(f || "").toLowerCase().includes(q))
+    [i.id, i.patient, i.treatment, i.paymentMode].some((f) => String(f || "").toLowerCase().includes(q))
   );
 };
 
@@ -71,7 +71,7 @@ export const invoiceView = (invoices = [], { status = "all", query = "" } = {}, 
 
 /** One row per invoice for the clinic's own records or accountant. */
 export const invoicesCsv = (invoices = [], now = new Date()) => {
-  const rows = [["Invoice", "Date", "Due date", "Patient", "Treatment", "Provider", "Claim ID", "Total (INR)", "Paid (INR)", "Balance (INR)", "Status", "Days old"]];
+  const rows = [["Invoice", "Date", "Due date", "Patient", "Treatment", "Payment mode", "Total (INR)", "Paid (INR)", "Balance (INR)", "Status", "Days old"]];
   for (const raw of invoices) {
     const inv = normalizeInvoice(raw);
     rows.push([
@@ -80,8 +80,7 @@ export const invoicesCsv = (invoices = [], now = new Date()) => {
       inv.dueDate || "",
       inv.patient || "",
       inv.treatment || "",
-      inv.provider || "",
-      inv.claimId || "",
+      inv.paymentMode || "",
       formatINR(inv.totalP || 0).replace(/,/g, ""),
       formatINR(paidPaise(inv)).replace(/,/g, ""),
       formatINR(balancePaise(inv)).replace(/,/g, ""),

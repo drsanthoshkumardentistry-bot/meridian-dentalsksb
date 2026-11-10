@@ -7,7 +7,8 @@
 import { normalizeInvoice, balancePaise, formatINR, invoiceLines } from "./billing";
 import { parseAnyDate, dateKey } from "./reminders";
 
-export const MODE_KEYS = ["Cash", "UPI", "Card", "Net banking", "Insurance / TPA"];
+// Older payments recorded with any other mode (including retired ones) are counted under "Other".
+export const MODE_KEYS = ["Cash", "UPI", "Card", "Net banking"];
 
 const pad = (n) => String(n).padStart(2, "0");
 
@@ -17,7 +18,7 @@ const inMonth = (date, ym) => Boolean(date) && `${date.getFullYear()}-${pad(date
 
 const modeKey = (mode) => (MODE_KEYS.includes(mode) ? mode : "Other");
 
-const emptyModes = () => ({ Cash: 0, UPI: 0, Card: 0, "Net banking": 0, "Insurance / TPA": 0, Other: 0 });
+const emptyModes = () => ({ Cash: 0, UPI: 0, Card: 0, "Net banking": 0, Other: 0 });
 
 /** Money received per day in the month, split by payment mode. All amounts in paise. */
 export const collectionsForMonth = (invoices = [], ym = currentMonthKey()) => {
