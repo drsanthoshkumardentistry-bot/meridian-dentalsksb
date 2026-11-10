@@ -101,7 +101,7 @@ const FEATURE_GROUPS = [
 
 const STEPS = [
   { n: "1", title: "Sign in", text: "Continue with Google, or use your email and password. Each clinic gets its own private workspace." },
-  { n: "2", title: "Add your data", text: "Register patients yourself, or ask us to help you move existing records." },
+  { n: "2", title: "Add your data", text: "Register patients yourself, or upload your existing patient list." },
   { n: "3", title: "Set up your clinic", text: "Add your clinic details, doctors and chairs. We guide you on a call if you like." },
   { n: "4", title: "Start charting", text: "Open a patient and chart the first tooth in a few taps." }
 ];
@@ -146,7 +146,7 @@ const FAQS = [
   },
   {
     q: "Can you move my existing records in?",
-    a: "Yes. Message us on WhatsApp and we will help you move your patient list across."
+    a: "Yes. Upload a patient list from a spreadsheet (CSV) in Practice Profile, or bring in a MeriDent backup. You see a preview before anything is added. Message us on WhatsApp if you want help."
   }
 ];
 
@@ -627,7 +627,7 @@ export default function LandingPage({
             <ShieldCheck className="w-5 h-5 mt-0.5 shrink-0 text-aqua-700" aria-hidden="true" />
             <div>
               <h3 className="font-bold">Your data, your control</h3>
-              <p className="mt-1 text-sm text-slate-600 leading-relaxed">Patients can opt out of WhatsApp messages, and you can ask us any time to export or delete your clinic's records.</p>
+              <p className="mt-1 text-sm text-slate-600 leading-relaxed">Patients can opt out of WhatsApp messages, and you can download a full copy of your clinic's records any time, or ask us to delete them.</p>
             </div>
           </div>
         </div>

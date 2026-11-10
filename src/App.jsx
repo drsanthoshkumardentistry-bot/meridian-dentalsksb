@@ -20,6 +20,8 @@ import { canRead, canWrite, navFor, NAV_BY_ROLE, firstScreen, branchScope, ROLE_
 import { isActiveMember, isPendingInvite, buildInvite, inviteMessage } from "./team.js";
 import { watchMyMembership, watchTeam, createInvite, acceptInvite, updateMember, removeMember } from "./teamStore.js";
 import BranchesCard from "./components/BranchesCard.jsx";
+import DataPortability from "./components/DataPortability.jsx";
+import { buildPatientBackup, backupFileName } from "./portability.js";
 import { branchesOf, filterByBranch, writeBranchId, tagBranch, scopeToBranches } from "./branches.js";
 import QueuePanel from "./components/QueuePanel.jsx";
 import BookingRequests from "./components/BookingRequests.jsx";
@@ -1349,6 +1351,18 @@ export default function App() {
 
   const downloadCsv = (csv, name) => {
     const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const downloadFile = (text, name, type, bom) => {
+    const blob = new Blob([bom ? "\ufeff" + text : text], { type: `${type};charset=utf-8` });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -3137,6 +3151,22 @@ export default function App() {
                 }}
               />}
 
+              {!allowedBranchIds && (role === "owner" || role === "manager") && <DataPortability
+                data={{ patients: allPatients, appointments: allAppointments, invoices: allInvoices, inventory, employees, profile: practiceProfile }}
+                newId={newId}
+                onDownloadFile={downloadFile}
+                onAudit={logAudit}
+                onImported={(r) => {
+                  if (r.patients) setPatients(r.patients);
+                  if (r.appointments) setAppointments(r.appointments);
+                  if (r.invoices) setInvoices(r.invoices);
+                  if (r.inventory) setInventory(r.inventory);
+                  if (r.employees) setEmployees(r.employees);
+                  if (r.addBranches && r.addBranches.length) setPracticeProfile({ ...practiceProfile, branches: [...allBranches, ...r.addBranches] });
+                  showToast("Import complete");
+                }}
+              />}
+
               {role === "owner" && (
                 <TeamCard
                   members={team}
@@ -4606,6 +4636,22 @@ export default function App() {
               >
                 <Trash2 className="w-3.5 h-3.5" /> Delete Chart
               </button>
+
+              {!allowedBranchIds && (role === "owner" || role === "manager") && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const b = buildPatientBackup(activePatient.id, { patients: allPatients, appointments: allAppointments, invoices: allInvoices }, practiceProfile);
+                    if (!b) return;
+                    downloadFile(JSON.stringify(b), backupFileName(b), "application/json");
+                    logAudit("data.export", activePatient.name, "One patient's record");
+                    showToast("Record downloaded. It holds private health details, keep it safe.");
+                  }}
+                  className="text-brand-700 hover:text-brand-900 font-medium flex items-center gap-1.5"
+                >
+                  <Download className="w-3.5 h-3.5" /> Download record
+                </button>
+              )}
 
               <button
                 type="button"
