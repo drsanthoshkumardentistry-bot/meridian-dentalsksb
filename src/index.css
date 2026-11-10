@@ -24,8 +24,9 @@ body {
     "Segoe UI",
     sans-serif;
 
-  background: #f3f8ff;
-  color: #0f172a;
+  background: #f7f9fc;
+  color: #0f1c33;
+  -webkit-font-smoothing: antialiased;
 }
 
 button,
@@ -129,6 +130,12 @@ html {
 }
 
 /* ---- App shell: display face for page titles ---- */
+main h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f1c33;
+}
+
 main h1,
 main h2 {
   font-family: "Bricolage Grotesque", Figtree, ui-sans-serif, system-ui, sans-serif;

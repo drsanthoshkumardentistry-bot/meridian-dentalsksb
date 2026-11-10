@@ -4,7 +4,7 @@ import { specialtyLabel } from "../connect/rules.js";
 import { trendingTopics, suggestAuthors, eventDay, eventWhen, inviteLink, activityText, GUIDELINES } from "../connect/feed.js";
 import { Avatar, downloadIcs } from "./ConnectPost.jsx";
 
-const card = "bg-white border border-rule rounded-2xl";
+const card = "bg-white border border-rule rounded-xl";
 const heading = "font-display font-bold text-sm text-ink";
 
 /** Who you are on the network, with your numbers. */
@@ -37,7 +37,7 @@ export function ProfileCard({ me, postCount, followers, followingCount, onMine, 
 export function ActivityBanner({ activity, onView, onDismiss }) {
   if (!activity.items.length) return null;
   return (
-    <div role="status" className="flex flex-wrap items-center gap-3 rounded-2xl border border-gold-500/40 bg-gold-50 px-4 py-3 text-sm text-ink">
+    <div role="status" className="flex flex-wrap items-center gap-3 rounded-xl border border-gold-500/40 bg-gold-50 px-4 py-3 text-sm text-ink">
       <Bell className="w-4 h-4 text-gold-700 shrink-0" aria-hidden="true" />
       <span className="flex-1 min-w-[12rem]">Your posts have {activityText(activity)}.</span>
       <button type="button" onClick={onView} className="px-3 py-1.5 rounded-lg bg-ink text-white text-xs font-bold">View my posts</button>

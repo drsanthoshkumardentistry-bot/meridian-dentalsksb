@@ -16,7 +16,7 @@ const blankDraft = () => ({ title: "", items: [blankItem()], discount: "", notes
 const STATUS_STYLE = {
   Proposed: "bg-amber-50 text-amber-700 border-amber-200",
   Approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  Declined: "bg-slate-100 text-slate-600 border-slate-200",
+  Declined: "bg-slate-100 text-slate-600 border-rule",
   Billed: "bg-blue-50 text-blue-700 border-blue-200",
 };
 
@@ -280,7 +280,7 @@ export default function TreatmentPlans({ patient, practiceProfile, onChange, onB
       {plans.map((plan) => {
         const t = planTotals(plan);
         return (
-          <div key={plan.id} className="rounded-xl border border-slate-200 p-4 space-y-2">
+          <div key={plan.id} className="rounded-xl border border-rule p-4 space-y-2">
             <div className="flex items-start justify-between gap-2">
               <div>
                 <div className="font-bold text-slate-900">{plan.title}</div>

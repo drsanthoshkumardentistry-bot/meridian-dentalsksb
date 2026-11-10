@@ -58,7 +58,7 @@ export default function OpgViewer({ patient, onUpload, onRemove, onCalibrate, on
   );
 
   return (
-    <div className="bg-ink rounded-2xl p-4 sm:p-5 text-white space-y-3">
+    <div className="bg-ink rounded-xl p-4 sm:p-5 text-white space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <div className="font-display font-bold">Panoramic film (OPG)</div>

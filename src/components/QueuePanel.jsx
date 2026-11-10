@@ -19,7 +19,7 @@ export default function QueuePanel({ queue, today, onAdd, onStatus, onRemove, no
   };
 
   return (
-    <section className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3" data-testid="walkin-queue" aria-label="Walk-in queue">
+    <section className="bg-white rounded-xl border border-rule p-4 space-y-3" data-testid="walkin-queue" aria-label="Walk-in queue">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-bold text-slate-900">Walk-in queue</h2>
         <p className="text-xs text-slate-500">

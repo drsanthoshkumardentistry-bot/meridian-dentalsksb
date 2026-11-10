@@ -77,7 +77,7 @@ export default function GlobalSearch({ patients, appointments, invoices, onPick 
           type="button"
           onMouseEnter={() => setActive(i)}
           onClick={() => pick({ type, item })}
-          className={`w-full text-left px-3 py-2 flex flex-col ${i === active ? "bg-blue-50" : "hover:bg-slate-50"}`}
+          className={`w-full text-left px-3 py-2 flex flex-col ${i === active ? "bg-blue-50" : "hover:bg-enamel"}`}
         >
           <span className="text-sm font-semibold text-slate-900">{title}</span>
           <span className="text-[11px] text-slate-500">{sub}</span>
@@ -111,10 +111,10 @@ export default function GlobalSearch({ patients, appointments, invoices, onPick 
         onFocus={() => setOpen(true)}
         onKeyDown={onInputKey}
         placeholder="Search patients, visits, invoices  ( / )"
-        className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        className="w-full pl-9 pr-3 py-1.5 bg-enamel border border-rule rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
       />
       {showPanel && (
-        <div id="global-search-results" role="listbox" className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl max-h-[70vh] overflow-y-auto z-50 pb-1">
+        <div id="global-search-results" role="listbox" className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-rule rounded-xl shadow-xl max-h-[70vh] overflow-y-auto z-50 pb-1">
           {flat.length === 0 ? (
             <p className="px-3 py-4 text-xs text-slate-500">Nothing found for "{q.trim()}". Try a name, phone number or invoice number.</p>
           ) : (

@@ -39,21 +39,21 @@ export default function Composer({ me, existing = null, onSubmit, onCancel }) {
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className="w-full text-left bg-white border border-rule rounded-2xl px-4 py-3.5 text-sm text-slate-500 hover:border-aqua-400 flex items-center gap-3">
+      <button type="button" onClick={() => setOpen(true)} className="w-full text-left bg-white border border-rule rounded-xl px-4 py-3.5 text-sm text-slate-500 hover:border-aqua-400 flex items-center gap-3">
         <span aria-hidden="true" className="w-9 h-9 rounded-full bg-brand-600 text-white font-bold flex items-center justify-center text-xs">{initials(me.fullName)}</span>
         Start a discussion, ask peers or share a tip
       </button>
     );
   }
   return (
-    <form onSubmit={submit} className="bg-white border border-rule rounded-2xl p-4 space-y-3" noValidate aria-label={editing ? "Edit post" : "New post"}>
+    <form onSubmit={submit} className="bg-white border border-rule rounded-xl p-4 space-y-3" noValidate aria-label={editing ? "Edit post" : "New post"}>
       {editing ? (
         <p className="text-xs font-semibold text-slate-600">Editing your {typeLabel(existing.type).toLowerCase()}</p>
       ) : (
         <div role="radiogroup" aria-label="Post type" className="flex flex-wrap gap-2">
           {POST_TYPES.map(([id, label]) => (
             <button key={id} type="button" role="radio" aria-checked={form.type === id} onClick={() => setForm({ ...form, type: id })}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${form.type === id ? "bg-ink text-white border-ink" : "bg-white text-slate-700 border-slate-200 hover:bg-sky-50"}`}>{label}</button>
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${form.type === id ? "bg-ink text-white border-ink" : "bg-white text-slate-700 border-rule hover:bg-sky-50"}`}>{label}</button>
           ))}
         </div>
       )}

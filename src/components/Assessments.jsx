@@ -22,7 +22,7 @@ export default function Assessments({ patient, onSave, onRemove, newId }) {
   return (
     <div className="space-y-5" data-testid="assessments">
       <div className="grid lg:grid-cols-2 gap-4">
-        <section className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 text-xs space-y-3" aria-label="Caries risk">
+        <section className="rounded-xl border border-rule bg-enamel/60 p-4 text-xs space-y-3" aria-label="Caries risk">
           <h3 className="text-sm font-bold text-slate-900">Caries risk</h3>
           {CARIES_FACTORS.map((f) => (
             <label key={f.id} className="flex items-start gap-2 text-slate-700">
@@ -37,7 +37,7 @@ export default function Assessments({ patient, onSave, onRemove, newId }) {
           <button type="button" onClick={saveCaries} className="px-4 py-2 rounded-lg bg-[#1d4ed8] text-white font-semibold">Save caries risk</button>
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 text-xs space-y-3" aria-label="Gum screening (BPE)">
+        <section className="rounded-xl border border-rule bg-enamel/60 p-4 text-xs space-y-3" aria-label="Gum screening (BPE)">
           <h3 className="text-sm font-bold text-slate-900">Gum screening (BPE)</h3>
           <p className="text-slate-500">Score the worst reading in each sextant. Use * if there is furcation involvement.</p>
           <div className="grid grid-cols-2 gap-2">
@@ -60,7 +60,7 @@ export default function Assessments({ patient, onSave, onRemove, newId }) {
       <section aria-label="Assessment history" className="space-y-2">
         <h3 className="text-sm font-bold text-slate-900">History</h3>
         {history.length === 0 ? <p className="text-xs text-slate-500">No assessments saved yet.</p> : history.map((a) => (
-          <div key={a.id} className="rounded-xl border border-slate-200 p-3 text-xs flex items-start justify-between gap-3">
+          <div key={a.id} className="rounded-xl border border-rule p-3 text-xs flex items-start justify-between gap-3">
             <div>
               <div className="font-semibold text-slate-900">{a.type === "caries" ? `Caries risk: ${a.result.level}` : `BPE: highest score ${a.result.highest}${a.result.furcation ? " (furcation)" : ""}`} <span className="font-normal text-slate-500">· {fmt(a.date)}</span></div>
               <div className="text-slate-600 mt-0.5">{a.type === "caries" ? `Recall every ${a.result.recallMonths} months. ${a.result.advice.join(". ")}.` : a.result.guidance}</div>
