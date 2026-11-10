@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   validatePlan, createPlan, planTotals, approvePlan, declinePlan, canBill, markPlanBilled,
-  planToInvoiceItems, buildPlanMessage, buildPlanHtml,
+  planToInvoiceItems, buildPlanMessage, buildPlanHtml, parseTeeth, plannedTeeth, suggestPlanItems,
 } from "../src/plans.js";
 
 const draft = () => ({
@@ -63,5 +63,33 @@ describe("treatment plans", () => {
     const html = buildPlanHtml(p, { name: "Asha" }, { name: "Smile Clinic" });
     expect(html).not.toContain("<b>Plan</b>");
     expect(html).toContain("&lt;b&gt;Plan&lt;/b&gt;");
+  });
+
+  it("parses tooth lists and rejects invalid FDI numbers", () => {
+    expect(parseTeeth("16, 17  26;16")).toEqual([16, 17, 26]);
+    expect(parseTeeth("")).toEqual([]);
+    const items = [{ id: "a", description: "x", tooth: "16, 99", amount: "5" }];
+    expect(validatePlan({ title: "t", items })).toMatch(/valid FDI/);
+    items[0].tooth = "16, 17";
+    expect(validatePlan({ title: "t", items })).toBe("");
+  });
+
+  it("marks teeth on the chart only for live plans", () => {
+    const base = createPlan({ ...draft(), id: "A" }, day); // tooth 46 proposed
+    const billed = { ...createPlan({ id: "B", title: "b", items: [{ id: "z", description: "d", tooth: "11", amount: "5" }] }, day), status: "Billed" };
+    const declined = { ...createPlan({ id: "C", title: "c", items: [{ id: "y", description: "d", tooth: "21", amount: "5" }] }, day), status: "Declined" };
+    expect([...plannedTeeth([base, billed, declined])]).toEqual([46]);
+    expect(plannedTeeth(undefined).size).toBe(0);
+  });
+
+  it("suggests treatments from charted findings, ordered by tooth", () => {
+    let n = 0;
+    const rows = suggestPlanItems({ 26: "CAR", 16: "SCL", 11: "RES", 18: "MIS", 99: "CAR" }, () => `r${++n}`);
+    expect(rows.map((r) => [r.tooth, r.description])).toEqual([
+      ["16", "Scaling and polishing"],
+      ["18", "Replacement of missing tooth"],
+      ["26", "Restoration (filling)"],
+    ]);
+    expect(rows[0].amount).toBe("");
   });
 });

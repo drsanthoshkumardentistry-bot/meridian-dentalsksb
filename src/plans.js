@@ -1,4 +1,5 @@
 import { computeLineItemTotals, formatINR } from "./billing.js";
+import { toothInfo } from "./odontogram.js";
 
 export const PLAN_STATUS = ["Proposed", "Approved", "Declined", "Billed"];
 export const MAX_PLAN_ITEMS = 20;
@@ -8,14 +9,59 @@ const esc = (v) =>
 
 const todayStr = (now) => now.toLocaleDateString("en-IN");
 
+/** "16, 17 26" -> [16, 17, 26]; keeps order, drops blanks and duplicates. Invalid entries are kept as NaN-free numbers only if numeric. */
+export const parseTeeth = (str) => {
+  const out = [];
+  String(str || "")
+    .split(/[\s,;]+/)
+    .filter(Boolean)
+    .forEach((tok) => {
+      const n = Number(tok);
+      if (!out.includes(n)) out.push(n);
+    });
+  return out;
+};
+
 /** Validate a draft plan; returns an error message or "". */
 export const validatePlan = ({ title, items = [] }) => {
   if (!String(title || "").trim()) return "Give the plan a title, for example 'Full mouth rehabilitation'";
   if (!items.length) return "Add at least one treatment to the plan";
   if (items.some((it) => !String(it.description || "").trim())) return "Describe the treatment for every item";
   if (items.some((it) => !(parseFloat(it.amount) > 0))) return "Enter an estimated amount greater than zero for every item";
+  if (items.some((it) => parseTeeth(it.tooth).some((n) => !toothInfo(n)))) {
+    return "Tooth numbers must be valid FDI numbers such as 16 or 46, separated by commas";
+  }
   return "";
 };
+
+/** Teeth currently planned: items of plans that are Proposed or Approved. */
+export const plannedTeeth = (plans = []) => {
+  const set = new Set();
+  plans
+    .filter((p) => p.status === "Proposed" || p.status === "Approved")
+    .forEach((p) => p.items.forEach((it) => parseTeeth(it.tooth).forEach((n) => toothInfo(n) && set.add(n))));
+  return set;
+};
+
+const SUGGESTIONS = {
+  CAR: "Restoration (filling)",
+  FRC: "Repair of fractured tooth",
+  SCL: "Scaling and polishing",
+  MIS: "Replacement of missing tooth"
+};
+
+/** One blank-priced plan row per charted finding that usually needs treatment. */
+export const suggestPlanItems = (conditions = {}, makeId) =>
+  Object.entries(conditions)
+    .filter(([tooth, code]) => SUGGESTIONS[code] && toothInfo(tooth))
+    .sort((a, b) => Number(a[0]) - Number(b[0]))
+    .map(([tooth, code]) => ({
+      id: makeId(),
+      description: SUGGESTIONS[code],
+      tooth: String(tooth),
+      amount: "",
+      taxCategory: "therapeutic"
+    }));
 
 /** Build a stored plan from a draft. Amounts stay as entered; totals are derived on demand. */
 export const createPlan = ({ id, title, items, discount = "", notes = "" }, now = new Date()) => ({
@@ -65,7 +111,7 @@ export const markPlanBilled = (plan, invoiceId) =>
 export const planToInvoiceItems = (plan, newId) =>
   plan.items.map((it) => ({
     id: newId(),
-    description: it.tooth ? `${it.description} (tooth ${it.tooth})` : it.description,
+    description: it.tooth ? `${it.description} (${parseTeeth(it.tooth).length > 1 ? "teeth" : "tooth"} ${parseTeeth(it.tooth).join(", ")})` : it.description,
     amount: it.amount,
     taxCategory: it.taxCategory,
   }));
@@ -74,7 +120,7 @@ export const buildPlanMessage = (plan, patient, profile = {}) => {
   const t = planTotals(plan);
   const lines = t.lines.map((l, i) => {
     const it = plan.items[i];
-    return `${i + 1}. ${l.description}${it.tooth ? ` (tooth ${it.tooth})` : ""}: ₹${formatINR(l.amountP)}`;
+    return `${i + 1}. ${l.description}${it.tooth ? ` (${parseTeeth(it.tooth).length > 1 ? "teeth" : "tooth"} ${parseTeeth(it.tooth).join(", ")})` : ""}: ₹${formatINR(l.amountP)}`;
   });
   return (
     `Hello ${patient?.name || ""}, here is your treatment estimate from ${profile.name || "our clinic"}.\n\n` +

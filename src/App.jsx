@@ -7,7 +7,7 @@
 
 import Odontogram from "./components/Odontogram.jsx";
 import TreatmentPlans from "./components/TreatmentPlans.jsx";
-import { planToInvoiceItems, markPlanBilled } from "./plans.js";
+import { planToInvoiceItems, markPlanBilled, plannedTeeth } from "./plans.js";
 import React, { useState, useEffect, useRef } from "react";
 import {
   Menu,
@@ -3193,6 +3193,7 @@ export default function App() {
                   }}
                   isDeciduous={isDeciduous}
                   onToggleDeciduous={() => setIsDeciduous(!isDeciduous)}
+                  plannedTeeth={plannedTeeth(activePatient.plans)}
                 />
               )}
 
