@@ -39,6 +39,8 @@ import { geocodeAddress } from "./connect/geo.js";
 import Odontogram from "./components/Odontogram.jsx";
 import TreatmentPlans from "./components/TreatmentPlans.jsx";
 import { planToInvoiceItems, markPlanBilled, plannedTeeth, planTotals } from "./plans.js";
+import BranchCompare from "./components/BranchCompare.jsx";
+import { branchComparison, branchComparisonCsv } from "./branchReport.js";
 import LabOrders from "./components/LabOrders.jsx";
 import LabBoard from "./components/LabBoard.jsx";
 import { openLabOrders, overdueCount as labOverdueCount, knownLabs, moveLabOrder, buildLabChase, buildPatientReady, markPatientNotified } from "./lab.js";
@@ -1338,6 +1340,10 @@ export default function App() {
   const reportInvoices = invoices;
   const reportCollections = collectionsForMonth(reportInvoices, reportMonth);
   const reportGst = gstSummaryForMonth(reportInvoices, reportMonth);
+  const branchCmp = useMemo(
+    () => branchComparison(branches, { patients: scopeToBranches(allPatients, allowedBranchIds), appointments: scopeToBranches(allAppointments, allowedBranchIds), invoices: scopeToBranches(allInvoices, allowedBranchIds) }, reportMonth),
+    [branches, allPatients, allAppointments, allInvoices, reportMonth, activeMember] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   const downloadCsv = (csv, name) => {
     const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
@@ -2749,6 +2755,8 @@ export default function App() {
                   </div>
                 ))}
               </div>
+
+              <BranchCompare cmp={branchCmp} ym={reportMonth} onDownload={() => downloadCsv(branchComparisonCsv(branchCmp, reportMonth), `branches-${reportMonth}.csv`)} />
 
               <div className="flex flex-wrap gap-2">
                 <button
