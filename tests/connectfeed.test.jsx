@@ -16,7 +16,7 @@ const makeApi = (o = {}) => ({
   listComments: vi.fn(async () => []), addComment: vi.fn(async () => {}), deleteComment: vi.fn(async () => {}),
   report: vi.fn(async () => {}), listReports: vi.fn(async () => []), getPost: vi.fn(async () => null), dismissReport: vi.fn(async () => {}),
   listPostsBy: vi.fn(async () => []), listUpcomingEvents: vi.fn(async () => []), updatePost: vi.fn(async () => {}), setAccepted: vi.fn(async () => {}),
-  savedIds: vi.fn(async () => new Set()), listSaved: vi.fn(async () => []), setSaved: vi.fn(async () => {}), countFollowers: vi.fn(async () => 0),
+  vote: vi.fn(async () => {}), myVotes: vi.fn(async () => ({})), savedIds: vi.fn(async () => new Set()), listSaved: vi.fn(async () => []), setSaved: vi.fn(async () => {}), countFollowers: vi.fn(async () => 0),
   ...o,
 });
 const mount = (api, admin = false, toast = vi.fn()) => render(<ConnectFeed api={api} me={me} admin={admin} showToast={toast} />);
@@ -336,5 +336,60 @@ describe("staff reports queue", () => {
     fireEvent.click(await screen.findByText("Remove post"));
     await waitFor(() => expect(api.deletePost).toHaveBeenCalledWith("p1"));
     expect(api.dismissReport).toHaveBeenCalledWith("r1");
+  });
+});
+
+describe("polls", () => {
+  const poll = (o = {}) => post({ id: "pl1", type: "poll", title: "Which file system?", body: "", pollOptions: ["Rotary", "Reciprocating", "Hand"], v0: 2, v1: 1, v2: 0, likeCount: 0, commentCount: 0, ...o });
+  const withPoll = (o = {}, api = {}) => makeApi({ listPosts: vi.fn(async () => ({ posts: [poll(o)], cursor: null })), ...api });
+
+  it("hides results until you vote, then shows them and keeps your choice", async () => {
+    const api = withPoll();
+    mount(api);
+    const card = within(await article("Which file system?"));
+    expect(card.getByText(/Vote to see the results/)).toBeTruthy();
+    expect(card.queryByText(/67%/)).toBeNull();
+    fireEvent.click(card.getByRole("button", { name: "Hand" }));
+    await waitFor(() => expect(api.vote).toHaveBeenCalledWith("pl1", 2));
+    expect(await card.findByText(/Hand \(your vote\)/)).toBeTruthy();
+    expect(card.getByText(/50%/)).toBeTruthy();
+    expect(card.getByText(/4 votes/)).toBeTruthy();
+    expect(card.queryByRole("button", { name: "Rotary" })).toBeNull();
+  });
+
+  it("shows results at once if you already voted, and to the author", async () => {
+    mount(withPoll({}, { myVotes: vi.fn(async () => ({ pl1: 1 })) }));
+    const card = within(await article("Which file system?"));
+    expect(await card.findByText(/Reciprocating \(your vote\)/)).toBeTruthy();
+    cleanup();
+    mount(withPoll({ authorId: "me", authorName: "Dr Me" }));
+    expect(await within(await article("Which file system?")).findByText(/67%/)).toBeTruthy();
+  });
+
+  it("takes the vote back and says so when saving fails", async () => {
+    const toast = vi.fn();
+    mount(withPoll({}, { vote: vi.fn(async () => { throw new Error("denied"); }) }), false, toast);
+    const card = within(await article("Which file system?"));
+    fireEvent.click(card.getByRole("button", { name: "Rotary" }));
+    await waitFor(() => expect(toast).toHaveBeenCalledWith(expect.stringMatching(/Could not save your vote/)));
+    expect(await card.findByRole("button", { name: "Rotary" })).toBeTruthy();
+  });
+
+  it("creates a poll with options and no patient confirmation", async () => {
+    const api = makeApi();
+    mount(api);
+    fireEvent.click(await screen.findByText(/Start a discussion/));
+    fireEvent.click(screen.getByRole("radio", { name: "Poll" }));
+    expect(screen.queryByRole("checkbox")).toBeNull();
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Best bur for zirconia?" } });
+    fireEvent.change(screen.getByLabelText("Option 1"), { target: { value: "Diamond" } });
+    fireEvent.click(screen.getByText("Post"));
+    expect((await screen.findByRole("alert")).textContent).toMatch(/at least 2 options/);
+    fireEvent.change(screen.getByLabelText("Option 2"), { target: { value: "Carbide" } });
+    fireEvent.click(screen.getByText("Add an option"));
+    fireEvent.change(screen.getByLabelText("Option 3"), { target: { value: "Ceramic" } });
+    fireEvent.click(screen.getByText("Post"));
+    await waitFor(() => expect(api.createPost).toHaveBeenCalledTimes(1));
+    expect(api.createPost.mock.calls[0][0]).toMatchObject({ type: "poll", pollOptions: ["Diamond", "Carbide", "Ceramic"], v0: 0, v1: 0, v2: 0 });
   });
 });

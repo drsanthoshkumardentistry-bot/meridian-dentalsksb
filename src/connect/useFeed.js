@@ -35,17 +35,26 @@ export default function useConnectFeed({ api, showToast }) {
   const [following, setFollowing] = useState(new Set());
   const [saved, setSaved] = useState(new Set());
   const [followers, setFollowers] = useState(null);
+  const [votes, setVotes] = useState({});
+  const asked = useRef(new Set());
   const [view, setViewState] = useState({ filter: "all", tag: "", query: "", sort: "latest" });
   const [seen, setSeen] = useState(() => loadSeen(uid));
   const [refreshing, setRefreshing] = useState(false);
   const loadedOnce = useRef(false);
   const lastLoad = useRef(0);
 
-  const add = useCallback((list) => setStore((prev) => {
-    const next = { ...prev };
-    for (const p of list) next[p.id] = p;
-    return next;
-  }), []);
+  const add = useCallback((list) => {
+    setStore((prev) => {
+      const next = { ...prev };
+      for (const p of list) next[p.id] = p;
+      return next;
+    });
+    const polls = list.filter((p) => p.type === "poll" && !asked.current.has(p.id)).map((p) => p.id);
+    if (polls.length) {
+      polls.forEach((id) => asked.current.add(id));
+      attempt(() => apiRef.current.myVotes(polls), {}).then((found) => setVotes((v) => ({ ...v, ...found })));
+    }
+  }, []);
   const patch = useCallback((id, changes) => setStore((prev) => (prev[id] ? { ...prev, [id]: { ...prev[id], ...changes } } : prev)), []);
   const bump = useCallback((id, field, delta) => setStore((prev) => (prev[id] ? { ...prev, [id]: { ...prev[id], [field]: Math.max(0, (prev[id][field] || 0) + delta) } } : prev)), []);
 
@@ -184,6 +193,15 @@ export default function useConnectFeed({ api, showToast }) {
     await apiRef.current.updatePost(post.id, patchSpec);
     patch(post.id, { ...patchSpec.set, ...(patchSpec.unset.includes("tag") ? { tag: undefined } : {}), editedAt: Date.now() });
   };
+  const vote = async (post, option) => {
+    setVotes((v) => ({ ...v, [post.id]: option }));
+    bump(post.id, `v${option}`, 1);
+    try { await apiRef.current.vote(post.id, option); } catch {
+      setVotes((v) => { const { [post.id]: _undo, ...rest } = v; return rest; });
+      bump(post.id, `v${option}`, -1);
+      toastRef.current("Could not save your vote. Check your connection.");
+    }
+  };
   const accept = async (post, commentId) => {
     try { await apiRef.current.setAccepted(post.id, commentId); patch(post.id, { acceptedCommentId: commentId }); } catch { toastRef.current("Could not save. Check your connection."); }
   };
@@ -215,7 +233,7 @@ export default function useConnectFeed({ api, showToast }) {
 
   return {
     uid, status, refreshing, view, setView, setFilter, shown, sourceLoading, feedPosts, minePosts, events, cursor,
-    liked, saved, following, followers, author, openAuthor, closeAuthor, activity, markSeen,
+    liked, saved, following, followers, votes, vote, author, openAuthor, closeAuthor, activity, markSeen,
     refresh, loadMore: () => loadFeed(true, cursor), like, follow, save, remove, publish, edit, accept, bump,
     postCount: mineIds ? mineIds.length : null,
   };

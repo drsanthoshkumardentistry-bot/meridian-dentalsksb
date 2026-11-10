@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { SPECIALTIES } from "../connect/rules.js";
-import { POST_TYPES, LIMITS, validatePost, warningAdvice, typeLabel, initials } from "../connect/feed.js";
+import { POST_TYPES, LIMITS, POLL_MAX, validatePost, warningAdvice, typeLabel, initials } from "../connect/feed.js";
 import { dateKey } from "../reminders.js";
 
 const field = "w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-aqua-400";
@@ -11,9 +11,9 @@ const field = "w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text
  */
 export default function Composer({ me, existing = null, onSubmit, onCancel }) {
   const editing = Boolean(existing);
-  const blank = { type: "case", title: "", body: "", tag: "", eventDate: "", venue: "", deidentified: false };
+  const blank = { type: "case", title: "", body: "", tag: "", eventDate: "", venue: "", deidentified: false, options: ["", ""] };
   const [form, setForm] = useState(editing
-    ? { type: existing.type, title: existing.title, body: existing.body, tag: existing.tag || "", eventDate: existing.eventDate || "", venue: existing.venue || "", deidentified: false }
+    ? { type: existing.type, title: existing.title, body: existing.body, tag: existing.tag || "", eventDate: existing.eventDate || "", venue: existing.venue || "", deidentified: false, options: existing.pollOptions || ["", ""] }
     : blank);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -62,10 +62,23 @@ export default function Composer({ me, existing = null, onSubmit, onCancel }) {
         <input id="post-title" className={field} maxLength={LIMITS.title} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder={form.type === "event" ? "e.g. Hands-on CBCT reading workshop" : "e.g. Recurrent abscess after RCT in 46"} />
       </div>
       <div>
-        <label htmlFor="post-body" className="block text-xs font-semibold text-slate-600 mb-1">Details</label>
+        <label htmlFor="post-body" className="block text-xs font-semibold text-slate-600 mb-1">{form.type === "poll" ? "Details (optional)" : "Details"}</label>
         <textarea id="post-body" rows={4} className={field} maxLength={LIMITS.body} value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} placeholder={form.type === "case" ? "Age and sex, history, findings, what you tried, and what you want to know." : ""} />
         <div className="text-[11px] text-slate-400 text-right">{form.body.length}/{LIMITS.body}</div>
       </div>
+      {form.type === "poll" && (
+        <fieldset className="space-y-2">
+          <legend className="block text-xs font-semibold text-slate-600 mb-1">Options (2 to {POLL_MAX}){editing ? ", fixed once posted" : ""}</legend>
+          {form.options.map((o, i) => (
+            <div key={i} className="flex gap-2">
+              <input aria-label={`Option ${i + 1}`} className={field} maxLength={LIMITS.option} value={o} disabled={editing}
+                onChange={(e) => setForm({ ...form, options: form.options.map((x, j) => (j === i ? e.target.value : x)) })} placeholder={`Option ${i + 1}`} />
+              {!editing && form.options.length > 2 && <button type="button" aria-label={`Remove option ${i + 1}`} onClick={() => setForm({ ...form, options: form.options.filter((_, j) => j !== i) })} className="px-3 rounded-lg text-xs font-semibold text-slate-500 hover:bg-slate-100">Remove</button>}
+            </div>
+          ))}
+          {!editing && form.options.length < POLL_MAX && <button type="button" onClick={() => setForm({ ...form, options: [...form.options, ""] })} className="text-xs font-bold text-brand-700 hover:underline">Add an option</button>}
+        </fieldset>
+      )}
       {form.type === "event" && (
         <div className="grid sm:grid-cols-2 gap-3">
           <div><label htmlFor="post-date" className="block text-xs font-semibold text-slate-600 mb-1">Event date</label>
