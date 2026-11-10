@@ -39,6 +39,9 @@ import { geocodeAddress } from "./connect/geo.js";
 import Odontogram from "./components/Odontogram.jsx";
 import TreatmentPlans from "./components/TreatmentPlans.jsx";
 import { planToInvoiceItems, markPlanBilled, plannedTeeth, planTotals } from "./plans.js";
+import LabOrders from "./components/LabOrders.jsx";
+import LabBoard from "./components/LabBoard.jsx";
+import { openLabOrders, overdueCount as labOverdueCount, knownLabs, moveLabOrder, buildLabChase, buildPatientReady, markPatientNotified } from "./lab.js";
 import FollowUpPanels, { ReviewInvites } from "./components/FollowUpPanels.jsx";
 import {
   dueFeedbackRequests, awaitingRatings, lowRatings, feedbackSummary, buildFeedbackMessage, markFeedbackAsked, recordRating, resolveFeedback,
@@ -1367,6 +1370,8 @@ export default function App() {
   const lowList = lowRatings(appointments);
   const feedbackStats = feedbackSummary(appointments);
   const planFollowUps = duePlanFollowUps(patients, appointments);
+  const labRows = openLabOrders(patients);
+  const labLate = labOverdueCount(patients);
   const [showAllRecalls, setShowAllRecalls] = useState(false);
   const [invoiceFilter, setInvoiceFilter] = useState("all");
   const connectApi = useMemo(() => bindApi(db, CLINIC_ID), [CLINIC_ID]);
@@ -1458,6 +1463,14 @@ export default function App() {
     if (openWhatsApp(patient.phone, buildPlanFollowUp({ clinicName: practiceProfile.name, clinicPhone: practiceProfile.phone, patient, plan, totalP }))) {
       setPatients((prev) => prev.map((p) => (p.id === patient.id ? markPlanFollowedUp(p, plan.id) : p)));
     }
+  };
+  const patchLab = (patientId, orderId, fn) =>
+    setPatients((prev) => prev.map((p) => (p.id === patientId ? { ...p, labOrders: (p.labOrders || []).map((o) => (o.id === orderId ? fn(o) : o)) } : p)));
+  const receiveLab = ({ patient, order }) => { patchLab(patient.id, order.id, (o) => moveLabOrder(o, "received")); showToast("Marked as received"); };
+  const fitLab = ({ patient, order }) => { patchLab(patient.id, order.id, (o) => moveLabOrder(o, "fitted")); showToast("Marked as fitted"); };
+  const chaseLab = ({ patient, order }) => { openWhatsApp(order.labPhone, buildLabChase({ clinicName: practiceProfile.name, patient, order })); };
+  const tellPatientLab = ({ patient, order }) => {
+    if (openWhatsApp(patient.phone, buildPatientReady({ clinicName: practiceProfile.name, clinicPhone: practiceProfile.phone, patient, order }))) patchLab(patient.id, order.id, (o) => markPatientNotified(o));
   };
   const snoozePlan = ({ patient, plan }) => setPatients((prev) => prev.map((p) => (p.id === patient.id ? markPlanFollowedUp(p, plan.id) : p)));
 
@@ -2312,6 +2325,7 @@ export default function App() {
                 reviewLink={practiceProfile.reviewLink} canWrite={canWrite(role, "appointments")}
                 onAsk={askFeedback} onRate={rateFeedback} onResolve={handleFeedback} onPlan={followUpPlan} onSnoozePlan={snoozePlan}
               />
+              <LabBoard rows={labRows} canWrite={canWrite(role, "patients")} onReceive={receiveLab} onFit={fitLab} onChase={chaseLab} onTellPatient={tellPatientLab} />
               <ReviewInvites appointments={appointments} reviewLink={practiceProfile.reviewLink} onReview={inviteReview} />
 
               <BookingRequests requests={bookingRequests} onConfirm={confirmBooking} onDecline={declineBooking} onContact={contactBooking} />
@@ -3447,6 +3461,7 @@ export default function App() {
                     const items = [
                       { n: billing.overdueCount, text: `${billing.overdueCount} overdue ${billing.overdueCount === 1 ? "invoice" : "invoices"}, ₹${formatINR(billing.overdueP)}`, to: "Billing & Invoices" },
                       { n: diarySum.needsUpdate, text: `${diarySum.needsUpdate} past ${diarySum.needsUpdate === 1 ? "visit has" : "visits have"} no outcome marked`, to: "Appointments Diary" },
+                      { n: labLate, text: `${labLate} lab ${labLate === 1 ? "order is" : "orders are"} overdue`, to: "Appointments Diary" },
                       { n: lowList.length, text: `${lowList.length} low patient ${lowList.length === 1 ? "rating needs" : "ratings need"} a call`, to: "Appointments Diary" },
                       { n: stockSum.out + stockSum.low, text: `${stockSum.out + stockSum.low} ${stockSum.out + stockSum.low === 1 ? "item" : "items"} to reorder`, to: "Stock Maintenance" },
                       { n: stockSum.expired + stockSum.expiring, text: `${stockSum.expired + stockSum.expiring} ${stockSum.expired + stockSum.expiring === 1 ? "item" : "items"} expired or expiring soon`, to: "Stock Maintenance" },
@@ -3954,6 +3969,7 @@ export default function App() {
                   "Systemic Review",
                   "Prescriptions",
                   "Treatment Plan",
+                  "Lab Work",
                   "Medical History",
                   "Patient Details",
                 ].map((tab) => {
@@ -4292,6 +4308,16 @@ export default function App() {
                     setActiveNav("Billing & Invoices");
                     setIsAddInvoiceOpen(true);
                   }}
+                />
+              )}
+
+              {activeModalTab === "Lab Work" && (
+                <LabOrders
+                  patient={activePatient}
+                  labs={knownLabs(patients)}
+                  newId={() => newId("LB")}
+                  canWrite={canWrite(role, "patients")}
+                  onChange={(labOrders) => updateActivePatient({ labOrders })}
                 />
               )}
 
