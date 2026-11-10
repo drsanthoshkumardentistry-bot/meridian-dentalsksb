@@ -138,7 +138,7 @@ service cloud.firestore {
                     && request.resource.data.phone is string && request.resource.data.phone.size() == 10
                     && request.resource.data.date is string && request.resource.data.date.size() == 10
                     && request.resource.data.slot in ['Morning', 'Afternoon', 'Evening']
-                    && request.resource.data.service is string && request.resource.data.service.size() <= 60
+                    && request.resource.data['service'] is string && request.resource.data['service'].size() <= 60
                     && request.resource.data.note is string && request.resource.data.note.size() <= 300
                     && request.resource.data.clinicId is string
                     && get(/databases/$(database)/documents/bookingPages/$(request.resource.data.clinicId)).data.enabled == true;
@@ -245,6 +245,8 @@ service cloud.firestore {
                     && request.resource.data.likeCount == 0 && request.resource.data.commentCount == 0
                     && request.resource.data.createdAt == request.time;
       // Anyone verified can change only a counter, by one, and a like counter only together with the like itself.
+      // The author can edit the text of their own post (never its type, author or counters), and the author of
+      // a question can mark one of its comments as the answer.
       allow update: if isVerified()
                     && ((request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likeCount'])
                          && ((request.resource.data.likeCount == resource.data.likeCount + 1
@@ -255,7 +257,23 @@ service cloud.firestore {
                                  && !existsAfter(/databases/$(database)/documents/connectPosts/$(postId)/likes/$(request.auth.uid)))))
                         || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentCount'])
                             && (request.resource.data.commentCount == resource.data.commentCount + 1
-                                || request.resource.data.commentCount == resource.data.commentCount - 1)));
+                                || request.resource.data.commentCount == resource.data.commentCount - 1))
+                        || (request.auth.uid == resource.data.authorId
+                            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title', 'body', 'tag', 'eventDate', 'venue', 'editedAt'])
+                            && request.resource.data.title is string && request.resource.data.title.size() >= 3 && request.resource.data.title.size() <= 120
+                            && request.resource.data.body is string && request.resource.data.body.size() >= 10 && request.resource.data.body.size() <= 2000
+                            && request.resource.data.editedAt == request.time
+                            && (!('tag' in request.resource.data) || (request.resource.data.tag is string && request.resource.data.tag.size() <= 30))
+                            && (resource.data.type == 'event'
+                                ? (request.resource.data.eventDate is string && request.resource.data.eventDate.size() == 10
+                                   && request.resource.data.venue is string && request.resource.data.venue.size() >= 1 && request.resource.data.venue.size() <= 80)
+                                : !request.resource.data.diff(resource.data).affectedKeys().hasAny(['eventDate', 'venue'])))
+                        || (request.auth.uid == resource.data.authorId
+                            && resource.data.type == 'question'
+                            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['acceptedCommentId'])
+                            && request.resource.data.acceptedCommentId is string
+                            && (request.resource.data.acceptedCommentId == ''
+                                || exists(/databases/$(database)/documents/connectPosts/$(postId)/comments/$(request.resource.data.acceptedCommentId)))));
       allow delete: if (isVerified() && request.auth.uid == resource.data.authorId) || isAdmin();
 
       match /likes/{likerId} {
@@ -277,12 +295,25 @@ service cloud.firestore {
     }
 
     match /connectFollows/{followId} {
-      allow read: if isVerified() && resource.data.followerId == request.auth.uid;
+      allow read: if isVerified() && (resource.data.followerId == request.auth.uid || resource.data.followeeId == request.auth.uid);
       allow create: if isVerified()
                     && request.resource.data.followerId == request.auth.uid
                     && request.resource.data.keys().hasOnly(['followerId', 'followeeId', 'createdAt'])
                     && followId == request.auth.uid + '_' + request.resource.data.followeeId;
       allow delete: if isVerified() && resource.data.followerId == request.auth.uid;
+    }
+
+    // Saved posts. Private: only the dentist who saved a post can read, add or remove their own entries.
+    match /connectSaves/{saveId} {
+      allow read: if isVerified() && resource.data.userId == request.auth.uid;
+      allow create: if isVerified()
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.keys().hasOnly(['userId', 'postId', 'createdAt'])
+                    && request.resource.data.postId is string
+                    && saveId == request.auth.uid + '_' + request.resource.data.postId
+                    && request.resource.data.createdAt == request.time;
+      allow delete: if isVerified() && resource.data.userId == request.auth.uid;
+      allow update: if false;
     }
 
     // Reports about a post or comment. Anyone verified can file one; only staff can read or clear them.

@@ -2,7 +2,7 @@ import { describe, it, beforeAll, afterAll, beforeEach } from "vitest";
 import { assertSucceeds, assertFails } from "@firebase/rules-unit-testing";
 import {
   doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, addDoc, collection, query, where, orderBy, limit,
-  writeBatch, increment, serverTimestamp,
+  writeBatch, increment, serverTimestamp, deleteField, getCountFromServer,
 } from "firebase/firestore";
 import { setup, as, anon, seed } from "./helpers.mjs";
 
@@ -241,5 +241,107 @@ describe("dentist profiles", () => {
     await assertSucceeds(updateDoc(doc(as(env, "admin"), "connectDentists", "pat"), { status: "verified", verifiedBy: "admin" }));
     await assertFails(getDoc(doc(as(env, "bob"), "connectDentists", "alice")));
     await assertSucceeds(getDoc(doc(as(env, "alice"), "connectDentists", "alice")));
+  });
+});
+
+describe("editing a post", () => {
+  const edit = { title: "Corrected title", body: "A corrected and longer body text.", editedAt: serverTimestamp() };
+  it("the author can fix the title and text, and the edit time must be stamped", async () => {
+    await seedPost();
+    const ref = doc(as(env, "alice"), "connectPosts", "p1");
+    await assertSucceeds(updateDoc(ref, edit));
+    await assertFails(updateDoc(ref, { title: "No stamp", body: "A corrected and longer body text." }));
+    await assertFails(updateDoc(ref, { ...edit, editedAt: new Date("2020-01-01") }));
+  });
+  it("other dentists cannot edit it", async () => {
+    await seedPost();
+    await assertFails(updateDoc(doc(as(env, "bob"), "connectPosts", "p1"), edit));
+  });
+  it("type, author, counters and unknown fields stay fixed", async () => {
+    await seedPost();
+    const ref = doc(as(env, "alice"), "connectPosts", "p1");
+    await assertFails(updateDoc(ref, { ...edit, type: "event" }));
+    await assertFails(updateDoc(ref, { ...edit, authorName: "Dr Else" }));
+    await assertFails(updateDoc(ref, { ...edit, authorId: "bob" }));
+    await assertFails(updateDoc(ref, { ...edit, likeCount: 50 }));
+    await assertFails(updateDoc(ref, { ...edit, isPinned: true }));
+  });
+  it("length limits still apply", async () => {
+    await seedPost();
+    const ref = doc(as(env, "alice"), "connectPosts", "p1");
+    await assertFails(updateDoc(ref, { ...edit, title: "ab" }));
+    await assertFails(updateDoc(ref, { ...edit, body: "short" }));
+    await assertFails(updateDoc(ref, { ...edit, body: "x".repeat(2001) }));
+  });
+  it("a topic can be set, changed or removed", async () => {
+    await seedPost("p1", { tag: "endodontics" });
+    const ref = doc(as(env, "alice"), "connectPosts", "p1");
+    await assertSucceeds(updateDoc(ref, { ...edit, tag: "implantology" }));
+    await assertSucceeds(updateDoc(ref, { ...edit, tag: deleteField() }));
+  });
+  it("an event keeps a date and place; other posts cannot gain them", async () => {
+    await seedPost("e1", { type: "event", eventDate: "2026-12-01", venue: "Zoom" });
+    const ev = doc(as(env, "alice"), "connectPosts", "e1");
+    await assertSucceeds(updateDoc(ev, { ...edit, eventDate: "2026-12-05", venue: "Chennai" }));
+    await assertFails(updateDoc(ev, { ...edit, eventDate: "2026-12-05", venue: "" }));
+    await seedPost("p1");
+    await assertFails(updateDoc(doc(as(env, "alice"), "connectPosts", "p1"), { ...edit, eventDate: "2026-12-05", venue: "Chennai" }));
+  });
+});
+
+describe("accepted answer on a question", () => {
+  const comment = { authorId: "bob", authorName: "Dr Bob", authorSpecialty: "endodontics", text: "Try a CBCT.", createdAt: new Date() };
+  beforeEach(async () => {
+    await seedPost("q1", { type: "question", commentCount: 1 });
+    await seedPost("p1", { commentCount: 1 });
+    await seed(env, async (db) => {
+      await setDoc(doc(db, "connectPosts", "q1", "comments", "c1"), comment);
+      await setDoc(doc(db, "connectPosts", "p1", "comments", "c1"), comment);
+    });
+  });
+  it("only the asker can mark an existing comment, and can clear it again", async () => {
+    await assertSucceeds(updateDoc(doc(as(env, "alice"), "connectPosts", "q1"), { acceptedCommentId: "c1" }));
+    await assertFails(updateDoc(doc(as(env, "bob"), "connectPosts", "q1"), { acceptedCommentId: "c1" }));
+    await assertSucceeds(updateDoc(doc(as(env, "alice"), "connectPosts", "q1"), { acceptedCommentId: "" }));
+  });
+  it("needs a real comment, a question, and nothing else changed at the same time", async () => {
+    await assertFails(updateDoc(doc(as(env, "alice"), "connectPosts", "q1"), { acceptedCommentId: "ghost" }));
+    await assertFails(updateDoc(doc(as(env, "alice"), "connectPosts", "p1"), { acceptedCommentId: "c1" }));
+    await assertFails(updateDoc(doc(as(env, "alice"), "connectPosts", "q1"), { acceptedCommentId: "c1", likeCount: 9 }));
+  });
+});
+
+describe("saved posts", () => {
+  const save = (uid, postId) => ({ userId: uid, postId, createdAt: serverTimestamp() });
+  it("a dentist saves, lists and removes their own", async () => {
+    const db = as(env, "bob");
+    await assertSucceeds(setDoc(doc(db, "connectSaves", "bob_p1"), save("bob", "p1")));
+    await assertSucceeds(getDocs(query(collection(db, "connectSaves"), where("userId", "==", "bob"), limit(200))));
+    await assertSucceeds(deleteDoc(doc(db, "connectSaves", "bob_p1")));
+  });
+  it("cannot save for someone else, with a wrong id, or as a pending dentist", async () => {
+    await assertFails(setDoc(doc(as(env, "alice"), "connectSaves", "bob_p1"), save("bob", "p1")));
+    await assertFails(setDoc(doc(as(env, "bob"), "connectSaves", "bob_other"), save("bob", "p1")));
+    await assertFails(setDoc(doc(as(env, "pat"), "connectSaves", "pat_p1"), save("pat", "p1")));
+  });
+  it("nobody can read or remove another dentist's saved posts", async () => {
+    await seed(env, (db) => setDoc(doc(db, "connectSaves", "bob_p1"), { userId: "bob", postId: "p1", createdAt: new Date() }));
+    await assertFails(getDocs(query(collection(as(env, "alice"), "connectSaves"), where("userId", "==", "bob"))));
+    await assertFails(deleteDoc(doc(as(env, "alice"), "connectSaves", "bob_p1")));
+    await assertFails(updateDoc(doc(as(env, "bob"), "connectSaves", "bob_p1"), { postId: "p2" }));
+  });
+});
+
+describe("followers", () => {
+  it("a dentist can count and list who follows them, but not who follows others", async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, "connectFollows", "alice_bob"), { followerId: "alice", followeeId: "bob", createdAt: new Date() });
+      await setDoc(doc(db, "connectFollows", "admin_bob"), { followerId: "admin", followeeId: "bob", createdAt: new Date() });
+    });
+    const mine = (db) => query(collection(db, "connectFollows"), where("followeeId", "==", "bob"));
+    await assertSucceeds(getDocs(mine(as(env, "bob"))));
+    const count = await assertSucceeds(getCountFromServer(mine(as(env, "bob"))));
+    if (count.data().count !== 2) throw new Error(`expected 2 followers, got ${count.data().count}`);
+    await assertFails(getDocs(mine(as(env, "alice"))));
   });
 });
