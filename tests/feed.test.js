@@ -94,3 +94,130 @@ describe("posts and comments", () => {
     expect(ids({ tag: "endodontics" })).toEqual([1]);
   });
 });
+
+import { searchPosts, sortPosts, trendingTopics, suggestAuthors, upcomingEvents, eventDay, eventWhen, eventIcs, eventIcsName, seenSnapshot, withBaseline, activitySince, activityText, postPatch, canAccept, isAnswered, inviteLink, warningAdvice, GUIDELINES, FEED_FILTERS } from "../src/connect/feed.js";
+
+describe("search and ordering", () => {
+  const posts = [
+    { id: 1, title: "Recurrent abscess in 46", body: "RCT done twice", authorName: "Dr Root", type: "case", tag: "endodontics", likeCount: 1, commentCount: 0, createdAt: 3000 },
+    { id: 2, title: "Which bur for zirconia?", body: "Crown prep", authorName: "Dr Pros", type: "question", tag: "prosthodontics", likeCount: 0, commentCount: 5, createdAt: 2000 },
+    { id: 3, title: "CBCT workshop", body: "Hands-on", authorName: "Dr Root", type: "event", venue: "Coimbatore", eventDate: "2026-12-01", createdAt: 1000 },
+  ];
+  it("needs every word to match somewhere", () => {
+    const ids = (q) => searchPosts(posts, q).map((p) => p.id);
+    expect(ids("")).toEqual([1, 2, 3]);
+    expect(ids("abscess")).toEqual([1]);
+    expect(ids("ZIRCONIA bur")).toEqual([2]);
+    expect(ids("root")).toEqual([1, 3]);
+    expect(ids("endodontics")).toEqual([1]);
+    expect(ids("coimbatore")).toEqual([3]);
+    expect(ids("question")).toEqual([2]);
+    expect(ids("abscess zirconia")).toEqual([]);
+  });
+  it("sorts by newest or most discussed without changing the list", () => {
+    const shuffled = [posts[2], posts[0], posts[1]];
+    expect(sortPosts(shuffled).map((p) => p.id)).toEqual([1, 2, 3]);
+    expect(sortPosts(shuffled, "top").map((p) => p.id)).toEqual([2, 1, 3]);
+    expect(shuffled.map((p) => p.id)).toEqual([3, 1, 2]);
+  });
+  it("finds trending topics, suggested colleagues and upcoming events", () => {
+    const more = [...posts, { id: 4, tag: "endodontics", authorId: "a", authorName: "Dr Root" }, { id: 5, authorId: "me", authorName: "Dr Me" }, { id: 6, authorId: "f", authorName: "Dr Followed" }];
+    expect(trendingTopics(more)).toEqual([{ tag: "endodontics", count: 2 }, { tag: "prosthodontics", count: 1 }]);
+    const sug = suggestAuthors(more.map((p, i) => ({ ...p, authorId: p.authorId || `x${i}` })), { uid: "me", following: new Set(["f"]) });
+    expect(sug.map((s) => s.id)).not.toContain("me");
+    expect(sug.map((s) => s.id)).not.toContain("f");
+    expect(upcomingEvents(posts, "2026-11-11").map((p) => p.id)).toEqual([3]);
+    expect(upcomingEvents(posts, "2026-12-02")).toEqual([]);
+  });
+  it("describes event dates", () => {
+    expect(eventDay("2026-12-01")).toEqual({ day: 1, month: "Dec", year: 2026 });
+    expect(eventWhen("2026-11-11", "2026-11-11")).toBe("Today");
+    expect(eventWhen("2026-11-12", "2026-11-11")).toBe("Tomorrow");
+    expect(eventWhen("2026-11-20", "2026-11-11")).toBe("In 9 days");
+    expect(eventWhen("2026-11-10", "2026-11-11")).toBe("Ended");
+    expect(eventWhen("nope")).toBe("");
+  });
+  it("has a Saved filter that passes the list through", () => {
+    expect(FEED_FILTERS.map(([id]) => id)).toContain("saved");
+    expect(filterPosts([{ id: 1, type: "case" }], { filter: "saved" })).toHaveLength(1);
+  });
+});
+
+describe("calendar file", () => {
+  const ev = { id: "p1", title: "CBCT, hands-on; day", body: "Line1\nLine2", eventDate: "2026-12-31", venue: "Coimbatore", authorName: "Dr Root" };
+  it("builds an all-day event that ends the next day, with escaped text", () => {
+    const ics = eventIcs(ev, new Date(Date.UTC(2026, 10, 11, 1, 2, 3)));
+    expect(ics).toContain("BEGIN:VCALENDAR");
+    expect(ics).toContain("DTSTART;VALUE=DATE:20261231");
+    expect(ics).toContain("DTEND;VALUE=DATE:20270101");
+    expect(ics).toContain("DTSTAMP:20261111T010203Z");
+    expect(ics).toContain("SUMMARY:CBCT\\, hands-on\\; day");
+    expect(ics).toContain("LOCATION:Coimbatore");
+    expect(ics).toContain("UID:p1@meridentconnect");
+    expect(ics.endsWith("END:VCALENDAR\r\n")).toBe(true);
+    expect(ics.split("\r\n").every((l) => l.length <= 74)).toBe(true);
+    expect(/[^\r]\n/.test(ics)).toBe(false);
+  });
+  it("returns nothing for a post without a valid date, and names the file safely", () => {
+    expect(eventIcs({ title: "x" })).toBe("");
+    expect(eventIcsName(ev)).toBe("cbct-hands-on-day.ics");
+    expect(eventIcsName({})).toBe("event.ics");
+  });
+});
+
+describe("activity on my posts", () => {
+  const mine = [{ id: "a", title: "A", likeCount: 3, commentCount: 2 }, { id: "b", title: "B", likeCount: 0, commentCount: 0 }, { id: "c", title: "C", likeCount: 4, commentCount: 1 }];
+  it("only counts what is new since the last visit", () => {
+    const seen = { a: [1, 2], b: [0, 0] };
+    const act = activitySince(mine, seen);
+    expect(act).toMatchObject({ likes: 2, comments: 0 });
+    expect(act.items).toEqual([{ id: "a", title: "A", likes: 2, comments: 0 }]);
+    expect(activityText(act)).toBe("2 new Helpful marks");
+    expect(activityText({ likes: 1, comments: 3 })).toBe("3 new comments and 1 new Helpful mark");
+    expect(activityText({})).toBe("");
+  });
+  it("starts unseen posts at their current counts, and never goes negative", () => {
+    const seen = withBaseline({ a: [1, 2] }, mine);
+    expect(seen.c).toEqual([4, 1]);
+    expect(seen.a).toEqual([1, 2]);
+    expect(activitySince(mine, seen).items).toHaveLength(1);
+    expect(activitySince([{ id: "a", likeCount: 0, commentCount: 0 }], { a: [5, 5] })).toMatchObject({ likes: 0, comments: 0 });
+    expect(seenSnapshot(mine).a).toEqual([3, 2]);
+  });
+});
+
+describe("editing, answers and invites", () => {
+  it("builds the edit: sets fields, removes a cleared topic, keeps event fields only for events", () => {
+    expect(postPatch({ type: "case", tag: "endodontics" }, { title: "T", body: "B" })).toEqual({ set: { title: "T", body: "B" }, unset: ["tag"] });
+    expect(postPatch({ type: "case" }, { title: "T", body: "B", tag: "implantology" })).toEqual({ set: { title: "T", body: "B", tag: "implantology" }, unset: [] });
+    expect(postPatch({ type: "event" }, { title: "T", body: "B", eventDate: "2026-12-01", venue: "V" }).set).toMatchObject({ eventDate: "2026-12-01", venue: "V" });
+  });
+  it("lets an old event keep its date when edited, but not move to the past", () => {
+    const ev = { type: "event", title: "Workshop", body: "Hands-on workshop for dentists.", eventDate: "2026-10-01", venue: "Chennai" };
+    const now = new Date(2026, 10, 11, 12);
+    expect(validatePost(ev, now).ok).toBe(false);
+    expect(validatePost(ev, now, { eventDate: "2026-10-01" }).ok).toBe(true);
+    expect(validatePost({ ...ev, eventDate: "2026-10-02" }, now, { eventDate: "2026-10-01" }).ok).toBe(false);
+  });
+  it("only the asker can accept an answer, and only on questions", () => {
+    expect(canAccept({ type: "question", authorId: "me" }, "me")).toBe(true);
+    expect(canAccept({ type: "question", authorId: "x" }, "me")).toBe(false);
+    expect(canAccept({ type: "case", authorId: "me" }, "me")).toBe(false);
+    expect(isAnswered({ type: "question", acceptedCommentId: "c1" })).toBe(true);
+    expect(isAnswered({ type: "question", acceptedCommentId: "" })).toBe(false);
+  });
+  it("warns about advertising and explains why", () => {
+    const w = findPrivacyIssues("Flat 20% off on scaling this week, book now").warn;
+    expect(w).toContain("wording that sounds like advertising");
+    expect(findPrivacyIssues("The patient offers no relevant history").warn).toEqual([]);
+    expect(warningAdvice("wording that sounds like advertising")).toMatch(/ethics/);
+    expect(warningAdvice("a title followed by a name")).toMatch(/patient/);
+    expect(GUIDELINES.length).toBeGreaterThanOrEqual(4);
+  });
+  it("builds a WhatsApp invite", () => {
+    const link = inviteLink("Dr Priya");
+    expect(link.startsWith("https://wa.me/?text=")).toBe(true);
+    expect(decodeURIComponent(link)).toMatch(/Dr Priya invites you to MeriDent Connect/);
+    expect(decodeURIComponent(link)).toContain("https://www.meridiandentalos.com");
+  });
+});

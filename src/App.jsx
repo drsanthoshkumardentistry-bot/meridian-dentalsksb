@@ -3061,6 +3061,12 @@ export default function App() {
                 data={{ patients: allPatients, appointments: allAppointments, invoices: allInvoices, queue: allQueue }}
                 newId={newId}
                 onChange={(list) => setPracticeProfile({ ...practiceProfile, branches: list })}
+                onTransfer={(r, patient, toName) => {
+                  setPatients(r.patients);
+                  setAppointments(r.appointments);
+                  setInvoices(r.invoices);
+                  logAudit("patient.move", patient.name, `to ${toName}, ${r.counts.appointments} appointments, ${r.counts.invoices} invoices`);
+                }}
               />}
 
               {role === "owner" && (

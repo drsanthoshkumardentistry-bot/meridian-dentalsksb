@@ -1,15 +1,28 @@
 import React, { useState } from "react";
-import { addBranch, renameBranch, removeBranch, branchSummary } from "../branches.js";
+import { addBranch, renameBranch, removeBranch, branchSummary, transferPatient, recordsOfPatient } from "../branches.js";
 import { formatINR } from "../billing.js";
 
 const input = "px-3 py-2 border border-slate-300 rounded-lg bg-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-600";
 
 /** Add, rename and remove branches, and compare them side by side. */
-export default function BranchesCard({ branches, data, onChange, newId }) {
+export default function BranchesCard({ branches, data, onChange, newId, onTransfer }) {
   const [name, setName] = useState("");
   const [edit, setEdit] = useState({});
   const [error, setError] = useState("");
   const rows = branchSummary(branches, data);
+  const [mv, setMv] = useState({ patientId: "", to: "" });
+  const [moved, setMoved] = useState("");
+  const chosen = (data.patients || []).find((p) => p.id === mv.patientId);
+  const preview = chosen ? recordsOfPatient(chosen, data) : null;
+  const branchName = (id) => branches.find((b) => b.id === (id || "main"))?.name || "Main";
+  const move = (e) => {
+    e.preventDefault(); setMoved("");
+    const r = transferPatient(mv.patientId, mv.to, branches, data);
+    if (!r.ok) { setError(r.error); return; }
+    if (!confirm(`Move ${chosen.name} with ${r.counts.appointments} appointment(s) and ${r.counts.invoices} invoice(s) to ${branchName(mv.to)}?`)) return;
+    setError(""); onTransfer(r, chosen, branchName(mv.to));
+    setMoved(`${chosen.name} moved to ${branchName(mv.to)}.`); setMv({ patientId: "", to: "" });
+  };
 
   const apply = (r) => {
     if (!r.ok) { setError(r.error); return false; }
@@ -44,6 +57,25 @@ export default function BranchesCard({ branches, data, onChange, newId }) {
         <input aria-label="New branch name" placeholder="New branch name, e.g. Peelamedu" className={`${input} flex-1`} value={name} maxLength={40} onChange={(e) => setName(e.target.value)} />
         <button type="submit" className="px-4 py-2 rounded-lg bg-[#1d4ed8] text-white font-semibold">Add branch</button>
       </form>
+      {branches.length > 1 && onTransfer && (
+        <form onSubmit={move} className="border-t border-slate-100 pt-3 space-y-2" aria-label="Move a patient">
+          <h3 className="font-bold text-slate-900">Move a patient to another branch</h3>
+          <p className="text-slate-500">Their appointments and invoices move with them. Nothing is deleted, and the move is recorded in the activity log.</p>
+          <div className="flex flex-wrap gap-2">
+            <select aria-label="Patient to move" className={`${input} flex-1 min-w-[10rem]`} value={mv.patientId} onChange={(e) => setMv({ ...mv, patientId: e.target.value })}>
+              <option value="">Choose patient</option>
+              {(data.patients || []).map((p) => <option key={p.id} value={p.id}>{p.name} ({branchName(p.branchId)})</option>)}
+            </select>
+            <select aria-label="Move to branch" className={input} value={mv.to} onChange={(e) => setMv({ ...mv, to: e.target.value })}>
+              <option value="">Move to</option>
+              {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
+            <button type="submit" className="px-4 py-2 rounded-lg bg-[#1d4ed8] text-white font-semibold">Move patient</button>
+          </div>
+          {preview && <p className="text-slate-500">{chosen.name} has {preview.appointments.length} appointment(s) and {preview.invoices.length} invoice(s).</p>}
+          {moved && <p role="status" className="text-emerald-700 font-medium">{moved}</p>}
+        </form>
+      )}
       {error && <p role="alert" className="text-rose-600 font-medium">{error}</p>}
     </section>
   );

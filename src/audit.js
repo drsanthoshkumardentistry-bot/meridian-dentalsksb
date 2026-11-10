@@ -1,6 +1,7 @@
 export const AUDIT_LABELS = {
   "patient.add": "Registered patient",
   "patient.delete": "Deleted patient",
+  "patient.move": "Moved patient to another branch",
   "appointment.add": "Booked appointment",
   "appointment.status": "Changed appointment status",
   "appointment.delete": "Deleted appointment",

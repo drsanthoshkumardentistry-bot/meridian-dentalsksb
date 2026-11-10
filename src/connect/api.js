@@ -1,7 +1,7 @@
 // Firestore access for MeriDent Connect. Every function takes the db and the signed-in uid explicitly.
 import {
   collection, doc, getDoc, getDocs, query, where, orderBy, startAt, endAt,
-  setDoc, updateDoc, deleteDoc, addDoc, writeBatch, serverTimestamp, limit, startAfter, increment,
+  setDoc, updateDoc, deleteDoc, addDoc, writeBatch, serverTimestamp, limit, startAfter, increment, deleteField, getCountFromServer,
 } from "firebase/firestore";
 import { searchBounds, withinRadius } from "./geo.js";
 import { CONSENT_TEXT, CONSENT_VERSION } from "./rules.js";
@@ -14,6 +14,7 @@ const ADMINS = "connectAdmins";
 const POSTS = "connectPosts";
 const FOLLOWS = "connectFollows";
 const REPORTS = "connectReports";
+const SAVES = "connectSaves";
 export const FEED_PAGE = 20;
 
 export const toMillis = (v) => (v && typeof v.toMillis === "function" ? v.toMillis() : v ? new Date(v).getTime() : 0);
@@ -215,6 +216,47 @@ export const getPost = async (db, postId) => {
 };
 export const dismissReport = (db, reportId) => deleteDoc(doc(db, REPORTS, reportId));
 
+/** All of one dentist's posts, newest first. An equality query only, so it needs no index. */
+export const listPostsBy = async (db, authorId) => {
+  const snap = await getDocs(query(collection(db, POSTS), where("authorId", "==", authorId), limit(60)));
+  return snap.docs.map(withId).sort(newestFirst);
+};
+
+/** Events from `today` on, soonest first. One range on one field, so it needs no index. */
+export const listUpcomingEvents = async (db, today, n = 6) => {
+  const snap = await getDocs(query(collection(db, POSTS), where("eventDate", ">=", today), orderBy("eventDate", "asc"), limit(n)));
+  return snap.docs.map(withId);
+};
+
+/** Edit your own post. `unset` lists fields to remove (a cleared topic). */
+export const updatePost = async (db, postId, { set, unset = [] }) => {
+  const data = { ...set, editedAt: serverTimestamp() };
+  for (const k of unset) data[k] = deleteField();
+  await updateDoc(doc(db, POSTS, postId), data);
+};
+
+/** The asker marks one comment as the answer. An empty id clears it. */
+export const setAccepted = (db, postId, commentId) => updateDoc(doc(db, POSTS, postId), { acceptedCommentId: commentId || "" });
+
+// Saved posts are private to the dentist who saved them.
+const savedDocs = async (db, uid) => {
+  const snap = await getDocs(query(collection(db, SAVES), where("userId", "==", uid), limit(200)));
+  return snap.docs.map((d) => d.data()).sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
+};
+export const savedIds = async (db, uid) => new Set((await savedDocs(db, uid)).map((s) => s.postId));
+export const listSaved = async (db, uid) => {
+  const posts = await Promise.all((await savedDocs(db, uid)).slice(0, 30).map((s) => getPost(db, s.postId).catch(() => null)));
+  return posts.filter(Boolean);
+};
+export const setSaved = async (db, uid, postId, on) => {
+  const ref = doc(db, SAVES, `${uid}_${postId}`);
+  if (on) await setDoc(ref, { userId: uid, postId, createdAt: serverTimestamp() });
+  else await deleteDoc(ref);
+};
+
+export const countFollowers = async (db, uid) =>
+  (await getCountFromServer(query(collection(db, FOLLOWS), where("followeeId", "==", uid)))).data().count;
+
 /** Bind everything to one db and uid for the UI. */
 export const bindApi = (db, uid) => ({
   enabled: Boolean(db && uid),
@@ -245,4 +287,12 @@ export const bindApi = (db, uid) => ({
   listReports: () => listReports(db),
   getPost: (id) => getPost(db, id),
   dismissReport: (id) => dismissReport(db, id),
+  listPostsBy: (authorId) => listPostsBy(db, authorId),
+  listUpcomingEvents: (today, n) => listUpcomingEvents(db, today, n),
+  updatePost: (postId, patch) => updatePost(db, postId, patch),
+  setAccepted: (postId, commentId) => setAccepted(db, postId, commentId),
+  savedIds: () => savedIds(db, uid),
+  listSaved: () => listSaved(db, uid),
+  setSaved: (postId, on) => setSaved(db, uid, postId, on),
+  countFollowers: () => countFollowers(db, uid),
 });

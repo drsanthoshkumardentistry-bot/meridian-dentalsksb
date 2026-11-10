@@ -49,3 +49,30 @@ describe("branches", () => {
     expect(s[1]).toMatchObject({ patients: 2, todayAppointments: 1, billedThisMonthP: 100000 });
   });
 });
+
+import { transferPatient, recordsOfPatient } from "../src/branches.js";
+describe("moving a patient between branches", () => {
+  const branches = [{ id: "main", name: "Main" }, { id: "B2", name: "Peelamedu" }];
+  const data = {
+    patients: [{ id: "p1", name: "Asha" }, { id: "p2", name: "Ravi" }, { id: "p3", name: "Ravi" }],
+    appointments: [{ id: "a1", patientId: "p1" }, { id: "a2", patientName: "Asha" }, { id: "a3", patientId: "p2" }, { id: "a4", patientName: "Ravi" }],
+    invoices: [{ id: "i1", patientId: "p1" }, { id: "i2", patient: "Asha" }, { id: "i3", patientId: "p2" }],
+  };
+  it("moves the patient with linked and uniquely-named records, and nothing else", () => {
+    const r = transferPatient("p1", "B2", branches, data);
+    expect(r.ok).toBe(true);
+    expect(r.counts).toEqual({ appointments: 2, invoices: 2 });
+    expect(r.patients.find((p) => p.id === "p1").branchId).toBe("B2");
+    expect(r.patients.find((p) => p.id === "p2").branchId).toBeUndefined();
+    expect(r.appointments.filter((a) => a.branchId === "B2").map((a) => a.id)).toEqual(["a1", "a2"]);
+    expect(r.invoices.filter((i) => i.branchId === "B2").map((i) => i.id)).toEqual(["i1", "i2"]);
+  });
+  it("does not guess by name when two patients share it", () => {
+    expect(recordsOfPatient(data.patients[1], data).appointments.map((a) => a.id)).toEqual(["a3"]);
+  });
+  it("refuses a missing patient, unknown branch, or the same branch", () => {
+    expect(transferPatient("zz", "B2", branches, data).ok).toBe(false);
+    expect(transferPatient("p1", "nope", branches, data).ok).toBe(false);
+    expect(transferPatient("p1", "main", branches, data).ok).toBe(false);
+  });
+});
