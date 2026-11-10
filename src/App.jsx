@@ -42,6 +42,10 @@ import { planToInvoiceItems, markPlanBilled, plannedTeeth, planTotals } from "./
 import ConsentForms from "./components/ConsentForms.jsx";
 import { consentHtml } from "./consent.js";
 import BranchCompare from "./components/BranchCompare.jsx";
+import DayClose from "./components/DayClose.jsx";
+import BirthdayPanel from "./components/BirthdayPanel.jsx";
+import { dayClose } from "./dayClose.js";
+import { dueBirthdays, buildBirthdayMessage, markGreeted } from "./greetings.js";
 import { branchComparison, branchComparisonCsv } from "./branchReport.js";
 import LabOrders from "./components/LabOrders.jsx";
 import LabBoard from "./components/LabBoard.jsx";
@@ -1370,6 +1374,8 @@ export default function App() {
   };
 
   // --- WhatsApp reminders (opens WhatsApp with the message ready; the clinic taps Send) ---
+  const birthdaysToday = dueBirthdays(patients);
+  const closeSummary = dayClose({ invoices, appointments, patients });
   const dueApptReminders = dueAppointmentReminders(appointments, new Date(), patients);
   const dueRecallList = dueRecalls(patients, appointments, invoices.map(normalizeInvoice));
   const duePayReminders = duePaymentReminders(invoices.map(normalizeInvoice), patients);
@@ -1446,6 +1452,13 @@ export default function App() {
     }
     window.open(link, "_blank", "noopener,noreferrer");
     setPatients((prev) => prev.map((p) => (p.id === patient.id ? markPatientRecalled(p) : p)));
+  };
+
+  const greetBirthday = (patient) => {
+    const link = whatsappLink(patient.phone, buildBirthdayMessage({ clinicName: practiceProfile.name, patient }));
+    if (!link) { showToast("This patient has no valid mobile number"); return; }
+    window.open(link, "_blank", "noopener,noreferrer");
+    setPatients((prev) => prev.map((p) => (p.id === patient.id ? markGreeted(p) : p)));
   };
 
   const patchAppt = (id, fn) => setAppointments((prev) => prev.map((a) => (a.id === id ? fn(a) : a)));
@@ -3440,6 +3453,10 @@ export default function App() {
                   ))}
                 </div>
               </section>
+
+              <BirthdayPanel due={birthdaysToday} onGreet={greetBirthday} canWrite={canWrite(role, "patients")} />
+
+              {canRead(role, "invoices") && <DayClose summary={closeSummary} clinicName={practiceProfile.name} onCopy={(t) => { navigator.clipboard?.writeText(t); showToast("Summary copied"); }} />}
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <section className="bg-white rounded-xl border border-rule p-5 shadow-card" data-testid="today-schedule">
