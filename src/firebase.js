@@ -4,7 +4,19 @@
  * ============================================================================== */
 
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  signOut,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  updateProfile
+} from "firebase/auth";
 import {
   getFirestore,
   initializeFirestore,
@@ -63,12 +75,70 @@ export const auth = authInstance;
 export const db = dbInstance;
 export const storage = storageInstance;
 
-export const loginWithGoogle = async () => {
-  if (!authInstance || !googleProvider) {
+const requireAuth = () => {
+  if (!authInstance) {
     throw new Error("Firebase is not configured. Add the VITE_FIREBASE_* environment variables.");
   }
-  const result = await signInWithPopup(authInstance, googleProvider);
-  return result.user;
+  return authInstance;
+};
+
+export const loginWithGoogle = async () => {
+  const activeAuth = requireAuth();
+  try {
+    const result = await signInWithPopup(activeAuth, googleProvider);
+    return result.user;
+  } catch (error) {
+    // Some phone browsers block pop-ups: fall back to a full-page redirect
+    if (error && (error.code === "auth/popup-blocked" || error.code === "auth/operation-not-supported-in-this-environment")) {
+      await signInWithRedirect(activeAuth, googleProvider);
+      return null;
+    }
+    throw error;
+  }
+};
+
+// Call once on page load to finish a redirect-based Google sign-in
+export const completeRedirectLogin = async () => {
+  if (!authInstance) return null;
+  const result = await getRedirectResult(authInstance);
+  return result ? result.user : null;
+};
+
+export const signInWithEmail = async (email, password) => {
+  const credential = await signInWithEmailAndPassword(requireAuth(), email, password);
+  return credential.user;
+};
+
+export const signUpWithEmail = async (name, email, password) => {
+  const credential = await createUserWithEmailAndPassword(requireAuth(), email, password);
+  if (name) {
+    try {
+      await updateProfile(credential.user, { displayName: name });
+    } catch (error) {
+      // The account exists; the display name can be set later
+    }
+  }
+  await sendEmailVerification(credential.user);
+  return credential.user;
+};
+
+export const resendVerificationEmail = async () => {
+  const user = requireAuth().currentUser;
+  if (!user) throw new Error("Please sign in again.");
+  await sendEmailVerification(user);
+};
+
+// Re-reads the account from Firebase and refreshes the token so security rules see the verified email
+export const refreshVerifiedStatus = async () => {
+  const user = requireAuth().currentUser;
+  if (!user) return false;
+  await user.reload();
+  if (user.emailVerified) await user.getIdToken(true);
+  return Boolean(user.emailVerified);
+};
+
+export const sendPasswordReset = async (email) => {
+  await sendPasswordResetEmail(requireAuth(), email);
 };
 
 export const logoutUser = async () => {

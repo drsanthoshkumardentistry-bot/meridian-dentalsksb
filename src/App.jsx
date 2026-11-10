@@ -55,6 +55,13 @@ import * as FirebaseModule from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, doc, setDoc, onSnapshot, deleteDoc } from "firebase/firestore";
 import LandingPage from "./components/landingpage";
+import { AppLoading, VerifyEmailScreen, IdleWarning } from "./components/AuthScreens";
+import { friendlyAuthError, usesPasswordLogin } from "./authErrors";
+import QRCode from "qrcode";
+import {
+  TAX_CATEGORIES, computeInvoiceTotals, nextInvoiceNumber, normalizeInvoice, addPayment,
+  paidPaise, balancePaise, paymentStatus, buildUpiUri, isValidUpiId, buildInvoiceHtml, formatINR, toPaise,
+} from "./billing";
 
 const auth = FirebaseModule.auth;
 const db = FirebaseModule.db;
@@ -62,6 +69,12 @@ const storage = FirebaseModule.storage;
 const firebaseConfigured = Boolean(auth && FirebaseModule.firebaseConfigured !== false);
 const loginWithGoogle = FirebaseModule.loginWithGoogle || (async () => {});
 const logoutUser = FirebaseModule.logoutUser || (async () => {});
+const signInWithEmail = FirebaseModule.signInWithEmail || (async () => {});
+const signUpWithEmail = FirebaseModule.signUpWithEmail || (async () => {});
+const sendPasswordReset = FirebaseModule.sendPasswordReset || (async () => {});
+const resendVerificationEmail = FirebaseModule.resendVerificationEmail || (async () => {});
+const refreshVerifiedStatus = FirebaseModule.refreshVerifiedStatus || (async () => false);
+const completeRedirectLogin = FirebaseModule.completeRedirectLogin || (async () => null);
 
 // --- DENTITION SCHEMAS (FDI TWO-DIGIT SYSTEM) ---
 const PERMANENT_UPPER = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
@@ -132,6 +145,9 @@ const stableStringify = (value) =>
       : val
   );
 
+// Invoice numbers contain "/" which is not allowed inside a Firestore document id
+const cloudDocId = (id) => String(id).replace(/\//g, "_");
+
 const cleanForCloud = (value) => JSON.parse(JSON.stringify(value));
 
 const SYNC_FAILED = "__sync_failed__";
@@ -142,10 +158,16 @@ function useCloudCollection({ clinicId, ready, name, items, setItems, sortFn, on
   const itemsRef = useRef(items);
   const [loaded, setLoaded] = useState(false);
   const [retryTick, setRetryTick] = useState(0);
+  const onErrorRef = useRef(onError);
+  const setItemsRef = useRef(setItems);
+  const sortFnRef = useRef(sortFn);
 
   useEffect(() => {
     itemsRef.current = items;
-  }, [items]);
+    onErrorRef.current = onError;
+    setItemsRef.current = setItems;
+    sortFnRef.current = sortFn;
+  }, [items, onError, setItems, sortFn]);
 
   // Listen to this clinic's collection
   useEffect(() => {
@@ -196,11 +218,12 @@ function useCloudCollection({ clinicId, ready, name, items, setItems, sortFn, on
         });
 
         first = false;
-        setItems(sortFn ? [...next].sort(sortFn) : next);
+        const sorter = sortFnRef.current;
+        setItemsRef.current(sorter ? [...next].sort(sorter) : next);
         setLoaded(true);
       },
       (error) => {
-        if (onError) onError(error);
+        if (onErrorRef.current) onErrorRef.current(error);
       }
     );
     return () => unsubscribe();
@@ -221,9 +244,9 @@ function useCloudCollection({ clinicId, ready, name, items, setItems, sortFn, on
         const json = stableStringify(clean);
         if (synced.current.get(id) === json) return;
         synced.current.set(id, json);
-        setDoc(doc(db, "clinics", clinicId, name, id), clean).catch((error) => {
+        setDoc(doc(db, "clinics", clinicId, name, cloudDocId(id)), clean).catch((error) => {
           synced.current.set(id, SYNC_FAILED);
-          if (onError) onError(error);
+          if (onErrorRef.current) onErrorRef.current(error);
           setTimeout(() => setRetryTick((t) => t + 1), 10000);
         });
       });
@@ -231,11 +254,11 @@ function useCloudCollection({ clinicId, ready, name, items, setItems, sortFn, on
       Array.from(synced.current.entries()).forEach(([id, value]) => {
         if (currentIds.has(id) || value === SYNC_DELETING) return;
         synced.current.set(id, SYNC_DELETING);
-        deleteDoc(doc(db, "clinics", clinicId, name, id))
+        deleteDoc(doc(db, "clinics", clinicId, name, cloudDocId(id)))
           .then(() => synced.current.delete(id))
           .catch((error) => {
             synced.current.delete(id);
-            if (onError) onError(error);
+            if (onErrorRef.current) onErrorRef.current(error);
           });
       });
     }, 700);
@@ -247,11 +270,15 @@ function useCloudCollection({ clinicId, ready, name, items, setItems, sortFn, on
 function useCloudDoc({ clinicId, ready, name, value, setValue, onError }) {
   const syncedJson = useRef(null);
   const valueRef = useRef(value);
+  const onErrorRef = useRef(onError);
+  const setValueRef = useRef(setValue);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     valueRef.current = value;
-  }, [value]);
+    onErrorRef.current = onError;
+    setValueRef.current = setValue;
+  }, [value, onError, setValue]);
 
   useEffect(() => {
     syncedJson.current = null;
@@ -269,13 +296,13 @@ function useCloudDoc({ clinicId, ready, name, value, setValue, onError }) {
             stableStringify(cleanForCloud(valueRef.current)) !== syncedJson.current;
           if (!dirty && remoteJson !== syncedJson.current) {
             syncedJson.current = remoteJson;
-            setValue(remote);
+            setValueRef.current(remote);
           }
         }
         setLoaded(true);
       },
       (error) => {
-        if (onError) onError(error);
+        if (onErrorRef.current) onErrorRef.current(error);
       }
     );
     return () => unsubscribe();
@@ -290,7 +317,7 @@ function useCloudDoc({ clinicId, ready, name, value, setValue, onError }) {
       syncedJson.current = json;
       setDoc(doc(db, "clinics", clinicId, "store", name), clean).catch((error) => {
         syncedJson.current = SYNC_FAILED;
-        if (onError) onError(error);
+        if (onErrorRef.current) onErrorRef.current(error);
       });
     }, 700);
     return () => clearTimeout(timer);
@@ -401,6 +428,63 @@ function SectionTitle({ children }) {
   return <div className="text-[10px] font-bold uppercase tracking-wider text-blue-700 pt-1">{children}</div>;
 }
 
+const IDLE_WARN_MS = 29 * 60 * 1000;
+const IDLE_LOGOUT_MS = 30 * 60 * 1000;
+
+// Signs the user out after 30 minutes without activity (warns 60 seconds before)
+function useIdleTimeout({ enabled, onTimeout }) {
+  const lastActivity = useRef(Date.now());
+  const warningVisible = useRef(false);
+  const onTimeoutRef = useRef(onTimeout);
+  const [secondsLeft, setSecondsLeft] = useState(null);
+
+  useEffect(() => {
+    onTimeoutRef.current = onTimeout;
+  }, [onTimeout]);
+
+  useEffect(() => {
+    if (!enabled) {
+      warningVisible.current = false;
+      setSecondsLeft(null);
+      return undefined;
+    }
+    lastActivity.current = Date.now();
+    warningVisible.current = false;
+
+    const markActive = () => {
+      if (!warningVisible.current) lastActivity.current = Date.now();
+    };
+    const eventNames = ["mousemove", "mousedown", "keydown", "touchstart", "scroll", "click"];
+    eventNames.forEach((name) => window.addEventListener(name, markActive, { passive: true }));
+
+    const timer = setInterval(() => {
+      const idle = Date.now() - lastActivity.current;
+      if (idle >= IDLE_LOGOUT_MS) {
+        clearInterval(timer);
+        warningVisible.current = false;
+        setSecondsLeft(null);
+        if (onTimeoutRef.current) onTimeoutRef.current();
+      } else if (idle >= IDLE_WARN_MS) {
+        warningVisible.current = true;
+        setSecondsLeft(Math.max(1, Math.ceil((IDLE_LOGOUT_MS - idle) / 1000)));
+      }
+    }, 1000);
+
+    return () => {
+      clearInterval(timer);
+      eventNames.forEach((name) => window.removeEventListener(name, markActive));
+    };
+  }, [enabled]);
+
+  const stay = () => {
+    lastActivity.current = Date.now();
+    warningVisible.current = false;
+    setSecondsLeft(null);
+  };
+
+  return { secondsLeft, stay };
+}
+
 const DEFAULT_EMPLOYEES = [];
 const DEFAULT_PROFILE = {
   name: "My Dental Clinic",
@@ -424,11 +508,18 @@ export default function App() {
 
   // Firebase authentication gate
   const [authUser, setAuthUser] = useState(null);
-  // Every signed-in account gets its own isolated clinic workspace
-  const CLINIC_ID = authUser?.uid || null;
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState("");
+  const [authNotice, setAuthNotice] = useState("");
   const [loginBusy, setLoginBusy] = useState(false);
+  const [emailVerifiedNow, setEmailVerifiedNow] = useState(false);
+  const [verifyBusy, setVerifyBusy] = useState(false);
+  const [verifyNotice, setVerifyNotice] = useState("");
+
+  // Google accounts are verified by Google; email-and-password accounts must verify their address first
+  const isVerified = Boolean(authUser && (authUser.emailVerified || emailVerifiedNow || !usesPasswordLogin(authUser)));
+  // Every signed-in, verified account gets its own isolated clinic workspace
+  const CLINIC_ID = isVerified ? authUser.uid : null;
 
   useEffect(() => {
     if (!firebaseConfigured || !auth) {
@@ -439,8 +530,9 @@ export default function App() {
       auth,
       (user) => {
         setAuthUser(user || null);
+        setEmailVerifiedNow(false);
+        setVerifyNotice("");
         setAuthLoading(false);
-        setAuthError("");
       },
       (error) => {
         console.error("Authentication state error:", error);
@@ -451,27 +543,95 @@ export default function App() {
     return unsubscribe;
   }, []);
 
-  const handleGoogleLogin = async () => {
+  // Finish a Google sign-in that used a full-page redirect (phone browsers that block pop-ups)
+  useEffect(() => {
+    if (!firebaseConfigured || !auth) return;
+    completeRedirectLogin().catch((error) => setAuthError(friendlyAuthError(error)));
+  }, []);
+
+  const runAuthAction = async (action) => {
     setAuthError("");
+    setAuthNotice("");
     setLoginBusy(true);
     try {
-      await loginWithGoogle();
+      await action();
     } catch (error) {
-      setAuthError(error?.message || "Google sign-in failed. Please try again.");
+      setAuthError(friendlyAuthError(error));
     } finally {
       setLoginBusy(false);
     }
   };
 
-  const handleLogout = async () => {
+  const handleGoogleLogin = () => runAuthAction(() => loginWithGoogle());
+  const handleEmailSignIn = (email, password) => runAuthAction(() => signInWithEmail(email, password));
+  const handleEmailSignUp = (name, email, password) => runAuthAction(() => signUpWithEmail(name, email, password));
+
+  const handleResetPassword = async (email) => {
+    setAuthError("");
+    setAuthNotice("");
+    setLoginBusy(true);
+    try {
+      await sendPasswordReset(email);
+    } catch (error) {
+      const code = error && error.code;
+      if (code === "auth/invalid-email" || code === "auth/network-request-failed" || code === "auth/too-many-requests") {
+        setAuthError(friendlyAuthError(error));
+        setLoginBusy(false);
+        return;
+      }
+      // Any other result: do not reveal whether an account exists
+    }
+    setAuthNotice("If an account exists for that email, a password reset link has been sent.");
+    setLoginBusy(false);
+  };
+
+  const handleResendVerification = async () => {
+    setVerifyBusy(true);
+    setAuthError("");
+    setVerifyNotice("");
+    try {
+      await resendVerificationEmail();
+      setVerifyNotice("Verification email sent. Check your inbox and spam folder.");
+    } catch (error) {
+      setAuthError(friendlyAuthError(error));
+    } finally {
+      setVerifyBusy(false);
+    }
+  };
+
+  const handleCheckVerified = async () => {
+    setVerifyBusy(true);
+    setAuthError("");
+    setVerifyNotice("");
+    try {
+      const verified = await refreshVerifiedStatus();
+      if (verified) {
+        setEmailVerifiedNow(true);
+      } else {
+        setAuthError("Your email is not verified yet. Open the link we sent, then try again.");
+      }
+    } catch (error) {
+      setAuthError(friendlyAuthError(error));
+    } finally {
+      setVerifyBusy(false);
+    }
+  };
+
+  const handleLogout = async (notice) => {
     try {
       await logoutUser();
       setAuthUser(null);
       setAuthError("");
+      setAuthNotice(typeof notice === "string" ? notice : "");
     } catch (error) {
-      setAuthError("Unable to log out. Please try again.");
+      setAuthError("Unable to sign out. Please try again.");
     }
   };
+
+  const { secondsLeft: idleSecondsLeft, stay: staySignedIn } = useIdleTimeout({
+    enabled: Boolean(authUser),
+    onTimeout: () => handleLogout("You were signed out after 30 minutes of inactivity to protect patient records."),
+  });
 
   // Navigation State
   const [activeNav, setActiveNav] = useState("Patients & Odontogram");
@@ -539,32 +699,32 @@ export default function App() {
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
     localStorage.setItem(`merident_${CLINIC_ID}_patients`, JSON.stringify(patients));
-  }, [patients, hydratedFor]);
+  }, [patients, hydratedFor, CLINIC_ID]);
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
     localStorage.setItem(`merident_${CLINIC_ID}_appointments`, JSON.stringify(appointments));
-  }, [appointments, hydratedFor]);
+  }, [appointments, hydratedFor, CLINIC_ID]);
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
     localStorage.setItem(`merident_${CLINIC_ID}_invoices`, JSON.stringify(invoices));
-  }, [invoices, hydratedFor]);
+  }, [invoices, hydratedFor, CLINIC_ID]);
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
     localStorage.setItem(`merident_${CLINIC_ID}_inventory`, JSON.stringify(inventory));
-  }, [inventory, hydratedFor]);
+  }, [inventory, hydratedFor, CLINIC_ID]);
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
     localStorage.setItem(`merident_${CLINIC_ID}_employees`, JSON.stringify(employees));
-  }, [employees, hydratedFor]);
+  }, [employees, hydratedFor, CLINIC_ID]);
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
     localStorage.setItem(`merident_${CLINIC_ID}_profile`, JSON.stringify(practiceProfile));
-  }, [practiceProfile, hydratedFor]);
+  }, [practiceProfile, hydratedFor, CLINIC_ID]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -659,7 +819,12 @@ export default function App() {
     status: "Self-Pay Completed",
     treatment: "",
     amount: "",
+    discount: "",
+    taxCategory: "therapeutic",
+    advance: "",
   });
+  const [payForm, setPayForm] = useState({ amount: "", mode: "Cash" });
+  const [upiQrDataUrl, setUpiQrDataUrl] = useState("");
 
   // New Stock Modal State
   const [isAddStockOpen, setIsAddStockOpen] = useState(false);
@@ -974,6 +1139,27 @@ export default function App() {
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank", "noopener,noreferrer");
   };
 
+  // Real, scannable UPI QR for the balance due on the selected invoice
+  const qrInvoice = activeUpiQrInvoice ? normalizeInvoice(invoices.find((i) => i.id === activeUpiQrInvoice.id) || activeUpiQrInvoice) : null;
+  const qrBalanceP = qrInvoice ? balancePaise(qrInvoice) : 0;
+  const upiUri =
+    qrInvoice && isValidUpiId(practiceProfile.upiId) && qrBalanceP > 0
+      ? buildUpiUri({ vpa: practiceProfile.upiId, name: practiceProfile.name, amountP: qrBalanceP, note: qrInvoice.id })
+      : "";
+  useEffect(() => {
+    let cancelled = false;
+    if (!upiUri) {
+      setUpiQrDataUrl("");
+      return undefined;
+    }
+    QRCode.toDataURL(upiUri, { margin: 1, width: 240 })
+      .then((url) => !cancelled && setUpiQrDataUrl(url))
+      .catch(() => !cancelled && setUpiQrDataUrl(""));
+    return () => {
+      cancelled = true;
+    };
+  }, [upiUri]);
+
   const handleCreateInvoice = (e) => {
     e.preventDefault();
     if (!newInvoiceForm.patientName.trim()) {
@@ -988,21 +1174,37 @@ export default function App() {
       showToast("Describe the treatment billed");
       return;
     }
+    const totals = computeInvoiceTotals({
+      amount: newInvoiceForm.amount,
+      discount: newInvoiceForm.discount,
+      taxCategory: newInvoiceForm.taxCategory,
+    });
+    if (totals.totalP <= 0) {
+      showToast("Invoice total must be greater than zero");
+      return;
+    }
+    const advanceP = toPaise(newInvoiceForm.advance);
+    if (advanceP > totals.totalP) {
+      showToast("Advance cannot be more than the invoice total");
+      return;
+    }
+    const today = new Date().toLocaleDateString("en-IN");
+    const isInsurance = newInvoiceForm.paymentMode === "Insurance / TPA";
     const inv = {
-      id: `INV-${new Date().getFullYear()}-${Date.now().toString(36).slice(-5).toUpperCase()}`,
+      id: nextInvoiceNumber(invoices),
       patientId: newInvoiceForm.patientId || "",
       patient: newInvoiceForm.patientName.trim(),
       paymentMode: newInvoiceForm.paymentMode,
-      provider: newInvoiceForm.paymentMode === "Insurance / TPA" ? newInvoiceForm.provider : "Self Pay",
-      claimId:
-        newInvoiceForm.paymentMode === "Insurance / TPA"
-          ? newInvoiceForm.claimId.trim() || `CLM-${Date.now().toString(36).slice(-6).toUpperCase()}`
-          : "",
-      status: newInvoiceForm.paymentMode === "Insurance / TPA" ? newInvoiceForm.status : "Self-Pay Completed",
+      provider: isInsurance ? newInvoiceForm.provider : "Self Pay",
+      claimId: isInsurance ? newInvoiceForm.claimId.trim() || `CLM-${Date.now().toString(36).slice(-6).toUpperCase()}` : "",
+      status: isInsurance ? newInvoiceForm.status : "Self-Pay",
       treatment: newInvoiceForm.treatment,
-      total: parseFloat(newInvoiceForm.amount || 0).toLocaleString("en-IN"),
-      rawAmount: newInvoiceForm.amount,
-      date: new Date().toLocaleDateString("en-IN"),
+      taxCategory: newInvoiceForm.taxCategory,
+      ...totals,
+      payments: advanceP > 0 ? [{ date: today, mode: isInsurance ? "Cash" : newInvoiceForm.paymentMode, amountP: advanceP }] : [],
+      total: (totals.totalP / 100).toLocaleString("en-IN"),
+      rawAmount: String(totals.totalP / 100),
+      date: today,
     };
     setInvoices([inv, ...invoices]);
     setNewInvoiceForm({
@@ -1014,9 +1216,37 @@ export default function App() {
       status: "Self-Pay Completed",
       treatment: "",
       amount: "",
+      discount: "",
+      taxCategory: "therapeutic",
+      advance: "",
     });
     setIsAddInvoiceOpen(false);
-    showToast(`Invoice ${inv.id} generated for ₹${inv.total}`);
+    showToast(`Invoice ${inv.id} generated for ₹${formatINR(inv.totalP)}`);
+  };
+
+  const handleCollectPayment = (e) => {
+    e.preventDefault();
+    const current = normalizeInvoice(invoices.find((i) => i.id === activeUpiQrInvoice?.id));
+    if (!current) return;
+    const result = addPayment(current, { amount: payForm.amount, mode: payForm.mode });
+    if (!result.ok) {
+      showToast(result.error);
+      return;
+    }
+    setInvoices((prev) => prev.map((i) => (i.id === current.id ? result.invoice : i)));
+    setActiveUpiQrInvoice(result.invoice);
+    setPayForm({ amount: "", mode: payForm.mode });
+    showToast(`₹${formatINR(toPaise(payForm.amount))} received. Balance ₹${formatINR(balancePaise(result.invoice))}`);
+  };
+
+  const handlePrintInvoice = (inv, receipt = false) => {
+    const win = window.open("", "_blank");
+    if (!win) {
+      showToast("Allow pop-ups to print the invoice");
+      return;
+    }
+    win.document.write(buildInvoiceHtml(normalizeInvoice(inv), practiceProfile, { receipt }));
+    win.document.close();
   };
 
   const handleStockAdjust = (stockId, delta) => {
@@ -1132,13 +1362,12 @@ export default function App() {
     return {
       label: date.toLocaleDateString("en-IN", { weekday: "short" }),
       value: invoices.filter((invoice) => dashboardDateKey(invoice.date) === key)
-        .reduce((sum, invoice) => sum + Number(invoice.rawAmount ?? String(invoice.total || "0").replace(/,/g, "")), 0),
+        .reduce((sum, invoice) => sum + paidPaise(normalizeInvoice(invoice)) / 100, 0),
     };
   });
 
-  const totalBilledRevenue = invoices.reduce(
-    (sum, invoice) => sum + Number(invoice.rawAmount ?? String(invoice.total || "0").replace(/,/g, "")), 0
-  );
+  const totalBilledRevenue = invoices.reduce((sum, invoice) => sum + normalizeInvoice(invoice).totalP / 100, 0);
+  const totalOutstanding = invoices.reduce((sum, invoice) => sum + balancePaise(normalizeInvoice(invoice)) / 100, 0);
 
   const todayKey = dashboardDateKey(new Date().toLocaleDateString("en-IN"));
   const todayAppointments = appointments.filter((appointment) => dashboardDateKey(appointment.date) === todayKey).length;
@@ -1192,23 +1421,34 @@ export default function App() {
   };
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen bg-[#0b1329] flex items-center justify-center p-6 text-white">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-cyan-300/30 border-t-cyan-300" />
-          <p className="text-sm text-slate-300">Checking your MeriDent OS session…</p>
-        </div>
-      </div>
-    );
+    return <AppLoading />;
   }
 
   if (!authUser) {
     return (
       <LandingPage
         onLoginClick={handleGoogleLogin}
+        onEmailSignIn={handleEmailSignIn}
+        onEmailSignUp={handleEmailSignUp}
+        onResetPassword={handleResetPassword}
         loginBusy={loginBusy}
         authError={authError}
+        authNotice={authNotice}
         firebaseConfigured={firebaseConfigured}
+      />
+    );
+  }
+
+  if (!isVerified) {
+    return (
+      <VerifyEmailScreen
+        email={authUser.email}
+        busy={verifyBusy}
+        notice={verifyNotice}
+        error={authError}
+        onResend={handleResendVerification}
+        onCheck={handleCheckVerified}
+        onLogout={() => handleLogout()}
       />
     );
   }
@@ -1216,6 +1456,10 @@ export default function App() {
   return (
     <div className="flex h-screen bg-[#f8fafc] text-slate-800 font-sans overflow-hidden">
       
+      {idleSecondsLeft !== null && (
+        <IdleWarning secondsLeft={idleSecondsLeft} onStay={staySignedIn} onLogout={() => handleLogout()} />
+      )}
+
       {/* Toast Notifier */}
       {toastMessage && (
         <div className="fixed bottom-5 right-5 z-50 bg-[#0b1329] text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2.5 text-xs border border-slate-700 animate-fade-in">
@@ -1684,13 +1928,13 @@ export default function App() {
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">Dental Insurance & Invoices</h1>
-                  <p className="text-xs text-slate-500">Pre-Auth Claims, Co-pay & Instant UPI Billing</p>
+                  <p className="text-xs text-slate-500">GST invoices, part payments & UPI collection · Outstanding ₹{totalOutstanding.toLocaleString("en-IN")}</p>
                 </div>
                 <button
                   onClick={() => setIsAddInvoiceOpen(true)}
                   className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
                 >
-                  <Plus className="w-4 h-4" /> New Insurance Invoice
+                  <Plus className="w-4 h-4" /> New Invoice
                 </button>
               </div>
 
@@ -1709,11 +1953,12 @@ export default function App() {
                         <th className="p-4">Provider</th>
                         <th className="p-4">Status</th>
                         <th className="p-4">Total (₹)</th>
+                        <th className="p-4">Balance (₹)</th>
                         <th className="p-4 text-center">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {invoices.map((inv) => (
+                      {invoices.map(normalizeInvoice).map((inv) => (
                         <tr key={inv.id} className="hover:bg-slate-50/60">
                           <td className="p-4">
                             <div className="font-bold text-blue-700">{inv.id}</div>
@@ -1726,16 +1971,27 @@ export default function App() {
                           </td>
                           <td className="p-4">
                             <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                              {inv.status}
+                              {paymentStatus(inv)}
                             </span>
+                            {inv.status && inv.claimId ? <div className="text-[10px] text-slate-400 mt-1">{inv.status}</div> : null}
                           </td>
-                          <td className="p-4 font-bold text-sm">₹{inv.total}</td>
-                          <td className="p-4 text-center">
+                          <td className="p-4 font-bold text-sm">
+                            ₹{formatINR(inv.totalP)}
+                            {inv.gstRate > 0 ? <div className="text-[10px] font-normal text-slate-400">incl. GST {inv.gstRate}%</div> : null}
+                          </td>
+                          <td className={`p-4 font-bold text-sm ${balancePaise(inv) > 0 ? "text-rose-600" : "text-emerald-600"}`}>₹{formatINR(balancePaise(inv))}</td>
+                          <td className="p-4 text-center space-x-1.5 whitespace-nowrap">
                             <button
-                              onClick={() => setActiveUpiQrInvoice(inv)}
+                              onClick={() => { setPayForm({ amount: "", mode: "Cash" }); setActiveUpiQrInvoice(inv); }}
                               className="px-3 py-1.5 bg-slate-100 hover:bg-blue-50 border border-slate-200 text-slate-800 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5"
                             >
-                              <QrCode className="w-3.5 h-3.5" /> UPI QR
+                              <QrCode className="w-3.5 h-3.5" /> {balancePaise(inv) > 0 ? "Collect" : "Payments"}
+                            </button>
+                            <button
+                              onClick={() => handlePrintInvoice(inv, false)}
+                              className="px-3 py-1.5 bg-white hover:bg-blue-50 border border-slate-200 text-slate-800 rounded-lg text-xs font-semibold"
+                            >
+                              Print
                             </button>
                           </td>
                         </tr>
@@ -2098,6 +2354,22 @@ export default function App() {
           )}
 
           {/* TAB 8: DASHBOARD OVERVIEW */}
+          {activeNav !== "Practice Profile" && (!practiceProfile.drName || !practiceProfile.state || !practiceProfile.councilRegNumber) && (
+            <div className="mb-5 rounded-2xl border border-blue-200 bg-blue-50 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="text-sm text-blue-900">
+                <strong>Complete your clinic profile.</strong> Add the doctor name, state and Dental Council registration number so
+                prescriptions and invoices are correct.
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveNav("Practice Profile")}
+                className="shrink-0 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold"
+              >
+                Open Practice Profile
+              </button>
+            </div>
+          )}
+
           {activeNav === "Dashboard" && (
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
@@ -3562,7 +3834,7 @@ export default function App() {
             className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-xl text-xs"
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
-              <h3 className="text-sm font-bold text-slate-900">Generate Dental Insurance Invoice</h3>
+              <h3 className="text-sm font-bold text-slate-900">Generate Invoice</h3>
               <button
                 type="button"
                 onClick={() => setIsAddInvoiceOpen(false)}
@@ -3653,16 +3925,73 @@ export default function App() {
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-600 mb-1">Total Bill Amount (₹) *</label>
-              <input
-                type="number"
-                required
-                value={newInvoiceForm.amount}
-                onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, amount: e.target.value })}
-                placeholder="e.g. 5500"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 font-bold focus:outline-none"
-              />
+              <label className="block font-semibold text-slate-600 mb-1">Tax category</label>
+              <select
+                value={newInvoiceForm.taxCategory}
+                onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, taxCategory: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none bg-white"
+              >
+                {TAX_CATEGORIES.map((c) => (
+                  <option key={c.id} value={c.id}>{c.label}</option>
+                ))}
+              </select>
             </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Amount before tax (₹) *</label>
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  step="0.01"
+                  value={newInvoiceForm.amount}
+                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, amount: e.target.value })}
+                  placeholder="e.g. 5500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 font-bold focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1">Discount (₹)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={newInvoiceForm.discount}
+                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, discount: e.target.value })}
+                  placeholder="0"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="block font-semibold text-slate-600 mb-1">Advance received now (₹)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={newInvoiceForm.advance}
+                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, advance: e.target.value })}
+                  placeholder="0 (optional)"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {(() => {
+              const t = computeInvoiceTotals(newInvoiceForm);
+              return (
+                <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 space-y-1 text-slate-700">
+                  <div className="flex justify-between"><span>Taxable value</span><span>₹{formatINR(t.taxableP)}</span></div>
+                  {t.gstRate > 0 && (
+                    <>
+                      <div className="flex justify-between"><span>CGST {t.gstRate / 2}%</span><span>₹{formatINR(t.cgstP)}</span></div>
+                      <div className="flex justify-between"><span>SGST {t.gstRate / 2}%</span><span>₹{formatINR(t.sgstP)}</span></div>
+                    </>
+                  )}
+                  <div className="flex justify-between font-bold text-slate-900 border-t border-blue-100 pt-1"><span>Total</span><span>₹{formatINR(t.totalP)}</span></div>
+                </div>
+              );
+            })()}
 
             <div className="pt-2 flex justify-end gap-2">
               <button
@@ -3781,42 +4110,98 @@ export default function App() {
         </div>
       )}
 
-      {/* --- UPI QR MODAL --- */}
-      {activeUpiQrInvoice && (
+      {/* --- COLLECT PAYMENT / UPI QR MODAL --- */}
+      {qrInvoice && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-sm p-6 text-center space-y-4 shadow-xl">
+          <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-sm p-6 text-center space-y-4 shadow-xl max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b pb-2 border-slate-100">
-              <span className="text-xs font-bold text-slate-700">Instant UPI Payment</span>
-              <button onClick={() => setActiveUpiQrInvoice(null)} className="text-slate-400 hover:text-slate-600">
+              <span className="text-xs font-bold text-slate-700">Collect payment · {qrInvoice.id}</span>
+              <button onClick={() => setActiveUpiQrInvoice(null)} className="text-slate-400 hover:text-slate-600" aria-label="Close">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 inline-block mx-auto">
-              <div className="w-44 h-44 bg-white p-2 border border-slate-200 rounded-lg flex flex-col items-center justify-center shadow-xs">
-                <QrCode className="w-32 h-32 text-slate-900" />
-                <span className="text-[10px] text-slate-500 font-mono mt-1 font-semibold">{practiceProfile.upiId}</span>
-              </div>
-            </div>
-
             <div>
-              <div className="text-xl font-bold text-slate-900">₹{activeUpiQrInvoice.total}</div>
-              <div className="text-xs text-slate-500 mt-0.5">
-                {activeUpiQrInvoice.patient} • {activeUpiQrInvoice.id}
-              </div>
+              <div className="text-[11px] text-slate-500">{qrInvoice.patient}</div>
+              <div className="text-xl font-bold text-slate-900">₹{formatINR(qrBalanceP)} <span className="text-xs font-medium text-slate-400">due</span></div>
+              <div className="text-[11px] text-slate-500">Total ₹{formatINR(qrInvoice.totalP)} · Paid ₹{formatINR(paidPaise(qrInvoice))}</div>
             </div>
 
-            <p className="text-[11px] text-slate-400">Scan with Google Pay, PhonePe, or Paytm at chair-side.</p>
+            {qrBalanceP > 0 && (
+              <>
+                {upiUri ? (
+                  <div className="space-y-2">
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 inline-block">
+                      {upiQrDataUrl ? (
+                        <img src={upiQrDataUrl} alt="UPI payment QR" className="w-44 h-44" />
+                      ) : (
+                        <div className="w-44 h-44 flex items-center justify-center text-[11px] text-slate-400">Preparing QR…</div>
+                      )}
+                    </div>
+                    <div className="text-[10px] text-slate-500 font-mono">{practiceProfile.upiId}</div>
+                    <a href={upiUri} className="text-[11px] font-semibold text-blue-700 underline">Open in UPI app (phone)</a>
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2">
+                    Add a valid UPI ID (like name@bank) in Settings to show a payment QR.
+                  </p>
+                )}
 
-            <button
-              onClick={() => {
-                setActiveUpiQrInvoice(null);
-                showToast("Payment marked as received via UPI");
-              }}
-              className="w-full py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold"
-            >
-              Confirm Payment Received
-            </button>
+                <form onSubmit={handleCollectPayment} className="space-y-2 text-left text-xs">
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      required
+                      value={payForm.amount}
+                      onChange={(e) => setPayForm({ ...payForm, amount: e.target.value })}
+                      placeholder={`Amount (max ${formatINR(qrBalanceP)})`}
+                      className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none"
+                    />
+                    <select
+                      value={payForm.mode}
+                      onChange={(e) => setPayForm({ ...payForm, mode: e.target.value })}
+                      className="px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none"
+                    >
+                      {PAYMENT_MODES.map((m) => (
+                        <option key={m}>{m}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setPayForm({ ...payForm, amount: String(qrBalanceP / 100) })} className="px-3 py-2 rounded-lg border border-slate-200 text-slate-600 font-semibold">
+                      Full balance
+                    </button>
+                    <button type="submit" className="flex-1 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg font-semibold">
+                      Record payment
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
+
+            {(qrInvoice.payments || []).length > 0 && (
+              <div className="text-left text-[11px] border-t border-slate-100 pt-2 space-y-1">
+                {qrInvoice.payments.map((p, i) => (
+                  <div key={i} className="flex justify-between text-slate-600">
+                    <span>{p.date} · {p.mode}</span>
+                    <span className="font-semibold">₹{formatINR(p.amountP)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <button onClick={() => handlePrintInvoice(qrInvoice, false)} className="flex-1 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                Print invoice
+              </button>
+              {paidPaise(qrInvoice) > 0 && (
+                <button onClick={() => handlePrintInvoice(qrInvoice, true)} className="flex-1 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                  Print receipt
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
