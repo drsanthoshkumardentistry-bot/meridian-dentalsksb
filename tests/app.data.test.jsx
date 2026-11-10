@@ -641,3 +641,48 @@ describe("clinic suite in the app", () => {
     expect(within(box).getByLabelText("Booking link").value).toMatch(/\?book=u-test$/);
   });
 });
+
+describe("branches in the app", () => {
+  const seed = () => {
+    localStorage.setItem(KEY("profile"), JSON.stringify({ name: "Smile", drName: "Dr S", state: "TN", councilRegNumber: "1", branches: [{ id: "main", name: "Main branch" }, { id: "b2", name: "Peelamedu" }] }));
+    localStorage.setItem(KEY("patients"), JSON.stringify([
+      { id: "P1", name: "Main Mani", phone: "9876543210", age: "30", gender: "Male", registeredDate: "01/11/2026" },
+      { id: "P2", name: "Peela Priya", phone: "9876543211", age: "28", gender: "Female", registeredDate: "01/11/2026", branchId: "b2" },
+    ]));
+  };
+
+  it("filters every list by the chosen branch and keeps the other branch's records when saving", async () => {
+    seed();
+    await openApp();
+    nav("Patients & Odontogram");
+    expect(await screen.findByText("Main Mani")).toBeTruthy();
+    expect(screen.getByText("Peela Priya")).toBeTruthy();
+    type(screen.getByLabelText("Branch"), "b2");
+    await waitFor(() => expect(screen.queryByText("Main Mani")).toBeNull());
+    expect(screen.getByText("Peela Priya")).toBeTruthy();
+    // register a patient while viewing Peelamedu
+    fireEvent.click(screen.getByText("Add Patient"));
+    const form = (await screen.findByText("Add New Patient")).closest("form");
+    await fillPatient(form, { name: "New Nila", phone: "9876543212" });
+    fireEvent.submit(form);
+    await waitFor(() => expect(stored("patients").length).toBe(3));
+    const saved = stored("patients");
+    expect(saved.find((p) => p.name === "New Nila").branchId).toBe("b2");
+    expect(saved.find((p) => p.name === "Main Mani")).toBeTruthy();
+  });
+
+  it("shows no switcher for a single branch, and a branch with records cannot be removed", async () => {
+    localStorage.setItem(KEY("patients"), JSON.stringify([{ id: "P1", name: "Only One", phone: "9876543210", age: "30", gender: "Male", registeredDate: "01/11/2026" }]));
+    await openApp();
+    expect(screen.queryByLabelText("Branch")).toBeNull();
+    nav("Practice Profile");
+    const card = await screen.findByTestId("branches-card");
+    type(within(card).getByLabelText("New branch name"), "Peelamedu");
+    fireEvent.click(within(card).getByText("Add branch"));
+    await waitFor(() => expect(screen.getByLabelText("Branch")).toBeTruthy());
+    fireEvent.click(within(card).getByLabelText("Remove Main branch"));
+    expect((await within(card).findByRole("alert")).textContent).toMatch(/1 records/);
+    fireEvent.click(within(card).getByLabelText("Remove Peelamedu"));
+    await waitFor(() => expect(screen.queryByLabelText("Branch")).toBeNull());
+  });
+});
