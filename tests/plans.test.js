@@ -129,3 +129,15 @@ describe("treatment plans", () => {
     expect(buildShareMessage(p, { name: "Asha" }, { name: "Smile" }, "https://x/?plan=t")).toContain("https://x/?plan=t");
   });
 });
+
+describe("suggestPlanItems with several findings on one tooth", () => {
+  it("suggests for every finding that needs treatment, and ignores the rest", () => {
+    let n = 0;
+    const items = suggestPlanItems({ 16: ["CAR", "RCT", "SCL"], 11: "FRC" }, () => `i${++n}`);
+    expect(items.map((i) => `${i.tooth}:${i.description}`)).toEqual([
+      "11:Repair of fractured tooth",
+      "16:Restoration (filling)",
+      "16:Scaling and polishing"
+    ]);
+  });
+});

@@ -1,16 +1,20 @@
 import React, { useMemo } from "react";
-import { toothInfo, groupFindings, STATUS_COLORS, archLayout } from "../odontogram.js";
+import { toothInfo, groupFindings, STATUS_COLORS, archLayout, codesOf, primaryCode, normalizeConditions } from "../odontogram.js";
 
 const PERMANENT_UPPER = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
 const PERMANENT_LOWER = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
 const DECIDUOUS_UPPER = [55, 54, 53, 52, 51, 61, 62, 63, 64, 65];
 const DECIDUOUS_LOWER = [85, 84, 83, 82, 81, 71, 72, 73, 74, 75];
 
-function Tooth({ t, code, activeLabel, label, onTap, planned }) {
+function Tooth({ t, codes, labelOf, onTap, planned, activeLabel }) {
   const info = toothInfo(t.num);
+  const code = primaryCode(codes);
   const colors = STATUS_COLORS[code || "HLT"] || STATUS_COLORS.HLT;
-  const charted = Boolean(code);
-  const aria = `Tooth ${t.num}, ${info.name}, ${charted ? label : "healthy"}${planned ? ", treatment planned" : ""}. Press to mark as ${activeLabel}.`;
+  const charted = codes.length > 0;
+  const extras = codes.filter((c) => c !== code);
+  const names = codes.map(labelOf).join(" + ");
+  const aria = `Tooth ${t.num}, ${info.name}, ${charted ? names : "healthy"}${planned ? ", treatment planned" : ""}. Press to toggle ${activeLabel}.`;
+  const label = names;
   const press = (e) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -62,6 +66,17 @@ function Tooth({ t, code, activeLabel, label, onTap, planned }) {
         {info.type === "premolar" && (
           <path d={`M0 ${-t.h / 2 + 6} V${t.h / 2 - 6}`} stroke={colors.stroke} strokeOpacity="0.35" strokeWidth="1" fill="none" />
         )}
+        {extras.slice(0, 3).map((c, i, arr) => (
+          <circle
+            key={c}
+            cx={(i - (arr.length - 1) / 2) * 8}
+            cy={t.h / 2 - 5}
+            r="3"
+            fill={(STATUS_COLORS[c] || STATUS_COLORS.HLT).stroke}
+            stroke="#fff"
+            strokeWidth="1"
+          />
+        ))}
       </g>
       {charted && (
         <text
@@ -74,6 +89,7 @@ function Tooth({ t, code, activeLabel, label, onTap, planned }) {
           pointerEvents="none"
         >
           {code}
+          {extras.length > 0 ? `+${extras.length}` : ""}
         </text>
       )}
       <text x={t.lx.toFixed(1)} y={(t.ly + 3.5).toFixed(1)} textAnchor="middle" fontSize="10" fill="#51638c" pointerEvents="none" style={{ fontVariantNumeric: "tabular-nums" }}>
@@ -84,16 +100,18 @@ function Tooth({ t, code, activeLabel, label, onTap, planned }) {
 }
 
 export default function Odontogram({
-  conditions = {},
+  conditions: rawConditions = {},
   palette,
   activeStatus,
   onSelectStatus,
   onTap,
+  onRemoveFinding,
   onClear,
   isDeciduous,
   onToggleDeciduous,
   plannedTeeth = new Set()
 }) {
+  const conditions = useMemo(() => normalizeConditions(rawConditions), [rawConditions]);
   const labelOf = (code) => palette.find((p) => p.id === code)?.label || code;
   const active = palette.find((p) => p.id === activeStatus) || palette[0];
 
@@ -114,7 +132,7 @@ export default function Odontogram({
         <div>
           <div className="font-display text-base font-bold text-ink">Dental chart</div>
           <div className="text-xs text-slate-500">
-            Pick a finding, then tap teeth to mark them. Tap a marked tooth again to clear it.
+            Pick a finding, then tap teeth to add it. A tooth can have several findings. Tap again to remove that one. Healthy and Missing stand alone.
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -168,7 +186,7 @@ export default function Odontogram({
           <text x="10" y="212" fontSize="11" fill="#6b7fa8">Patient's right</text>
           <text x="590" y="212" textAnchor="end" fontSize="11" fill="#6b7fa8">Patient's left</text>
           {[...upper, ...lower].map((t) => (
-            <Tooth key={t.num} t={t} code={conditions[t.num]} label={labelOf(conditions[t.num])} activeLabel={active.label} onTap={onTap} planned={plannedTeeth.has(t.num)} />
+            <Tooth key={t.num} t={t} codes={conditions[t.num] || []} labelOf={labelOf} activeLabel={active.label} onTap={onTap} planned={plannedTeeth.has(t.num)} />
           ))}
         </svg>
       </div>
@@ -218,6 +236,34 @@ export default function Odontogram({
           </ul>
         )}
       </div>
+
+      {count > 0 && (
+        <div>
+          <div className="text-sm font-bold text-ink mb-2">By tooth</div>
+          <ul className="grid sm:grid-cols-2 gap-1.5">
+            {Object.entries(conditions)
+              .sort((a, b) => Number(a[0]) - Number(b[0]))
+              .map(([tooth, codes]) => (
+                <li key={tooth} className="flex flex-wrap items-center gap-1.5 rounded-lg border border-rule bg-white px-2.5 py-1.5 text-sm">
+                  <strong className="text-ink tabular-nums w-7">{tooth}</strong>
+                  {codes.map((code) => {
+                    const c = STATUS_COLORS[code] || STATUS_COLORS.HLT;
+                    return (
+                      <span key={code} className="inline-flex items-center gap-1 rounded-full pl-2 pr-1 py-0.5 text-xs font-semibold" style={{ background: c.fill === "none" ? "#f1f5f9" : c.fill, color: "#0b1b3a", border: `1px solid ${c.stroke}` }}>
+                        {labelOf(code)}
+                        {onRemoveFinding && (
+                          <button type="button" onClick={() => onRemoveFinding(Number(tooth), code)} aria-label={`Remove ${labelOf(code)} from tooth ${tooth}`} className="w-4 h-4 rounded-full hover:bg-black/10 leading-none">
+                            ×
+                          </button>
+                        )}
+                      </span>
+                    );
+                  })}
+                </li>
+              ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
