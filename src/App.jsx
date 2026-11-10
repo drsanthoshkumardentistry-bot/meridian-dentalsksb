@@ -10,6 +10,7 @@ import { toggleFinding, normalizeConditions, chartedCount as chartedTeeth } from
 import { billingSummary, invoiceView, invoicesCsv, buildInvoiceMessage, isOverdue, daysOverdue, dueDateIn } from "./billingView.js";
 import { adjustStock, buildStockItem, stockState, stockSummary, stockView, buildReorderMessage } from "./stock.js";
 import { APPT_STATUSES, findClash, diarySummary, diaryView, withStatus, needsUpdate } from "./diary.js";
+import { LEAVE_TYPES, buildLeave, setLeaveStatus, removeLeave, leaveDays, onLeaveOn, buildReview, averageRating, staffAlerts } from "./staff.js";
 import OpgViewer from "./components/OpgViewer.jsx";
 import Connect from "./components/Connect.jsx";
 import { bindApi } from "./connect/api.js";
@@ -782,7 +783,7 @@ export default function App() {
 
   const [leaveForm, setLeaveForm] = useState({
     employeeName: "",
-    leaveType: "Sick",
+    leaveType: "Sick leave",
     startDate: "",
     endDate: "",
     reason: ""
@@ -2639,15 +2640,23 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Admin Alert Banner */}
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3 shadow-xs">
-                <Bell className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                <div className="space-y-1 text-xs text-amber-900">
-                  <div className="font-bold">ADMIN ALERTS & NOTIFICATIONS</div>
-                  <div>• <strong>Dr. A. Khan's</strong> license expires in 30 days.</div>
-                  <div>• <strong>Ms. Sharma</strong> has a pending leave request.</div>
-                </div>
-              </div>
+              {(() => {
+                const alerts = staffAlerts(employees);
+                const away = onLeaveOn(employees);
+                if (!alerts.length && !away.length) return null;
+                return (
+                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3 shadow-xs" data-testid="staff-alerts">
+                    <Bell className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="space-y-1 text-xs text-amber-900">
+                      <div className="font-bold">Needs attention</div>
+                      {alerts.map((al) => (
+                        <div key={al.text} className={al.level === "danger" ? "font-semibold text-rose-700" : ""}>{al.text}</div>
+                      ))}
+                      {away.length > 0 && <div>On leave today: {away.map((x) => x.name).join(", ")}</div>}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {employees.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3 shadow-xs">
@@ -2672,6 +2681,18 @@ export default function App() {
                             <span>•</span>
                             <span className={licenseStatus(emp.licenseExpiry).tone}>{licenseStatus(emp.licenseExpiry).label}</span>
                           </div>
+                          {(() => {
+                            const pend = (emp.leaves || []).filter((l) => l.status === "Pending").length;
+                            const avg = averageRating(emp);
+                            const away = onLeaveOn([emp]).length > 0;
+                            return pend || avg || away ? (
+                              <div className="flex flex-wrap gap-1.5 text-[10px] font-semibold">
+                                {away && <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">On leave today</span>}
+                                {pend > 0 && <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">{pend} leave pending</span>}
+                                {avg && <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">Rating {avg} / 5</span>}
+                              </div>
+                            ) : null;
+                          })()}
                           {[emp.qualification, emp.phone ? `+91 ${emp.phone}` : "", emp.shift].filter(Boolean).length > 0 ? (
                             <div className="text-xs text-slate-500">
                               {[emp.qualification, emp.phone ? `+91 ${emp.phone}` : "", emp.shift].filter(Boolean).join(" • ")}
@@ -2701,7 +2722,7 @@ export default function App() {
                             }}
                             className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-semibold cursor-pointer"
                           >
-                            View/Request Leave
+                            Leave
                           </button>
 
                           <button
@@ -2712,7 +2733,7 @@ export default function App() {
                             }}
                             className="px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs font-semibold cursor-pointer"
                           >
-                            Submit Review
+                            Reviews
                           </button>
 
                           <button
@@ -2802,6 +2823,11 @@ export default function App() {
                     onChange={(e) => setPracticeProfile({ ...practiceProfile, upiId: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 font-mono focus:outline-none"
                   />
+                  {practiceProfile.upiId && !isValidUpiId(practiceProfile.upiId) ? (
+                    <p className="text-[10px] text-rose-600 mt-1">A UPI ID looks like name@bank. QR codes and WhatsApp payment messages use it only when it is valid.</p>
+                  ) : (
+                    <p className="text-[10px] text-slate-500 mt-1">Shown as a QR code when you collect a payment and added to payment messages.</p>
+                  )}
                 </div>
 
                 <div className="sm:col-span-2">
@@ -3220,13 +3246,21 @@ export default function App() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              setIsLeaveModalOpen(false);
-              showToast(`Leave request submitted for ${leaveForm.employeeName}`);
+              const target = employees.find((x) => x.id === selectedStaffForAction?.id);
+              if (!target) return;
+              const built = buildLeave(leaveForm, target.leaves || [], newId("LV"));
+              if (!built.ok) {
+                showToast(built.error);
+                return;
+              }
+              setEmployees((prev) => prev.map((x) => (x.id === target.id ? { ...x, leaves: [...(x.leaves || []), built.leave] } : x)));
+              setLeaveForm((f) => ({ ...f, startDate: "", endDate: "", reason: "" }));
+              showToast(`Leave request recorded for ${target.name}. Approve it below.`);
             }}
             className="bg-white rounded-3xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-2xl text-xs"
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
-              <h3 className="text-base font-bold text-slate-900">Leave Request</h3>
+              <h3 className="text-base font-bold text-slate-900">Leave</h3>
               <button type="button" onClick={() => setIsLeaveModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
@@ -3249,9 +3283,7 @@ export default function App() {
                 onChange={(e) => setLeaveForm({...leaveForm, leaveType: e.target.value})}
                 className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl bg-white focus:outline-none"
               >
-                <option>Sick Leave</option>
-                <option>Vacation</option>
-                <option>Personal Leave</option>
+                {LEAVE_TYPES.map((t) => (<option key={t}>{t}</option>))}
               </select>
             </div>
 
@@ -3287,9 +3319,39 @@ export default function App() {
               />
             </div>
 
+            {(() => {
+              const live = employees.find((x) => x.id === selectedStaffForAction?.id);
+              const leaves = [...(live?.leaves || [])].sort((a, b) => b.startDate.localeCompare(a.startDate));
+              if (!leaves.length) return null;
+              const update = (fn) => setEmployees((prev) => prev.map((x) => (x.id === live.id ? fn(x) : x)));
+              return (
+                <div className="space-y-2" data-testid="leave-history">
+                  <div className="font-semibold text-slate-600">Leave on record</div>
+                  {leaves.map((l) => (
+                    <div key={l.id} className="rounded-xl border border-slate-200 p-2.5 flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <div className="font-semibold text-slate-800">{l.type}: {new Date(l.startDate).toLocaleDateString("en-IN")}{l.endDate !== l.startDate ? ` to ${new Date(l.endDate).toLocaleDateString("en-IN")}` : ""} ({leaveDays(l)} {leaveDays(l) === 1 ? "day" : "days"})</div>
+                        {l.reason ? <div className="text-slate-500">{l.reason}</div> : null}
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`px-2 py-0.5 rounded-full font-bold border ${l.status === "Approved" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : l.status === "Rejected" ? "bg-rose-50 text-rose-700 border-rose-200" : "bg-amber-50 text-amber-800 border-amber-200"}`}>{l.status}</span>
+                        {l.status === "Pending" && (
+                          <>
+                            <button type="button" onClick={() => update((x) => setLeaveStatus(x, l.id, "Approved"))} aria-label={`Approve leave from ${l.startDate}`} className="px-2 py-1 rounded bg-emerald-600 text-white font-semibold">Approve</button>
+                            <button type="button" onClick={() => update((x) => setLeaveStatus(x, l.id, "Rejected"))} aria-label={`Reject leave from ${l.startDate}`} className="px-2 py-1 rounded bg-slate-100 text-slate-700 font-semibold">Reject</button>
+                          </>
+                        )}
+                        <button type="button" onClick={() => update((x) => removeLeave(x, l.id))} aria-label={`Delete leave from ${l.startDate}`} className="p-1 text-slate-400 hover:text-rose-600"><X className="w-3.5 h-3.5" /></button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+
             <div className="pt-3 flex justify-end gap-2 border-t border-slate-100">
-              <button type="button" onClick={() => setIsLeaveModalOpen(false)} className="px-4 py-2 border rounded-xl text-slate-600 cursor-pointer">Cancel</button>
-              <button type="submit" className="px-5 py-2 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 cursor-pointer">Submit Leave Request</button>
+              <button type="button" onClick={() => setIsLeaveModalOpen(false)} className="px-4 py-2 border rounded-xl text-slate-600 cursor-pointer">Close</button>
+              <button type="submit" className="px-5 py-2 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 cursor-pointer">Request leave</button>
             </div>
           </form>
         </div>
@@ -3303,13 +3365,21 @@ export default function App() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              setIsPerformanceModalOpen(false);
-              showToast(`Performance review saved for ${performanceForm.employeeName}`);
+              const target = employees.find((x) => x.id === selectedStaffForAction?.id);
+              if (!target) return;
+              const built = buildReview({ rating: performanceForm.rating, notes: performanceForm.notes, reviewer: practiceProfile.drName || practiceProfile.name, date: dateKey() }, newId("RV"));
+              if (!built.ok) {
+                showToast(built.error);
+                return;
+              }
+              setEmployees((prev) => prev.map((x) => (x.id === target.id ? { ...x, reviews: [built.review, ...(x.reviews || [])] } : x)));
+              setPerformanceForm((f) => ({ ...f, notes: "", rating: 4 }));
+              showToast(`Review saved for ${target.name}`);
             }}
             className="bg-white rounded-3xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-2xl text-xs"
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
-              <h3 className="text-base font-bold text-slate-900">Performance Review</h3>
+              <h3 className="text-base font-bold text-slate-900">Performance reviews</h3>
               <button type="button" onClick={() => setIsPerformanceModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
@@ -3330,7 +3400,7 @@ export default function App() {
               <input
                 type="text"
                 readOnly
-                value={performanceForm.reviewerName}
+                value={practiceProfile.drName || practiceProfile.name}
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800"
               />
             </div>
@@ -3362,9 +3432,26 @@ export default function App() {
               />
             </div>
 
+            {(() => {
+              const live = employees.find((x) => x.id === selectedStaffForAction?.id);
+              const reviews = live?.reviews || [];
+              if (!reviews.length) return null;
+              return (
+                <div className="space-y-2" data-testid="review-history">
+                  <div className="font-semibold text-slate-600">Past reviews</div>
+                  {reviews.slice(0, 5).map((r) => (
+                    <div key={r.id} className="rounded-xl border border-slate-200 p-2.5">
+                      <div className="font-semibold text-slate-800">{r.rating} / 5 <span className="font-normal text-slate-500">on {new Date(r.date).toLocaleDateString("en-IN")}{r.reviewer ? ` by ${r.reviewer}` : ""}</span></div>
+                      {r.notes ? <div className="text-slate-500">{r.notes}</div> : null}
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+
             <div className="pt-3 flex justify-end gap-2 border-t border-slate-100">
               <button type="button" onClick={() => setIsPerformanceModalOpen(false)} className="px-4 py-2 border rounded-xl text-slate-600 cursor-pointer">Cancel</button>
-              <button type="submit" className="px-5 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 cursor-pointer">Submit Review</button>
+              <button type="submit" className="px-5 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 cursor-pointer">Save review</button>
             </div>
           </form>
         </div>

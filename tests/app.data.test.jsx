@@ -494,4 +494,35 @@ describe("demographics and required data", () => {
     await waitFor(() => expect(stored("appointments").find((a) => a.id === "A1").status).toBe("Completed"));
     expect(screen.queryByText("Mark the outcome")).toBeNull();
   });
+
+  it("staff: real licence alerts, leave is saved and approved, reviews are saved", async () => {
+    localStorage.setItem(KEY("employees"), JSON.stringify([
+      { id: "E1", name: "Dr Khan", role: "Orthodontist", license: "TN-1", licenseExpiry: "2020-01-01", phone: "9876543210", qualification: "MDS", shift: "Full day", active: true },
+    ]));
+    await openApp();
+    nav("Employee Roles & Roster");
+    const alerts = await screen.findByTestId("staff-alerts");
+    expect(within(alerts).getByText(/Dr Khan's licence expired/)).toBeTruthy();
+    expect(screen.queryByText(/Ms\. Sharma/)).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Leave" }));
+    const form = (await screen.findByText("Request leave")).closest("form");
+    const dates = form.querySelectorAll('input[type="date"]');
+    type(dates[0], "2026-12-01");
+    type(dates[1], "2026-11-28");
+    fireEvent.submit(form);
+    expect(await screen.findByText(/cannot be before/i)).toBeTruthy();
+    type(dates[1], "2026-12-03");
+    fireEvent.submit(form);
+    await waitFor(() => expect(stored("employees")[0].leaves.length).toBe(1));
+    expect(stored("employees")[0].leaves[0]).toMatchObject({ status: "Pending", startDate: "2026-12-01", endDate: "2026-12-03" });
+    fireEvent.click(await screen.findByRole("button", { name: /Approve leave from 2026-12-01/ }));
+    await waitFor(() => expect(stored("employees")[0].leaves[0].status).toBe("Approved"));
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Reviews" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Save review" }));
+    await waitFor(() => expect(stored("employees")[0].reviews.length).toBe(1));
+    expect(stored("employees")[0].reviews[0].rating).toBe(4);
+  });
 });
