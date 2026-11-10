@@ -6,6 +6,7 @@
  * ============================================================================== */
 
 import { AGING_BUCKETS, agingSummary, filterInvoices, invoiceAgeDays } from "./receivables.js";
+import OpgViewer from "./components/OpgViewer.jsx";
 import Connect from "./components/Connect.jsx";
 import { bindApi } from "./connect/api.js";
 import { geocodeAddress } from "./connect/geo.js";
@@ -806,11 +807,6 @@ export default function App() {
 
   // OPG Workstation State
   const [opgSelectedPatientId, setOpgSelectedPatientId] = useState(null);
-  const [isNegativeInverted, setIsNegativeInverted] = useState(false);
-  const [rulerActive, setRulerActive] = useState(false);
-  const [rulerPoints, setRulerPoints] = useState([]);
-  const fileInputRef = useRef(null);
-  const opgCanvasRef = useRef(null);
 
   // New Appointment Modal State
   const [isAddApptOpen, setIsAddApptOpen] = useState(false);
@@ -1099,7 +1095,11 @@ export default function App() {
     }
     try {
       const dataUrl = await compressImageToDataUrl(file);
-      setPatients((prev) => prev.map((p) => (p.id === targetId ? { ...p, opgImage: dataUrl } : p)));
+      setPatients((prev) =>
+        prev.map((p) =>
+          p.id === targetId ? { ...p, opgImage: dataUrl, opgUploadedAt: new Date().toLocaleDateString("en-IN"), opgCalibration: null } : p
+        )
+      );
       showToast("OPG radiograph uploaded & linked to patient");
     } catch (err) {
       showToast("Could not use this image. Try a smaller JPG or PNG.");
@@ -1416,26 +1416,6 @@ export default function App() {
     setIsAddStaffOpen(false);
     setNewStaffForm({ name: "", role: "Orthodontist", license: "", licenseExpiry: "", phone: "", qualification: "", shift: "Full day", active: true });
     showToast(`Staff member ${staffMember.name} added successfully`);
-  };
-
-  const calculateDistanceMm = () => {
-    if (rulerPoints.length !== 2) return null;
-    const dx = rulerPoints[1].x - rulerPoints[0].x;
-    const dy = rulerPoints[1].y - rulerPoints[0].y;
-    const px = Math.sqrt(dx * dx + dy * dy);
-    return (px * 0.08).toFixed(1);
-  };
-
-  const handleOpgCanvasClick = (e) => {
-    if (!rulerActive) return;
-    const rect = opgCanvasRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    if (rulerPoints.length === 2) {
-      setRulerPoints([{ x, y }]);
-    } else {
-      setRulerPoints([...rulerPoints, { x, y }]);
-    }
   };
 
   const filteredPatients = patients.filter((p) =>
@@ -1835,84 +1815,27 @@ export default function App() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                {/* Left: OPG Card */}
-                <div className="bg-ink rounded-2xl p-5 text-white flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <div className="text-sm font-bold">Baseline Panoramic OPG</div>
-                        <div className="text-[11px] text-slate-400">
-                          Patient: {currentOpgPatient ? currentOpgPatient.name : "None"}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <input type="file" ref={fileInputRef} onChange={handleOpgFileChange} accept="image/*" className="hidden" />
-                        <button
-                          type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5"
-                        >
-                          <Upload className="w-3.5 h-3.5" /> Insert Film
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setIsNegativeInverted(!isNegativeInverted)}
-                          className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium flex items-center gap-1.5"
-                        >
-                          <Sun className="w-3.5 h-3.5" /> {isNegativeInverted ? "Normal" : "Invert Negative (X-Ray)"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => { setRulerActive(!rulerActive); setRulerPoints([]); }}
-                          className={`px-2 py-1.5 rounded-lg text-xs font-medium border ${rulerActive ? "bg-amber-500 text-white border-amber-400" : "bg-slate-800 text-slate-300"}`}
-                        >
-                          <Ruler className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div
-                      ref={opgCanvasRef}
-                      onClick={handleOpgCanvasClick}
-                      className={`w-full h-80 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center overflow-hidden relative ${
-                        rulerActive ? "cursor-crosshair" : "cursor-default"
-                      }`}
-                    >
-                      {currentOpgPatient && currentOpgPatient.opgImage ? (
-                        <>
-                          <img
-                            src={currentOpgPatient.opgImage}
-                            alt="OPG Film"
-                            className={`w-full h-full object-cover ${isNegativeInverted ? "filter invert contrast-125" : ""}`}
-                          />
-                          <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                            {rulerPoints.map((pt, idx) => (
-                              <circle key={idx} cx={pt.x} cy={pt.y} r="4" fill="#f59e0b" stroke="#ffffff" strokeWidth="1.5" />
-                            ))}
-                            {rulerPoints.length === 2 && (
-                              <>
-                                <line x1={rulerPoints[0].x} y1={rulerPoints[0].y} x2={rulerPoints[1].x} y2={rulerPoints[1].y} stroke="#f59e0b" strokeWidth="2" strokeDasharray="4 2" />
-                                <text x={(rulerPoints[0].x + rulerPoints[1].x) / 2 + 10} y={(rulerPoints[0].y + rulerPoints[1].y) / 2 - 10} fill="#f59e0b" fontSize="12" fontWeight="bold">
-                                  {calculateDistanceMm()} mm (WL)
-                                </text>
-                              </>
-                            )}
-                          </svg>
-                        </>
-                      ) : (
-                        <div className="text-center p-6 text-slate-500">
-                          <Upload className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                          <p className="text-xs text-slate-400">No OPG film uploaded for this patient.</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between text-[11px] text-slate-400 pt-3 border-t border-slate-800">
-                    <span>{rulerActive ? `Caliper Mode: ${calculateDistanceMm() || 0} mm` : "High-Contrast Diagnostic View"}</span>
-                  </div>
-                </div>
+                {/* Left: OPG viewer */}
+                <OpgViewer
+                  key={currentOpgPatient ? currentOpgPatient.id : "none"}
+                  patient={currentOpgPatient}
+                  onUpload={handleOpgFileChange}
+                  onRemove={() =>
+                    currentOpgPatient &&
+                    setPatients((prev) =>
+                      prev.map((p) => (p.id === currentOpgPatient.id ? { ...p, opgImage: "", opgUploadedAt: "", opgCalibration: null } : p))
+                    )
+                  }
+                  onCalibrate={(cal) =>
+                    currentOpgPatient &&
+                    setPatients((prev) => prev.map((p) => (p.id === currentOpgPatient.id ? { ...p, opgCalibration: cal } : p)))
+                  }
+                  onAddToNotes={(line) =>
+                    currentOpgPatient &&
+                    handleUpdateDiagnosis("diagnosisNotes", `${currentOpgPatient.diagnosis?.diagnosisNotes ? currentOpgPatient.diagnosis.diagnosisNotes + "\n" : ""}${line}`)
+                  }
+                  showToast={showToast}
+                />
 
                 {/* Right: Diagnostic Entry Pane */}
                 <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between">
