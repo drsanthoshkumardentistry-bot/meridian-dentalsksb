@@ -12,6 +12,9 @@ import { adjustStock, buildStockItem, stockState, stockSummary, stockView, build
 import { APPT_STATUSES, findClash, diarySummary, diaryView, withStatus, needsUpdate } from "./diary.js";
 import { LEAVE_TYPES, buildLeave, setLeaveStatus, removeLeave, leaveDays, onLeaveOn, buildReview, averageRating, staffAlerts } from "./staff.js";
 import GlobalSearch from "./components/GlobalSearch.jsx";
+import ActivityLog from "./components/ActivityLog.jsx";
+import { buildAuditEntry } from "./audit.js";
+import { writeAudit, watchAudit } from "./auditStore.js";
 import TeamCard from "./components/TeamCard.jsx";
 import { canRead, canWrite, navFor, NAV_BY_ROLE, firstScreen, branchScope, ROLE_LABEL } from "./roles.js";
 import { isActiveMember, isPendingInvite, buildInvite, inviteMessage } from "./team.js";
@@ -819,6 +822,18 @@ export default function App() {
     localStorage.setItem(`merident_${CACHE_ID}_queue`, JSON.stringify(allQueue));
   }, [allQueue, hydratedFor, CLINIC_ID]);
 
+  // Activity log: one line per important change, written by whoever made it
+  const logAudit = (action, subject, detail) => {
+    if (!db || !CLINIC_ID || !authUser) return;
+    const entry = buildAuditEntry({ actor: { uid: authUser.uid, email: authUser.email, role }, action, subject, detail }, newId("AU"));
+    writeAudit(db, CLINIC_ID, entry).catch(() => {});
+  };
+  const [auditEntries, setAuditEntries] = useState([]);
+  useEffect(() => {
+    if (!db || !CLINIC_ID || hydratedFor !== CLINIC_ID || !(role === "owner" || role === "manager") || activeNav !== "Practice Profile") return undefined;
+    return watchAudit(db, CLINIC_ID, setAuditEntries, () => {});
+  }, [hydratedFor, CLINIC_ID, role, activeNav]);
+
   // Owner: the list of team logins
   const [team, setTeam] = useState([]);
   useEffect(() => {
@@ -999,6 +1014,7 @@ export default function App() {
     };
 
     setPatients((prev) => [tagBranch(created, writeBranch), ...prev]);
+    logAudit("patient.add", created.name);
     setNewPatientForm({ ...EMPTY_PATIENT_FORM });
     setIsAddPatientOpen(false);
     setSelectedPatientId(created.id);
@@ -1240,6 +1256,7 @@ export default function App() {
       procedure: newApptForm.procedure.trim() || "Consultation",
     };
     setAppointments((prev) => [tagBranch(appt, writeBranch), ...prev]);
+    logAudit("appointment.add", appt.patientName, `${appt.date} ${appt.time}`);
     setNewApptForm((f) => ({ ...f, patientId: "", patientName: "", phone: "", age: "", procedure: "" }));
     setIsAddApptOpen(false);
     showToast(`Appointment booked for ${appt.patientName} on ${appt.date}`);
@@ -1267,6 +1284,7 @@ export default function App() {
     }
     try {
       await markBookingRequest(db, req.id, "confirmed");
+      logAudit("booking.confirm", req.name, `${req.date} ${req.slot}`);
     } catch {
       showToast("Could not update the request. Check your connection and try again.");
       return;
@@ -1282,6 +1300,7 @@ export default function App() {
   const declineBooking = async (req) => {
     try {
       await markBookingRequest(db, req.id, "declined");
+      logAudit("booking.decline", req.name, req.date);
     } catch {
       showToast("Could not update the request. Check your connection and try again.");
     }
@@ -1490,6 +1509,7 @@ export default function App() {
       ...(newInvoiceForm.dueDate ? { dueDate: newInvoiceForm.dueDate } : {}),
     };
     setInvoices((prev) => [tagBranch(inv, writeBranch), ...prev]);
+    logAudit("invoice.add", inv.id, `${inv.patient}, ₹${formatINR(inv.totalP)}`);
     if (newInvoiceForm.planId && newInvoiceForm.patientId) {
       setPatients((prev) =>
         prev.map((p) =>
@@ -1522,6 +1542,7 @@ export default function App() {
       return;
     }
     setInvoices((prev) => prev.map((i) => (i.id === current.id ? result.invoice : i)));
+    logAudit("payment.add", current.id, `₹${formatINR(toPaise(payForm.amount))} by ${payForm.mode}`);
     setActiveUpiQrInvoice(result.invoice);
     setPayForm({ amount: "", mode: payForm.mode });
     showToast(`₹${formatINR(toPaise(payForm.amount))} received. Balance ₹${formatINR(balancePaise(result.invoice))}`);
@@ -2001,6 +2022,7 @@ export default function App() {
                               e.stopPropagation();
                               if (confirm(`Remove record for ${p.name}?`)) {
                                 setPatients((prev) => prev.filter((x) => x.id !== p.id));
+                                logAudit("patient.delete", p.name);
                                 showToast(`Removed ${p.name}`);
                               }
                             }}
@@ -2366,7 +2388,7 @@ export default function App() {
                               <select
                                 aria-label={`Status for ${appt.patientName}`}
                                 value={APPT_STATUSES.includes(appt.status) ? appt.status : "Confirmed"}
-                                onChange={(e) => setAppointments((prev) => prev.map((x) => (x.id === appt.id ? withStatus(x, e.target.value) : x)))}
+                                onChange={(e) => { logAudit("appointment.status", appt.patientName, `${appt.status || "Confirmed"} to ${e.target.value}`); setAppointments((prev) => prev.map((x) => (x.id === appt.id ? withStatus(x, e.target.value) : x))); }}
                                 className={`px-2 py-1 rounded-lg border text-[11px] font-bold bg-white ${
                                   appt.status === "Completed" ? "border-emerald-300 text-emerald-700" : appt.status === "Cancelled" || appt.status === "No show" ? "border-rose-300 text-rose-700" : "border-blue-200 text-blue-700"
                                 }`}
@@ -2387,7 +2409,7 @@ export default function App() {
                               </button>
                               <button
                                 aria-label={`Delete appointment for ${appt.patientName}`}
-                                onClick={() => { if (confirm(`Delete the appointment for ${appt.patientName}? To keep a record, set its status to Cancelled instead.`)) setAppointments((prev) => prev.filter((x) => x.id !== appt.id)); }}
+                                onClick={() => { if (confirm(`Delete the appointment for ${appt.patientName}? To keep a record, set its status to Cancelled instead.`)) setAppointments((prev) => prev.filter((x) => x.id !== appt.id)); logAudit("appointment.delete", appt.patientName, `${appt.date} ${appt.time}`); }}
                                 className="p-1 text-slate-400 hover:text-rose-500"
                               >
                                 <Trash2 className="w-3.5 h-3.5 inline" />
@@ -3037,13 +3059,16 @@ export default function App() {
                   origin={window.location.origin}
                   onInvite={async (v) => {
                     await createInvite(db, buildInvite(v, { clinicId: CLINIC_ID, clinicName: practiceProfile.name, ownerEmail: authUser.email }));
+                    logAudit("team.invite", v.email, v.role);
                     showToast(`Invitation saved for ${v.email}`);
                   }}
-                  onUpdate={(email, changes) => updateMember(db, email, changes).catch(() => showToast("Could not save the change. Check your connection."))}
-                  onRemove={(email) => removeMember(db, email).catch(() => showToast("Could not remove this login. Check your connection."))}
+                  onUpdate={(email, changes) => updateMember(db, email, changes).then(() => logAudit("team.update", email, Object.entries(changes).map(([k, v]) => `${k}: ${v}`).join(", "))).catch(() => showToast("Could not save the change. Check your connection."))}
+                  onRemove={(email) => removeMember(db, email).then(() => logAudit("team.remove", email)).catch(() => showToast("Could not remove this login. Check your connection."))}
                   message={inviteMessage}
                 />
               )}
+
+              {(role === "owner" || role === "manager") && <ActivityLog entries={auditEntries} />}
 
               <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-xs space-y-2" data-testid="booking-settings">
                 <label className="flex items-center gap-2 font-semibold text-slate-800">
@@ -4437,6 +4462,7 @@ export default function App() {
                 onClick={() => {
                   if (confirm(`Delete chart for ${activePatient.name}?`)) {
                     setPatients((prev) => prev.filter((p) => p.id !== activePatient.id));
+                    logAudit("patient.delete", activePatient.name);
                     setIsChartModalOpen(false);
                     showToast("Patient chart deleted");
                   }

@@ -57,6 +57,16 @@ service cloud.firestore {
                     || (request.auth != null && request.auth.token.email_verified == true && myEmailKey() == emailKey);
     }
 
+    // Activity log. Team members can add entries under their own identity; only the owner and managers can
+    // read them, and team members cannot change or delete an entry.
+    match /clinics/{clinicId}/audit/{entryId} {
+      allow create: if (isClinicOwner(clinicId) || memberHasRole(clinicId, ['manager', 'dentist', 'receptionist']))
+                    && request.resource.data.actorUid == request.auth.uid
+                    && request.resource.data.keys().hasOnly(['id', 'at', 'actorUid', 'actorEmail', 'actorRole', 'action', 'subject', 'detail']);
+      allow read: if isClinicOwner(clinicId) || memberHasRole(clinicId, ['manager']);
+      allow update, delete: if false;
+    }
+
     // Team members reach the clinic's data by role, collection by collection (see src/roles.js).
     match /clinics/{clinicId}/patients/{d}     { allow read, write: if memberHasRole(clinicId, ['manager', 'dentist', 'receptionist']); }
     match /clinics/{clinicId}/appointments/{d} { allow read, write: if memberHasRole(clinicId, ['manager', 'dentist', 'receptionist']); }
