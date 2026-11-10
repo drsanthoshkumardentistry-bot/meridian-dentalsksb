@@ -4,7 +4,7 @@
  * GST figures come from INVOICES (GST is due on the invoice date, not the payment date).
  * ============================================================================== */
 
-import { normalizeInvoice, balancePaise, formatINR } from "./billing";
+import { normalizeInvoice, balancePaise, formatINR, invoiceLines } from "./billing";
 import { parseAnyDate, dateKey } from "./reminders";
 
 export const MODE_KEYS = ["Cash", "UPI", "Card", "Net banking", "Insurance / TPA"];
@@ -52,12 +52,16 @@ export const gstSummaryForMonth = (invoices = [], ym = currentMonthKey()) => {
     const inv = normalizeInvoice(raw);
     const d = parseAnyDate(inv.date);
     if (!inMonth(d, ym)) continue;
+    const lines = invoiceLines(inv);
+    const taxableLines = lines.filter((l) => l.gstRate > 0);
+    const category =
+      taxableLines.length === 0 ? "Exempt" : taxableLines.length === lines.length ? `Taxable ${inv.gstRate}%` : "Mixed";
     rows.push({
       date: dateKey(d),
       id: inv.id,
       patient: inv.patient,
       treatment: inv.treatment || "",
-      category: inv.gstRate > 0 ? `Taxable ${inv.gstRate}%` : "Exempt",
+      category,
       taxableP: inv.taxableP || 0,
       cgstP: inv.cgstP || 0,
       sgstP: inv.sgstP || 0,
@@ -67,8 +71,10 @@ export const gstSummaryForMonth = (invoices = [], ym = currentMonthKey()) => {
     sum.subtotalP += inv.subtotalP || 0;
     sum.discountP += inv.discountP || 0;
     sum.taxableP += inv.taxableP || 0;
-    if (inv.gstRate > 0) sum.taxableAt18P += inv.taxableP || 0;
-    else sum.exemptP += inv.taxableP || 0;
+    for (const l of lines) {
+      if (l.gstRate > 0) sum.taxableAt18P += l.taxableP || 0;
+      else sum.exemptP += l.taxableP || 0;
+    }
     sum.cgstP += inv.cgstP || 0;
     sum.sgstP += inv.sgstP || 0;
     sum.taxP += inv.taxP || 0;

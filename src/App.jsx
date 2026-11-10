@@ -69,7 +69,7 @@ import {
   collectionsCsv, gstRegisterCsv, buildReportHtml, monthLabel,
 } from "./reports";
 import {
-  TAX_CATEGORIES, computeInvoiceTotals, nextInvoiceNumber, normalizeInvoice, addPayment,
+  TAX_CATEGORIES, MAX_LINE_ITEMS, computeLineItemTotals, nextInvoiceNumber, normalizeInvoice, addPayment,
   paidPaise, balancePaise, paymentStatus, buildUpiUri, isValidUpiId, buildInvoiceHtml, formatINR, toPaise,
 } from "./billing";
 
@@ -140,6 +140,8 @@ const PRESET_MEDICATIONS = [
 // ---------------------------------------------------------------------------
 const newId = (prefix) =>
   `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
+
+const blankInvoiceItem = () => ({ id: newId("LI"), description: "", amount: "", taxCategory: "therapeutic" });
 
 const byIdDesc = (a, b) => String(b.id).localeCompare(String(a.id));
 
@@ -827,10 +829,8 @@ export default function App() {
     provider: "Self Pay",
     claimId: "",
     status: "Self-Pay Completed",
-    treatment: "",
-    amount: "",
+    items: [blankInvoiceItem()],
     discount: "",
-    taxCategory: "therapeutic",
     advance: "",
   });
   const [payForm, setPayForm] = useState({ amount: "", mode: "Cash" });
@@ -1254,19 +1254,16 @@ export default function App() {
       showToast("Patient Name is required");
       return;
     }
-    if (!(parseFloat(newInvoiceForm.amount) > 0)) {
-      showToast("Enter a bill amount greater than zero");
+    const items = newInvoiceForm.items;
+    if (items.some((it) => !(parseFloat(it.amount) > 0))) {
+      showToast("Enter a bill amount greater than zero for every item");
       return;
     }
-    if (!newInvoiceForm.treatment.trim()) {
-      showToast("Describe the treatment billed");
+    if (items.some((it) => !it.description.trim())) {
+      showToast("Describe the treatment billed for every item");
       return;
     }
-    const totals = computeInvoiceTotals({
-      amount: newInvoiceForm.amount,
-      discount: newInvoiceForm.discount,
-      taxCategory: newInvoiceForm.taxCategory,
-    });
+    const totals = computeLineItemTotals({ items, discount: newInvoiceForm.discount });
     if (totals.totalP <= 0) {
       showToast("Invoice total must be greater than zero");
       return;
@@ -1286,8 +1283,8 @@ export default function App() {
       provider: isInsurance ? newInvoiceForm.provider : "Self Pay",
       claimId: isInsurance ? newInvoiceForm.claimId.trim() || `CLM-${Date.now().toString(36).slice(-6).toUpperCase()}` : "",
       status: isInsurance ? newInvoiceForm.status : "Self-Pay",
-      treatment: newInvoiceForm.treatment,
-      taxCategory: newInvoiceForm.taxCategory,
+      treatment: totals.lines.map((l) => l.description).join(", "),
+      taxCategory: new Set(totals.lines.map((l) => l.taxCategory)).size === 1 ? totals.lines[0].taxCategory : "mixed",
       ...totals,
       payments: advanceP > 0 ? [{ date: today, mode: isInsurance ? "Cash" : newInvoiceForm.paymentMode, amountP: advanceP }] : [],
       total: (totals.totalP / 100).toLocaleString("en-IN"),
@@ -1302,10 +1299,8 @@ export default function App() {
       provider: "Self Pay",
       claimId: "",
       status: "Self-Pay Completed",
-      treatment: "",
-      amount: "",
+      items: [blankInvoiceItem()],
       discount: "",
-      taxCategory: "therapeutic",
       advance: "",
     });
     setIsAddInvoiceOpen(false);
@@ -4250,44 +4245,76 @@ export default function App() {
             </div>
             )}
 
-            <div>
-              <label className="block font-semibold text-slate-600 mb-1">Treatment Description</label>
-              <input
-                type="text"
-                value={newInvoiceForm.treatment}
-                onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, treatment: e.target.value })}
-                placeholder="e.g. Root Canal Therapy + Zirconia Crown"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold text-slate-600 mb-1">Tax category</label>
-              <select
-                value={newInvoiceForm.taxCategory}
-                onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, taxCategory: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none bg-white"
-              >
-                {TAX_CATEGORIES.map((c) => (
-                  <option key={c.id} value={c.id}>{c.label}</option>
-                ))}
-              </select>
+            <div className="space-y-2">
+              <label className="block font-semibold text-slate-600">Treatments billed</label>
+              {newInvoiceForm.items.map((it, idx) => {
+                const setItem = (changes) =>
+                  setNewInvoiceForm({
+                    ...newInvoiceForm,
+                    items: newInvoiceForm.items.map((x) => (x.id === it.id ? { ...x, ...changes } : x)),
+                  });
+                return (
+                  <div key={it.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-2.5 space-y-2">
+                    <input
+                      type="text"
+                      aria-label={`Treatment ${idx + 1} description`}
+                      value={it.description}
+                      onChange={(e) => setItem({ description: e.target.value })}
+                      placeholder="e.g. Root Canal Therapy"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none bg-white"
+                    />
+                    <div className="grid grid-cols-[1fr_1.4fr_auto] gap-2 items-center">
+                      <input
+                        type="number"
+                        required
+                        min="0"
+                        step="0.01"
+                        aria-label={`Treatment ${idx + 1} amount before tax`}
+                        value={it.amount}
+                        onChange={(e) => setItem({ amount: e.target.value })}
+                        placeholder="Amount ₹"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 font-bold focus:outline-none bg-white"
+                      />
+                      <select
+                        aria-label={`Treatment ${idx + 1} tax category`}
+                        value={it.taxCategory}
+                        onChange={(e) => setItem({ taxCategory: e.target.value })}
+                        className="w-full px-2 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none bg-white"
+                      >
+                        {TAX_CATEGORIES.map((c) => (
+                          <option key={c.id} value={c.id}>{c.label}</option>
+                        ))}
+                      </select>
+                      {newInvoiceForm.items.length > 1 ? (
+                        <button
+                          type="button"
+                          aria-label={`Remove treatment ${idx + 1}`}
+                          onClick={() =>
+                            setNewInvoiceForm({ ...newInvoiceForm, items: newInvoiceForm.items.filter((x) => x.id !== it.id) })
+                          }
+                          className="p-1.5 text-slate-400 hover:text-rose-500"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      ) : (
+                        <span className="w-7" />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {newInvoiceForm.items.length < MAX_LINE_ITEMS && (
+                <button
+                  type="button"
+                  onClick={() => setNewInvoiceForm({ ...newInvoiceForm, items: [...newInvoiceForm.items, blankInvoiceItem()] })}
+                  className="text-xs font-bold text-blue-700 hover:text-blue-900 inline-flex items-center gap-1"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Add another treatment
+                </button>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">Amount before tax (₹) *</label>
-                <input
-                  type="number"
-                  required
-                  min="0"
-                  step="0.01"
-                  value={newInvoiceForm.amount}
-                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, amount: e.target.value })}
-                  placeholder="e.g. 5500"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 font-bold focus:outline-none"
-                />
-              </div>
               <div>
                 <label className="block font-semibold text-slate-600 mb-1">Discount (₹)</label>
                 <input
@@ -4300,7 +4327,7 @@ export default function App() {
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                 />
               </div>
-              <div className="col-span-2">
+              <div>
                 <label className="block font-semibold text-slate-600 mb-1">Advance received now (₹)</label>
                 <input
                   type="number"
@@ -4315,7 +4342,7 @@ export default function App() {
             </div>
 
             {(() => {
-              const t = computeInvoiceTotals(newInvoiceForm);
+              const t = computeLineItemTotals({ items: newInvoiceForm.items, discount: newInvoiceForm.discount });
               return (
                 <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 space-y-1 text-slate-700">
                   <div className="flex justify-between"><span>Taxable value</span><span>₹{formatINR(t.taxableP)}</span></div>
