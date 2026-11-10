@@ -35,7 +35,7 @@ export default function BranchesCard({ branches, data, onChange, newId, onTransf
         <h2 className="text-sm font-bold text-slate-900">Branches</h2>
         <p className="text-slate-500">Run several clinics from one account. Each record belongs to one branch, and the branch switcher in the header filters every screen.</p>
       </div>
-      <table className="w-full text-left">
+      <div className="overflow-x-auto"><table className="w-full text-left">
         <thead><tr className="text-slate-500"><th className="py-1 font-semibold">Branch</th><th className="font-semibold">Patients</th><th className="font-semibold">Visits today</th><th className="font-semibold">Billed this month</th><th /></tr></thead>
         <tbody>
           {rows.map((r) => (
@@ -52,10 +52,10 @@ export default function BranchesCard({ branches, data, onChange, newId, onTransf
             </tr>
           ))}
         </tbody>
-      </table>
-      <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); if (apply(addBranch(branches, name, newId("BR")))) setName(""); }}>
-        <input aria-label="New branch name" placeholder="New branch name, e.g. Peelamedu" className={`${input} flex-1`} value={name} maxLength={40} onChange={(e) => setName(e.target.value)} />
-        <button type="submit" className="px-4 py-2 rounded-lg bg-[#1d4ed8] text-white font-semibold">Add branch</button>
+      </table></div>
+      <form className="flex flex-wrap gap-2" onSubmit={(e) => { e.preventDefault(); if (apply(addBranch(branches, name, newId("BR")))) setName(""); }}>
+        <input aria-label="New branch name" placeholder="New branch name, e.g. Peelamedu" className={`${input} flex-1 min-w-[10rem]`} value={name} maxLength={40} onChange={(e) => setName(e.target.value)} />
+        <button type="submit" className="px-4 py-2 shrink-0 rounded-lg bg-[#1d4ed8] text-white font-semibold">Add branch</button>
       </form>
       {branches.length > 1 && onTransfer && (
         <form onSubmit={move} className="border-t border-slate-100 pt-3 space-y-2" aria-label="Move a patient">
