@@ -12,6 +12,8 @@ import { adjustStock, buildStockItem, stockState, stockSummary, stockView, build
 import { APPT_STATUSES, findClash, diarySummary, diaryView, withStatus, needsUpdate } from "./diary.js";
 import { LEAVE_TYPES, buildLeave, setLeaveStatus, removeLeave, leaveDays, onLeaveOn, buildReview, averageRating, staffAlerts } from "./staff.js";
 import GlobalSearch from "./components/GlobalSearch.jsx";
+import BranchesCard from "./components/BranchesCard.jsx";
+import { branchesOf, filterByBranch, writeBranchId, tagBranch } from "./branches.js";
 import QueuePanel from "./components/QueuePanel.jsx";
 import BookingRequests from "./components/BookingRequests.jsx";
 import Assessments from "./components/Assessments.jsx";
@@ -679,15 +681,25 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState(null);
 
   // --- PERSISTENT DATA STORES (isolated per signed-in account) ---
-  const [patients, setPatients] = useState([]);
-  const [appointments, setAppointments] = useState([]);
-  const [invoices, setInvoices] = useState([]);
+  const [allPatients, setPatients] = useState([]);
+  const [allAppointments, setAppointments] = useState([]);
+  const [allInvoices, setInvoices] = useState([]);
   const [inventory, setInventory] = useState([]);
   const [employees, setEmployees] = useState(DEFAULT_EMPLOYEES);
-  const [queue, setQueue] = useState([]);
+  const [allQueue, setQueue] = useState([]);
   const [bookingRequests, setBookingRequests] = useState([]);
   const [practiceProfile, setPracticeProfile] = useState(DEFAULT_PROFILE);
   const [hydratedFor, setHydratedFor] = useState(null);
+
+  // Branches: every screen shows the branch picked in the header (or all). Raw lists keep every branch for sync and saving.
+  const [activeBranch, setActiveBranch] = useState("all");
+  const branches = useMemo(() => branchesOf(practiceProfile), [practiceProfile]);
+  const shownBranch = activeBranch === "all" || branches.some((b) => b.id === activeBranch) ? activeBranch : "all";
+  const writeBranch = writeBranchId(branches, shownBranch);
+  const patients = useMemo(() => filterByBranch(allPatients, shownBranch), [allPatients, shownBranch]);
+  const appointments = useMemo(() => filterByBranch(allAppointments, shownBranch), [allAppointments, shownBranch]);
+  const invoices = useMemo(() => filterByBranch(allInvoices, shownBranch), [allInvoices, shownBranch]);
+  const queue = useMemo(() => filterByBranch(allQueue, shownBranch), [allQueue, shownBranch]);
 
   // Load this account's local cache when the signed-in user changes; reset on sign-out
   useEffect(() => {
@@ -698,6 +710,7 @@ export default function App() {
       setInventory([]);
       setEmployees(DEFAULT_EMPLOYEES);
       setQueue([]);
+      setActiveBranch("all");
       setBookingRequests([]);
       setPracticeProfile(DEFAULT_PROFILE);
       setHydratedFor(null);
@@ -717,6 +730,7 @@ export default function App() {
     setInventory(load("inventory", []));
     setEmployees(load("employees", DEFAULT_EMPLOYEES));
     setQueue(pruneQueue(load("queue", [])));
+    setActiveBranch(load("branch", "all"));
     setPracticeProfile(load("profile", DEFAULT_PROFILE));
     setHydratedFor(CLINIC_ID);
   }, [CLINIC_ID]);
@@ -732,29 +746,29 @@ export default function App() {
       showToast("Cloud sync issue. Your changes are kept and will retry automatically.");
     }
   };
-  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "patients", items: patients, setItems: setPatients, sortFn: byIdDesc, onError: reportSyncError });
-  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "appointments", items: appointments, setItems: setAppointments, sortFn: byIdDesc, onError: reportSyncError });
-  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "invoices", items: invoices, setItems: setInvoices, sortFn: byIdDesc, onError: reportSyncError });
+  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "patients", items: allPatients, setItems: setPatients, sortFn: byIdDesc, onError: reportSyncError });
+  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "appointments", items: allAppointments, setItems: setAppointments, sortFn: byIdDesc, onError: reportSyncError });
+  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "invoices", items: allInvoices, setItems: setInvoices, sortFn: byIdDesc, onError: reportSyncError });
   useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "inventory", items: inventory, setItems: setInventory, onError: reportSyncError });
-  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "queue", items: queue, setItems: setQueue, onError: reportSyncError });
+  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "queue", items: allQueue, setItems: setQueue, onError: reportSyncError });
   useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "employees", items: employees, setItems: setEmployees, onError: reportSyncError });
   useCloudDoc({ clinicId: CLINIC_ID, ready: cloudReady, name: "profile", value: practiceProfile, setValue: setPracticeProfile, onError: reportSyncError });
 
   // Save changes to localStorage
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
-    localStorage.setItem(`merident_${CLINIC_ID}_patients`, JSON.stringify(patients));
-  }, [patients, hydratedFor, CLINIC_ID]);
+    localStorage.setItem(`merident_${CLINIC_ID}_patients`, JSON.stringify(allPatients));
+  }, [allPatients, hydratedFor, CLINIC_ID]);
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
-    localStorage.setItem(`merident_${CLINIC_ID}_appointments`, JSON.stringify(appointments));
-  }, [appointments, hydratedFor, CLINIC_ID]);
+    localStorage.setItem(`merident_${CLINIC_ID}_appointments`, JSON.stringify(allAppointments));
+  }, [allAppointments, hydratedFor, CLINIC_ID]);
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
-    localStorage.setItem(`merident_${CLINIC_ID}_invoices`, JSON.stringify(invoices));
-  }, [invoices, hydratedFor, CLINIC_ID]);
+    localStorage.setItem(`merident_${CLINIC_ID}_invoices`, JSON.stringify(allInvoices));
+  }, [allInvoices, hydratedFor, CLINIC_ID]);
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
@@ -768,8 +782,13 @@ export default function App() {
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
-    localStorage.setItem(`merident_${CLINIC_ID}_queue`, JSON.stringify(queue));
-  }, [queue, hydratedFor, CLINIC_ID]);
+    localStorage.setItem(`merident_${CLINIC_ID}_branch`, JSON.stringify(shownBranch));
+  }, [shownBranch, hydratedFor, CLINIC_ID]);
+
+  useEffect(() => {
+    if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
+    localStorage.setItem(`merident_${CLINIC_ID}_queue`, JSON.stringify(allQueue));
+  }, [allQueue, hydratedFor, CLINIC_ID]);
 
   // Online booking: publish the public page and listen for requests (only while signed in to this clinic)
   useEffect(() => {
@@ -936,7 +955,7 @@ export default function App() {
       referrals: [],
     };
 
-    setPatients([created, ...patients]);
+    setPatients((prev) => [tagBranch(created, writeBranch), ...prev]);
     setNewPatientForm({ ...EMPTY_PATIENT_FORM });
     setIsAddPatientOpen(false);
     setSelectedPatientId(created.id);
@@ -1177,7 +1196,7 @@ export default function App() {
       phone: normalizePhone(newApptForm.phone),
       procedure: newApptForm.procedure.trim() || "Consultation",
     };
-    setAppointments([appt, ...appointments]);
+    setAppointments((prev) => [tagBranch(appt, writeBranch), ...prev]);
     setNewApptForm((f) => ({ ...f, patientId: "", patientName: "", phone: "", age: "", procedure: "" }));
     setIsAddApptOpen(false);
     showToast(`Appointment booked for ${appt.patientName} on ${appt.date}`);
@@ -1187,7 +1206,7 @@ export default function App() {
   const handleAddWalkIn = (form) => {
     const r = addWalkIn(queue, form, newId("Q"));
     if (!r.ok) return r;
-    setQueue((prev) => [r.entry, ...prev]);
+    setQueue((prev) => [tagBranch(r.entry, writeBranch), ...prev]);
     showToast(`Token ${r.entry.token} issued to ${r.entry.name}`);
     return r;
   };
@@ -1209,7 +1228,7 @@ export default function App() {
       showToast("Could not update the request. Check your connection and try again.");
       return;
     }
-    setAppointments((prev) => [appointment, ...prev]);
+    setAppointments((prev) => [tagBranch(appointment, writeBranch), ...prev]);
     const wa = whatsappNumber(req.phone);
     showToast(`Booked ${req.name} for ${appointment.date} at ${formatTime12(appointment.time)}`);
     if (wa) {
@@ -1414,7 +1433,7 @@ export default function App() {
     }
     const today = new Date().toLocaleDateString("en-IN");
     const inv = {
-      id: nextInvoiceNumber(invoices),
+      id: nextInvoiceNumber(allInvoices),
       patientId: newInvoiceForm.patientId || "",
       patient: newInvoiceForm.patientName.trim(),
       paymentMode: newInvoiceForm.paymentMode,
@@ -1427,7 +1446,7 @@ export default function App() {
       date: today,
       ...(newInvoiceForm.dueDate ? { dueDate: newInvoiceForm.dueDate } : {}),
     };
-    setInvoices([inv, ...invoices]);
+    setInvoices((prev) => [tagBranch(inv, writeBranch), ...prev]);
     if (newInvoiceForm.planId && newInvoiceForm.patientId) {
       setPatients((prev) =>
         prev.map((p) =>
@@ -1786,6 +1805,17 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-4 flex-1 justify-end min-w-0">
+            {branches.length > 1 && (
+              <select
+                aria-label="Branch"
+                value={shownBranch}
+                onChange={(e) => setActiveBranch(e.target.value)}
+                className="px-3 py-2 border border-slate-300 rounded-lg bg-white text-xs font-semibold text-slate-700 max-w-[160px] focus:outline-none focus:ring-2 focus:ring-blue-600"
+              >
+                <option value="all">All branches</option>
+                {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+              </select>
+            )}
             <GlobalSearch
               patients={patients}
               appointments={appointments}
@@ -1900,7 +1930,7 @@ export default function App() {
                             onClick={(e) => {
                               e.stopPropagation();
                               if (confirm(`Remove record for ${p.name}?`)) {
-                                setPatients(patients.filter((x) => x.id !== p.id));
+                                setPatients((prev) => prev.filter((x) => x.id !== p.id));
                                 showToast(`Removed ${p.name}`);
                               }
                             }}
@@ -2287,7 +2317,7 @@ export default function App() {
                               </button>
                               <button
                                 aria-label={`Delete appointment for ${appt.patientName}`}
-                                onClick={() => { if (confirm(`Delete the appointment for ${appt.patientName}? To keep a record, set its status to Cancelled instead.`)) setAppointments(appointments.filter((x) => x.id !== appt.id)); }}
+                                onClick={() => { if (confirm(`Delete the appointment for ${appt.patientName}? To keep a record, set its status to Cancelled instead.`)) setAppointments((prev) => prev.filter((x) => x.id !== appt.id)); }}
                                 className="p-1 text-slate-400 hover:text-rose-500"
                               >
                                 <Trash2 className="w-3.5 h-3.5 inline" />
@@ -2920,6 +2950,13 @@ export default function App() {
                 <h1 className="text-xl font-bold text-slate-900">Practice Profile & Legal Registration</h1>
                 <p className="text-xs text-slate-500">Clinic details used on prescriptions, invoices, and patient messages</p>
               </div>
+
+              <BranchesCard
+                branches={branches}
+                data={{ patients: allPatients, appointments: allAppointments, invoices: allInvoices, queue: allQueue }}
+                newId={newId}
+                onChange={(list) => setPracticeProfile({ ...practiceProfile, branches: list })}
+              />
 
               <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-xs space-y-2" data-testid="booking-settings">
                 <label className="flex items-center gap-2 font-semibold text-slate-800">
@@ -4311,7 +4348,7 @@ export default function App() {
                 type="button"
                 onClick={() => {
                   if (confirm(`Delete chart for ${activePatient.name}?`)) {
-                    setPatients(patients.filter((p) => p.id !== activePatient.id));
+                    setPatients((prev) => prev.filter((p) => p.id !== activePatient.id));
                     setIsChartModalOpen(false);
                     showToast("Patient chart deleted");
                   }
