@@ -57,6 +57,7 @@ const FEATURE_GROUPS = [
       { icon: ClipboardList, title: "Treatment plans & estimates", text: "Price a plan tooth by tooth and send the patient a link on WhatsApp. They approve or decline from their phone, with no sign-in. Approved plans turn into an invoice." },
       { icon: ClipboardList, title: "Draft visit notes from the chart", text: "One tap fills findings, advice and the next planned treatment from the patient's chart. You edit the note before you save it, and treatment done is left for you to write." },
       { icon: ShieldCheck, title: "Caries risk & gum screening", text: "Tick risk factors to see low, moderate or high caries risk with a suggested recall. Score six sextants for a gum (BPE) screening. Both are saved on the patient." },
+      { icon: FileText, title: "Signed treatment consents", text: "Pick a consent for an extraction, root canal, implant, braces and more, edit the wording, and have the patient or a parent sign on screen. The signed copy stays on the patient's record and prints on demand." },
       { icon: FileText, title: "Prescriptions & referrals", text: "Add medicines from presets and share the prescription on WhatsApp. Refer patients between departments." }
     ]
   },

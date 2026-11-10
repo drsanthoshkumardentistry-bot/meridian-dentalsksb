@@ -39,6 +39,8 @@ import { geocodeAddress } from "./connect/geo.js";
 import Odontogram from "./components/Odontogram.jsx";
 import TreatmentPlans from "./components/TreatmentPlans.jsx";
 import { planToInvoiceItems, markPlanBilled, plannedTeeth, planTotals } from "./plans.js";
+import ConsentForms from "./components/ConsentForms.jsx";
+import { consentHtml } from "./consent.js";
 import BranchCompare from "./components/BranchCompare.jsx";
 import { branchComparison, branchComparisonCsv } from "./branchReport.js";
 import LabOrders from "./components/LabOrders.jsx";
@@ -3978,6 +3980,7 @@ export default function App() {
                   "Prescriptions",
                   "Treatment Plan",
                   "Lab Work",
+                  "Consent",
                   "Medical History",
                   "Patient Details",
                 ].map((tab) => {
@@ -4315,6 +4318,23 @@ export default function App() {
                     setIsChartModalOpen(false);
                     setActiveNav("Billing & Invoices");
                     setIsAddInvoiceOpen(true);
+                  }}
+                />
+              )}
+
+              {activeModalTab === "Consent" && (
+                <ConsentForms
+                  patient={activePatient}
+                  profile={practiceProfile}
+                  newId={() => newId("CN")}
+                  canWrite={canWrite(role, "patients")}
+                  onChange={(consents) => updateActivePatient({ consents })}
+                  onSigned={(c) => logAudit("consent.sign", activePatient.name, c.title)}
+                  onPrint={(c) => {
+                    const win = window.open("", "_blank");
+                    if (!win) { showToast("Allow pop-ups to print"); return; }
+                    win.document.write(consentHtml(c, activePatient, practiceProfile));
+                    win.document.close();
                   }}
                 />
               )}
