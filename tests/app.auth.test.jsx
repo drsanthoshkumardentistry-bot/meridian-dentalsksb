@@ -47,7 +47,7 @@ const openEmailForm = async () => {
 describe("authentication gate", () => {
   it("signed-out visitors only see the landing page", async () => {
     render(<App />);
-    expect(await screen.findByText(/Run your dental clinic/i)).toBeTruthy();
+    expect(await screen.findByText(/Chart the tooth\. Bill the visit/i)).toBeTruthy();
     expect(screen.queryByText("Patients & Odontogram")).toBeNull();
   });
 
@@ -134,7 +134,7 @@ describe("authentication gate", () => {
     await screen.findAllByText("Patients & Odontogram");
     fireEvent.click(screen.getByText("Sign out"));
     await waitFor(() => expect(h.calls).toContainEqual(["logout"]));
-    expect(await screen.findByText(/Run your dental clinic/i)).toBeTruthy();
+    expect(await screen.findByText(/Chart the tooth\. Bill the visit/i)).toBeTruthy();
   });
 
   it("new clinics are asked to complete their profile", async () => {
@@ -166,7 +166,7 @@ describe("idle sign-out", () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(62 * 1000); });
     expect(h.calls).toContainEqual(["logout"]);
     expect(screen.getByText(/signed out after 30 minutes of inactivity/i)).toBeTruthy();
-    expect(screen.getByText(/Run your dental clinic/i)).toBeTruthy();
+    expect(screen.getByText(/Chart the tooth\. Bill the visit/i)).toBeTruthy();
   });
 
   it("activity resets the idle timer", async () => {

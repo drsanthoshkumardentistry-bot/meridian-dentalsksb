@@ -6,7 +6,7 @@ import App from "../src/App.jsx";
 describe("deployment without Firebase keys", () => {
   it("shows the landing page and a clear setup notice", async () => {
     render(<App />);
-    expect(await screen.findByText(/Run your dental clinic/i)).toBeTruthy();
+    expect(await screen.findByText(/Chart the tooth\. Bill the visit/i)).toBeTruthy();
     expect(screen.getByRole("alert").textContent).toMatch(/VITE_FIREBASE/);
     expect(document.body.textContent).not.toMatch(/span_\d/);
   });

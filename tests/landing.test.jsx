@@ -14,7 +14,11 @@ describe("landing page content", () => {
     const next = screen.getByText("Coming next").closest("section");
     expect(within(next).queryByText("GST-ready invoices")).toBeNull();
     expect(within(next).queryByText("Automated recall reminders")).toBeNull();
-    expect(within(next).getByText("Multi-item invoices")).toBeTruthy();
+    expect(within(next).queryByText("Multi-item invoices")).toBeNull();
+    expect(within(next).queryByText("Shareable treatment plans")).toBeNull();
+    expect(within(next).getByText("Lab order tracking")).toBeTruthy();
+    expect(screen.getByText("Multi-item invoices")).toBeTruthy();
+    expect(screen.getByText("Treatment plans & estimates")).toBeTruthy();
   });
 
   it("has a FAQ that is honest about WhatsApp sending and pricing", () => {
