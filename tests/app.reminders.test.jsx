@@ -67,3 +67,39 @@ describe("WhatsApp reminders panel", () => {
     expect(screen.getAllByText("Reminder sent").length).toBe(1);
   });
 });
+
+describe("Patient recall panel", () => {
+  const seedPatients = () =>
+    localStorage.setItem(
+      KEY("patients"),
+      JSON.stringify([
+        { id: "P1", name: "Meena Iyer", phone: "9876543210", registeredDate: "01/01/2025", consent: { treatment: true, whatsapp: true } },
+        { id: "P2", name: "Opted Out", phone: "9876543211", registeredDate: "01/01/2025", consent: { treatment: true, whatsapp: false } },
+        { id: "P3", name: "Recent Visit", phone: "9876543212", registeredDate: new Date().toLocaleDateString("en-IN"), consent: { treatment: true, whatsapp: true } },
+      ])
+    );
+
+  it("lists overdue patients who allow WhatsApp, sends a recall and hides them afterwards", async () => {
+    seedPatients();
+    const open = vi.spyOn(window, "open").mockImplementation(() => null);
+    await openDiary();
+    const panel = await screen.findByTestId("recall-panel");
+    expect(within(panel).getByText("Meena Iyer")).toBeTruthy();
+    expect(within(panel).queryByText("Opted Out")).toBeNull();
+    expect(within(panel).queryByText("Recent Visit")).toBeNull();
+
+    fireEvent.click(within(panel).getByText("Recall"));
+    expect(open.mock.calls[0][0].startsWith("https://wa.me/919876543210?text=")).toBe(true);
+    await waitFor(() => expect(stored("patients").find((p) => p.id === "P1").lastRecallAt).toBeTruthy());
+    await waitFor(() => expect(screen.queryByTestId("recall-panel")).toBeNull());
+  });
+
+  it("'Not now' snoozes without opening WhatsApp", async () => {
+    seedPatients();
+    const open = vi.spyOn(window, "open").mockImplementation(() => null);
+    await openDiary();
+    fireEvent.click(await screen.findByText("Not now"));
+    expect(open).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.queryByTestId("recall-panel")).toBeNull());
+  });
+});
