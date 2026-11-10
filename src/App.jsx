@@ -1897,18 +1897,18 @@ export default function App() {
 
       {/* --- WORKSPACE --- */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <header className="h-16 bg-white/90 backdrop-blur border-b border-rule px-6 flex items-center justify-between sticky top-0 z-30">
-          <div className="flex items-center gap-4">
+        <header className="h-16 bg-white/90 backdrop-blur border-b border-rule px-3 sm:px-6 flex items-center justify-between gap-2 sticky top-0 z-30">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0 shrink">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="md:hidden text-slate-600 hover:text-slate-900"
+              aria-label="Open menu" className="md:hidden shrink-0 -ml-1 p-1.5 text-slate-600 hover:text-slate-900"
             >
               <Menu className="w-6 h-6" />
             </button>
-            <div className="font-display text-lg font-bold text-ink tracking-tight">{activeNav}</div>
+            <div className="hidden sm:block font-display text-lg font-bold text-ink tracking-tight truncate">{activeNav}</div>
           </div>
 
-          <div className="flex items-center gap-4 flex-1 justify-end min-w-0">
+          <div className="flex items-center gap-2 sm:gap-4 flex-1 justify-end min-w-0">
             {branches.length > 1 && (
               <select
                 aria-label="Branch"
@@ -1950,7 +1950,7 @@ export default function App() {
           </div>
         </header>
 
-        <main className="p-6 md:p-8 max-w-7xl mx-auto w-full">
+        <main className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto w-full">
           
           {/* TAB 1: PATIENTS & ODONTOGRAM */}
           {activeNav === "Patients & Odontogram" && (
@@ -3300,29 +3300,29 @@ export default function App() {
 
           {activeNav === "Dashboard" && (
             <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 sm:gap-3">
                 <div>
                   <h1 className="text-2xl font-bold tracking-tight text-slate-900">Clinical Overview</h1>
                   <p className="text-sm text-slate-500 mt-1">MeriDent Clinical Workspace</p>
                 </div>
-                <button onClick={() => setActiveNav("Appointments Diary")} className="text-sm font-semibold text-blue-600 hover:text-blue-800">
+                <button onClick={() => setActiveNav("Appointments Diary")} className="self-start text-sm font-semibold text-blue-600 hover:text-blue-800 py-1">
                   View today's diary ›
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
                 {[
                   { title: "Patients", value: patients.length, note: "Registered patient records", icon: <UsersRound className="w-5 h-5" />, tone: "bg-blue-50 text-blue-600" },
                   { title: "Visits Today", value: diarySum.today, note: diarySum.tomorrow ? `${diarySum.tomorrow} tomorrow` : "Active bookings today", icon: <CalendarDays className="w-5 h-5" />, tone: "bg-aqua-50 text-aqua-600" },
                   { title: "Collected this month", value: `₹${formatINR(billing.collectedP)}`, note: `₹${formatINR(billing.billedP)} billed this month`, icon: <IndianRupee className="w-5 h-5" />, tone: "bg-emerald-50 text-emerald-600" },
                   { title: "Outstanding", value: `₹${formatINR(billing.outstandingP)}`, note: billing.overdueCount ? `${billing.overdueCount} overdue, ₹${formatINR(billing.overdueP)}` : "Unpaid balance across invoices", icon: <Wallet className="w-5 h-5" />, tone: billing.overdueCount ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600" },
                 ].map((card) => (
-                  <div key={card.title} className="bg-white rounded-xl border border-rule p-5 shadow-card flex items-center gap-4">
-                    <div className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center ${card.tone}`}>{card.icon}</div>
+                  <div key={card.title} className="bg-white rounded-xl border border-rule p-4 sm:p-5 shadow-card flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                    <div className={`w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-xl flex items-center justify-center ${card.tone}`}>{card.icon}</div>
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-slate-500">{card.title}</div>
-                      <div className="text-2xl font-bold text-slate-900 mt-0.5 break-words">{card.value}</div>
-                      <div className="text-xs text-slate-400 mt-1">{card.note}</div>
+                      <div className="text-[13px] sm:text-sm font-medium text-slate-500">{card.title}</div>
+                      <div className="text-xl sm:text-2xl font-bold text-slate-900 mt-0.5 break-words tabular">{card.value}</div>
+                      <div className="text-[11px] sm:text-xs text-slate-500 mt-1 leading-snug">{card.note}</div>
                     </div>
                   </div>
                 ))}
@@ -3335,7 +3335,7 @@ export default function App() {
                     <span className="text-xs rounded-full bg-emerald-50 text-emerald-700 px-3 py-1 font-semibold">All caught up</span>
                   )}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
                   {[
                     { label: "Appointment reminders", count: dueApptReminders.length, to: "Appointments Diary" },
                     { label: "Patients due for recall", count: dueRecallList.length, to: "Appointments Diary" },
@@ -3344,13 +3344,13 @@ export default function App() {
                     <button
                       key={a.label}
                       onClick={() => setActiveNav(a.to)}
-                      className={`text-left rounded-xl border p-4 transition-colors ${
+                      className={`text-left rounded-xl border p-3 sm:p-4 transition-colors ${
                         a.count > 0 ? "border-blue-200 bg-blue-50 hover:bg-blue-100" : "border-rule bg-enamel hover:bg-slate-100"
                       }`}
                     >
                       <div className={`text-2xl font-bold ${a.count > 0 ? "text-blue-700" : "text-slate-400"}`}>{a.count}</div>
                       <div className="text-xs font-semibold text-slate-700 mt-0.5">{a.label}</div>
-                      <div className="text-[11px] text-slate-400 mt-1">{a.count > 0 ? "Tap to send on WhatsApp ›" : "Nothing to send"}</div>
+                      <div className="text-[11px] text-slate-500 mt-1 leading-snug">{a.count > 0 ? "Tap to send ›" : "Nothing to send"}</div>
                     </button>
                   ))}
                 </div>

@@ -110,8 +110,8 @@ export default function GlobalSearch({ patients, appointments, invoices, onPick 
         }}
         onFocus={() => setOpen(true)}
         onKeyDown={onInputKey}
-        placeholder="Search patients, visits, invoices  ( / )"
-        className="w-full pl-9 pr-3 py-1.5 bg-enamel border border-rule rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        placeholder="Search patients, visits, invoices"
+        className="w-full pl-9 pr-3 py-2 sm:py-1.5 bg-enamel border border-rule rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
       />
       {showPanel && (
         <div id="global-search-results" role="listbox" className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-rule rounded-xl shadow-xl max-h-[70vh] overflow-y-auto z-50 pb-1">

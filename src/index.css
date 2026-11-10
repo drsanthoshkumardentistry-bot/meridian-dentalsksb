@@ -163,3 +163,22 @@ main h2 {
   outline: 2px solid #2cc4d6;
   outline-offset: 2px;
 }
+
+/* ---- Mobile calibration ---- */
+@media (max-width: 640px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  main h1 {
+    font-size: 1.35rem;
+  }
+  table {
+    font-size: 0.8rem;
+  }
+}
+html,
+body {
+  overflow-x: hidden;
+}
