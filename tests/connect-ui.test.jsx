@@ -24,7 +24,7 @@ const makeApi = (over = {}) => ({
   listPending: vi.fn(async () => []), verify: vi.fn(async () => {}), suspend: vi.fn(async () => {}),
   ...over,
 });
-const mount = (api, extra = {}) => render(<Connect api={api} uid="me" showToast={vi.fn()} geocode={async () => ({ lat: 11, lng: 76.9 })} defaults={{}} {...extra} />);
+const mount = (api, extra = {}) => render(<Connect api={api} uid="me" showToast={vi.fn()} initialTab="find" geocode={async () => ({ lat: 11, lng: 76.9 })} defaults={{}} {...extra} />);
 const type = (el, value) => fireEvent.change(el, { target: { value } });
 
 describe("MeriDent Connect screens", () => {

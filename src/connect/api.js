@@ -1,7 +1,7 @@
 // Firestore access for MeriDent Connect. Every function takes the db and the signed-in uid explicitly.
 import {
   collection, doc, getDoc, getDocs, query, where, orderBy, startAt, endAt,
-  setDoc, updateDoc, deleteDoc, addDoc, writeBatch, serverTimestamp,
+  setDoc, updateDoc, deleteDoc, addDoc, writeBatch, serverTimestamp, limit, startAfter, increment,
 } from "firebase/firestore";
 import { searchBounds, withinRadius } from "./geo.js";
 import { CONSENT_TEXT, CONSENT_VERSION } from "./rules.js";
@@ -11,6 +11,10 @@ const DIRECTORY = "connectDirectory";
 const CONSULTS = "connectConsults";
 const AUDIT = "connectAudit";
 const ADMINS = "connectAdmins";
+const POSTS = "connectPosts";
+const FOLLOWS = "connectFollows";
+const REPORTS = "connectReports";
+export const FEED_PAGE = 20;
 
 export const toMillis = (v) => (v && typeof v.toMillis === "function" ? v.toMillis() : v ? new Date(v).getTime() : 0);
 const newestFirst = (a, b) => toMillis(b.createdAt) - toMillis(a.createdAt);
@@ -133,6 +137,84 @@ export const suspendDentist = async (db, id) => {
   await batch.commit();
 };
 
+// ---------------- Network feed ----------------
+
+/** One page of posts, newest first. `cursor` is the last snapshot of the previous page. */
+export const listPosts = async (db, cursor) => {
+  const q = cursor
+    ? query(collection(db, POSTS), orderBy("createdAt", "desc"), startAfter(cursor), limit(FEED_PAGE))
+    : query(collection(db, POSTS), orderBy("createdAt", "desc"), limit(FEED_PAGE));
+  const snap = await getDocs(q);
+  return { posts: snap.docs.map(withId), cursor: snap.docs.length === FEED_PAGE ? snap.docs[snap.docs.length - 1] : null };
+};
+
+export const createPost = async (db, post) => {
+  const ref = doc(collection(db, POSTS));
+  await setDoc(ref, { ...post, createdAt: serverTimestamp() });
+  return ref.id;
+};
+
+export const deletePost = (db, postId) => deleteDoc(doc(db, POSTS, postId));
+
+export const likedSet = async (db, uid, postIds) => {
+  const found = await Promise.all(postIds.map(async (id) => ((await getDoc(doc(db, POSTS, id, "likes", uid))).exists() ? id : null)));
+  return new Set(found.filter(Boolean));
+};
+
+export const setLike = async (db, uid, postId, on) => {
+  const batch = writeBatch(db);
+  const like = doc(db, POSTS, postId, "likes", uid);
+  if (on) batch.set(like, { createdAt: serverTimestamp() });
+  else batch.delete(like);
+  batch.update(doc(db, POSTS, postId), { likeCount: increment(on ? 1 : -1) });
+  await batch.commit();
+};
+
+export const listComments = async (db, postId) => {
+  const snap = await getDocs(query(collection(db, POSTS, postId, "comments"), orderBy("createdAt", "asc"), limit(100)));
+  return snap.docs.map(withId);
+};
+
+export const addComment = async (db, uid, postId, profile, text) => {
+  const batch = writeBatch(db);
+  const ref = doc(collection(db, POSTS, postId, "comments"));
+  batch.set(ref, { authorId: uid, authorName: profile.fullName, authorSpecialty: profile.specialty, text, createdAt: serverTimestamp() });
+  batch.update(doc(db, POSTS, postId), { commentCount: increment(1) });
+  await batch.commit();
+  return ref.id;
+};
+
+export const deleteComment = async (db, postId, commentId) => {
+  const batch = writeBatch(db);
+  batch.delete(doc(db, POSTS, postId, "comments", commentId));
+  batch.update(doc(db, POSTS, postId), { commentCount: increment(-1) });
+  await batch.commit();
+};
+
+export const followingSet = async (db, uid) => {
+  const snap = await getDocs(query(collection(db, FOLLOWS), where("followerId", "==", uid)));
+  return new Set(snap.docs.map((d) => d.data().followeeId));
+};
+
+export const setFollow = async (db, uid, followeeId, on) => {
+  const ref = doc(db, FOLLOWS, `${uid}_${followeeId}`);
+  if (on) await setDoc(ref, { followerId: uid, followeeId, createdAt: serverTimestamp() });
+  else await deleteDoc(ref);
+};
+
+export const reportContent = (db, uid, { postId, commentId = null, reason }) =>
+  addDoc(collection(db, REPORTS), { postId, commentId, reporterId: uid, reason: String(reason).slice(0, 200), createdAt: serverTimestamp() });
+
+export const listReports = async (db) => {
+  const snap = await getDocs(query(collection(db, REPORTS), orderBy("createdAt", "desc"), limit(50)));
+  return snap.docs.map(withId);
+};
+export const getPost = async (db, postId) => {
+  const snap = await getDoc(doc(db, POSTS, postId));
+  return snap.exists() ? withId(snap) : null;
+};
+export const dismissReport = (db, reportId) => deleteDoc(doc(db, REPORTS, reportId));
+
 /** Bind everything to one db and uid for the UI. */
 export const bindApi = (db, uid) => ({
   enabled: Boolean(db && uid),
@@ -149,4 +231,18 @@ export const bindApi = (db, uid) => ({
   listPending: () => listPending(db),
   verify: (id) => verifyDentist(db, uid, id),
   suspend: (id) => suspendDentist(db, id),
+  listPosts: (cursor) => listPosts(db, cursor),
+  createPost: (post) => createPost(db, post),
+  deletePost: (postId) => deletePost(db, postId),
+  likedSet: (ids) => likedSet(db, uid, ids),
+  setLike: (postId, on) => setLike(db, uid, postId, on),
+  listComments: (postId) => listComments(db, postId),
+  addComment: (postId, profile, text) => addComment(db, uid, postId, profile, text),
+  deleteComment: (postId, commentId) => deleteComment(db, postId, commentId),
+  followingSet: () => followingSet(db, uid),
+  setFollow: (followeeId, on) => setFollow(db, uid, followeeId, on),
+  report: (target) => reportContent(db, uid, target),
+  listReports: () => listReports(db),
+  getPost: (id) => getPost(db, id),
+  dismissReport: (id) => dismissReport(db, id),
 });

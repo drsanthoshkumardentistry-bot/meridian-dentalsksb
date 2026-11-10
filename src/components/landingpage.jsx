@@ -21,7 +21,10 @@ import {
   ReceiptText,
   ClipboardList,
   ShieldCheck,
-  Sun,
+  ScanSearch,
+  IndianRupee,
+  CalendarDays,
+  MessagesSquare,
   TrendingUp,
   Users,
   WifiOff,
@@ -50,7 +53,7 @@ const FEATURE_GROUPS = [
     tone: "blue",
     items: [
       { icon: Users, title: "32-tooth FDI odontogram", text: "Chart adult and primary teeth. A tooth can hold several findings at once, such as caries, a root canal and a crown, and each one can be removed on its own." },
-      { icon: Sun, title: "OPG & diagnosis studio", text: "Open a panoramic film at full size, zoom in, adjust brightness and contrast, and invert the negative. Calibrate against an object of known length to measure in millimetres." },
+      { icon: ScanSearch, title: "OPG & diagnosis studio", text: "Open a panoramic film at full size, zoom in, adjust brightness and contrast, and invert the negative. Calibrate against an object of known length to measure in millimetres." },
       { icon: ClipboardList, title: "Treatment plans & estimates", text: "Price a plan tooth by tooth and send the patient a link on WhatsApp. They approve or decline from their phone, with no sign-in. Approved plans turn into an invoice." },
       { icon: ClipboardList, title: "Draft visit notes from the chart", text: "One tap fills findings, advice and the next planned treatment from the patient's chart. You edit the note before you save it, and treatment done is left for you to write." },
       { icon: ShieldCheck, title: "Caries risk & gum screening", text: "Tick risk factors to see low, moderate or high caries risk with a suggested recall. Score six sextants for a gum (BPE) screening. Both are saved on the patient." },
@@ -61,8 +64,8 @@ const FEATURE_GROUPS = [
     heading: "At the desk",
     tone: "aqua",
     items: [
-      { icon: Calendar, title: "Appointments diary", text: "Book by chair and doctor, with a warning before you double-book. See today and upcoming visits, and mark each one Completed, No show or Cancelled." },
-      { icon: BarChart3, title: "GST billing & UPI QR", text: "Invoices with GST where it applies (therapeutic care is exempt), part payments, a scannable UPI QR for the exact balance, and printable invoices and receipts." },
+      { icon: CalendarDays, title: "Appointments diary", text: "Book by chair and doctor, with a warning before you double-book. See today and upcoming visits, and mark each one Completed, No show or Cancelled." },
+      { icon: IndianRupee, title: "GST billing & UPI QR", text: "Invoices with GST where it applies (therapeutic care is exempt), part payments, a scannable UPI QR for the exact balance, and printable invoices and receipts." },
       { icon: ReceiptText, title: "Multi-item invoices", text: "Bill several treatments on one invoice and mix GST-exempt and 18% work. Discounts are shared out fairly across the items." },
       { icon: Users, title: "Walk-in queue & triage", text: "Give each walk-in a token, mark urgent cases to go first, see how long each person has waited, and call them in from the diary." },
       { icon: Calendar, title: "Online booking page", text: "Switch on a link you can share on WhatsApp or Instagram. Patients send a request, you confirm it, and it lands in your diary with a WhatsApp confirmation ready." },
@@ -85,7 +88,7 @@ const FEATURE_GROUPS = [
     heading: "Beyond your clinic",
     tone: "sky",
     items: [
-      { icon: Network, title: "MeriDent Connect", text: "A closed network of dentists verified by our team. Find a nearby specialist and send a consult request. Patient names are never shared, and case notes go only with recorded consent." },
+      { icon: MessagesSquare, title: "MeriDent Connect", text: "A professional network for dentists verified by our team. Discuss cases, ask peers, share tips and events, and send a consult request to a nearby specialist. Patient names are never shared." },
       { icon: Bell, title: "WhatsApp reminders & recall", text: "See who to remind for tomorrow, who owes a balance, and who is due for a 6-month check-up. One tap opens WhatsApp with the message ready. Patients can opt out." },
       { icon: WifiOff, title: "Works with weak internet", text: "Keep working when the connection drops. Your changes save on the device and sync to the cloud when you are back online." }
     ]
@@ -133,7 +136,7 @@ const FAQS = [
   },
   {
     q: "What is MeriDent Connect?",
-    a: "A closed network for dentists. Our team checks each dentist's registration before they can see the directory or send a request. You can find a nearby colleague and send a consult request. Patient names are never shared, and case notes are included only when consent is recorded."
+    a: "A professional network for dentists. Our team checks each dentist's registration before they can read or post. You can discuss de-identified cases, ask questions, share tips and events, follow colleagues, and send a consult request to a nearby specialist. Patient names are never shared, and case notes are included only when consent is recorded."
   },
   {
     q: "Can I run more than one branch or give my staff logins?",

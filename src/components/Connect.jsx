@@ -7,6 +7,7 @@ import {
 import { geoFields } from "../connect/geo.js";
 import { toMillis } from "../connect/api.js";
 
+import ConnectFeed, { ReportsQueue } from "./ConnectFeed.jsx";
 const field = "w-full px-3 py-2 border border-rule rounded-lg bg-white text-sm text-ink";
 const btn = "px-3 py-1.5 rounded-lg text-xs font-semibold";
 const when = (v) => (toMillis(v) ? new Date(toMillis(v)).toLocaleDateString("en-IN") : "");
@@ -361,9 +362,9 @@ function AdminQueue({ api, showToast }) {
   );
 }
 
-export default function Connect({ api, defaults = {}, geocode, showToast, uid }) {
+export default function Connect({ api, defaults = {}, geocode, showToast, uid, initialTab = "network" }) {
   const [state, setState] = useState({ status: "loading", me: null, admin: false });
-  const [tab, setTab] = useState("find");
+  const [tab, setTab] = useState(initialTab);
   const [received, setReceived] = useState([]);
   const [sent, setSent] = useState([]);
   const [editing, setEditing] = useState(false);
@@ -395,9 +396,9 @@ export default function Connect({ api, defaults = {}, geocode, showToast, uid })
   if (status === "error") return <p role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">Could not open MeriDent Connect. Check your connection and reload.</p>;
 
   const tabs = verified
-    ? [["find", "Find specialists"], ["inbox", `Requests received${newCount ? ` (${newCount})` : ""}`], ["sent", "Requests sent"], ["listing", "My listing"]]
+    ? [["network", "Network"], ["find", "Find specialists"], ["inbox", `Requests received${newCount ? ` (${newCount})` : ""}`], ["sent", "Requests sent"], ["listing", "My listing"]]
     : [];
-  if (admin) tabs.push(["admin", "Verify dentists"]);
+  if (admin) tabs.push(["admin", "Verify dentists"], ["reports", "Reports"]);
 
   let body;
   if (!me || editing) {
@@ -412,17 +413,19 @@ export default function Connect({ api, defaults = {}, geocode, showToast, uid })
         <button type="button" onClick={() => setEditing(true)} className={`${btn} border border-rule text-slate-700`}>Correct my details</button>
       </div>
     );
-  } else if (tab === "find") body = <Finder api={api} me={me} showToast={showToast} refreshSent={loadConsults} />;
+  } else if (tab === "network") body = <ConnectFeed api={api} me={me} admin={admin} showToast={showToast} />;
+  else if (tab === "find") body = <Finder api={api} me={me} showToast={showToast} refreshSent={loadConsults} />;
   else if (tab === "inbox") body = <ConsultList api={api} side="received" items={received} reload={loadConsults} showToast={showToast} />;
   else if (tab === "sent") body = <ConsultList api={api} side="sent" items={sent} reload={loadConsults} showToast={showToast} />;
   else if (tab === "listing") body = <Listing api={api} me={me} reloadMe={loadMe} showToast={showToast} />;
   else if (tab === "admin") body = <AdminQueue api={api} showToast={showToast} />;
+  else if (tab === "reports") body = <ReportsQueue api={api} showToast={showToast} />;
 
   return (
     <div className="space-y-5" data-testid="connect-screen">
       <div>
         <h1 className="text-xl font-bold text-ink">MeriDent Connect</h1>
-        <p className="text-xs text-slate-500">Find a verified specialist near you and send a consult request.</p>
+        <p className="text-xs text-slate-500">The professional network for verified dentists: discuss cases, ask peers, share tips and events, and refer to a specialist near you.</p>
       </div>
       {tabs.length > 0 && (
         <div role="tablist" className="flex flex-wrap gap-2">
