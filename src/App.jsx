@@ -366,7 +366,7 @@ const TOBACCO_OPTIONS = ["Not recorded", "None", "Smoking", "Smokeless tobacco",
 const ALCOHOL_OPTIONS = ["Not recorded", "None", "Occasional", "Regular"];
 const BRUSHING_OPTIONS = ["Not recorded", "Not daily", "Once daily", "Twice daily", "More than twice"];
 const DIET_OPTIONS = ["Not recorded", "Vegetarian", "Mixed", "Eggetarian", "Vegan"];
-const PAYMENT_MODES = ["Cash", "UPI", "Card", "Net banking", "Insurance / TPA"];
+const PAYMENT_MODES = ["Cash", "UPI", "Card", "Net banking"];
 const VISIT_TYPES = ["New patient", "Follow-up", "Review", "Emergency"];
 const COUNCIL_NAMES = ["Dental Council of India", "Tamil Nadu Dental Council", "Karnataka State Dental Council", "Kerala State Dental Council", "Andhra Pradesh State Dental Council", "Telangana State Dental Council", "Maharashtra State Dental Council", "Other State Dental Council"];
 
@@ -833,9 +833,6 @@ export default function App() {
     patientId: "",
     patientName: "",
     paymentMode: "Cash",
-    provider: "Self Pay",
-    claimId: "",
-    status: "Self-Pay Completed",
     items: [blankInvoiceItem()],
     discount: "",
     advance: "",
@@ -1279,7 +1276,7 @@ export default function App() {
   const closeInvoiceModal = () => {
     if (newInvoiceForm.planId) {
       setNewInvoiceForm({
-        patientId: "", patientName: "", paymentMode: "Cash", provider: "Self Pay", claimId: "",
+        patientId: "", patientName: "", paymentMode: "Cash",
         status: "Self-Pay Completed", items: [blankInvoiceItem()], discount: "", advance: "",
       });
     }
@@ -1312,19 +1309,15 @@ export default function App() {
       return;
     }
     const today = new Date().toLocaleDateString("en-IN");
-    const isInsurance = newInvoiceForm.paymentMode === "Insurance / TPA";
     const inv = {
       id: nextInvoiceNumber(invoices),
       patientId: newInvoiceForm.patientId || "",
       patient: newInvoiceForm.patientName.trim(),
       paymentMode: newInvoiceForm.paymentMode,
-      provider: isInsurance ? newInvoiceForm.provider : "Self Pay",
-      claimId: isInsurance ? newInvoiceForm.claimId.trim() || `CLM-${Date.now().toString(36).slice(-6).toUpperCase()}` : "",
-      status: isInsurance ? newInvoiceForm.status : "Self-Pay",
       treatment: totals.lines.map((l) => l.description).join(", "),
       taxCategory: new Set(totals.lines.map((l) => l.taxCategory)).size === 1 ? totals.lines[0].taxCategory : "mixed",
       ...totals,
-      payments: advanceP > 0 ? [{ date: today, mode: isInsurance ? "Cash" : newInvoiceForm.paymentMode, amountP: advanceP }] : [],
+      payments: advanceP > 0 ? [{ date: today, mode: newInvoiceForm.paymentMode, amountP: advanceP }] : [],
       total: (totals.totalP / 100).toLocaleString("en-IN"),
       rawAmount: String(totals.totalP / 100),
       date: today,
@@ -1344,9 +1337,6 @@ export default function App() {
       patientId: "",
       patientName: "",
       paymentMode: "Cash",
-      provider: "Self Pay",
-      claimId: "",
-      status: "Self-Pay Completed",
       items: [blankInvoiceItem()],
       discount: "",
       advance: "",
@@ -2085,13 +2075,13 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB 4: DENTAL INSURANCE & INVOICES */}
+          {/* TAB 4: BILLING & INVOICES */}
           {activeNav === "Billing & Invoices" && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">Billing & Invoices</h1>
-                  <p className="text-xs text-slate-500">GST invoices, part payments, insurance claims and UPI collection</p>
+                  <p className="text-xs text-slate-500">GST invoices, part payments and UPI collection</p>
                 </div>
                 <button
                   onClick={() => setIsAddInvoiceOpen(true)}
@@ -2171,7 +2161,7 @@ export default function App() {
                     aria-label="Search invoices"
                     value={invoiceQuery}
                     onChange={(e) => setInvoiceQuery(e.target.value)}
-                    placeholder="Search patient, invoice or claim"
+                    placeholder="Search patient, invoice or treatment"
                     className="ml-auto w-full sm:w-64 px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none"
                   />
                   <button
@@ -2205,9 +2195,9 @@ export default function App() {
                   <table className="w-full text-left text-xs">
                     <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-b border-slate-200">
                       <tr>
-                        <th className="p-4">Invoice / Claim ID</th>
+                        <th className="p-4">Invoice</th>
                         <th className="p-4">Patient</th>
-                        <th className="p-4">Provider</th>
+                        <th className="p-4">Payment</th>
                         <th className="p-4">Status</th>
                         <th className="p-4">Total (₹)</th>
                         <th className="p-4">Balance (₹)</th>
@@ -2224,15 +2214,14 @@ export default function App() {
                         <tr key={inv.id} className="hover:bg-slate-50/60">
                           <td className="p-4">
                             <div className="font-bold text-blue-700">{inv.id}</div>
-                            {inv.claimId ? <div className="text-[10px] text-slate-400">Claim: {inv.claimId}</div> : null}
                             {balancePaise(inv) > 0 && invoiceAgeDays(inv) !== null ? (
                               <div className="text-[10px] text-slate-400">{invoiceAgeDays(inv)} {invoiceAgeDays(inv) === 1 ? "day" : "days"} old</div>
                             ) : null}
                           </td>
                           <td className="p-4 font-semibold">{inv.patient}</td>
                           <td className="p-4 text-slate-600">
-                            {inv.provider}
-                            {inv.paymentMode ? <div className="text-[10px] text-slate-400">{inv.paymentMode}</div> : null}
+                            {inv.paymentMode || "Cash"}
+                            {inv.treatment ? <div className="text-[10px] text-slate-400 max-w-[14rem] truncate">{inv.treatment}</div> : null}
                           </td>
                           <td className="p-4">
                             <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
@@ -2243,7 +2232,6 @@ export default function App() {
                             ) : balancePaise(inv) > 0 && inv.dueDate ? (
                               <div className="text-[10px] text-slate-500 mt-1">Due {new Date(inv.dueDate).toLocaleDateString("en-IN")}</div>
                             ) : null}
-                            {inv.status && inv.claimId ? <div className="text-[10px] text-slate-400 mt-1">{inv.status}</div> : null}
                           </td>
                           <td className="p-4 font-bold text-sm">
                             ₹{formatINR(inv.totalP)}
@@ -2369,7 +2357,7 @@ export default function App() {
                     <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-y border-slate-200">
                       <tr>
                         <th className="p-3">Date</th>
-                        {MODE_KEYS.map((m) => (
+                        {[...MODE_KEYS, ...(reportCollections.totals.byMode.Other > 0 ? ["Other"] : [])].map((m) => (
                           <th key={m} className="p-3 text-right">{m}</th>
                         ))}
                         <th className="p-3 text-right">Total (₹)</th>
@@ -2379,7 +2367,7 @@ export default function App() {
                       {reportCollections.days.map((d) => (
                         <tr key={d.date}>
                           <td className="p-3 font-semibold">{d.date}</td>
-                          {MODE_KEYS.map((m) => (
+                          {[...MODE_KEYS, ...(reportCollections.totals.byMode.Other > 0 ? ["Other"] : [])].map((m) => (
                             <td key={m} className="p-3 text-right text-slate-600">{d.byMode[m] ? formatINR(d.byMode[m]) : "–"}</td>
                           ))}
                           <td className="p-3 text-right font-bold">{formatINR(d.totalP)}</td>
@@ -2387,7 +2375,7 @@ export default function App() {
                       ))}
                       <tr className="bg-slate-50 font-bold">
                         <td className="p-3">Total</td>
-                        {MODE_KEYS.map((m) => (
+                        {[...MODE_KEYS, ...(reportCollections.totals.byMode.Other > 0 ? ["Other"] : [])].map((m) => (
                           <td key={m} className="p-3 text-right">{formatINR(reportCollections.totals.byMode[m])}</td>
                         ))}
                         <td className="p-3 text-right">{formatINR(reportCollections.totals.totalP)}</td>
@@ -3465,9 +3453,6 @@ export default function App() {
                       patientId: activePatient.id,
                       patientName: activePatient.name,
                       paymentMode: "Cash",
-                      provider: "Self Pay",
-                      claimId: "",
-                      status: "Self-Pay Completed",
                       items: planToInvoiceItems(plan, () => newId("LI")),
                       discount: plan.discount || "",
                       advance: "",
@@ -4274,45 +4259,6 @@ export default function App() {
                 ))}
               </select>
             </div>
-
-            {newInvoiceForm.paymentMode === "Insurance / TPA" && (
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">Insurance / TPA</label>
-                <input
-                  type="text"
-                  value={newInvoiceForm.provider}
-                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, provider: e.target.value })}
-                  placeholder="e.g. Star Health / Self Pay"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-slate-600 mb-1">Claim Status</label>
-                <select
-                  value={newInvoiceForm.status}
-                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, status: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-                >
-                  <option>Pre-Auth Approved</option>
-                  <option>Pre-Auth Submitted</option>
-                  <option>Claim Settled</option>
-                  <option>Self-Pay Completed</option>
-                </select>
-              </div>
-              <div className="col-span-2">
-                <label className="block font-semibold text-slate-600 mb-1">Claim ID (optional)</label>
-                <input
-                  type="text"
-                  value={newInvoiceForm.claimId}
-                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, claimId: e.target.value })}
-                  placeholder="Leave empty to generate one"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-                />
-              </div>
-            </div>
-            )}
 
             <div className="space-y-2">
               <label className="block font-semibold text-slate-600">Treatments billed</label>

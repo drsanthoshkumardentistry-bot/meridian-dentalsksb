@@ -175,17 +175,14 @@ describe("demographics and required data", () => {
     expect(a.visitType).toBe("New patient");
   });
 
-  it("invoices require amount and treatment, and self-pay hides insurance fields", async () => {
+  it("invoices require amount and treatment, and offer no insurance option", async () => {
     await openApp();
     nav("Billing & Invoices");
     fireEvent.click(await screen.findByText("New Invoice"));
     const form = (await screen.findAllByText("Patient Name *"))[0].closest("form");
     type(form.querySelector('input[list="patient-options"]'), "Walk In");
-    expect(within(form).queryByText("Insurance / TPA", { selector: "label" })).toBeNull();
-    type(form.querySelector("select"), "Insurance / TPA");
-    expect(within(form).getByText("Insurance / TPA", { selector: "label" })).toBeTruthy();
-    type(form.querySelector("select"), "Cash");
-    expect(within(form).queryByText("Insurance / TPA", { selector: "label" })).toBeNull();
+    expect(within(form).queryByText(/insurance|TPA|claim/i)).toBeNull();
+    expect([...form.querySelector("select").options].map((o) => o.value)).toEqual(["Cash", "UPI", "Card", "Net banking"]);
     fireEvent.submit(form);
     expect(await screen.findByText(/bill amount greater than zero/i)).toBeTruthy();
     type(form.querySelector('input[type="number"]'), "1500");
@@ -196,8 +193,7 @@ describe("demographics and required data", () => {
     await waitFor(() => expect(stored("invoices").length).toBe(1));
     const inv = stored("invoices")[0];
     expect(inv.paymentMode).toBe("Cash");
-    expect(inv.provider).toBe("Self Pay");
-    expect(inv.claimId).toBe("");
+    expect(inv.claimId).toBeUndefined();
     expect(inv.id).toMatch(/^INV\/\d{4}-\d{2}\/0001$/);
     expect(inv.totalP).toBe(150000);
     expect(inv.taxP).toBe(0);

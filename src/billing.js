@@ -213,7 +213,6 @@ ${profile.regNumber ? `<div class="muted">Reg: ${esc(profile.regNumber)}</div>` 
 <div class="r"><div class="badge">${receipt ? "PAYMENT RECEIPT" : "TAX INVOICE"}</div>
 <div><b>${esc(inv.id)}</b></div><div class="muted">${esc(inv.date)}</div></div></div>
 <h2>Billed to</h2><div><b>${esc(inv.patient)}</b></div>
-${inv.claimId ? `<div class="muted">Claim: ${esc(inv.claimId)} · ${esc(inv.provider)}</div>` : ""}
 ${lineRows}
 <table>
 <tr><td>Amount</td><td class="r">₹${formatINR(inv.subtotalP)}</td></tr>

@@ -111,3 +111,13 @@ describe("GST summary with mixed invoices", () => {
     expect(rows[0].category).toBe("Mixed");
   });
 });
+
+describe("retired payment modes", () => {
+  it("counts payments recorded as Insurance / TPA under Other so totals still add up", async () => {
+    const { collectionsForMonth } = await import("../src/reports.js");
+    const inv = { id: "X", patient: "A", totalP: 1000, date: "05/11/2026", payments: [{ date: "05/11/2026", mode: "Insurance / TPA", amountP: 1000 }] };
+    const r = collectionsForMonth([inv], "2026-11");
+    expect(r.totals.byMode.Other).toBe(1000);
+    expect(r.totals.totalP).toBe(1000);
+  });
+});
