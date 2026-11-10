@@ -79,7 +79,7 @@ const FEATURE_GROUPS = [
       { icon: Package, title: "Stock with reorder and expiry alerts", text: "Set a reorder level and an expiry date for each item. See what is low or expiring, and send a reorder list to your supplier on WhatsApp." },
       { icon: Briefcase, title: "Staff roster, leave and reviews", text: "Track licence expiry, approve leave, and record performance reviews. Alerts come from your own saved dates." },
       { icon: LayoutDashboard, title: "Today at a glance", text: "A dashboard with today's schedule, money collected this month, what is outstanding, and a short list of what needs your attention." },
-      { icon: Network, title: "Branches", text: "Run several clinics from one account. Switch branch from the header, and compare patients, visits and billing side by side." },
+      { icon: Network, title: "Branches", text: "Run several clinics from one account. Switch branch from the header, compare patients, visits and billing side by side, and move a patient with their records between branches." },
       { icon: Lock, title: "Team logins & activity log", text: "Give staff their own login as manager, dentist or receptionist. Each person accepts an invitation and sees only what their role allows. Owners and managers can see who changed what." },
       { icon: TrendingUp, title: "Reports for your accountant", text: "Daily collections by cash, UPI and card, plus a monthly GST summary. Download a spreadsheet or print a PDF." }
     ]
@@ -105,8 +105,7 @@ const STEPS = [
 const COMING_NEXT = [
   "Automatic WhatsApp sending",
   "Radiograph cloud storage",
-  "Lab order tracking",
-  "Moving records between branches"
+  "Lab order tracking"
 ];
 
 const FAQS = [

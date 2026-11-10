@@ -47,7 +47,7 @@ export const branchUsage = (id, data = {}) =>
 export const removeBranch = (branches, id, data) => {
   if (branches.length <= 1) return { ok: false, error: "A clinic needs at least one branch" };
   const used = branchUsage(id, data);
-  if (used > 0) return { ok: false, error: `This branch has ${used} records. Records cannot be moved yet, so it cannot be removed` };
+  if (used > 0) return { ok: false, error: `This branch has ${used} records. Move its patients to another branch first, then remove it` };
   return { ok: true, branches: branches.filter((b) => b.id !== id) };
 };
 
@@ -72,4 +72,38 @@ export const branchSummary = (branches, { patients = [], appointments = [], invo
       billedThisMonthP: billed,
     };
   });
+};
+
+const sameName = (a, b) => String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
+
+/**
+ * Which appointments and invoices belong to a patient. Records link by patientId. Older records with
+ * no patientId are matched by name only when no other patient shares that name.
+ */
+export const recordsOfPatient = (patient, { patients = [], appointments = [], invoices = [] } = {}) => {
+  const unique = patients.filter((p) => sameName(p.name, patient.name)).length === 1;
+  const mine = (linkId, name) => (linkId ? linkId === patient.id : unique && sameName(name, patient.name));
+  return {
+    appointments: appointments.filter((a) => mine(a.patientId, a.patientName)),
+    invoices: invoices.filter((i) => mine(i.patientId, i.patient)),
+  };
+};
+
+/** Move one patient with their appointments and invoices to another branch. Nothing is deleted or edited otherwise. */
+export const transferPatient = (patientId, toBranchId, branches, data) => {
+  const patient = (data.patients || []).find((p) => p.id === patientId);
+  if (!patient) return { ok: false, error: "Choose a patient to move" };
+  if (!branches.some((b) => b.id === toBranchId)) return { ok: false, error: "Choose the branch to move to" };
+  if ((patient.branchId || MAIN_ID) === toBranchId) return { ok: false, error: "This patient is already in that branch" };
+  const rec = recordsOfPatient(patient, data);
+  const ids = (list) => new Set(list.map((x) => x.id));
+  const a = ids(rec.appointments), i = ids(rec.invoices);
+  const move = (list, set) => list.map((x) => (set.has(x.id) ? { ...x, branchId: toBranchId } : x));
+  return {
+    ok: true,
+    patients: data.patients.map((p) => (p.id === patientId ? { ...p, branchId: toBranchId } : p)),
+    appointments: move(data.appointments || [], a),
+    invoices: move(data.invoices || [], i),
+    counts: { appointments: a.size, invoices: i.size },
+  };
 };
