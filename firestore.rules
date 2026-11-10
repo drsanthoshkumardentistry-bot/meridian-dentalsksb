@@ -18,6 +18,63 @@ service cloud.firestore {
           && exists(/databases/$(database)/documents/connectAdmins/$(request.auth.uid));
     }
 
+    // ---------------- Team logins (roles) ----------------
+    // clinicStaff/{email}: one invitation or membership per email. The owner creates it (status 'invited');
+    // the person accepts it (status 'active') and can leave by deleting it. Access needs status active and
+    // active true, so an owner cannot push someone into a clinic they did not accept.
+    function myEmailKey() { return request.auth.token.email.lower(); }
+    function memberDoc() { return get(/databases/$(database)/documents/clinicStaff/$(myEmailKey())); }
+    function isMemberOf(clinicId) {
+      return request.auth != null && request.auth.token.email_verified == true
+          && exists(/databases/$(database)/documents/clinicStaff/$(myEmailKey()))
+          && memberDoc().data.clinicId == clinicId
+          && memberDoc().data.status == 'active'
+          && memberDoc().data.active == true;
+    }
+    function memberHasRole(clinicId, roles) { return isMemberOf(clinicId) && memberDoc().data.role in roles; }
+    function isClinicOwner(clinicId) {
+      return request.auth != null && request.auth.uid == clinicId && request.auth.token.email_verified == true;
+    }
+
+    match /clinicStaff/{emailKey} {
+      allow get: if request.auth != null && request.auth.token.email_verified == true
+                 && (myEmailKey() == emailKey || isClinicOwner(resource.data.clinicId));
+      allow list: if isClinicOwner(resource.data.clinicId);
+      allow create: if isClinicOwner(request.resource.data.clinicId)
+                    && request.resource.data.keys().hasOnly(['email', 'clinicId', 'clinicName', 'role', 'branchIds', 'status', 'active', 'invitedBy', 'invitedAt'])
+                    && request.resource.data.email == emailKey
+                    && request.resource.data.role in ['manager', 'dentist', 'receptionist']
+                    && request.resource.data.status == 'invited'
+                    && request.resource.data.active == true;
+      allow update: if (isClinicOwner(resource.data.clinicId)
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'branchIds', 'active'])
+                        && request.resource.data.role in ['manager', 'dentist', 'receptionist'])
+                    || (request.auth != null && request.auth.token.email_verified == true && myEmailKey() == emailKey
+                        && resource.data.status == 'invited' && resource.data.active == true
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+                        && request.resource.data.status == 'active');
+      allow delete: if isClinicOwner(resource.data.clinicId)
+                    || (request.auth != null && request.auth.token.email_verified == true && myEmailKey() == emailKey);
+    }
+
+    // Team members reach the clinic's data by role, collection by collection (see src/roles.js).
+    match /clinics/{clinicId}/patients/{d}     { allow read, write: if memberHasRole(clinicId, ['manager', 'dentist', 'receptionist']); }
+    match /clinics/{clinicId}/appointments/{d} { allow read, write: if memberHasRole(clinicId, ['manager', 'dentist', 'receptionist']); }
+    match /clinics/{clinicId}/queue/{d}        { allow read, write: if memberHasRole(clinicId, ['manager', 'dentist', 'receptionist']); }
+    match /clinics/{clinicId}/invoices/{d} {
+      allow read: if memberHasRole(clinicId, ['manager', 'dentist', 'receptionist']);
+      allow write: if memberHasRole(clinicId, ['manager', 'receptionist']);
+    }
+    match /clinics/{clinicId}/inventory/{d} {
+      allow read: if memberHasRole(clinicId, ['manager', 'dentist', 'receptionist']);
+      allow write: if memberHasRole(clinicId, ['manager']);
+    }
+    match /clinics/{clinicId}/employees/{d}    { allow read, write: if memberHasRole(clinicId, ['manager']); }
+    match /clinics/{clinicId}/store/{d} {
+      allow read: if memberHasRole(clinicId, ['manager', 'dentist', 'receptionist']);
+      allow write: if memberHasRole(clinicId, ['manager']);
+    }
+
     // Each signed-in account can only access its own clinic: clinics/{its own uid}/**
     // Accounts created with email and password must also have verified their email address.
     match /clinics/{clinicId}/{document=**} {
@@ -61,8 +118,7 @@ service cloud.firestore {
     match /bookingPages/{clinicId} {
       allow get: if true;
       allow list: if false;
-      allow write: if request.auth != null && request.auth.uid == clinicId
-                   && request.auth.token.email_verified == true;
+      allow write: if isClinicOwner(clinicId) || memberHasRole(clinicId, ['manager']);
     }
     match /bookingRequests/{requestId} {
       allow create: if request.resource.data.keys().hasOnly(['clinicId', 'name', 'phone', 'date', 'slot', 'service', 'note', 'status', 'createdAt'])
@@ -76,10 +132,8 @@ service cloud.firestore {
                     && request.resource.data.note is string && request.resource.data.note.size() <= 300
                     && request.resource.data.clinicId is string
                     && get(/databases/$(database)/documents/bookingPages/$(request.resource.data.clinicId)).data.enabled == true;
-      allow read, delete: if request.auth != null && request.auth.uid == resource.data.clinicId
-                          && request.auth.token.email_verified == true;
-      allow update: if request.auth != null && request.auth.uid == resource.data.clinicId
-                    && request.auth.token.email_verified == true
+      allow read, delete: if isClinicOwner(resource.data.clinicId) || memberHasRole(resource.data.clinicId, ['manager', 'receptionist']);
+      allow update: if (isClinicOwner(resource.data.clinicId) || memberHasRole(resource.data.clinicId, ['manager', 'receptionist']))
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'handledAt'])
                     && request.resource.data.status in ['confirmed', 'declined'];
     }

@@ -63,7 +63,7 @@ export default function TreatmentPlans({ patient, practiceProfile, onChange, onB
   const linkFor = (plan) => shareUrl(window.location.origin, plan.shareToken);
 
   const sendLink = async (plan) => {
-    if (!shareApi?.enabled) return showToast("Approval links need you to be signed in and online");
+    if (!shareApi?.enabled) return showToast(shareApi?.reason || "Approval links need you to be signed in and online");
     setBusyId(plan.id);
     try {
       let current = plan;
@@ -345,7 +345,7 @@ export default function TreatmentPlans({ patient, practiceProfile, onChange, onB
                   <X className="w-3 h-3" /> Declined
                 </button>
               )}
-              {canBill(plan) && (
+              {canBill(plan) && onBill && (
                 <button type="button" onClick={() => onBill(plan)} className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-900 text-white">
                   Create invoice
                 </button>

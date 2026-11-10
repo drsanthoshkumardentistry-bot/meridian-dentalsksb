@@ -16,7 +16,10 @@ export const inBranch = (item, branchId) => branchId === "all" || (item?.branchI
 export const filterByBranch = (items = [], branchId = "all") => (branchId === "all" ? items : items.filter((i) => inBranch(i, branchId)));
 
 /** New records go to the branch being viewed; "All branches" writes to the first branch. */
-export const writeBranchId = (branches, active) => (branches.some((b) => b.id === active) ? active : branches[0].id);
+export const writeBranchId = (branches, active) => (branches.some((b) => b.id === active) ? active : branches[0]?.id ?? MAIN_ID);
+
+/** Limit records to a member's assigned branches (null = no limit). */
+export const scopeToBranches = (items = [], allowed = null) => (allowed ? items.filter((i) => allowed.includes(i?.branchId || MAIN_ID)) : items);
 export const tagBranch = (item, branchId) => ({ ...item, branchId });
 
 const cleanName = (n) => String(n || "").trim().replace(/\s+/g, " ").slice(0, 40);
