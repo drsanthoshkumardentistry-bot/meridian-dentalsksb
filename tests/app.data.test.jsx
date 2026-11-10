@@ -315,15 +315,30 @@ describe("demographics and required data", () => {
     fireEvent.click(await screen.findByRole("radio", { name: /Caries/ }));
     const tooth16 = () => screen.getByLabelText(/^Tooth 16, Upper right first molar/);
     fireEvent.click(tooth16());
-    await waitFor(() => expect(stored("patients")[0].toothConditions).toEqual({ 16: "CAR" }));
+    await waitFor(() => expect(stored("patients")[0].toothConditions).toEqual({ 16: ["CAR"] }));
     expect(tooth16().getAttribute("aria-label")).toMatch(/Caries/);
     expect(screen.getByText(/teeth 16|tooth 16/)).toBeTruthy();
     fireEvent.click(screen.getByRole("radio", { name: /Restored/ }));
     fireEvent.keyDown(screen.getByLabelText(/^Tooth 26,/), { key: "Enter" });
-    await waitFor(() => expect(stored("patients")[0].toothConditions[26]).toBe("RES"));
+    await waitFor(() => expect(stored("patients")[0].toothConditions[26]).toEqual(["RES"]));
     fireEvent.click(screen.getByRole("radio", { name: /Caries/ }));
     fireEvent.click(tooth16());
     await waitFor(() => expect(stored("patients")[0].toothConditions[16]).toBeUndefined());
+  });
+
+  it("odontogram: one tooth can hold several findings, and one can be removed on its own", async () => {
+    localStorage.setItem(KEY("patients"), JSON.stringify([
+      { id: "P-1", name: "Multi Patient", phone: "9876543210", age: "30", gender: "Male", toothConditions: { 36: "CAR" }, registeredDate: "01/11/2026" },
+    ]));
+    await openApp();
+    nav("Patients & Odontogram");
+    fireEvent.click(await screen.findByText("Multi Patient"));
+    fireEvent.click(await screen.findByRole("radio", { name: /RCT Done/ }));
+    fireEvent.click(screen.getByLabelText(/^Tooth 36,/));
+    await waitFor(() => expect(stored("patients")[0].toothConditions[36]).toEqual(["CAR", "RCT"]));
+    expect(screen.getByLabelText(/^Tooth 36,/).getAttribute("aria-label")).toMatch(/Caries \+ RCT Done/);
+    fireEvent.click(screen.getByRole("button", { name: /Remove Caries from tooth 36/ }));
+    await waitFor(() => expect(stored("patients")[0].toothConditions[36]).toEqual(["RCT"]));
   });
 
   it("plans can be suggested from the chart, and planned teeth show on the odontogram", async () => {

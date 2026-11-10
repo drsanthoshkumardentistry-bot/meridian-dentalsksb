@@ -1,5 +1,5 @@
 import { computeLineItemTotals, formatINR } from "./billing.js";
-import { toothInfo } from "./odontogram.js";
+import { toothInfo, normalizeConditions } from "./odontogram.js";
 
 export const PLAN_STATUS = ["Proposed", "Approved", "Declined", "Billed"];
 export const MAX_PLAN_ITEMS = 20;
@@ -52,16 +52,20 @@ const SUGGESTIONS = {
 
 /** One blank-priced plan row per charted finding that usually needs treatment. */
 export const suggestPlanItems = (conditions = {}, makeId) =>
-  Object.entries(conditions)
-    .filter(([tooth, code]) => SUGGESTIONS[code] && toothInfo(tooth))
+  Object.entries(normalizeConditions(conditions))
+    .filter(([tooth]) => toothInfo(tooth))
     .sort((a, b) => Number(a[0]) - Number(b[0]))
-    .map(([tooth, code]) => ({
-      id: makeId(),
-      description: SUGGESTIONS[code],
-      tooth: String(tooth),
-      amount: "",
-      taxCategory: "therapeutic"
-    }));
+    .flatMap(([tooth, codes]) =>
+      codes
+        .filter((code) => SUGGESTIONS[code])
+        .map((code) => ({
+          id: makeId(),
+          description: SUGGESTIONS[code],
+          tooth: String(tooth),
+          amount: "",
+          taxCategory: "therapeutic"
+        }))
+    );
 
 /** Build a stored plan from a draft. Amounts stay as entered; totals are derived on demand. */
 export const createPlan = ({ id, title, items, discount = "", notes = "" }, now = new Date()) => ({

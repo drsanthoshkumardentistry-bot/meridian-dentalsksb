@@ -39,11 +39,61 @@ export const toothInfo = (num) => {
   return { number: n, deciduous, upper, right, quadrant, type, name };
 };
 
-/** Group a { tooth: code } map into [{ code, teeth: [...] }] in palette order. */
+/** Findings that cannot sit alongside any other finding on the same tooth. */
+export const EXCLUSIVE = ["HLT", "MIS"];
+
+/** Which finding drives the tooth colour when several are present (most urgent first). */
+const DISPLAY_PRIORITY = ["FRC", "CAR", "RCT", "IMP", "CRW", "BRG", "RES", "PRM", "DEF", "MAL", "ATT", "SPC", "SCL", "BND", "MIS", "HLT"];
+
+/** A tooth's findings as an array. Old charts stored a single code string; both forms are read. */
+export const codesOf = (value) => (Array.isArray(value) ? value : value ? [value] : []);
+
+/** Upgrade a whole chart to arrays, dropping empty teeth. Safe to run on already-upgraded data. */
+export const normalizeConditions = (conditions = {}) => {
+  const out = {};
+  Object.entries(conditions || {}).forEach(([tooth, v]) => {
+    const codes = [...new Set(codesOf(v))];
+    if (codes.length) out[tooth] = codes;
+  });
+  return out;
+};
+
+/** The finding to colour the tooth with. */
+export const primaryCode = (value) => {
+  const codes = codesOf(value);
+  if (!codes.length) return null;
+  return [...codes].sort((a, b) => DISPLAY_PRIORITY.indexOf(a) - DISPLAY_PRIORITY.indexOf(b))[0];
+};
+
+/**
+ * Add the finding to the tooth, or remove it if the tooth already has it.
+ * Healthy and Missing stand alone: choosing them clears the rest, and choosing anything else clears them.
+ */
+export const toggleFinding = (conditions = {}, tooth, code) => {
+  const next = normalizeConditions(conditions);
+  const key = String(tooth);
+  const current = next[key] || [];
+  let updated;
+  if (current.includes(code)) {
+    updated = current.filter((c) => c !== code);
+  } else if (EXCLUSIVE.includes(code)) {
+    updated = [code];
+  } else {
+    updated = [...current.filter((c) => !EXCLUSIVE.includes(c)), code];
+  }
+  if (updated.length) next[key] = updated;
+  else delete next[key];
+  return next;
+};
+
+/** Number of teeth with at least one finding. */
+export const chartedCount = (conditions = {}) => Object.keys(normalizeConditions(conditions)).length;
+
+/** Group a { tooth: code | [codes] } map into [{ code, teeth: [...] }] in palette order. */
 export const groupFindings = (conditions = {}, palette = []) => {
   const byCode = {};
-  Object.entries(conditions).forEach(([tooth, code]) => {
-    (byCode[code] = byCode[code] || []).push(Number(tooth));
+  Object.entries(normalizeConditions(conditions)).forEach(([tooth, codes]) => {
+    codes.forEach((code) => (byCode[code] = byCode[code] || []).push(Number(tooth)));
   });
   const order = palette.map((p) => p.id);
   return Object.keys(byCode)

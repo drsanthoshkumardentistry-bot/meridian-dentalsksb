@@ -6,6 +6,7 @@
  * ============================================================================== */
 
 import { AGING_BUCKETS, agingSummary, filterInvoices, invoiceAgeDays } from "./receivables.js";
+import { toggleFinding, normalizeConditions, chartedCount as chartedTeeth } from "./odontogram.js";
 import OpgViewer from "./components/OpgViewer.jsx";
 import Connect from "./components/Connect.jsx";
 import { bindApi } from "./connect/api.js";
@@ -906,17 +907,15 @@ export default function App() {
   // Tooth Click in Odontogram
   const handleToothTap = (toothNumber) => {
     if (!activePatient) return;
-    const currentConditions = { ...(activePatient.toothConditions || {}) };
-    if (currentConditions[toothNumber] === activePaletteStatus) {
-      delete currentConditions[toothNumber];
-    } else {
-      currentConditions[toothNumber] = activePaletteStatus;
-    }
+    const next = toggleFinding(activePatient.toothConditions, toothNumber, activePaletteStatus);
+    setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? { ...p, toothConditions: next } : p)));
+  };
 
-    setPatients((prev) =>
-      prev.map((p) => (p.id === activePatient.id ? { ...p, toothConditions: currentConditions } : p))
-    );
-
+  // Remove one finding from one tooth (from the per-tooth list under the chart)
+  const handleRemoveFinding = (toothNumber, code) => {
+    if (!activePatient) return;
+    const next = toggleFinding(activePatient.toothConditions, toothNumber, code);
+    setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? { ...p, toothConditions: next } : p)));
   };
 
   // Update Diagnostic Fields in Realtime
@@ -1008,10 +1007,11 @@ export default function App() {
       return;
     }
 
-    const chartedList = Object.entries(activePatient.toothConditions || {})
-      .map(([tooth, code]) => {
-        const found = CLINICAL_PALETTE.find((p) => p.id === code);
-        return `#${tooth} (${found ? found.label : code})`;
+    const chartedList = Object.entries(normalizeConditions(activePatient.toothConditions))
+      .sort((a, b) => Number(a[0]) - Number(b[0]))
+      .map(([tooth, codes]) => {
+        const labels = codes.map((code) => (CLINICAL_PALETTE.find((p) => p.id === code) || { label: code }).label);
+        return `#${tooth} (${labels.join(" + ")})`;
       })
       .join(", ") || "General Oral Examination";
 
@@ -1728,7 +1728,7 @@ export default function App() {
               ) : (
                 <div className="space-y-3">
                   {filteredPatients.map((p) => {
-                    const chartedCount = Object.keys(p.toothConditions || {}).length;
+                    const chartedCount = chartedTeeth(p.toothConditions);
                     return (
                       <div
                         key={p.id}
@@ -3206,6 +3206,7 @@ export default function App() {
                   activeStatus={activePaletteStatus}
                   onSelectStatus={setActivePaletteStatus}
                   onTap={handleToothTap}
+                  onRemoveFinding={handleRemoveFinding}
                   onClear={() => {
                     if (confirm("Clear every finding on this chart?")) updateActivePatient({ toothConditions: {} });
                   }}
