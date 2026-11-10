@@ -5,11 +5,14 @@ import { dateKey } from "../reminders.js";
 export const POST_TYPES = [
   ["case", "Case discussion"],
   ["question", "Ask peers"],
+  ["poll", "Poll"],
   ["update", "Clinical tip"],
   ["event", "CME and events"],
 ];
 export const typeLabel = (id) => (POST_TYPES.find(([k]) => k === id) || [id, id])[1];
-export const LIMITS = { title: 120, body: 2000, comment: 800, venue: 80 };
+export const LIMITS = { title: 120, body: 2000, comment: 800, venue: 80, option: 60 };
+export const POLL_MIN = 2;
+export const POLL_MAX = 5;
 export const REPORT_REASONS = ["Patient can be identified", "Spam or advertising", "Rude or abusive", "Medical misinformation", "Other"];
 
 const AD_WORDS = /\b(?:discounts?|special offer|offer price|\d+\s?% ?off|free (?:consultation|check-?up|scaling)|book (?:now|today)|call (?:now|us today)|whats ?app (?:me|us)|dm me)\b/i;
@@ -41,14 +44,23 @@ export const validatePost = (form = {}, now = new Date(), existing = null) => {
   if (!POST_TYPES.some(([k]) => k === type)) return { ok: false, error: "Choose what you are posting" };
   const title = String(form.title || "").trim();
   const body = String(form.body || "").trim();
+  const isPoll = type === "poll";
+  const options = isPoll ? (Array.isArray(form.options) ? form.options : []).map((o) => String(o || "").trim()).filter(Boolean) : [];
   if (title.length < 3) return { ok: false, error: "Add a short title (at least 3 characters)" };
   if (title.length > LIMITS.title) return { ok: false, error: `Keep the title under ${LIMITS.title} characters` };
-  if (body.length < 10) return { ok: false, error: "Write a little more (at least 10 characters)" };
+  if (body.length < 10 && !isPoll) return { ok: false, error: "Write a little more (at least 10 characters)" };
   if (body.length > LIMITS.body) return { ok: false, error: `Keep the post under ${LIMITS.body} characters` };
-  const issues = findPrivacyIssues(`${title}\n${body}\n${form.venue || ""}`);
+  if (isPoll) {
+    if (options.length < POLL_MIN) return { ok: false, error: `Add at least ${POLL_MIN} options` };
+    if (options.length > POLL_MAX) return { ok: false, error: `Use at most ${POLL_MAX} options` };
+    if (options.some((o) => o.length > LIMITS.option)) return { ok: false, error: `Keep each option under ${LIMITS.option} characters` };
+    if (new Set(options.map((o) => o.toLowerCase())).size !== options.length) return { ok: false, error: "Each option must be different" };
+  }
+  const issues = findPrivacyIssues(`${title}\n${body}\n${form.venue || ""}\n${options.join("\n")}`);
   if (issues.block.length) return { ok: false, error: `Remove ${issues.block[0]} before posting` };
   if ((type === "case" || type === "question") && form.deidentified !== true) return { ok: false, error: "Confirm that the patient cannot be identified from this post" };
   const post = { type, title, body };
+  if (isPoll) post.pollOptions = options;
   if (form.tag) {
     if (!SPECIALTIES.some(([k]) => k === form.tag)) return { ok: false, error: "Choose a topic from the list" };
     post.tag = form.tag;
@@ -68,6 +80,7 @@ export const validatePost = (form = {}, now = new Date(), existing = null) => {
 /** The stored post. Name, qualification and specialty always come from the verified profile, never the form. */
 export const buildPost = (post, authorId, profile) => ({
   ...post,
+  ...Object.fromEntries((post.pollOptions || []).map((_, i) => [`v${i}`, 0])),
   authorId,
   authorName: profile.fullName,
   authorQualification: profile.qualification || "",
@@ -97,7 +110,7 @@ export const timeAgo = (ms, now = Date.now()) => {
   return new Date(ms).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 };
 
-export const FEED_FILTERS = [["all", "All"], ["case", "Cases"], ["question", "Questions"], ["update", "Tips"], ["event", "Events"], ["following", "Following"], ["saved", "Saved"], ["mine", "My posts"]];
+export const FEED_FILTERS = [["all", "All"], ["case", "Cases"], ["question", "Questions"], ["poll", "Polls"], ["update", "Tips"], ["event", "Events"], ["following", "Following"], ["saved", "Saved"], ["mine", "My posts"]];
 
 export const filterPosts = (posts = [], { filter = "all", following = new Set(), uid = "", tag = "" } = {}) =>
   posts.filter((p) => {
@@ -120,7 +133,7 @@ export const searchPosts = (posts = [], q = "") => {
   const terms = norm(q).split(/\s+/).filter(Boolean);
   if (!terms.length) return posts;
   return posts.filter((p) => {
-    const hay = norm([p.title, p.body, p.authorName, p.venue, p.tag ? specialtyLabel(p.tag) : "", typeLabel(p.type), p.type].join(" "));
+    const hay = norm([p.title, p.body, p.authorName, p.venue, p.tag ? specialtyLabel(p.tag) : "", typeLabel(p.type), p.type, ...(p.pollOptions || [])].join(" "));
     return terms.every((t) => hay.includes(t));
   });
 };
@@ -258,3 +271,13 @@ export const GUIDELINES = [
   "Say when you are unsure, and share the evidence you used.",
   "Report posts that break these rules. MeriDent staff review reports.",
 ];
+
+// ---------------- Polls ----------------
+
+/** Votes per option, with percentages. Votes live in fields v0..v4 on the post. */
+export const pollResults = (post = {}) => {
+  const options = post.pollOptions || [];
+  const votes = options.map((_, i) => Math.max(0, post[`v${i}`] || 0));
+  const total = votes.reduce((a, b) => a + b, 0);
+  return { total, rows: options.map((label, index) => ({ index, label, votes: votes[index], pct: total ? Math.round((votes[index] / total) * 100) : 0 })) };
+};

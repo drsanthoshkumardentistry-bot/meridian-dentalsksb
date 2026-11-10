@@ -345,3 +345,65 @@ describe("followers", () => {
     await assertFails(getDocs(mine(as(env, "alice"))));
   });
 });
+
+describe("polls", () => {
+  const poll = (over = {}) => newPost({ type: "poll", title: "Which file system?", body: "", pollOptions: ["Rotary", "Reciprocating", "Hand"], v0: 0, v1: 0, v2: 0, ...over });
+  const vote = (db, uid, postId, option, field = `v${option}`) => {
+    const b = writeBatch(db);
+    b.set(doc(db, "connectPosts", postId, "votes", uid), { option, createdAt: serverTimestamp() });
+    b.update(doc(db, "connectPosts", postId), { [field]: increment(1) });
+    return b.commit();
+  };
+  const seedPoll = (id = "poll1", over = {}) => seed(env, (db) => setDoc(doc(db, "connectPosts", id), { ...poll(over), createdAt: new Date() }));
+
+  it("a dentist can post a poll with 2 to 5 options and zeroed counters, without a body", async () => {
+    await assertSucceeds(setDoc(doc(as(env, "alice"), "connectPosts", "n1"), poll()));
+    const two = poll();
+    delete two.v2;
+    two.pollOptions = ["A", "B"];
+    await assertSucceeds(setDoc(doc(as(env, "alice"), "connectPosts", "n2"), two));
+  });
+  it("rejects bad polls: one option, six options, non-zero votes, mismatched counters", async () => {
+    const db = as(env, "alice");
+    await assertFails(setDoc(doc(db, "connectPosts", "a"), poll({ pollOptions: ["Only"] })));
+    await assertFails(setDoc(doc(db, "connectPosts", "b"), poll({ pollOptions: ["1", "2", "3", "4", "5", "6"] })));
+    await assertFails(setDoc(doc(db, "connectPosts", "c"), poll({ v0: 3 })));
+    await assertFails(setDoc(doc(db, "connectPosts", "d"), poll({ v3: 0 })));
+    const noOptions = poll();
+    delete noOptions.pollOptions;
+    await assertFails(setDoc(doc(db, "connectPosts", "e"), noOptions));
+    await assertFails(setDoc(doc(db, "connectPosts", "f"), newPost({ v0: 0 })));
+  });
+  it("a vote adds the vote record and exactly one to that option", async () => {
+    await seedPoll();
+    await assertSucceeds(vote(as(env, "bob"), "bob", "poll1", 1));
+  });
+  it("cannot vote twice, change a vote, vote for another dentist, or bump a count without a vote", async () => {
+    await seedPoll();
+    await assertSucceeds(vote(as(env, "bob"), "bob", "poll1", 0));
+    await assertFails(vote(as(env, "bob"), "bob", "poll1", 1));
+    await assertFails(vote(as(env, "admin"), "bob", "poll1", 2));
+    await assertFails(updateDoc(doc(as(env, "admin"), "connectPosts", "poll1"), { v2: increment(1) }));
+    await assertFails(deleteDoc(doc(as(env, "bob"), "connectPosts", "poll1", "votes", "bob")));
+  });
+  it("the vote record and the counter must name the same option, and the option must exist", async () => {
+    await seedPoll();
+    await assertFails(vote(as(env, "bob"), "bob", "poll1", 0, "v1"));
+    await assertFails(vote(as(env, "bob"), "bob", "poll1", 3, "v3"));
+    await assertFails(vote(as(env, "bob"), "bob", "poll1", 0, "likeCount"));
+  });
+  it("votes cannot be added to other kinds of posts", async () => {
+    await seedPost("p1");
+    await assertFails(vote(as(env, "bob"), "bob", "p1", 0));
+  });
+  it("a dentist can read only their own vote; the author can fix the title but not the options", async () => {
+    await seedPoll();
+    await assertSucceeds(getDoc(doc(as(env, "bob"), "connectPosts", "poll1", "votes", "bob")));
+    await assertFails(getDoc(doc(as(env, "bob"), "connectPosts", "poll1", "votes", "alice")));
+    await assertFails(getDocs(collection(as(env, "bob"), "connectPosts", "poll1", "votes")));
+    const edit = { title: "Which file system do you prefer?", body: "", editedAt: serverTimestamp() };
+    await assertSucceeds(updateDoc(doc(as(env, "alice"), "connectPosts", "poll1"), edit));
+    await assertFails(updateDoc(doc(as(env, "alice"), "connectPosts", "poll1"), { ...edit, pollOptions: ["X", "Y"] }));
+    await assertFails(updateDoc(doc(as(env, "alice"), "connectPosts", "poll1"), { ...edit, v0: 99 }));
+  });
+});

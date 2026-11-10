@@ -221,3 +221,37 @@ describe("editing, answers and invites", () => {
     expect(decodeURIComponent(link)).toContain("https://www.meridiandentalos.com");
   });
 });
+
+import { pollResults, POLL_MAX } from "../src/connect/feed.js";
+describe("polls", () => {
+  const base = { type: "poll", title: "Which file system do you use for retreatment?", body: "", options: ["Rotary", " Reciprocating ", "", "Hand files"] };
+  const now = new Date(2026, 10, 11, 12);
+  it("accepts 2 to 5 distinct options, trims and drops blanks, and the body is optional", () => {
+    const r = validatePost(base, now);
+    expect(r.ok).toBe(true);
+    expect(r.post).toEqual({ type: "poll", title: base.title, body: "", pollOptions: ["Rotary", "Reciprocating", "Hand files"] });
+  });
+  it("rejects too few, too many, long, duplicate or identifying options", () => {
+    expect(validatePost({ ...base, options: ["Only"] }, now).error).toMatch(/at least 2/);
+    expect(validatePost({ ...base, options: Array.from({ length: POLL_MAX + 1 }, (_, i) => `o${i}`) }, now).error).toMatch(/at most 5/);
+    expect(validatePost({ ...base, options: ["a", "x".repeat(61)] }, now).error).toMatch(/60/);
+    expect(validatePost({ ...base, options: ["Same", "same"] }, now).error).toMatch(/different/);
+    expect(validatePost({ ...base, options: ["Call 9876543210", "No"] }, now).error).toMatch(/phone/);
+  });
+  it("needs no patient confirmation, and builds zeroed vote counters", () => {
+    const p = buildPost(validatePost(base, now).post, "u1", { fullName: "Dr A", qualification: "MDS", specialty: "endodontics" });
+    expect(p).toMatchObject({ v0: 0, v1: 0, v2: 0, likeCount: 0 });
+    expect(p.v3).toBeUndefined();
+  });
+  it("totals votes and rounds percentages", () => {
+    const r = pollResults({ pollOptions: ["A", "B", "C"], v0: 2, v1: 1, v2: 0 });
+    expect(r.total).toBe(3);
+    expect(r.rows.map((x) => x.pct)).toEqual([67, 33, 0]);
+    expect(pollResults({ pollOptions: ["A", "B"], v0: 0, v1: 0 }).rows.map((x) => x.pct)).toEqual([0, 0]);
+    expect(pollResults({}).total).toBe(0);
+  });
+  it("is searchable by option and filterable", () => {
+    expect(searchPosts([{ id: 1, title: "x", pollOptions: ["Reciprocating"], type: "poll" }], "reciprocating")).toHaveLength(1);
+    expect(FEED_FILTERS.map(([id]) => id)).toContain("poll");
+  });
+});

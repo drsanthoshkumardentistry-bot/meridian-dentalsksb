@@ -18,6 +18,12 @@ service cloud.firestore {
           && exists(/databases/$(database)/documents/connectAdmins/$(request.auth.uid));
     }
 
+    // A poll vote: this dentist's vote document did not exist before this write, exists after it, and picked option idx.
+    function votePath(postId) { return /databases/$(database)/documents/connectPosts/$(postId)/votes/$(request.auth.uid); }
+    function votedFor(postId, idx) {
+      return !exists(votePath(postId)) && existsAfter(votePath(postId)) && getAfter(votePath(postId)).data.option == idx;
+    }
+
     // ---------------- Team logins (roles) ----------------
     // clinicStaff/{email}: one invitation or membership per email. The owner creates it (status 'invited');
     // the person accepts it (status 'active') and can leave by deleting it. Access needs status active and
@@ -235,13 +241,22 @@ service cloud.firestore {
       allow read: if isVerified();
       allow create: if isVerified()
                     && request.auth.uid == request.resource.data.authorId
-                    && request.resource.data.keys().hasOnly(['authorId', 'authorName', 'authorQualification', 'authorSpecialty', 'type', 'title', 'body', 'tag', 'eventDate', 'venue', 'likeCount', 'commentCount', 'createdAt'])
+                    && request.resource.data.keys().hasOnly(['authorId', 'authorName', 'authorQualification', 'authorSpecialty', 'type', 'title', 'body', 'tag', 'eventDate', 'venue', 'pollOptions', 'v0', 'v1', 'v2', 'v3', 'v4', 'likeCount', 'commentCount', 'createdAt'])
                     && request.resource.data.authorName == get(dentistDoc(request.auth.uid)).data.fullName
                     && request.resource.data.authorSpecialty == get(dentistDoc(request.auth.uid)).data.specialty
                     && request.resource.data.authorQualification == get(dentistDoc(request.auth.uid)).data.qualification
-                    && request.resource.data.type in ['case', 'question', 'update', 'event']
+                    && request.resource.data.type in ['case', 'question', 'poll', 'update', 'event']
                     && request.resource.data.title is string && request.resource.data.title.size() >= 3 && request.resource.data.title.size() <= 120
-                    && request.resource.data.body is string && request.resource.data.body.size() >= 10 && request.resource.data.body.size() <= 2000
+                    && request.resource.data.body is string && request.resource.data.body.size() <= 2000
+                    && (request.resource.data.type == 'poll' || request.resource.data.body.size() >= 10)
+                    && (request.resource.data.type == 'poll'
+                        ? (request.resource.data.pollOptions is list
+                           && request.resource.data.pollOptions.size() >= 2 && request.resource.data.pollOptions.size() <= 5
+                           && request.resource.data.v0 == 0 && request.resource.data.v1 == 0
+                           && (request.resource.data.pollOptions.size() >= 3 ? request.resource.data.v2 == 0 : !('v2' in request.resource.data))
+                           && (request.resource.data.pollOptions.size() >= 4 ? request.resource.data.v3 == 0 : !('v3' in request.resource.data))
+                           && (request.resource.data.pollOptions.size() >= 5 ? request.resource.data.v4 == 0 : !('v4' in request.resource.data)))
+                        : (!('pollOptions' in request.resource.data) && !('v0' in request.resource.data)))
                     && request.resource.data.likeCount == 0 && request.resource.data.commentCount == 0
                     && request.resource.data.createdAt == request.time;
       // Anyone verified can change only a counter, by one, and a like counter only together with the like itself.
@@ -261,13 +276,20 @@ service cloud.firestore {
                         || (request.auth.uid == resource.data.authorId
                             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title', 'body', 'tag', 'eventDate', 'venue', 'editedAt'])
                             && request.resource.data.title is string && request.resource.data.title.size() >= 3 && request.resource.data.title.size() <= 120
-                            && request.resource.data.body is string && request.resource.data.body.size() >= 10 && request.resource.data.body.size() <= 2000
+                            && request.resource.data.body is string && request.resource.data.body.size() <= 2000
+                            && (resource.data.type == 'poll' || request.resource.data.body.size() >= 10)
                             && request.resource.data.editedAt == request.time
                             && (!('tag' in request.resource.data) || (request.resource.data.tag is string && request.resource.data.tag.size() <= 30))
                             && (resource.data.type == 'event'
                                 ? (request.resource.data.eventDate is string && request.resource.data.eventDate.size() == 10
                                    && request.resource.data.venue is string && request.resource.data.venue.size() >= 1 && request.resource.data.venue.size() <= 80)
                                 : !request.resource.data.diff(resource.data).affectedKeys().hasAny(['eventDate', 'venue'])))
+                        || (resource.data.type == 'poll'
+                            && ((request.resource.data.diff(resource.data).affectedKeys().hasOnly(['v0']) && request.resource.data.v0 == resource.data.v0 + 1 && votedFor(postId, 0))
+                                || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['v1']) && request.resource.data.v1 == resource.data.v1 + 1 && votedFor(postId, 1))
+                                || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['v2']) && request.resource.data.v2 == resource.data.v2 + 1 && votedFor(postId, 2))
+                                || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['v3']) && request.resource.data.v3 == resource.data.v3 + 1 && votedFor(postId, 3))
+                                || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['v4']) && request.resource.data.v4 == resource.data.v4 + 1 && votedFor(postId, 4))))
                         || (request.auth.uid == resource.data.authorId
                             && resource.data.type == 'question'
                             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['acceptedCommentId'])
@@ -280,6 +302,18 @@ service cloud.firestore {
         allow get: if isVerified() && request.auth.uid == likerId;
         allow list: if false;
         allow create, delete: if isVerified() && request.auth.uid == likerId;
+      }
+      // One vote per dentist, never changed or removed. The option must exist on the poll.
+      match /votes/{voterId} {
+        allow get: if isVerified() && request.auth.uid == voterId;
+        allow list: if false;
+        allow create: if isVerified() && request.auth.uid == voterId
+                      && request.resource.data.keys().hasOnly(['option', 'createdAt'])
+                      && request.resource.data.option is int
+                      && request.resource.data.option >= 0
+                      && request.resource.data.option < get(/databases/$(database)/documents/connectPosts/$(postId)).data.pollOptions.size()
+                      && request.resource.data.createdAt == request.time;
+        allow update, delete: if false;
       }
       match /comments/{commentId} {
         allow read: if isVerified();
