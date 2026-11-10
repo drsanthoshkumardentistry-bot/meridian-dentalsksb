@@ -13,7 +13,7 @@ const btn = "px-3 py-1.5 rounded-lg text-xs font-semibold";
 const when = (v) => (toMillis(v) ? new Date(toMillis(v)).toLocaleDateString("en-IN") : "");
 
 const URGENCY_STYLE = {
-  routine: "bg-slate-100 text-slate-700 border-slate-200",
+  routine: "bg-slate-100 text-slate-700 border-rule",
   soon: "bg-amber-50 text-amber-800 border-amber-200",
   urgent: "bg-rose-50 text-rose-700 border-rose-200",
 };
@@ -59,7 +59,7 @@ function Registration({ api, defaults, geocode, showToast, onDone, existing }) {
   );
 
   return (
-    <form onSubmit={submit} noValidate className="bg-white border border-rule rounded-2xl p-5 space-y-3 max-w-2xl">
+    <form onSubmit={submit} noValidate className="bg-white border border-rule rounded-xl p-5 space-y-3 max-w-2xl">
       <div>
         <h2 className="font-display text-xl font-bold text-ink">Join MeriDent Connect</h2>
         <p className="text-sm text-slate-600 mt-1">
@@ -303,7 +303,7 @@ function Listing({ api, me, reloadMe, showToast }) {
   };
   const row = "flex items-start gap-3 py-3";
   return (
-    <div className="bg-white border border-rule rounded-2xl p-5 max-w-2xl divide-y divide-rule">
+    <div className="bg-white border border-rule rounded-xl p-5 max-w-2xl divide-y divide-rule">
       <div className="pb-3">
         <div className="font-display font-bold text-lg text-ink">{me.fullName}</div>
         <div className="text-sm text-slate-600">{me.qualification} · {specialtyLabel(me.specialty)}</div>
@@ -407,7 +407,7 @@ export default function Connect({ api, defaults = {}, geocode, showToast, uid, i
     body = <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">Your MeriDent Connect access is suspended. Contact MeriDent support.</p>;
   } else if (!verified && tab !== "admin") {
     body = (
-      <div className="bg-white border border-rule rounded-2xl p-5 max-w-2xl space-y-2" role="status">
+      <div className="bg-white border border-rule rounded-xl p-5 max-w-2xl space-y-2" role="status">
         <h2 className="font-display text-xl font-bold text-ink">Waiting for verification</h2>
         <p className="text-sm text-slate-600">We are checking your council registration ({me.councilState}, {me.registrationNo}). You can find and contact specialists once it is verified.</p>
         <button type="button" onClick={() => setEditing(true)} className={`${btn} border border-rule text-slate-700`}>Correct my details</button>

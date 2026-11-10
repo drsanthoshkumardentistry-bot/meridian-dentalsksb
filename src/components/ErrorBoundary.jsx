@@ -21,7 +21,7 @@ export default class ErrorBoundary extends React.Component {
     return (
       <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-6 text-slate-800">
         <div role="alert" className="max-w-md w-full bg-white border border-blue-100 rounded-3xl shadow-xl p-8 text-center space-y-4">
-          <div className="mx-auto w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black">M</div>
+          <div className="mx-auto w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black">M</div>
           <h1 className="text-lg font-black text-slate-900">Something went wrong</h1>
           <p className="text-sm text-slate-600 leading-relaxed">
             MeriDent hit an unexpected problem. Your saved records are safe in the cloud. Reload the page to continue.

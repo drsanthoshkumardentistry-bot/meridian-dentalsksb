@@ -14,7 +14,7 @@ export default function ActivityLog({ entries }) {
   const total = auditView(entries, { query, actor }, Infinity).length;
 
   return (
-    <section className="rounded-xl border border-slate-200 p-4 text-xs space-y-3" data-testid="activity-log" aria-label="Activity log">
+    <section className="rounded-xl border border-rule p-4 text-xs space-y-3" data-testid="activity-log" aria-label="Activity log">
       <div>
         <h2 className="text-sm font-bold text-slate-900">Activity log</h2>
         <p className="text-slate-500">The latest 300 changes made by you and your team. Clinical notes are never copied here.</p>

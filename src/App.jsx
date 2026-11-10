@@ -153,7 +153,7 @@ const CLINICAL_PALETTE = [
   { id: "PRM", label: "Paramolar", border: "border-pink-200", bg: "bg-pink-50/60", text: "text-pink-600" },
   { id: "SCL", label: "Calculus (scaling)", border: "border-yellow-200", bg: "bg-yellow-50/60", text: "text-yellow-600" },
   { id: "DEF", label: "Deformities", border: "border-purple-200", bg: "bg-purple-50/60", text: "text-purple-600" },
-  { id: "BND", label: "Bone Deformations", border: "border-slate-200", bg: "bg-slate-50", text: "text-slate-600" },
+  { id: "BND", label: "Bone Deformations", border: "border-rule", bg: "bg-enamel", text: "text-slate-600" },
   { id: "MIS", label: "Missing / Extracted", border: "border-slate-300", bg: "bg-slate-100", text: "text-slate-600" },
 ];
 
@@ -1754,19 +1754,19 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen bg-sky-50 text-slate-800 font-sans overflow-hidden">
+    <div className="flex h-screen bg-enamel text-slate-800 font-sans overflow-hidden">
       
       {idleSecondsLeft !== null && (
         <IdleWarning secondsLeft={idleSecondsLeft} onStay={staySignedIn} onLogout={() => handleLogout()} />
       )}
 
       {pendingInvite && (
-        <div role="dialog" aria-label="Team invitation" className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[min(92vw,520px)] bg-white border border-blue-200 rounded-2xl shadow-xl p-4 text-xs space-y-2">
+        <div role="dialog" aria-label="Team invitation" className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[min(92vw,520px)] bg-white border border-blue-200 rounded-xl shadow-xl p-4 text-xs space-y-2">
           <div className="font-bold text-slate-900 text-sm">{pendingInvite.clinicName || "A clinic"} invited you as {ROLE_LABEL[pendingInvite.role]}</div>
           <p className="text-slate-600">Accepting moves you into that clinic's workspace. Your own clinic stays safe and comes back if you leave. Only accept if you know this clinic.</p>
           <div className="flex gap-2">
             <button type="button" onClick={() => acceptInvite(db, authUser.email).catch(() => showToast("Could not accept. Check your connection."))} className="px-4 py-2 rounded-lg bg-[#1d4ed8] text-white font-semibold">Accept</button>
-            <button type="button" onClick={() => removeMember(db, authUser.email).catch(() => showToast("Could not decline. Check your connection."))} className="px-4 py-2 rounded-lg border border-slate-200 text-slate-700 font-semibold">Decline</button>
+            <button type="button" onClick={() => removeMember(db, authUser.email).catch(() => showToast("Could not decline. Check your connection."))} className="px-4 py-2 rounded-lg border border-rule text-slate-700 font-semibold">Decline</button>
           </div>
         </div>
       )}
@@ -1792,33 +1792,33 @@ export default function App() {
 
       {/* --- SIDEBAR --- */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-ink to-[#0c2a5c] text-white flex flex-col justify-between transition-transform duration-300 md:static md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white text-ink border-r border-rule flex flex-col justify-between transition-transform duration-300 md:static md:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div>
-          <div className="p-5 flex items-center justify-between border-b border-slate-800/80">
+          <div className="p-5 flex items-center justify-between border-b border-slate-100">
             <div className="flex items-center gap-2.5">
               <img
                 src="/logo.png"
                 alt=""
-                className="w-9 h-9 rounded-lg object-cover bg-white/10"
+                className="w-9 h-9 rounded-lg object-cover bg-brand-50"
                 onError={(e) => {
                   e.currentTarget.style.display = "none";
                 }}
               />
               <div>
-                <div className="font-display text-lg font-extrabold text-white tracking-tight leading-none">
+                <div className="font-display text-lg font-extrabold text-ink tracking-tight leading-none">
                   MeriDent
                 </div>
-                <div className="text-[11px] text-blue-200/70 font-normal mt-1">
+                <div className="text-[11px] text-slate-500 font-normal mt-1">
                   Practice management
                 </div>
               </div>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="md:hidden text-slate-400 hover:text-white"
+              className="md:hidden text-slate-500 hover:text-ink"
             >
               <X className="w-5 h-5" />
             </button>
@@ -1845,10 +1845,10 @@ export default function App() {
                     setActiveNav(item.label);
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all ${
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-[13px] font-medium transition-colors ${
                     isActive
-                      ? "bg-[#1d4ed8] text-white shadow-[inset_3px_0_0_#2cc4d6]"
-                      : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
+                      ? "bg-brand-50 text-brand-700 font-semibold"
+                      : "text-slate-600 hover:bg-enamel hover:text-ink"
                   }`}
                 >
                   {item.icon}
@@ -1859,19 +1859,19 @@ export default function App() {
           </nav>
         </div>
 
-        <div className="p-4 border-t border-slate-800/80">
+        <div className="p-4 border-t border-slate-100">
           <div className="flex items-center gap-3 min-w-0">
             {authUser.photoURL ? (
-              <img src={authUser.photoURL} alt="Avatar" className="h-9 w-9 rounded-full border border-slate-600 object-cover" />
+              <img src={authUser.photoURL} alt="Avatar" className="h-9 w-9 rounded-full border border-rule object-cover" />
             ) : (
-              <div className="h-9 w-9 shrink-0 rounded-full bg-cyan-400/15 text-cyan-300 flex items-center justify-center">
+              <div className="h-9 w-9 shrink-0 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center">
                 <User className="h-4 w-4" />
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <div className="truncate text-xs font-semibold text-white">{authUser.displayName || "Dr. Clinician"}</div>
-              <div className="truncate text-[11px] text-slate-400">{authUser.email}</div>
-              {activeMember && <div className="truncate text-[11px] text-cyan-300" data-testid="member-role">{ROLE_LABEL[role]} at {activeMember.clinicName || "this clinic"}</div>}
+              <div className="truncate text-xs font-semibold text-ink">{authUser.displayName || "Dr. Clinician"}</div>
+              <div className="truncate text-[11px] text-slate-500">{authUser.email}</div>
+              {activeMember && <div className="truncate text-[11px] text-brand-600" data-testid="member-role">{ROLE_LABEL[role]} at {activeMember.clinicName || "this clinic"}</div>}
             </div>
           </div>
           {activeMember && (
@@ -1880,7 +1880,7 @@ export default function App() {
               onClick={() => {
                 if (confirm(`Leave ${activeMember.clinicName || "this clinic"}? You will need a new invitation to return.`)) removeMember(db, authUser.email).catch(() => showToast("Could not leave. Check your connection."));
               }}
-              className="mt-3 w-full rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800"
+              className="mt-3 w-full rounded-lg border border-rule px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-enamel"
             >
               Leave this clinic
             </button>
@@ -1888,7 +1888,7 @@ export default function App() {
           <button
             type="button"
             onClick={handleLogout}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-300 transition hover:bg-rose-500/10 hover:text-rose-200"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-rule px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
           >
             <LogOut className="h-4 w-4" /> Sign out
           </button>
@@ -1897,7 +1897,7 @@ export default function App() {
 
       {/* --- WORKSPACE --- */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-30">
+        <header className="h-16 bg-white/90 backdrop-blur border-b border-rule px-6 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -1962,7 +1962,7 @@ export default function App() {
                 </div>
                 <button
                   onClick={() => setIsAddPatientOpen(true)}
-                  className="shrink-0 whitespace-nowrap px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                  className="shrink-0 whitespace-nowrap px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-card"
                 >
                   <Plus className="w-4 h-4" /> Add Patient
                 </button>
@@ -1979,7 +1979,7 @@ export default function App() {
                 />
               )}
               {filteredPatients.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
+                <div className="bg-white rounded-xl border border-rule p-12 text-center space-y-3">
                   <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
                     <Users className="w-6 h-6" />
                   </div>
@@ -1999,7 +1999,7 @@ export default function App() {
                           setSelectedPatientId(p.id);
                           setIsChartModalOpen(true);
                         }}
-                        className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:border-blue-300 hover:shadow-md transition-all"
+                        className="bg-white rounded-xl border border-rule p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:border-blue-300 hover:shadow-md transition-all"
                       >
                         <div>
                           <div className="text-base font-bold text-slate-900 flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -2065,7 +2065,7 @@ export default function App() {
                     <select
                       value={opgSelectedPatientId || (currentOpgPatient ? currentOpgPatient.id : "")}
                       onChange={(e) => setOpgSelectedPatientId(e.target.value, currentOpgPatient?.id)}
-                      className="text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-700 font-semibold focus:outline-none"
+                      className="text-xs border border-rule rounded-lg px-3 py-2 bg-white text-slate-700 font-semibold focus:outline-none"
                     >
                       {patients.map((p) => (
                         <option key={p.id} value={p.id}>{p.name}{p.age ? ` (${p.age}y)` : ""}</option>
@@ -2099,7 +2099,7 @@ export default function App() {
                 />
 
                 {/* Right: Diagnostic Entry Pane */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between">
+                <div className="bg-white rounded-xl border border-rule p-6 flex flex-col justify-between">
                   <div className="space-y-4">
                     <div className="text-xs font-bold text-slate-800 tracking-wider uppercase flex items-center gap-2">
                       <ScanSearch className="w-4 h-4 text-blue-600" /> Diagnostic Entry Pane
@@ -2112,7 +2112,7 @@ export default function App() {
                         value={currentOpgPatient?.diagnosis?.trauma || ""}
                         onChange={(e) => handleUpdateDiagnosis("trauma", e.target.value, currentOpgPatient?.id)}
                         placeholder="Crown fracture, luxation, alveolar ridge integrity..."
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
+                        className="w-full px-3 py-2 border border-rule rounded-lg text-xs"
                       />
                     </div>
 
@@ -2123,7 +2123,7 @@ export default function App() {
                         value={currentOpgPatient?.diagnosis?.impaction || ""}
                         onChange={(e) => handleUpdateDiagnosis("impaction", e.target.value, currentOpgPatient?.id)}
                         placeholder="Angulation, depth, position relative to ramus..."
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
+                        className="w-full px-3 py-2 border border-rule rounded-lg text-xs"
                       />
                     </div>
 
@@ -2134,7 +2134,7 @@ export default function App() {
                         value={currentOpgPatient?.diagnosis?.boneDeformations || ""}
                         onChange={(e) => handleUpdateDiagnosis("boneDeformations", e.target.value, currentOpgPatient?.id)}
                         placeholder="Horizontal bone loss, angular crest defects, furcation..."
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
+                        className="w-full px-3 py-2 border border-rule rounded-lg text-xs"
                       />
                     </div>
 
@@ -2145,7 +2145,7 @@ export default function App() {
                         value={currentOpgPatient?.diagnosis?.diagnosisNotes || ""}
                         onChange={(e) => handleUpdateDiagnosis("diagnosisNotes", e.target.value, currentOpgPatient?.id)}
                         placeholder="Type formal clinical diagnosis and operative procedures..."
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
+                        className="w-full px-3 py-2 border border-rule rounded-lg text-xs"
                       />
                     </div>
                   </div>
@@ -2174,7 +2174,7 @@ export default function App() {
                 </div>
                 <button
                   onClick={() => setIsAddApptOpen(true)}
-                  className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                  className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-card"
                 >
                   <Plus className="w-4 h-4" /> Book Appointment
                 </button>
@@ -2226,7 +2226,7 @@ export default function App() {
               )}
 
               {dueRecallList.length > 0 && (
-                <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3" data-testid="recall-panel">
+                <div className="bg-white border border-rule rounded-xl p-4 space-y-3" data-testid="recall-panel">
                   <div className="flex items-center justify-between">
                     <div className="text-xs font-bold text-slate-900">Patient recall ({dueRecallList.length} due)</div>
                     {dueRecallList.length > 5 && (
@@ -2240,7 +2240,7 @@ export default function App() {
                   </div>
                   <div className="space-y-2">
                     {(showAllRecalls ? dueRecallList : dueRecallList.slice(0, 5)).map((d) => (
-                      <div key={d.patient.id} className="flex items-center justify-between gap-3 bg-slate-50 rounded-lg border border-slate-100 px-3 py-2 text-xs">
+                      <div key={d.patient.id} className="flex items-center justify-between gap-3 bg-enamel rounded-lg border border-slate-100 px-3 py-2 text-xs">
                         <div>
                           <div className="font-semibold text-slate-900">{d.patient.name}</div>
                           <div className="text-[11px] text-slate-500">
@@ -2274,7 +2274,7 @@ export default function App() {
               <QueuePanel queue={queue} today={dateKey()} onAdd={handleAddWalkIn} onStatus={handleQueueStatus} onRemove={handleQueueRemove} />
 
               {appointments.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
+                <div className="bg-white rounded-xl border border-rule p-12 text-center space-y-3">
                   <Calendar className="w-10 h-10 text-blue-600 mx-auto" />
                   <h3 className="text-sm font-bold text-slate-800">No appointments yet</h3>
                   <p className="text-xs text-slate-500 max-w-sm mx-auto">Book a visit to see today's list, get reminders ready to send, and avoid double-booking a chair.</p>
@@ -2291,7 +2291,7 @@ export default function App() {
                       { label: "Upcoming", value: dsum.upcoming, tone: "text-slate-900" },
                       { label: "Needs a status", value: dsum.needsUpdate, tone: dsum.needsUpdate ? "text-amber-600" : "text-slate-900" },
                     ].map((c) => (
-                      <div key={c.label} className="bg-white border border-slate-200 rounded-xl p-4">
+                      <div key={c.label} className="bg-white border border-rule rounded-xl p-4">
                         <div className="text-[11px] font-semibold text-slate-500">{c.label}</div>
                         <div className={`text-lg font-bold mt-1 tabular ${c.tone}`}>{c.value}</div>
                       </div>
@@ -2305,7 +2305,7 @@ export default function App() {
                         type="button"
                         aria-pressed={diaryViewId === id}
                         onClick={() => setDiaryViewId(id)}
-                        className={`px-3 py-1.5 rounded-full border font-semibold ${diaryViewId === id ? "bg-ink text-white border-ink" : "bg-white text-slate-700 border-slate-200 hover:bg-blue-50"}`}
+                        className={`px-3 py-1.5 rounded-full border font-semibold ${diaryViewId === id ? "bg-ink text-white border-ink" : "bg-white text-slate-700 border-rule hover:bg-blue-50"}`}
                       >
                         {label}
                       </button>
@@ -2324,12 +2324,12 @@ export default function App() {
                     const grid = dayGrid(appointments, dayDate, ["Chair 1 (Main Operatory)", "Chair 2 (Pediatric / Perio)", "Chair 3 (Prosthodontics)"]);
                     const marks = hourMarks();
                     return (
-                      <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-4 space-y-3" data-testid="day-view">
+                      <div className="bg-white rounded-xl border border-rule shadow-xs p-4 space-y-3" data-testid="day-view">
                         <div className="flex flex-wrap items-center gap-2 text-xs">
-                          <button type="button" aria-label="Previous day" onClick={() => setDayDate(shiftDay(dayDate, -1))} className="px-2.5 py-1.5 border border-slate-200 rounded-lg font-bold hover:bg-blue-50">‹</button>
+                          <button type="button" aria-label="Previous day" onClick={() => setDayDate(shiftDay(dayDate, -1))} className="px-2.5 py-1.5 border border-rule rounded-lg font-bold hover:bg-blue-50">‹</button>
                           <input type="date" aria-label="Day to show" value={dayDate} onChange={(e) => e.target.value && setDayDate(e.target.value)} className="px-2.5 py-1.5 border border-slate-300 rounded-lg" />
-                          <button type="button" aria-label="Next day" onClick={() => setDayDate(shiftDay(dayDate, 1))} className="px-2.5 py-1.5 border border-slate-200 rounded-lg font-bold hover:bg-blue-50">›</button>
-                          <button type="button" onClick={() => setDayDate(dateKey())} className="px-3 py-1.5 border border-slate-200 rounded-lg font-semibold hover:bg-blue-50">Today</button>
+                          <button type="button" aria-label="Next day" onClick={() => setDayDate(shiftDay(dayDate, 1))} className="px-2.5 py-1.5 border border-rule rounded-lg font-bold hover:bg-blue-50">›</button>
+                          <button type="button" onClick={() => setDayDate(dateKey())} className="px-3 py-1.5 border border-rule rounded-lg font-semibold hover:bg-blue-50">Today</button>
                           <span className="ml-auto text-slate-500">{grid.total} {grid.total === 1 ? "visit" : "visits"} on {new Date(dayDate).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}</span>
                         </div>
                         <div className="overflow-x-auto">
@@ -2340,7 +2340,7 @@ export default function App() {
                               ))}
                             </div>
                             {grid.columns.map((col) => (
-                              <div key={col.chair} className="flex-1 min-w-[170px] border-l border-slate-200">
+                              <div key={col.chair} className="flex-1 min-w-[170px] border-l border-rule">
                                 <div className="h-7 px-2 text-[11px] font-bold text-slate-700 truncate" title={col.chair}>{col.chair.split(" (")[0]}</div>
                                 <div className="relative" style={{ height: grid.heightPx }}>
                                   {marks.map((m) => (
@@ -2369,9 +2369,9 @@ export default function App() {
                       </div>
                     );
                   })() : (
-                  <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto shadow-xs">
+                  <div className="bg-white rounded-xl border border-rule overflow-x-auto shadow-xs">
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-b border-slate-200">
+                      <thead className="bg-enamel text-slate-600 font-semibold uppercase text-[10px] border-b border-rule">
                         <tr>
                           <th className="p-3.5">Patient</th>
                           <th className="p-3.5">Date & time</th>
@@ -2386,7 +2386,7 @@ export default function App() {
                           <tr><td colSpan={6} className="p-8 text-center text-slate-500">{diaryQuery ? "No appointment matches your search." : "No appointments in this view."}</td></tr>
                         )}
                         {rows.map((appt) => (
-                          <tr key={appt.id} className="hover:bg-slate-50/60">
+                          <tr key={appt.id} className="hover:bg-enamel/60">
                             <td className="p-3.5">
                               <div className="font-bold text-slate-900">{appt.patientName}</div>
                               <div className="text-[10px] text-slate-400">{appt.phone}</div>
@@ -2450,7 +2450,7 @@ export default function App() {
                 </div>
                 <button
                   onClick={() => setIsAddInvoiceOpen(true)}
-                  className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                  className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-card"
                 >
                   <Plus className="w-4 h-4" /> New Invoice
                 </button>
@@ -2464,7 +2464,7 @@ export default function App() {
                     { label: "Outstanding (all time)", value: billing.outstandingP, tone: billing.outstandingP ? "text-rose-600" : "text-slate-900" },
                     { label: `Overdue${billing.overdueCount ? ` (${billing.overdueCount})` : ""}`, value: billing.overdueP, tone: billing.overdueP ? "text-rose-600" : "text-slate-900" },
                   ].map((c) => (
-                    <div key={c.label} className="bg-white border border-slate-200 rounded-xl p-4">
+                    <div key={c.label} className="bg-white border border-rule rounded-xl p-4">
                       <div className="text-[11px] font-semibold text-slate-500">{c.label}</div>
                       <div className={`text-lg font-bold mt-1 tabular ${c.tone}`}>₹{formatINR(c.value)}</div>
                     </div>
@@ -2485,7 +2485,7 @@ export default function App() {
                           disabled={b.count === 0}
                           onClick={() => setInvoiceFilter(on ? "all" : b.id)}
                           className={`text-left rounded-xl border p-4 transition-colors disabled:opacity-50 disabled:cursor-default ${
-                            on ? "border-blue-600 bg-blue-50 ring-1 ring-blue-600" : "border-slate-200 bg-white hover:border-blue-300"
+                            on ? "border-blue-600 bg-blue-50 ring-1 ring-blue-600" : "border-rule bg-white hover:border-blue-300"
                           }`}
                         >
                           <div className="text-[11px] font-semibold text-slate-500">{b.label}</div>
@@ -2515,7 +2515,7 @@ export default function App() {
                       aria-pressed={invoiceFilter === id}
                       onClick={() => setInvoiceFilter(id)}
                       className={`px-3 py-1.5 rounded-full border font-semibold ${
-                        invoiceFilter === id ? "bg-ink text-white border-ink" : "bg-white text-slate-700 border-slate-200 hover:bg-blue-50"
+                        invoiceFilter === id ? "bg-ink text-white border-ink" : "bg-white text-slate-700 border-rule hover:bg-blue-50"
                       }`}
                     >
                       {label}
@@ -2532,7 +2532,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => downloadCsv(invoicesCsv(visibleInvoices), `invoices-${dateKey()}.csv`)}
-                    className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-blue-50 rounded-lg font-semibold text-slate-800 inline-flex items-center gap-1.5"
+                    className="px-3 py-1.5 bg-white border border-rule hover:bg-blue-50 rounded-lg font-semibold text-slate-800 inline-flex items-center gap-1.5"
                   >
                     <Download className="w-3.5 h-3.5" /> Export list
                   </button>
@@ -2543,7 +2543,7 @@ export default function App() {
               )}
 
               {invoices.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
+                <div className="bg-white rounded-xl border border-rule p-12 text-center space-y-3">
                   <IndianRupee className="w-10 h-10 text-blue-600 mx-auto" />
                   <h3 className="text-sm font-bold text-slate-800">No invoices yet</h3>
                   <p className="text-xs text-slate-500 max-w-sm mx-auto">Bill a visit with GST, take part payments and share a UPI QR for the balance.</p>
@@ -2556,9 +2556,9 @@ export default function App() {
                   </button>
                 </div>
               ) : (
-                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+                <div className="bg-white rounded-xl border border-rule overflow-hidden shadow-xs">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-b border-slate-200">
+                    <thead className="bg-enamel text-slate-600 font-semibold uppercase text-[10px] border-b border-rule">
                       <tr>
                         <th className="p-4">Invoice</th>
                         <th className="p-4">Patient</th>
@@ -2576,7 +2576,7 @@ export default function App() {
                         </tr>
                       )}
                       {visibleInvoices.map(normalizeInvoice).map((inv) => (
-                        <tr key={inv.id} className="hover:bg-slate-50/60">
+                        <tr key={inv.id} className="hover:bg-enamel/60">
                           <td className="p-4">
                             <div className="font-bold text-blue-700">{inv.id}</div>
                             {balancePaise(inv) > 0 && invoiceAgeDays(inv) !== null ? (
@@ -2606,20 +2606,20 @@ export default function App() {
                           <td className="p-4 text-center space-x-1.5 whitespace-nowrap">
                             <button
                               onClick={() => { setPayForm({ amount: "", mode: "Cash" }); setActiveUpiQrInvoice(inv); }}
-                              className="px-3 py-1.5 bg-slate-100 hover:bg-blue-50 border border-slate-200 text-slate-800 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5"
+                              className="px-3 py-1.5 bg-slate-100 hover:bg-blue-50 border border-rule text-slate-800 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5"
                             >
                               <QrCode className="w-3.5 h-3.5" /> {balancePaise(inv) > 0 ? "Collect" : "Payments"}
                             </button>
                             <button
                               onClick={() => sendInvoiceToPatient(inv)}
-                              className="px-3 py-1.5 bg-white hover:bg-emerald-50 border border-slate-200 text-slate-800 rounded-lg text-xs font-semibold"
+                              className="px-3 py-1.5 bg-white hover:bg-emerald-50 border border-rule text-slate-800 rounded-lg text-xs font-semibold"
                               aria-label={`Send invoice ${inv.id} on WhatsApp`}
                             >
                               Send
                             </button>
                             <button
                               onClick={() => handlePrintInvoice(inv, false)}
-                              className="px-3 py-1.5 bg-white hover:bg-blue-50 border border-slate-200 text-slate-800 rounded-lg text-xs font-semibold"
+                              className="px-3 py-1.5 bg-white hover:bg-blue-50 border border-rule text-slate-800 rounded-lg text-xs font-semibold"
                             >
                               Print
                             </button>
@@ -2685,7 +2685,7 @@ export default function App() {
                   { label: "Invoiced (incl. GST)", value: reportGst.sum.totalP, tone: "text-slate-900" },
                   { label: "Outstanding (all time)", value: outstandingTotalP(reportInvoices), tone: "text-rose-600" },
                 ].map((c) => (
-                  <div key={c.label} className="bg-white border border-slate-200 rounded-xl p-4">
+                  <div key={c.label} className="bg-white border border-rule rounded-xl p-4">
                     <div className="text-[11px] font-semibold text-slate-500">{c.label}</div>
                     <div className={`text-lg font-bold mt-1 ${c.tone}`}>₹{formatINR(c.value)}</div>
                   </div>
@@ -2695,13 +2695,13 @@ export default function App() {
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => downloadCsv(collectionsCsv(reportInvoices, reportMonth), `collections-${reportMonth}.csv`)}
-                  className="px-3 py-2 bg-white border border-slate-200 hover:bg-blue-50 rounded-lg text-xs font-semibold text-slate-800 inline-flex items-center gap-1.5"
+                  className="px-3 py-2 bg-white border border-rule hover:bg-blue-50 rounded-lg text-xs font-semibold text-slate-800 inline-flex items-center gap-1.5"
                 >
                   <Download className="w-3.5 h-3.5" /> Collections (spreadsheet)
                 </button>
                 <button
                   onClick={() => downloadCsv(gstRegisterCsv(reportInvoices, reportMonth), `gst-register-${reportMonth}.csv`)}
-                  className="px-3 py-2 bg-white border border-slate-200 hover:bg-blue-50 rounded-lg text-xs font-semibold text-slate-800 inline-flex items-center gap-1.5"
+                  className="px-3 py-2 bg-white border border-rule hover:bg-blue-50 rounded-lg text-xs font-semibold text-slate-800 inline-flex items-center gap-1.5"
                 >
                   <Download className="w-3.5 h-3.5" /> GST register (spreadsheet)
                 </button>
@@ -2713,13 +2713,13 @@ export default function App() {
                 </button>
               </div>
 
-              <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto">
+              <div className="bg-white border border-rule rounded-xl overflow-x-auto">
                 <div className="px-4 pt-3 text-xs font-bold text-slate-900">Money received · {monthLabel(reportMonth)}</div>
                 {reportCollections.days.length === 0 ? (
                   <div className="p-6 text-center text-xs text-slate-500">No payments recorded this month.</div>
                 ) : (
                   <table className="w-full text-left text-xs mt-2">
-                    <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-y border-slate-200">
+                    <thead className="bg-enamel text-slate-600 font-semibold uppercase text-[10px] border-y border-rule">
                       <tr>
                         <th className="p-3">Date</th>
                         {[...MODE_KEYS, ...(reportCollections.totals.byMode.Other > 0 ? ["Other"] : [])].map((m) => (
@@ -2738,7 +2738,7 @@ export default function App() {
                           <td className="p-3 text-right font-bold">{formatINR(d.totalP)}</td>
                         </tr>
                       ))}
-                      <tr className="bg-slate-50 font-bold">
+                      <tr className="bg-enamel font-bold">
                         <td className="p-3">Total</td>
                         {[...MODE_KEYS, ...(reportCollections.totals.byMode.Other > 0 ? ["Other"] : [])].map((m) => (
                           <td key={m} className="p-3 text-right">{formatINR(reportCollections.totals.byMode[m])}</td>
@@ -2750,7 +2750,7 @@ export default function App() {
                 )}
               </div>
 
-              <div className="bg-white border border-slate-200 rounded-xl p-4 text-xs space-y-2">
+              <div className="bg-white border border-rule rounded-xl p-4 text-xs space-y-2">
                 <div className="font-bold text-slate-900">GST summary · invoices raised in {monthLabel(reportMonth)}</div>
                 {[
                   ["Invoices", String(reportGst.sum.invoices)],
@@ -2788,13 +2788,13 @@ export default function App() {
                 </div>
                 <div className="flex gap-2">
                   {inventory.length > 0 && (
-                    <button onClick={sendReorderList} className="px-3 py-2 bg-white border border-slate-200 hover:bg-emerald-50 rounded-lg text-xs font-semibold text-slate-800">
+                    <button onClick={sendReorderList} className="px-3 py-2 bg-white border border-rule hover:bg-emerald-50 rounded-lg text-xs font-semibold text-slate-800">
                       Send reorder list
                     </button>
                   )}
                   <button
                     onClick={() => setIsAddStockOpen(true)}
-                    className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                    className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-card"
                   >
                     <Plus className="w-4 h-4" /> Add Stock Item
                   </button>
@@ -2802,7 +2802,7 @@ export default function App() {
               </div>
 
               {inventory.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
+                <div className="bg-white rounded-xl border border-rule p-12 text-center space-y-3">
                   <Package className="w-10 h-10 text-blue-600 mx-auto" />
                   <h3 className="text-sm font-bold text-slate-800">No stock items yet</h3>
                   <p className="text-xs text-slate-500 max-w-sm mx-auto">Add the materials you use. Set a reorder level to be warned before you run out, and an expiry date to be warned before it lapses.</p>
@@ -2816,7 +2816,7 @@ export default function App() {
                       { label: "Running low", value: sum.low, tone: sum.low ? "text-amber-600" : "text-slate-900" },
                       { label: "Expired or expiring", value: sum.expired + sum.expiring, tone: sum.expired ? "text-rose-600" : sum.expiring ? "text-amber-600" : "text-slate-900" },
                     ].map((c) => (
-                      <div key={c.label} className="bg-white border border-slate-200 rounded-xl p-4">
+                      <div key={c.label} className="bg-white border border-rule rounded-xl p-4">
                         <div className="text-[11px] font-semibold text-slate-500">{c.label}</div>
                         <div className={`text-lg font-bold mt-1 tabular ${c.tone}`}>{c.value}</div>
                       </div>
@@ -2830,7 +2830,7 @@ export default function App() {
                         type="button"
                         aria-pressed={stockViewId === id}
                         onClick={() => setStockViewId(id)}
-                        className={`px-3 py-1.5 rounded-full border font-semibold ${stockViewId === id ? "bg-ink text-white border-ink" : "bg-white text-slate-700 border-slate-200 hover:bg-blue-50"}`}
+                        className={`px-3 py-1.5 rounded-full border font-semibold ${stockViewId === id ? "bg-ink text-white border-ink" : "bg-white text-slate-700 border-rule hover:bg-blue-50"}`}
                       >
                         {label}
                       </button>
@@ -2845,9 +2845,9 @@ export default function App() {
                     />
                   </div>
 
-                  <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto shadow-xs">
+                  <div className="bg-white rounded-xl border border-rule overflow-x-auto shadow-xs">
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-b border-slate-200">
+                      <thead className="bg-enamel text-slate-600 font-semibold uppercase text-[10px] border-b border-rule">
                         <tr>
                           <th className="p-3.5">Item</th>
                           <th className="p-3.5">Category</th>
@@ -2866,7 +2866,7 @@ export default function App() {
                           const amount = stockQty[item.id] ?? "1";
                           const n = Math.max(1, Math.floor(Number(amount)) || 1);
                           return (
-                            <tr key={item.id} className="hover:bg-slate-50/60">
+                            <tr key={item.id} className="hover:bg-enamel/60">
                               <td className="p-3.5 font-bold text-slate-900">{item.name}</td>
                               <td className="p-3.5 text-slate-600">{item.category}</td>
                               <td className="p-3.5">
@@ -2926,7 +2926,7 @@ export default function App() {
                 </div>
                 <button
                   onClick={() => setIsAddStaffOpen(true)}
-                  className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-card cursor-pointer"
                 >
                   <Plus className="w-4 h-4" /> Add Staff Member
                 </button>
@@ -2937,7 +2937,7 @@ export default function App() {
                 const away = onLeaveOn(employees);
                 if (!alerts.length && !away.length) return null;
                 return (
-                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3 shadow-xs" data-testid="staff-alerts">
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 shadow-xs" data-testid="staff-alerts">
                     <Bell className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                     <div className="space-y-1 text-xs text-amber-900">
                       <div className="font-bold">Needs attention</div>
@@ -2951,20 +2951,20 @@ export default function App() {
               })()}
 
               {employees.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3 shadow-xs">
+                <div className="bg-white rounded-xl border border-rule p-12 text-center space-y-3 shadow-xs">
                   <Briefcase className="w-10 h-10 text-slate-400 mx-auto" />
                   <h3 className="text-sm font-bold text-slate-800">No Staff Added</h3>
                   <p className="text-xs text-slate-500">Add dental specialists, assistants, and hygienists to assign operatory duties.</p>
                 </div>
               ) : (
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+                <div className="bg-white rounded-xl border border-rule shadow-xs overflow-hidden">
                   <div className="divide-y divide-slate-100">
                     {employees.map((emp) => (
-                      <div key={emp.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50/50 transition">
+                      <div key={emp.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-enamel/50 transition">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2.5">
                             <h3 className="text-sm font-bold text-slate-900">{emp.name}</h3>
-                            <span className="text-[10px] font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">
+                            <span className="text-[10px] font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-rule">
                               {emp.license}
                             </span>
                           </div>
@@ -2979,7 +2979,7 @@ export default function App() {
                             const away = onLeaveOn([emp]).length > 0;
                             return pend || avg || away ? (
                               <div className="flex flex-wrap gap-1.5 text-[10px] font-semibold">
-                                {away && <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">On leave today</span>}
+                                {away && <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-rule">On leave today</span>}
                                 {pend > 0 && <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">{pend} leave pending</span>}
                                 {avg && <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">Rating {avg} / 5</span>}
                               </div>
@@ -3002,7 +3002,7 @@ export default function App() {
                               }}
                               className={`w-10 h-6 flex items-center rounded-full p-1 transition cursor-pointer ${emp.active ? 'bg-emerald-600 justify-end' : 'bg-slate-300 justify-start'}`}
                             >
-                              <div className="w-4 h-4 rounded-full bg-white shadow-sm"></div>
+                              <div className="w-4 h-4 rounded-full bg-white shadow-card"></div>
                             </button>
                           </div>
 
@@ -3050,7 +3050,7 @@ export default function App() {
 
           {/* TAB 7: PRACTICE PROFILE */}
           {activeNav === "Practice Profile" && (
-            <div className="max-w-3xl bg-white rounded-2xl border border-slate-200 p-6 md:p-8 space-y-6">
+            <div className="max-w-3xl bg-white rounded-xl border border-rule p-6 md:p-8 space-y-6">
               <div>
                 <h1 className="text-xl font-bold text-slate-900">Practice Profile & Legal Registration</h1>
                 <p className="text-xs text-slate-500">Clinic details used on prescriptions, invoices, and patient messages</p>
@@ -3273,7 +3273,7 @@ export default function App() {
                 </span>
                 <button
                   onClick={() => showToast("Practice credentials saved")}
-                  className="px-4 py-2 bg-[#1d4ed8] text-white rounded-lg text-xs font-semibold shadow-sm hover:bg-blue-700"
+                  className="px-4 py-2 bg-[#1d4ed8] text-white rounded-lg text-xs font-semibold shadow-card hover:bg-blue-700"
                 >
                   Update Profile
                 </button>
@@ -3283,7 +3283,7 @@ export default function App() {
 
           {/* TAB 8: DASHBOARD OVERVIEW */}
           {activeNav !== "Practice Profile" && (!practiceProfile.drName || !practiceProfile.state || !practiceProfile.councilRegNumber) && (
-            <div className="mt-5 mb-6 rounded-2xl border border-gold-500/40 bg-gold-50 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="mt-5 mb-6 rounded-xl border border-gold-500/40 bg-gold-50 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="text-sm text-gold-700">
                 <strong>Complete your clinic profile.</strong> Add the doctor name, state and Dental Council registration number so
                 prescriptions and invoices are correct.
@@ -3317,7 +3317,7 @@ export default function App() {
                   { title: "Collected this month", value: `₹${formatINR(billing.collectedP)}`, note: `₹${formatINR(billing.billedP)} billed this month`, icon: <IndianRupee className="w-5 h-5" />, tone: "bg-emerald-50 text-emerald-600" },
                   { title: "Outstanding", value: `₹${formatINR(billing.outstandingP)}`, note: billing.overdueCount ? `${billing.overdueCount} overdue, ₹${formatINR(billing.overdueP)}` : "Unpaid balance across invoices", icon: <Wallet className="w-5 h-5" />, tone: billing.overdueCount ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600" },
                 ].map((card) => (
-                  <div key={card.title} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
+                  <div key={card.title} className="bg-white rounded-xl border border-rule p-5 shadow-card flex items-center gap-4">
                     <div className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center ${card.tone}`}>{card.icon}</div>
                     <div className="min-w-0">
                       <div className="text-sm font-medium text-slate-500">{card.title}</div>
@@ -3328,7 +3328,7 @@ export default function App() {
                 ))}
               </div>
 
-              <section className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm" data-testid="today-actions">
+              <section className="bg-white rounded-xl border border-rule p-5 shadow-card" data-testid="today-actions">
                 <div className="flex items-center justify-between gap-3 mb-3">
                   <h2 className="text-base font-bold text-slate-900">Today's actions</h2>
                   {dueApptReminders.length + dueRecallList.length + duePayReminders.length === 0 && (
@@ -3345,7 +3345,7 @@ export default function App() {
                       key={a.label}
                       onClick={() => setActiveNav(a.to)}
                       className={`text-left rounded-xl border p-4 transition-colors ${
-                        a.count > 0 ? "border-blue-200 bg-blue-50 hover:bg-blue-100" : "border-slate-200 bg-slate-50 hover:bg-slate-100"
+                        a.count > 0 ? "border-blue-200 bg-blue-50 hover:bg-blue-100" : "border-rule bg-enamel hover:bg-slate-100"
                       }`}
                     >
                       <div className={`text-2xl font-bold ${a.count > 0 ? "text-blue-700" : "text-slate-400"}`}>{a.count}</div>
@@ -3357,7 +3357,7 @@ export default function App() {
               </section>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                <section className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm" data-testid="today-schedule">
+                <section className="bg-white rounded-xl border border-rule p-5 shadow-card" data-testid="today-schedule">
                   <div className="flex items-center justify-between gap-3 mb-3">
                     <h2 className="text-base font-bold text-slate-900">Today's schedule</h2>
                     <button onClick={() => setActiveNav("Appointments Diary")} className="text-xs font-semibold text-blue-600 hover:text-blue-800">Open diary ›</button>
@@ -3380,7 +3380,7 @@ export default function App() {
                   )}
                 </section>
 
-                <section className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm" data-testid="attention">
+                <section className="bg-white rounded-xl border border-rule p-5 shadow-card" data-testid="attention">
                   <h2 className="text-base font-bold text-slate-900 mb-3">Needs attention</h2>
                   {(() => {
                     const items = [
@@ -3408,7 +3408,7 @@ export default function App() {
               </div>
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-                <section className="xl:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 md:p-6 shadow-sm">
+                <section className="xl:col-span-2 bg-white rounded-xl border border-rule p-5 md:p-6 shadow-card">
                   <div className="flex items-start justify-between gap-3 mb-5">
                     <div>
                       <h2 className="text-base font-bold text-slate-900">Patient Registration</h2>
@@ -3416,7 +3416,7 @@ export default function App() {
                     </div>
                     <span className="text-xs rounded-full bg-blue-50 text-blue-700 px-3 py-1 font-semibold">Weekly trend</span>
                   </div>
-                  <div className="h-56 flex items-end gap-3 sm:gap-5 border-b border-slate-200 px-1">
+                  <div className="h-56 flex items-end gap-3 sm:gap-5 border-b border-rule px-1">
                     {dashboardPatientSeries.map((day, index) => {
                       const max = Math.max(1, ...dashboardPatientSeries.map((item) => item.value));
                       const height = day.value ? Math.max(8, (day.value / max) * 145) : 2;
@@ -3431,12 +3431,12 @@ export default function App() {
                   </div>
                 </section>
 
-                <section className="bg-white rounded-2xl border border-slate-200 p-5 md:p-6 shadow-sm">
+                <section className="bg-white rounded-xl border border-rule p-5 md:p-6 shadow-card">
                   <div className="mb-5">
                     <h2 className="text-base font-bold text-slate-900">Billed this week</h2>
                     <p className="text-xs text-slate-500 mt-1">Invoice value raised over the last 7 days</p>
                   </div>
-                  <div className="h-56 flex items-end gap-3 border-b border-slate-200 px-1">
+                  <div className="h-56 flex items-end gap-3 border-b border-rule px-1">
                     {dashboardRevenueSeries.map((day, index) => {
                       const max = Math.max(1, ...dashboardRevenueSeries.map((item) => item.value));
                       const height = day.value ? Math.max(8, (day.value / max) * 145) : 2;
@@ -3466,7 +3466,7 @@ export default function App() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
           <form
             onSubmit={handleCreateStaff}
-            className="bg-white rounded-3xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-2xl text-xs"
+            className="bg-white rounded-3xl border border-rule w-full max-w-md p-6 space-y-4 shadow-2xl text-xs"
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-base font-bold text-slate-900">Add Staff Member</h3>
@@ -3600,7 +3600,7 @@ export default function App() {
               setLeaveForm((f) => ({ ...f, startDate: "", endDate: "", reason: "" }));
               showToast(`Leave request recorded for ${target.name}. Approve it below.`);
             }}
-            className="bg-white rounded-3xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-2xl text-xs"
+            className="bg-white rounded-3xl border border-rule w-full max-w-md p-6 space-y-4 shadow-2xl text-xs"
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-base font-bold text-slate-900">Leave</h3>
@@ -3615,7 +3615,7 @@ export default function App() {
                 type="text"
                 readOnly
                 value={leaveForm.employeeName}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800"
+                className="w-full px-3.5 py-2.5 bg-enamel border border-rule rounded-xl font-bold text-slate-800"
               />
             </div>
 
@@ -3671,7 +3671,7 @@ export default function App() {
                 <div className="space-y-2" data-testid="leave-history">
                   <div className="font-semibold text-slate-600">Leave on record</div>
                   {leaves.map((l) => (
-                    <div key={l.id} className="rounded-xl border border-slate-200 p-2.5 flex flex-wrap items-center justify-between gap-2">
+                    <div key={l.id} className="rounded-xl border border-rule p-2.5 flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <div className="font-semibold text-slate-800">{l.type}: {new Date(l.startDate).toLocaleDateString("en-IN")}{l.endDate !== l.startDate ? ` to ${new Date(l.endDate).toLocaleDateString("en-IN")}` : ""} ({leaveDays(l)} {leaveDays(l) === 1 ? "day" : "days"})</div>
                         {l.reason ? <div className="text-slate-500">{l.reason}</div> : null}
@@ -3719,7 +3719,7 @@ export default function App() {
               setPerformanceForm((f) => ({ ...f, notes: "", rating: 4 }));
               showToast(`Review saved for ${target.name}`);
             }}
-            className="bg-white rounded-3xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-2xl text-xs"
+            className="bg-white rounded-3xl border border-rule w-full max-w-md p-6 space-y-4 shadow-2xl text-xs"
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-base font-bold text-slate-900">Performance reviews</h3>
@@ -3734,7 +3734,7 @@ export default function App() {
                 type="text"
                 readOnly
                 value={performanceForm.employeeName}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800"
+                className="w-full px-3.5 py-2.5 bg-enamel border border-rule rounded-xl font-bold text-slate-800"
               />
             </div>
 
@@ -3744,7 +3744,7 @@ export default function App() {
                 type="text"
                 readOnly
                 value={practiceProfile.drName || practiceProfile.name}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800"
+                className="w-full px-3.5 py-2.5 bg-enamel border border-rule rounded-xl font-bold text-slate-800"
               />
             </div>
 
@@ -3783,7 +3783,7 @@ export default function App() {
                 <div className="space-y-2" data-testid="review-history">
                   <div className="font-semibold text-slate-600">Past reviews</div>
                   {reviews.slice(0, 5).map((r) => (
-                    <div key={r.id} className="rounded-xl border border-slate-200 p-2.5">
+                    <div key={r.id} className="rounded-xl border border-rule p-2.5">
                       <div className="font-semibold text-slate-800">{r.rating} / 5 <span className="font-normal text-slate-500">on {new Date(r.date).toLocaleDateString("en-IN")}{r.reviewer ? ` by ${r.reviewer}` : ""}</span></div>
                       {r.notes ? <div className="text-slate-500">{r.notes}</div> : null}
                     </div>
@@ -3805,7 +3805,7 @@ export default function App() {
       {/* ======================================================== */}
       {isChartModalOpen && activePatient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl p-6 md:p-7 relative max-h-[92vh] flex flex-col justify-between overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-2xl border border-rule w-full max-w-4xl p-6 md:p-7 relative max-h-[92vh] flex flex-col justify-between overflow-y-auto">
             
             <div>
               {/* Header */}
@@ -3813,7 +3813,7 @@ export default function App() {
                 <div>
                   <div className="text-xl font-bold text-slate-900 flex items-center gap-3">
                     {activePatient.name}
-                    <div className="flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-md text-xs font-medium text-slate-700 border border-slate-200">
+                    <div className="flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-md text-xs font-medium text-slate-700 border border-rule">
                       <span>Age:</span>
                       <input
                         type="number"
@@ -3861,19 +3861,19 @@ export default function App() {
                 const sm = patientSummary(activePatient, invoices, appointments);
                 return (
                   <div className="mb-4 grid grid-cols-2 lg:grid-cols-4 gap-2 text-xs" data-testid="patient-summary">
-                    <div className={`rounded-xl border px-3 py-2 ${sm.dueP > 0 ? "border-rose-200 bg-rose-50" : "border-slate-200 bg-slate-50"}`}>
+                    <div className={`rounded-xl border px-3 py-2 ${sm.dueP > 0 ? "border-rose-200 bg-rose-50" : "border-rule bg-enamel"}`}>
                       <div className="text-[11px] text-slate-500">Balance due</div>
                       <div className={`font-bold text-sm ${sm.dueP > 0 ? "text-rose-700" : "text-slate-900"}`}>₹{formatINR(sm.dueP)}</div>
                     </div>
-                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                    <div className="rounded-xl border border-rule bg-enamel px-3 py-2">
                       <div className="text-[11px] text-slate-500">Next visit</div>
                       <div className="font-bold text-sm text-slate-900">{sm.nextAppt ? `${new Date(sm.nextAppt.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}, ${formatTime12(sm.nextAppt.time)}` : "None booked"}</div>
                     </div>
-                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                    <div className="rounded-xl border border-rule bg-enamel px-3 py-2">
                       <div className="text-[11px] text-slate-500">Last visit</div>
                       <div className="font-bold text-sm text-slate-900">{sm.lastVisitDate ? new Date(sm.lastVisitDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "Not recorded"}</div>
                     </div>
-                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                    <div className="rounded-xl border border-rule bg-enamel px-3 py-2">
                       <div className="text-[11px] text-slate-500">Open treatment plans</div>
                       <div className="font-bold text-sm text-slate-900">{sm.plansOpen}</div>
                     </div>
@@ -3902,7 +3902,7 @@ export default function App() {
                       onClick={() => setActiveModalTab(tab)}
                       className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${
                         isActive
-                          ? "bg-[#1d4ed8] text-white shadow-sm font-semibold"
+                          ? "bg-[#1d4ed8] text-white shadow-card font-semibold"
                           : "text-slate-600 hover:bg-slate-100"
                       }`}
                     >
@@ -3970,7 +3970,7 @@ export default function App() {
                       setVisitForm({ complaint: "", findings: "", treatment: "", advice: "", nextVisit: "", date: "" });
                       showToast("Visit note saved");
                     }}
-                    className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 grid sm:grid-cols-2 gap-3 text-xs"
+                    className="rounded-xl border border-rule bg-enamel/60 p-4 grid sm:grid-cols-2 gap-3 text-xs"
                   >
                     {[
                       ["complaint", "Chief complaint", "e.g. Pain on chewing, lower left"],
@@ -4008,7 +4008,7 @@ export default function App() {
                   ) : (
                     <ol className="space-y-3">
                       {(activePatient.visits || []).map((v) => (
-                        <li key={v.id} className="rounded-xl border border-slate-200 bg-white p-4 text-xs">
+                        <li key={v.id} className="rounded-xl border border-rule bg-white p-4 text-xs">
                           <div className="flex items-center justify-between gap-3 mb-2">
                             <span className="font-bold text-sm text-slate-900">{new Date(v.date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</span>
                             <button
@@ -4040,7 +4040,7 @@ export default function App() {
               {/* TAB 2: DEPARTMENT REFERRALS ROUTER */}
               {activeModalTab === "Department Referrals" && (
                 <div className="space-y-4">
-                  <form onSubmit={handleAddReferral} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-end gap-3 text-xs">
+                  <form onSubmit={handleAddReferral} className="p-4 rounded-xl bg-enamel border border-rule flex flex-wrap items-end gap-3 text-xs">
                     <div className="flex-1 min-w-[140px]">
                       <label className="font-bold text-slate-600 block mb-1">Treatment Directive</label>
                       <input
@@ -4049,7 +4049,7 @@ export default function App() {
                         placeholder="e.g. EXTRACTION, SCALING, GIC"
                         value={refTreatment}
                         onChange={(e) => setRefTreatment(e.target.value)}
-                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white"
+                        className="w-full px-3 py-1.5 rounded-lg border border-rule bg-white"
                       />
                     </div>
                     <div className="w-28">
@@ -4059,7 +4059,7 @@ export default function App() {
                         placeholder="e.g. 18 or 46"
                         value={refTooth}
                         onChange={(e) => setRefTooth(e.target.value)}
-                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white"
+                        className="w-full px-3 py-1.5 rounded-lg border border-rule bg-white"
                       />
                     </div>
                     <div className="w-44">
@@ -4067,7 +4067,7 @@ export default function App() {
                       <select
                         value={refDept}
                         onChange={(e) => setRefDept(e.target.value)}
-                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white"
+                        className="w-full px-3 py-1.5 rounded-lg border border-rule bg-white"
                       >
                         {DENTAL_DEPARTMENTS.map((d) => (
                           <option key={d.id} value={d.code}>{d.code} ({d.room})</option>
@@ -4081,12 +4081,12 @@ export default function App() {
 
                   <div className="space-y-2">
                     {(activePatient.referrals || []).length === 0 ? (
-                      <div className="p-6 text-center text-xs text-slate-400 bg-slate-50 rounded-xl">
+                      <div className="p-6 text-center text-xs text-slate-400 bg-enamel rounded-xl">
                         No specialty referrals queued. Route directives to OMFS, Perio, Cons, or Prostho above.
                       </div>
                     ) : (
                       activePatient.referrals.map((r, i) => (
-                        <div key={r.id || i} className="p-3 rounded-xl border border-slate-200 bg-white flex items-center justify-between text-xs">
+                        <div key={r.id || i} className="p-3 rounded-xl border border-rule bg-white flex items-center justify-between text-xs">
                           <div className="flex items-center gap-3">
                             <span className="w-6 h-6 rounded-md bg-slate-100 flex items-center justify-center font-bold text-slate-700">
                               {i + 1}
@@ -4117,7 +4117,7 @@ export default function App() {
                   <div className="text-xs font-bold uppercase text-slate-800 tracking-wider">
                     Radiology & Diagnostic Record
                   </div>
-                  <div className="border border-slate-200 rounded-xl p-4 divide-y divide-slate-100 bg-white">
+                  <div className="border border-rule rounded-xl p-4 divide-y divide-slate-100 bg-white">
                     <div className="py-2.5">
                       <div className="text-xs font-bold text-rose-600">Trauma Evaluation:</div>
                       <input
@@ -4175,7 +4175,7 @@ export default function App() {
                       { id: "respiratory", label: "Asthma / Respiratory" },
                       { id: "epilepsy", label: "Epileptic Seizures" }
                     ].map((item) => (
-                      <label key={item.id} className="p-3 rounded-xl border border-slate-200 bg-slate-50/50 flex items-center gap-2 cursor-pointer hover:bg-slate-50">
+                      <label key={item.id} className="p-3 rounded-xl border border-rule bg-enamel/50 flex items-center gap-2 cursor-pointer hover:bg-enamel">
                         <input
                           type="checkbox"
                           checked={Boolean((activePatient.systemic || {})[item.id])}
@@ -4242,7 +4242,7 @@ export default function App() {
                     <button
                       type="button"
                       onClick={dispatchPatientWhatsApp}
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all bg-emerald-600 hover:bg-emerald-700 text-white"
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-card transition-all bg-emerald-600 hover:bg-emerald-700 text-white"
                     >
                       <Send className="w-3.5 h-3.5" /> Dispatch WhatsApp Prescription
                     </button>
@@ -4258,7 +4258,7 @@ export default function App() {
                           key={med.name}
                           type="button"
                           onClick={() => handleAddPrescription(med)}
-                          className="px-2.5 py-1 text-xs bg-slate-50 hover:bg-blue-50 border border-slate-200 text-slate-700 hover:text-blue-700 rounded-lg flex items-center gap-1"
+                          className="px-2.5 py-1 text-xs bg-enamel hover:bg-blue-50 border border-rule text-slate-700 hover:text-blue-700 rounded-lg flex items-center gap-1"
                         >
                           <Plus className="w-3 h-3 text-blue-600" />
                           <span className="font-semibold">{med.name}</span>
@@ -4268,9 +4268,9 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="border border-slate-200 rounded-xl overflow-hidden">
+                  <div className="border border-rule rounded-xl overflow-hidden">
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-b border-slate-200">
+                      <thead className="bg-enamel text-slate-600 font-semibold uppercase text-[10px] border-b border-rule">
                         <tr>
                           <th className="p-3">Drug & Generic Name</th>
                           <th className="p-3">Dosage</th>
@@ -4388,7 +4388,7 @@ export default function App() {
 
                   <SectionTitle>Consent</SectionTitle>
                   {activePatient.consent ? (
-                    <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 space-y-2">
+                    <div className="rounded-xl border border-rule bg-enamel/60 p-3 space-y-2">
                       <div className="text-slate-600">
                         Consent for examination, treatment and record keeping:{" "}
                         <strong>{activePatient.consent.treatment ? "Recorded" : "Not recorded"}</strong>
@@ -4437,7 +4437,7 @@ export default function App() {
                     Systemic Screening & Allergies
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="border border-slate-200 rounded-xl p-4 bg-white">
+                    <div className="border border-rule rounded-xl p-4 bg-white">
                       <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                         Conditions
                       </div>
@@ -4450,7 +4450,7 @@ export default function App() {
                             prev.map((p) => (p.id === activePatient.id ? { ...p, conditions: val } : p))
                           );
                         }}
-                        className="w-full text-sm font-medium text-slate-800 border-b border-slate-200 focus:outline-none"
+                        className="w-full text-sm font-medium text-slate-800 border-b border-rule focus:outline-none"
                       />
                     </div>
                     <div className="border border-rose-100 rounded-xl p-4 bg-rose-50/40">
@@ -4509,7 +4509,7 @@ export default function App() {
         <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs overflow-y-auto">
           <form
             onSubmit={handleCreatePatient}
-            className="bg-white rounded-2xl border border-slate-200 w-full max-w-lg p-6 space-y-4 shadow-xl text-xs my-4"
+            className="bg-white rounded-xl border border-rule w-full max-w-lg p-6 space-y-4 shadow-xl text-xs my-4"
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-sm font-bold text-slate-900">Add New Patient</h3>
@@ -4688,7 +4688,7 @@ export default function App() {
               </Field>
             </div>
 
-            <details className="rounded-xl border border-slate-200 p-3">
+            <details className="rounded-xl border border-rule p-3">
               <summary className="cursor-pointer font-semibold text-slate-700">More details (optional)</summary>
               <div className="space-y-3 pt-3">
                 <div className="grid grid-cols-2 gap-3">
@@ -4811,7 +4811,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setIsAddPatientOpen(false)}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
+                className="px-3 py-1.5 rounded-lg border border-rule text-slate-600 hover:bg-enamel font-semibold"
               >
                 Cancel
               </button>
@@ -4828,7 +4828,7 @@ export default function App() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
           <form
             onSubmit={handleCreateAppointment}
-            className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-xl text-xs"
+            className="bg-white rounded-xl border border-rule w-full max-w-md p-6 space-y-4 shadow-xl text-xs"
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-sm font-bold text-slate-900">Book Chair-side Appointment</h3>
@@ -4966,7 +4966,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setIsAddApptOpen(false)}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
+                className="px-3 py-1.5 rounded-lg border border-rule text-slate-600 hover:bg-enamel font-semibold"
               >
                 Cancel
               </button>
@@ -4986,7 +4986,7 @@ export default function App() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
           <form
             onSubmit={handleCreateInvoice}
-            className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-xl text-xs"
+            className="bg-white rounded-xl border border-rule w-full max-w-md p-6 space-y-4 shadow-xl text-xs"
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-sm font-bold text-slate-900">Generate Invoice</h3>
@@ -5038,7 +5038,7 @@ export default function App() {
                     items: newInvoiceForm.items.map((x) => (x.id === it.id ? { ...x, ...changes } : x)),
                   });
                 return (
-                  <div key={it.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-2.5 space-y-2">
+                  <div key={it.id} className="rounded-xl border border-rule bg-enamel/60 p-2.5 space-y-2">
                     <input
                       type="text"
                       aria-label={`Treatment ${idx + 1} description`}
@@ -5136,7 +5136,7 @@ export default function App() {
                   className="px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                 />
                 {[["On visit", 0], ["7 days", 7], ["15 days", 15], ["30 days", 30]].map(([label, d]) => (
-                  <button key={label} type="button" onClick={() => setNewInvoiceForm({ ...newInvoiceForm, dueDate: dueDateIn(d) })} className="px-2.5 py-1.5 rounded-full border border-slate-200 bg-white hover:bg-blue-50 font-semibold text-slate-700">
+                  <button key={label} type="button" onClick={() => setNewInvoiceForm({ ...newInvoiceForm, dueDate: dueDateIn(d) })} className="px-2.5 py-1.5 rounded-full border border-rule bg-white hover:bg-blue-50 font-semibold text-slate-700">
                     {label}
                   </button>
                 ))}
@@ -5167,7 +5167,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={closeInvoiceModal}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
+                className="px-3 py-1.5 rounded-lg border border-rule text-slate-600 hover:bg-enamel font-semibold"
               >
                 Cancel
               </button>
@@ -5187,7 +5187,7 @@ export default function App() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
           <form
             onSubmit={handleCreateStock}
-            className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 space-y-4 shadow-xl text-xs"
+            className="bg-white rounded-xl border border-rule w-full max-w-md p-6 space-y-4 shadow-xl text-xs"
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-sm font-bold text-slate-900">Add Stock Item</h3>
@@ -5276,7 +5276,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setIsAddStockOpen(false)}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
+                className="px-3 py-1.5 rounded-lg border border-rule text-slate-600 hover:bg-enamel font-semibold"
               >
                 Cancel
               </button>
@@ -5294,7 +5294,7 @@ export default function App() {
       {/* --- COLLECT PAYMENT / UPI QR MODAL --- */}
       {qrInvoice && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-sm p-6 text-center space-y-4 shadow-xl max-h-[92vh] overflow-y-auto">
+          <div className="bg-white rounded-xl border border-rule w-full max-w-sm p-6 text-center space-y-4 shadow-xl max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b pb-2 border-slate-100">
               <span className="text-xs font-bold text-slate-700">Collect payment · {qrInvoice.id}</span>
               <button onClick={() => setActiveUpiQrInvoice(null)} className="text-slate-400 hover:text-slate-600" aria-label="Close">
@@ -5312,7 +5312,7 @@ export default function App() {
               <>
                 {upiUri ? (
                   <div className="space-y-2">
-                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 inline-block">
+                    <div className="p-3 bg-enamel rounded-xl border border-rule inline-block">
                       {upiQrDataUrl ? (
                         <img src={upiQrDataUrl} alt="UPI payment QR" className="w-44 h-44" />
                       ) : (
@@ -5351,7 +5351,7 @@ export default function App() {
                     </select>
                   </div>
                   <div className="flex gap-2">
-                    <button type="button" onClick={() => setPayForm({ ...payForm, amount: String(qrBalanceP / 100) })} className="px-3 py-2 rounded-lg border border-slate-200 text-slate-600 font-semibold">
+                    <button type="button" onClick={() => setPayForm({ ...payForm, amount: String(qrBalanceP / 100) })} className="px-3 py-2 rounded-lg border border-rule text-slate-600 font-semibold">
                       Full balance
                     </button>
                     <button type="submit" className="flex-1 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg font-semibold">
@@ -5374,11 +5374,11 @@ export default function App() {
             )}
 
             <div className="flex gap-2">
-              <button onClick={() => handlePrintInvoice(qrInvoice, false)} className="flex-1 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50">
+              <button onClick={() => handlePrintInvoice(qrInvoice, false)} className="flex-1 py-2 border border-rule rounded-lg text-xs font-semibold text-slate-700 hover:bg-enamel">
                 Print invoice
               </button>
               {paidPaise(qrInvoice) > 0 && (
-                <button onClick={() => handlePrintInvoice(qrInvoice, true)} className="flex-1 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                <button onClick={() => handlePrintInvoice(qrInvoice, true)} className="flex-1 py-2 border border-rule rounded-lg text-xs font-semibold text-slate-700 hover:bg-enamel">
                   Print receipt
                 </button>
               )}

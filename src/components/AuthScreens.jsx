@@ -18,7 +18,7 @@ export function VerifyEmailScreen({ email, busy, notice, error, onResend, onChec
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-6 text-slate-800">
       <div className="max-w-md w-full bg-white border border-blue-100 rounded-3xl shadow-xl p-8 text-center space-y-5">
-        <div className="mx-auto w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center">
+        <div className="mx-auto w-14 h-14 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center">
           <Mail className="w-7 h-7" />
         </div>
         <div className="space-y-2">
@@ -44,7 +44,7 @@ export function VerifyEmailScreen({ email, busy, notice, error, onResend, onChec
             type="button"
             onClick={onResend}
             disabled={busy}
-            className="w-full inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 disabled:opacity-60 text-slate-700 border border-slate-300 text-sm font-semibold px-6 py-3 rounded-xl"
+            className="w-full inline-flex items-center justify-center gap-2 bg-white hover:bg-enamel disabled:opacity-60 text-slate-700 border border-slate-300 text-sm font-semibold px-6 py-3 rounded-xl"
           >
             <RefreshCw className="w-4 h-4" />
             <span>Send the email again</span>
@@ -61,13 +61,13 @@ export function VerifyEmailScreen({ email, busy, notice, error, onResend, onChec
 export function IdleWarning({ secondsLeft, onStay, onLogout }) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-      <div role="alertdialog" aria-label="Session about to expire" className="bg-white rounded-2xl border border-blue-100 shadow-2xl max-w-sm w-full p-6 text-center space-y-4">
+      <div role="alertdialog" aria-label="Session about to expire" className="bg-white rounded-xl border border-blue-100 shadow-2xl max-w-sm w-full p-6 text-center space-y-4">
         <h2 className="text-base font-black text-slate-900">Still there?</h2>
         <p className="text-sm text-slate-600">
           To protect patient records, you will be signed out in <strong>{secondsLeft}</strong> seconds because of inactivity.
         </p>
         <div className="flex gap-2 justify-center">
-          <button type="button" onClick={onLogout} className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 text-sm font-semibold hover:bg-slate-50">
+          <button type="button" onClick={onLogout} className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 text-sm font-semibold hover:bg-enamel">
             Sign out now
           </button>
           <button type="button" onClick={onStay} className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold">

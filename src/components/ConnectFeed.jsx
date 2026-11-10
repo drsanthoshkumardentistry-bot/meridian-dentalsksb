@@ -10,8 +10,8 @@ import ReportsQueue from "./ConnectReports.jsx";
 
 export { ReportsQueue };
 
-const chip = (on) => `px-3 py-1.5 rounded-full border text-xs font-semibold ${on ? "bg-ink text-white border-ink" : "bg-white text-slate-700 border-slate-200 hover:bg-sky-50"}`;
-const select = "px-3 py-1.5 border border-slate-200 rounded-full bg-white text-xs font-semibold text-slate-700";
+const chip = (on) => `px-3 py-1.5 rounded-full border text-xs font-semibold ${on ? "bg-ink text-white border-ink" : "bg-white text-slate-700 border-rule hover:bg-sky-50"}`;
+const select = "px-3 py-1.5 border border-rule rounded-full bg-white text-xs font-semibold text-slate-700";
 
 function emptyText(f, hasMore) {
   const more = hasMore ? " Load older posts to search further back." : "";
@@ -52,7 +52,7 @@ export default function ConnectFeed({ api, me, admin, showToast }) {
           <div className="relative flex-1 min-w-[12rem]">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
             <input type="search" aria-label="Search posts" placeholder="Search posts, topics and colleagues" value={view.query} onChange={(e) => f.setView({ query: e.target.value })}
-              className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-aqua-400" />
+              className="w-full pl-9 pr-3 py-2 border border-rule rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-aqua-400" />
           </div>
           <select aria-label="Filter by topic" value={view.tag} onChange={(e) => f.setView({ tag: e.target.value })} className={select}>
             <option value="">All topics</option>
@@ -61,7 +61,7 @@ export default function ConnectFeed({ api, me, admin, showToast }) {
           <select aria-label="Sort posts" value={view.sort} onChange={(e) => f.setView({ sort: e.target.value })} className={select}>
             {SORTS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
           </select>
-          <button type="button" onClick={f.refresh} disabled={f.refreshing} aria-label="Refresh the feed" className="p-2 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-sky-50 disabled:opacity-50">
+          <button type="button" onClick={f.refresh} disabled={f.refreshing} aria-label="Refresh the feed" className="p-2 rounded-full border border-rule bg-white text-slate-600 hover:bg-sky-50 disabled:opacity-50">
             <RefreshCw className={`w-4 h-4 ${f.refreshing ? "animate-spin" : ""}`} />
           </button>
         </div>
@@ -78,7 +78,7 @@ export default function ConnectFeed({ api, me, admin, showToast }) {
         {f.status === "error" && <p role="alert" className="rounded-xl border border-gold-500/40 bg-gold-50 p-4 text-sm text-gold-700">Could not load the network. Check your connection and <button type="button" onClick={f.refresh} className="font-bold underline">try again</button>.</p>}
         {f.status === "ready" && f.sourceLoading && <p role="status" className="text-sm text-slate-500">Loading posts…</p>}
         {f.status === "ready" && !f.sourceLoading && f.shown.length === 0 && (
-          <div className="bg-white border border-rule rounded-2xl p-8 text-center text-sm text-slate-600">{emptyText(f, Boolean(f.cursor))}</div>
+          <div className="bg-white border border-rule rounded-xl p-8 text-center text-sm text-slate-600">{emptyText(f, Boolean(f.cursor))}</div>
         )}
         {f.status === "ready" && f.shown.map(card)}
         {f.status === "ready" && f.cursor && !f.author && view.filter !== "mine" && view.filter !== "saved" && (

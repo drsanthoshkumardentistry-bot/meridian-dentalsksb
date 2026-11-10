@@ -173,7 +173,7 @@ export default function Odontogram({
       </div>
 
       {/* Chart */}
-      <div className="rounded-2xl border border-rule bg-enamel p-3 sm:p-4 overflow-x-auto">
+      <div className="rounded-xl border border-rule bg-enamel p-3 sm:p-4 overflow-x-auto">
         <svg
           viewBox="0 0 600 425"
           role="group"

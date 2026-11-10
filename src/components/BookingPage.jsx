@@ -38,7 +38,7 @@ export default function BookingPage({ clinicId, loadPage, submit }) {
 
   const shell = (children) => (
     <main className="min-h-screen bg-[#f6f9ff] flex items-start justify-center p-4 sm:p-8">
-      <div className="w-full max-w-md bg-white rounded-2xl border border-[#d5e0f5] shadow-sm p-6">{children}</div>
+      <div className="w-full max-w-md bg-white rounded-xl border border-[#d5e0f5] shadow-card p-6">{children}</div>
     </main>
   );
 

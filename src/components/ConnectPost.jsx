@@ -15,7 +15,7 @@ const TYPE_TONE = {
   case: "bg-brand-50 text-brand-700 border-brand-100",
   question: "bg-aqua-50 text-aqua-700 border-aqua-100",
   poll: "bg-sky-100 text-brand-700 border-sky-200",
-  update: "bg-slate-100 text-ink border-slate-200",
+  update: "bg-slate-100 text-ink border-rule",
   event: "bg-gold-50 text-gold-700 border-gold-500/40",
 };
 const ghost = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-sky-50";
@@ -128,12 +128,12 @@ function Poll({ post, vote, canSee, onVote }) {
   return (
     <div role="group" aria-label="Poll" className="space-y-2">
       {rows.map((r) => showResults ? (
-        <div key={r.index} className={`relative overflow-hidden rounded-lg border px-3 py-2 text-sm ${vote === r.index ? "border-brand-500" : "border-slate-200"}`}>
+        <div key={r.index} className={`relative overflow-hidden rounded-lg border px-3 py-2 text-sm ${vote === r.index ? "border-brand-500" : "border-rule"}`}>
           <div className="absolute inset-y-0 left-0 bg-sky-100" style={{ width: `${r.pct}%` }} aria-hidden="true" />
           <div className="relative flex justify-between gap-3"><span className={vote === r.index ? "font-bold text-ink" : "text-slate-800"}>{r.label}{vote === r.index ? " (your vote)" : ""}</span><span className="font-semibold text-slate-600 tabular">{r.pct}% · {r.votes}</span></div>
         </div>
       ) : (
-        <button key={r.index} type="button" onClick={() => onVote(post, r.index)} className="w-full text-left rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-sky-50 hover:border-brand-500">{r.label}</button>
+        <button key={r.index} type="button" onClick={() => onVote(post, r.index)} className="w-full text-left rounded-lg border border-rule px-3 py-2 text-sm hover:bg-sky-50 hover:border-brand-500">{r.label}</button>
       ))}
       <p className="text-xs text-slate-500">{total} {total === 1 ? "vote" : "votes"}{showResults ? "" : ". Vote to see the results."}</p>
     </div>
@@ -158,7 +158,7 @@ export default function PostCard({ post, api, me, admin, liked, saved, followed,
   }
 
   return (
-    <article className="bg-white border border-rule rounded-2xl p-4 space-y-3" aria-label={post.title}>
+    <article className="bg-white border border-rule rounded-xl p-4 space-y-3" aria-label={post.title}>
       <header className="flex items-start gap-3">
         <Avatar name={post.authorName} />
         <div className="flex-1 min-w-0">

@@ -30,7 +30,7 @@ export default function BranchesCard({ branches, data, onChange, newId, onTransf
   };
 
   return (
-    <section className="rounded-xl border border-slate-200 p-4 text-xs space-y-3" data-testid="branches-card" aria-label="Branches">
+    <section className="rounded-xl border border-rule p-4 text-xs space-y-3" data-testid="branches-card" aria-label="Branches">
       <div>
         <h2 className="text-sm font-bold text-slate-900">Branches</h2>
         <p className="text-slate-500">Run several clinics from one account. Each record belongs to one branch, and the branch switcher in the header filters every screen.</p>

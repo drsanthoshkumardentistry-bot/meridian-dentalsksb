@@ -26,7 +26,7 @@ export default function TeamCard({ members, branches, ownerEmail, clinicName, or
   const scopeText = (m) => (m.branchIds?.length ? m.branchIds.map((id) => (branches.find((b) => b.id === id) || { name: "Removed branch" }).name).join(", ") : "All branches");
 
   return (
-    <section className="rounded-xl border border-slate-200 p-4 text-xs space-y-3" data-testid="team-card" aria-label="Team logins">
+    <section className="rounded-xl border border-rule p-4 text-xs space-y-3" data-testid="team-card" aria-label="Team logins">
       <div>
         <h2 className="text-sm font-bold text-slate-900">Team logins</h2>
         <p className="text-slate-500">Give each staff member their own login. They sign in with the email you enter, then accept the invitation. Roles limit what they can open and change. Branch limits hide other branches in the app.</p>
@@ -51,7 +51,7 @@ export default function TeamCard({ members, branches, ownerEmail, clinicName, or
         </ul>
       )}
 
-      <form onSubmit={submit} className="space-y-2 rounded-lg bg-slate-50 p-3" noValidate>
+      <form onSubmit={submit} className="space-y-2 rounded-lg bg-enamel p-3" noValidate>
         <div className="flex flex-wrap gap-2">
           <input aria-label="Staff email" type="email" placeholder="staff@example.com" className={`${input} flex-1 min-w-[200px]`} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
           <select aria-label="Role" className={input} value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>

@@ -41,10 +41,10 @@ const DEMO_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
 
 /* Features grouped by where in the day they happen. Only things the app does today. */
 const TONES = {
-  blue: { head: "text-brand-700 border-brand-600", chip: "bg-mist text-brand-600" },
-  aqua: { head: "text-aqua-700 border-aqua-500", chip: "bg-aqua-50 text-aqua-600" },
-  navy: { head: "text-ink border-ink", chip: "bg-slate-100 text-ink" },
-  sky: { head: "text-brand-500 border-brand-500", chip: "bg-sky-200/60 text-brand-700" }
+  blue: { head: "text-ink border-brand-600", chip: "bg-brand-50 text-brand-600" },
+  aqua: { head: "text-ink border-brand-600", chip: "bg-brand-50 text-brand-600" },
+  navy: { head: "text-ink border-brand-600", chip: "bg-brand-50 text-brand-600" },
+  sky: { head: "text-ink border-brand-600", chip: "bg-brand-50 text-brand-600" }
 };
 
 const FEATURE_GROUPS = [
@@ -263,7 +263,7 @@ function ChartLegend() {
 function SampleBill() {
   const row = "flex items-baseline justify-between gap-4 py-1.5";
   return (
-    <div className="bg-white border border-rule rounded-xl shadow-[0_18px_40px_-18px_rgba(29,78,216,0.35)] p-4 text-xs w-full max-w-[290px] tabular">
+    <div className="bg-white border border-rule rounded-xl shadow-lift p-4 text-xs w-full max-w-[290px] tabular">
       <div className="flex items-center justify-between pb-2 border-b border-dashed border-rule">
         <span className="font-display font-bold text-ink text-sm">Invoice</span>
         <span className="text-slate-500">INV/2026-27/0042</span>
@@ -360,9 +360,9 @@ export default function LandingPage({
                 e.currentTarget.style.display = "none";
               }}
             />
-            <span className="font-display font-extrabold text-xl tracking-tight text-ink">MeriDent</span>
+            <span className="font-display font-bold text-xl tracking-tight text-ink">MeriDent</span>
           </a>
-          <nav className="hidden md:flex items-center gap-7 text-sm font-semibold text-slate-600">
+          <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-slate-600">
             <a href="#features" className="hover:text-brand-600">Features</a>
             <a href="#start" className="hover:text-brand-600">Getting started</a>
             <a href="#faq" className="hover:text-brand-600">FAQ</a>
@@ -371,7 +371,7 @@ export default function LandingPage({
             type="button"
             onClick={onLoginClick}
             disabled={loginBusy || !firebaseConfigured}
-            className="text-sm font-bold text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-60 px-5 py-2 rounded-lg transition-colors"
+            className="text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-60 px-4 py-2 rounded-lg transition-colors"
           >
             {loginBusy ? "Connecting…" : "Sign in"}
           </button>
@@ -379,21 +379,19 @@ export default function LandingPage({
       </header>
 
       {/* HERO */}
-      <section id="top" className="relative overflow-hidden bg-gradient-to-b from-white via-sky-50 to-sky-100 border-b border-rule">
-        <div aria-hidden="true" className="pointer-events-none absolute -right-32 top-10 h-[520px] w-[520px] rounded-full bg-aqua-300/25 blur-3xl" />
-        <div aria-hidden="true" className="pointer-events-none absolute -left-40 bottom-0 h-[380px] w-[380px] rounded-full bg-brand-500/10 blur-3xl" />
-        <div className="relative max-w-6xl mx-auto px-5 pt-12 pb-16 lg:pt-20 lg:pb-24 grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-8 items-center">
+      <section id="top" className="relative overflow-hidden bg-white border-b border-rule">
+        <div className="relative max-w-6xl mx-auto px-5 pt-14 pb-20 lg:pt-28 lg:pb-32 grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-14 lg:gap-16 items-center">
           <div className="space-y-6">
-            <p className="inline-flex items-center gap-2 text-sm font-semibold text-aqua-700 bg-aqua-50 border border-aqua-100 px-3 py-1 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-aqua-500" aria-hidden="true" />
+            <p className="inline-flex items-center gap-2 text-sm font-medium text-brand-700 bg-brand-50 px-3 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-600" aria-hidden="true" />
               Free during early access for dental clinics
             </p>
 
-            <h1 className="font-display font-extrabold text-[2.6rem] sm:text-6xl leading-[1.02] tracking-[-0.03em] text-ink">
+            <h1 className="font-display font-bold text-[2.5rem] sm:text-[3.4rem] leading-[1.06] tracking-[-0.03em] text-ink">
               Chart the tooth. Bill the visit. Remind the patient.
             </h1>
 
-            <p className="text-base sm:text-lg text-slate-600 max-w-xl leading-relaxed">
+            <p className="text-base sm:text-lg text-slate-600 max-w-lg leading-[1.7]">
               MeriDent is a practice manager for Indian dental clinics: a 32-tooth odontogram, treatment plans patients can approve from their phone, GST invoices with a UPI QR, stock and staff, online booking, branches, and WhatsApp reminders. It runs in your browser, so there is nothing to install.
             </p>
 
@@ -402,7 +400,7 @@ export default function LandingPage({
                 type="button"
                 onClick={onLoginClick}
                 disabled={loginBusy || !firebaseConfigured}
-                className="inline-flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white text-base font-bold px-7 py-3.5 rounded-xl shadow-lg shadow-brand-600/25 transition-colors"
+                className="inline-flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white text-[15px] font-semibold px-6 py-3.5 rounded-lg transition-colors"
               >
                 <span>{signInLabel}</span>
                 <ArrowRight className="w-4 h-4" />
@@ -411,7 +409,7 @@ export default function LandingPage({
                 href={DEMO_LINK}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 bg-white hover:bg-mist text-ink border border-rule text-base font-bold px-7 py-3.5 rounded-xl transition-colors"
+                className="inline-flex items-center justify-center gap-2 bg-white hover:bg-enamel text-ink border border-rule text-[15px] font-semibold px-6 py-3.5 rounded-lg transition-colors"
               >
                 <MessageCircle className="w-4 h-4 text-brand-600" />
                 <span>Ask for a demo on WhatsApp</span>
@@ -445,7 +443,7 @@ export default function LandingPage({
                   Use email and password instead
                 </button>
               ) : (
-                <form onSubmit={submitEmail} noValidate className="bg-white border border-rule rounded-xl shadow-lg p-5 space-y-3">
+                <form onSubmit={submitEmail} noValidate className="bg-white border border-rule rounded-xl shadow-lift p-5 space-y-3">
                   <div className="grid grid-cols-2 gap-1 rounded-lg bg-mist p-1 text-sm font-bold">
                     <button
                       type="button"
@@ -525,7 +523,7 @@ export default function LandingPage({
 
           {/* Product artwork */}
           <div className="relative">
-            <div className="bg-white border border-rule rounded-2xl shadow-[0_30px_60px_-30px_rgba(29,78,216,0.35)] p-5 sm:p-6 pb-10">
+            <div className="bg-white border border-rule rounded-xl shadow-lift p-5 sm:p-6 pb-10">
               <div className="flex items-baseline justify-between mb-1">
                 <span className="font-display font-bold text-ink">Odontogram</span>
                 <span className="text-xs text-slate-500">Upper arch, adult</span>
@@ -542,18 +540,18 @@ export default function LandingPage({
       </section>
 
       {/* FEATURES */}
-      <section id="features" className="max-w-6xl mx-auto px-5 pt-20 pb-16 lg:pt-28">
+      <section id="features" className="max-w-6xl mx-auto px-5 pt-24 pb-20 lg:pt-32">
         <div className="max-w-2xl mb-12">
-          <h2 className="font-display font-extrabold text-3xl sm:text-4xl tracking-[-0.02em] leading-tight">What you can do today</h2>
+          <h2 className="font-display font-bold text-3xl sm:text-[2.5rem] tracking-[-0.025em] leading-tight">What you can do today</h2>
           <p className="mt-3 text-base text-slate-600">Everything below is in the app now, grouped by where it happens in a clinic day.</p>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-14 gap-y-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-16 gap-y-16">
           {FEATURE_GROUPS.map((group) => (
             <div key={group.heading}>
-              <h3 className={`font-display font-bold text-xl pb-3 border-b-2 ${TONES[group.tone].head}`}>{group.heading}</h3>
+              <h3 className={`font-display font-bold text-xl pb-3 border-b ${TONES[group.tone].head}`}>{group.heading}</h3>
               <ul className="divide-y divide-rule">
                 {group.items.map(({ icon: Icon, title, text }) => (
-                  <li key={title} className="py-5 flex gap-3.5">
+                  <li key={title} className="py-6 flex gap-4">
                     <span className={`mt-0.5 shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${TONES[group.tone].chip}`}>
                       <Icon className="w-[18px] h-[18px]" aria-hidden="true" />
                     </span>
@@ -570,18 +568,18 @@ export default function LandingPage({
       </section>
 
       {/* GETTING STARTED */}
-      <section id="start" className="bg-gradient-to-br from-ink via-ink to-[#0f2f6b] text-white">
-        <div className="max-w-6xl mx-auto px-5 py-16 lg:py-20">
+      <section id="start" className="bg-enamel text-ink border-y border-rule">
+        <div className="max-w-6xl mx-auto px-5 py-20 lg:py-24">
           <div className="max-w-2xl mb-10">
-            <h2 className="font-display font-extrabold text-3xl sm:text-4xl tracking-[-0.02em] leading-tight">Getting started</h2>
-            <p className="mt-3 text-base text-blue-100/80">Free during early access. No credit card needed.</p>
+            <h2 className="font-display font-bold text-3xl sm:text-[2.5rem] tracking-[-0.025em] leading-tight">Getting started</h2>
+            <p className="mt-3 text-base text-slate-600">Free during early access. No credit card needed.</p>
           </div>
           <ol className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-6">
             {STEPS.map((step) => (
-              <li key={step.n} className="md:border-t md:border-aqua-300/40 md:pt-5">
-                <span className="font-display font-extrabold text-4xl text-aqua-300">{step.n}</span>
+              <li key={step.n} className="md:border-t md:border-rule md:pt-5">
+                <span className="font-display font-bold text-3xl text-brand-600">{step.n}</span>
                 <h3 className="mt-2 font-display font-bold text-lg">{step.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-blue-100/80">{step.text}</p>
+                <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{step.text}</p>
               </li>
             ))}
           </ol>
@@ -590,9 +588,9 @@ export default function LandingPage({
 
       {/* COMING NEXT */}
       <section className="max-w-6xl mx-auto px-5 py-16">
-        <div className="rounded-2xl bg-enamel border border-rule p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center gap-5 lg:gap-10">
+        <div className="rounded-xl bg-enamel border border-rule p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center gap-5 lg:gap-10">
           <div className="lg:w-1/3">
-            <h2 className="font-display font-extrabold text-2xl tracking-tight">Coming next</h2>
+            <h2 className="font-display font-bold text-2xl tracking-tight">Coming next</h2>
             <p className="mt-1.5 text-sm text-slate-600">We are building these now. Tell us what your clinic needs most.</p>
           </div>
           <ul className="flex flex-wrap gap-2">
@@ -609,21 +607,21 @@ export default function LandingPage({
       <section className="max-w-6xl mx-auto px-5 pb-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
           <div className="flex gap-3.5">
-            <Lock className="w-5 h-5 mt-0.5 shrink-0 text-aqua-600" aria-hidden="true" />
+            <Lock className="w-5 h-5 mt-0.5 shrink-0 text-brand-600" aria-hidden="true" />
             <div>
               <h3 className="font-bold">Private workspace</h3>
               <p className="mt-1 text-sm text-slate-600 leading-relaxed">Each clinic's records are stored under its own sign-in and are not shared with other clinics. Only a verified email can open a workspace.</p>
             </div>
           </div>
           <div className="flex gap-3.5">
-            <Cloud className="w-5 h-5 mt-0.5 shrink-0 text-aqua-600" aria-hidden="true" />
+            <Cloud className="w-5 h-5 mt-0.5 shrink-0 text-brand-600" aria-hidden="true" />
             <div>
               <h3 className="font-bold">Cloud backup</h3>
               <p className="mt-1 text-sm text-slate-600 leading-relaxed">Your data is saved to the cloud and available on any device where you sign in.</p>
             </div>
           </div>
           <div className="flex gap-3.5">
-            <ShieldCheck className="w-5 h-5 mt-0.5 shrink-0 text-aqua-600" aria-hidden="true" />
+            <ShieldCheck className="w-5 h-5 mt-0.5 shrink-0 text-brand-600" aria-hidden="true" />
             <div>
               <h3 className="font-bold">Your data, your control</h3>
               <p className="mt-1 text-sm text-slate-600 leading-relaxed">Patients can opt out of WhatsApp messages, and you can ask us any time to export or delete your clinic's records.</p>
@@ -635,7 +633,7 @@ export default function LandingPage({
       {/* FAQ */}
       <section id="faq" className="bg-enamel border-y border-rule">
         <div className="max-w-3xl mx-auto px-5 py-16 lg:py-20">
-          <h2 className="font-display font-extrabold text-3xl sm:text-4xl tracking-[-0.02em] mb-8">Questions clinics ask</h2>
+          <h2 className="font-display font-bold text-3xl sm:text-[2.5rem] tracking-[-0.025em] mb-8">Questions clinics ask</h2>
           <div className="divide-y divide-rule border-y border-rule">
             {FAQS.map(({ q, a }) => (
               <details key={q} className="group py-4">
@@ -658,7 +656,7 @@ export default function LandingPage({
 
       {/* FOUNDERS */}
       <section className="max-w-4xl mx-auto px-5 py-16 lg:py-20">
-        <h2 className="font-display font-extrabold text-3xl tracking-[-0.02em]">Built by dental students</h2>
+        <h2 className="font-display font-bold text-3xl tracking-[-0.025em]">Built by dental students</h2>
         <p className="mt-2 text-base text-slate-600 max-w-xl">We study dentistry and write the code ourselves, so the app is shaped around real clinic work.</p>
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
           {[
@@ -666,7 +664,7 @@ export default function LandingPage({
             { init: "SG", name: "Sivasabari G", role: "Co-Founder & CEO", bio: "BDS student, Dhanalakshmi Srinivasan Dental College & Hospital, Perambalur. Leads clinical workflow requirements and testing." }
           ].map((p) => (
             <div key={p.name} className="flex gap-4 rounded-xl border border-rule p-5">
-              <div className="shrink-0 w-12 h-12 rounded-full bg-brand-600 text-white font-display font-extrabold flex items-center justify-center">{p.init}</div>
+              <div className="shrink-0 w-12 h-12 rounded-full bg-brand-50 text-brand-700 font-display font-bold flex items-center justify-center">{p.init}</div>
               <div>
                 <h3 className="font-display font-bold text-lg leading-tight">{p.name}</h3>
                 <p className="text-sm font-semibold text-brand-700">{p.role}</p>
@@ -678,14 +676,14 @@ export default function LandingPage({
       </section>
 
       {/* FINAL CTA */}
-      <section className="bg-gradient-to-r from-brand-700 via-brand-600 to-aqua-600 text-white">
+      <section className="bg-ink text-white">
         <div className="max-w-4xl mx-auto px-5 py-14 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-          <h2 className="font-display font-extrabold text-3xl tracking-[-0.02em] leading-tight">Try MeriDent with your clinic</h2>
+          <h2 className="font-display font-bold text-3xl tracking-[-0.025em] leading-tight">Try MeriDent with your clinic</h2>
           <button
             type="button"
             onClick={onLoginClick}
             disabled={loginBusy || !firebaseConfigured}
-            className="shrink-0 inline-flex items-center justify-center gap-2 bg-white hover:bg-mist disabled:opacity-60 text-brand-700 text-base font-bold px-7 py-3.5 rounded-xl transition-colors"
+            className="shrink-0 inline-flex items-center justify-center gap-2 bg-white hover:bg-mist disabled:opacity-60 text-ink text-[15px] font-semibold px-6 py-3.5 rounded-lg transition-colors"
           >
             <span>{signInLabel}</span>
             <ArrowRight className="w-4 h-4" />
@@ -705,10 +703,10 @@ export default function LandingPage({
       </a>
 
       {/* FOOTER */}
-      <footer className="bg-ink text-blue-100/70 py-10 px-5 text-center text-sm space-y-1.5">
-        <p className="font-display font-bold text-white text-base">MeriDent</p>
+      <footer className="bg-white border-t border-rule text-slate-500 py-10 px-5 text-center text-sm space-y-1.5">
+        <p className="font-display font-bold text-ink text-base">MeriDent</p>
         <p>StartupTN ref: STN99974 | MSME Udyam: UDYAM-TN-04-0139569</p>
-        <p className="text-blue-100/50 pt-2">© 2026 MeriDent. All rights reserved.</p>
+        <p className="text-slate-400 pt-2">© 2026 MeriDent. All rights reserved.</p>
       </footer>
     </div>
   );
