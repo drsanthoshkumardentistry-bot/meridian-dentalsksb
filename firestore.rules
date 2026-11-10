@@ -8,5 +8,34 @@ service cloud.firestore {
                          && request.auth.uid == clinicId
                          && request.auth.token.email_verified == true;
     }
+
+    // Treatment estimate links for patients. The random token is the key, so a document can be
+    // read only by someone holding the link. Nobody can list the collection.
+    match /planShares/{token} {
+      allow get: if true;
+      allow list: if false;
+
+      allow create: if request.auth != null
+                    && request.auth.uid == request.resource.data.clinicId
+                    && request.auth.token.email_verified == true
+                    && request.resource.data.decision == 'pending';
+
+      allow delete: if request.auth != null
+                    && request.auth.uid == resource.data.clinicId
+                    && request.auth.token.email_verified == true;
+
+      // The clinic can update its own link. A patient (no sign-in needed) can answer once,
+      // before it expires, and can change nothing except the decision fields.
+      allow update: if (request.auth != null
+                        && request.auth.uid == resource.data.clinicId
+                        && request.auth.token.email_verified == true)
+                    || (resource.data.decision == 'pending'
+                        && request.time < resource.data.expiresAt
+                        && request.resource.data.diff(resource.data).affectedKeys()
+                             .hasOnly(['decision', 'decidedAt', 'decidedName'])
+                        && request.resource.data.decision in ['approved', 'declined']
+                        && request.resource.data.decidedName is string
+                        && request.resource.data.decidedName.size() <= 80);
+    }
   }
 }

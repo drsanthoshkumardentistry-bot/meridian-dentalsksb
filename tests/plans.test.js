@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   validatePlan, createPlan, planTotals, approvePlan, declinePlan, canBill, markPlanBilled,
   planToInvoiceItems, buildPlanMessage, buildPlanHtml, parseTeeth, plannedTeeth, suggestPlanItems,
+  newShareToken, shareUrl, buildShareDoc, isShareExpired, applyShareDecision, buildShareMessage,
 } from "../src/plans.js";
 
 const draft = () => ({
@@ -91,5 +92,40 @@ describe("treatment plans", () => {
       ["26", "Restoration (filling)"],
     ]);
     expect(rows[0].amount).toBe("");
+  });
+
+  it("makes long unguessable URL-safe tokens", () => {
+    const a = newShareToken();
+    const b = newShareToken();
+    expect(a).toMatch(/^[A-Za-z0-9_-]{32}$/);
+    expect(a).not.toBe(b);
+    expect(shareUrl("https://x.test/", "abc")).toBe("https://x.test/?plan=abc");
+  });
+
+  it("shares only first name, clinic name and the priced plan", () => {
+    const plan = createPlan(draft(), day);
+    const doc = buildShareDoc({ plan, patient: { id: "P-9", name: "Asha Devi Kumar", phone: "9876543210" }, profile: { name: "Smile Clinic", phone: "1", address: "somewhere" }, clinicId: "u1" }, day);
+    expect(doc.patientFirstName).toBe("Asha");
+    expect(doc.clinicName).toBe("Smile Clinic");
+    expect(doc.totalP).toBe(736000);
+    expect(doc.items.map((i) => i.amountP)).toEqual([500000, 200000]);
+    expect(doc.decision).toBe("pending");
+    const text = JSON.stringify(doc);
+    expect(text).not.toMatch(/9876543210|Devi|Kumar|somewhere/);
+    expect(isShareExpired(doc, day)).toBe(false);
+    expect(isShareExpired(doc, new Date("2026-12-20T00:00:00"))).toBe(true);
+    expect(isShareExpired(null)).toBe(true);
+    expect(isShareExpired({ expiresAt: { toDate: () => new Date("2030-01-01") } }, day)).toBe(false);
+  });
+
+  it("applies a patient's online answer only to a Proposed plan", () => {
+    const p = createPlan(draft(), day);
+    expect(applyShareDecision(p, { decision: "pending" }, day)).toBe(p);
+    const ok = applyShareDecision(p, { decision: "approved", decidedName: "Asha Devi" }, day);
+    expect(ok.status).toBe("Approved");
+    expect(ok.decidedBy).toBe("Asha Devi (online)");
+    expect(applyShareDecision(p, { decision: "declined" }, day).status).toBe("Declined");
+    expect(applyShareDecision(ok, { decision: "declined" }, day)).toBe(ok);
+    expect(buildShareMessage(p, { name: "Asha" }, { name: "Smile" }, "https://x/?plan=t")).toContain("https://x/?plan=t");
   });
 });

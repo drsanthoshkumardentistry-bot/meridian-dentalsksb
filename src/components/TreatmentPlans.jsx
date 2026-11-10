@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { Plus, Trash2, Send, Printer, Check, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Plus, Trash2, Send, Printer, Check, X, Link2, RefreshCw } from "lucide-react";
 import { TAX_CATEGORIES, formatINR } from "../billing.js";
 import { whatsappLink, hasWhatsAppConsent } from "../reminders.js";
 import {
   MAX_PLAN_ITEMS, validatePlan, createPlan, planTotals, approvePlan, declinePlan, canBill,
   buildPlanMessage, buildPlanHtml, suggestPlanItems,
+  newShareToken, buildShareDoc, shareUrl, buildShareMessage, applyShareDecision,
 } from "../plans.js";
 
 const uid = (p) => `${p}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
@@ -19,9 +20,91 @@ const STATUS_STYLE = {
   Billed: "bg-blue-50 text-blue-700 border-blue-200",
 };
 
-export default function TreatmentPlans({ patient, practiceProfile, onChange, onBill, showToast }) {
+export default function TreatmentPlans({ patient, practiceProfile, onChange, onBill, showToast, clinicId, shareApi }) {
   const plans = patient.plans || [];
   const [draft, setDraft] = useState(null);
+  const [busyId, setBusyId] = useState("");
+  const plansRef = useRef(plans);
+  plansRef.current = plans;
+
+  // Pick up answers patients gave through their link.
+  const checkAnswers = async (quiet = true) => {
+    if (!shareApi?.enabled) return;
+    const waiting = plansRef.current.filter((p) => p.shareToken && p.status === "Proposed");
+    if (!waiting.length) {
+      if (!quiet) showToast("No plans are waiting for an answer");
+      return;
+    }
+    let changed = false;
+    const next = [...plansRef.current];
+    for (const plan of waiting) {
+      try {
+        const share = await shareApi.fetch(plan.shareToken);
+        const updated = applyShareDecision(plan, share);
+        if (updated !== plan) {
+          next[next.findIndex((p) => p.id === plan.id)] = updated;
+          changed = true;
+          showToast(`${patient.name} ${updated.status === "Approved" ? "approved" : "declined"} "${plan.title}"`);
+        }
+      } catch {
+        if (!quiet) showToast("Could not check for answers. Try again when you are online.");
+        return;
+      }
+    }
+    if (changed) onChange(next);
+    else if (!quiet) showToast("No answer yet");
+  };
+
+  useEffect(() => {
+    checkAnswers(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [patient.id]);
+
+  const linkFor = (plan) => shareUrl(window.location.origin, plan.shareToken);
+
+  const sendLink = async (plan) => {
+    if (!shareApi?.enabled) return showToast("Approval links need you to be signed in and online");
+    setBusyId(plan.id);
+    try {
+      let current = plan;
+      if (!plan.shareToken) {
+        const token = newShareToken();
+        await shareApi.create(token, buildShareDoc({ plan, patient, profile: practiceProfile, clinicId }));
+        current = { ...plan, shareToken: token };
+        onChange(plansRef.current.map((p) => (p.id === plan.id ? current : p)));
+      }
+      const url = linkFor(current);
+      const wa = hasWhatsAppConsent(patient) ? whatsappLink(patient.phone, buildShareMessage(current, patient, practiceProfile, url)) : "";
+      if (wa) {
+        window.open(wa, "_blank", "noopener,noreferrer");
+      } else {
+        try {
+          await navigator.clipboard.writeText(url);
+          showToast("Link copied. Send it to the patient.");
+        } catch {
+          showToast(url);
+        }
+      }
+    } catch {
+      showToast("Could not create the link. Check your connection and try again.");
+    } finally {
+      setBusyId("");
+    }
+  };
+
+  const copyLink = async (plan) => {
+    try {
+      await navigator.clipboard.writeText(linkFor(plan));
+      showToast("Link copied");
+    } catch {
+      showToast(linkFor(plan));
+    }
+  };
+
+  const removePlan = (plan) => {
+    if (plan.shareToken && shareApi?.enabled) shareApi.remove(plan.shareToken).catch(() => {});
+    save(plans.filter((p) => p.id !== plan.id));
+  };
 
   const save = (next) => onChange(next);
   const replace = (plan) => save(plans.map((p) => (p.id === plan.id ? plan : p)));
@@ -209,6 +292,11 @@ export default function TreatmentPlans({ patient, practiceProfile, onChange, onB
               </div>
               <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${STATUS_STYLE[plan.status]}`}>{plan.status}</span>
             </div>
+            {plan.status === "Proposed" && plan.shareToken && (
+              <div className="text-xs text-blue-800 bg-blue-50 border border-blue-100 rounded-lg px-3 py-1.5">
+                Link sent. Waiting for the patient's answer.
+              </div>
+            )}
             <ul className="text-slate-700 space-y-0.5">
               {t.lines.map((l, i) => (
                 <li key={plan.items[i].id} className="flex justify-between">
@@ -227,6 +315,26 @@ export default function TreatmentPlans({ patient, practiceProfile, onChange, onB
               <button type="button" onClick={() => print(plan)} className="px-2.5 py-1 rounded-lg text-xs font-semibold border border-slate-300 text-slate-700 inline-flex items-center gap-1">
                 <Printer className="w-3 h-3" /> Print
               </button>
+              {plan.status === "Proposed" && (
+                <button
+                  type="button"
+                  disabled={busyId === plan.id}
+                  onClick={() => sendLink(plan)}
+                  className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 border border-blue-200 text-blue-800 inline-flex items-center gap-1 disabled:opacity-60"
+                >
+                  <Link2 className="w-3 h-3" /> {plan.shareToken ? "Send link again" : "Send approval link"}
+                </button>
+              )}
+              {plan.status === "Proposed" && plan.shareToken && (
+                <>
+                  <button type="button" onClick={() => copyLink(plan)} className="px-2.5 py-1 rounded-lg text-xs font-semibold border border-slate-300 text-slate-700">
+                    Copy link
+                  </button>
+                  <button type="button" onClick={() => checkAnswers(false)} className="px-2.5 py-1 rounded-lg text-xs font-semibold border border-slate-300 text-slate-700 inline-flex items-center gap-1">
+                    <RefreshCw className="w-3 h-3" /> Check for answer
+                  </button>
+                </>
+              )}
               {(plan.status === "Proposed" || plan.status === "Declined") && (
                 <button type="button" onClick={() => replace(approvePlan(plan, patient.name))} className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#1d4ed8] text-white inline-flex items-center gap-1">
                   <Check className="w-3 h-3" /> Mark approved
@@ -246,7 +354,7 @@ export default function TreatmentPlans({ patient, practiceProfile, onChange, onB
                 <button
                   type="button"
                   aria-label={`Delete plan ${plan.title}`}
-                  onClick={() => save(plans.filter((p) => p.id !== plan.id))}
+                  onClick={() => removePlan(plan)}
                   className="ml-auto p-1.5 text-slate-400 hover:text-rose-500"
                 >
                   <Trash2 className="w-4 h-4" />
