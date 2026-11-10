@@ -122,6 +122,38 @@ function Thread({ post, api, me, admin, showToast, onCount, onAccept }) {
   );
 }
 
+function CaseImages({ post, api }) {
+  const [imgs, setImgs] = useState(null);
+  const [big, setBig] = useState(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    let live = true;
+    api.getPostImages(post.id, post.imageCount).then((r) => live && setImgs(r)).catch(() => live && setFailed(true));
+    return () => { live = false; };
+  }, [api, post.id, post.imageCount]);
+  if (failed) return <p className="text-xs text-slate-500">Could not load the images.</p>;
+  if (!imgs) return <p className="text-xs text-slate-500" role="status">Loading images…</p>;
+  return (
+    <>
+      <ul className="flex flex-wrap gap-2">
+        {imgs.map((src, i) => (
+          <li key={i}>
+            <button type="button" onClick={() => setBig(src)} aria-label={`View image ${i + 1} of ${imgs.length} full size`}>
+              <img src={src} alt={`Case image ${i + 1}`} className="h-28 w-28 object-cover rounded-lg border border-rule" />
+            </button>
+          </li>
+        ))}
+      </ul>
+      {big && (
+        <div role="dialog" aria-label="Case image" className="fixed inset-0 z-[60] bg-ink/80 flex items-center justify-center p-4" onClick={() => setBig(null)}>
+          <img src={big} alt="Case image, full size" className="max-h-full max-w-full rounded-lg bg-white" />
+          <button type="button" aria-label="Close image" className="absolute top-4 right-4 h-9 w-9 rounded-full bg-white text-ink font-bold" onClick={() => setBig(null)}>×</button>
+        </div>
+      )}
+    </>
+  );
+}
+
 function Poll({ post, vote, canSee, onVote }) {
   const { total, rows } = pollResults(post);
   const showResults = vote !== undefined || canSee;
@@ -185,6 +217,7 @@ export default function PostCard({ post, api, me, admin, liked, saved, followed,
         <h3 className="font-display font-bold text-lg text-ink leading-snug">{post.title}</h3>
         <p className="mt-1 text-sm text-slate-700 whitespace-pre-wrap break-words leading-relaxed">{post.body}</p>
       </div>
+      {post.imageCount > 0 && <CaseImages post={post} api={api} />}
       {post.type === "poll" && <Poll post={post} vote={vote} canSee={mine} onVote={onVote} />}
       {post.type === "event" && (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-semibold text-gold-700 bg-gold-50 rounded-lg px-3 py-2">

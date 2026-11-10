@@ -1,5 +1,6 @@
 // Pure rules for the MeriDent Connect network feed: posts, comments, privacy checks, filtering. No Firebase here.
 import { SPECIALTIES, specialtyLabel } from "./rules.js";
+import { validateImages } from "./images.js";
 import { dateKey } from "../reminders.js";
 
 export const POST_TYPES = [
@@ -60,6 +61,14 @@ export const validatePost = (form = {}, now = new Date(), existing = null) => {
   if (issues.block.length) return { ok: false, error: `Remove ${issues.block[0]} before posting` };
   if ((type === "case" || type === "question") && form.deidentified !== true) return { ok: false, error: "Confirm that the patient cannot be identified from this post" };
   const post = { type, title, body };
+  let images = [];
+  if (form.images && form.images.length) {
+    if (type !== "case") return { ok: false, error: "Images can only be added to a case" };
+    const iv = validateImages(form.images);
+    if (!iv.ok) return iv;
+    images = iv.images;
+    post.imageCount = images.length;
+  }
   if (isPoll) post.pollOptions = options;
   if (form.tag) {
     if (!SPECIALTIES.some(([k]) => k === form.tag)) return { ok: false, error: "Choose a topic from the list" };
@@ -74,7 +83,7 @@ export const validatePost = (form = {}, now = new Date(), existing = null) => {
     post.eventDate = form.eventDate;
     post.venue = venue;
   }
-  return { ok: true, post, warnings: issues.warn };
+  return { ok: true, post, images, warnings: issues.warn };
 };
 
 /** The stored post. Name, qualification and specialty always come from the verified profile, never the form. */

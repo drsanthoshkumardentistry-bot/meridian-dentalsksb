@@ -241,7 +241,7 @@ service cloud.firestore {
       allow read: if isVerified();
       allow create: if isVerified()
                     && request.auth.uid == request.resource.data.authorId
-                    && request.resource.data.keys().hasOnly(['authorId', 'authorName', 'authorQualification', 'authorSpecialty', 'type', 'title', 'body', 'tag', 'eventDate', 'venue', 'pollOptions', 'v0', 'v1', 'v2', 'v3', 'v4', 'likeCount', 'commentCount', 'createdAt'])
+                    && request.resource.data.keys().hasOnly(['authorId', 'authorName', 'authorQualification', 'authorSpecialty', 'type', 'title', 'body', 'tag', 'eventDate', 'venue', 'pollOptions', 'v0', 'v1', 'v2', 'v3', 'v4', 'imageCount', 'likeCount', 'commentCount', 'createdAt'])
                     && request.resource.data.authorName == get(dentistDoc(request.auth.uid)).data.fullName
                     && request.resource.data.authorSpecialty == get(dentistDoc(request.auth.uid)).data.specialty
                     && request.resource.data.authorQualification == get(dentistDoc(request.auth.uid)).data.qualification
@@ -257,6 +257,9 @@ service cloud.firestore {
                            && (request.resource.data.pollOptions.size() >= 4 ? request.resource.data.v3 == 0 : !('v3' in request.resource.data))
                            && (request.resource.data.pollOptions.size() >= 5 ? request.resource.data.v4 == 0 : !('v4' in request.resource.data)))
                         : (!('pollOptions' in request.resource.data) && !('v0' in request.resource.data)))
+                    && (!('imageCount' in request.resource.data)
+                        || (request.resource.data.type == 'case' && request.resource.data.imageCount is int
+                            && request.resource.data.imageCount >= 1 && request.resource.data.imageCount <= 2))
                     && request.resource.data.likeCount == 0 && request.resource.data.commentCount == 0
                     && request.resource.data.createdAt == request.time;
       // Anyone verified can change only a counter, by one, and a like counter only together with the like itself.
@@ -314,6 +317,21 @@ service cloud.firestore {
                       && request.resource.data.option < get(/databases/$(database)/documents/connectPosts/$(postId)).data.pollOptions.size()
                       && request.resource.data.createdAt == request.time;
         allow update, delete: if false;
+      }
+      // Case images (up to two small JPEGs). Only the post's author adds them, and only as many as the post declares.
+      match /images/{imgId} {
+        allow read: if isVerified();
+        allow create: if isVerified()
+                      && get(/databases/$(database)/documents/connectPosts/$(postId)).data.authorId == request.auth.uid
+                      && (imgId == '0' ? get(/databases/$(database)/documents/connectPosts/$(postId)).data.get('imageCount', 0) >= 1
+                          : (imgId == '1' && get(/databases/$(database)/documents/connectPosts/$(postId)).data.get('imageCount', 0) >= 2))
+                      && request.resource.data.keys().hasOnly(['data', 'createdAt'])
+                      && request.resource.data.data is string
+                      && request.resource.data.data.size() <= 200000
+                      && request.resource.data.data.matches('^data:image/jpeg;base64,.+')
+                      && request.resource.data.createdAt == request.time;
+        allow update: if false;
+        allow delete: if (isVerified() && get(/databases/$(database)/documents/connectPosts/$(postId)).data.authorId == request.auth.uid) || isAdmin();
       }
       match /comments/{commentId} {
         allow read: if isVerified();

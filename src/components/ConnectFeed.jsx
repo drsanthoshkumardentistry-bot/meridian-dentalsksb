@@ -46,7 +46,7 @@ export default function ConnectFeed({ api, me, admin, showToast }) {
       <div className="space-y-4 min-w-0">
         <ActivityBanner activity={f.activity} onDismiss={f.markSeen} onView={() => { f.markSeen(); f.setFilter("mine"); }} />
         <Guidelines />
-        <Composer me={me} onSubmit={async (post) => { await f.publish(buildPost(post, api.uid, me)); showToast("Posted to the network"); }} />
+        <Composer me={me} onSubmit={async (post, images) => { await f.publish(buildPost(post, api.uid, me), images); showToast("Posted to the network"); }} />
 
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative flex-1 min-w-[12rem]">

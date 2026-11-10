@@ -149,13 +149,36 @@ export const listPosts = async (db, cursor) => {
   return { posts: snap.docs.map(withId), cursor: snap.docs.length === FEED_PAGE ? snap.docs[snap.docs.length - 1] : null };
 };
 
-export const createPost = async (db, post) => {
+export const createPost = async (db, post, images = []) => {
   const ref = doc(collection(db, POSTS));
   await setDoc(ref, { ...post, createdAt: serverTimestamp() });
+  try {
+    for (let i = 0; i < images.length; i++) {
+      await setDoc(doc(db, POSTS, ref.id, "images", String(i)), { data: images[i], createdAt: serverTimestamp() });
+    }
+  } catch (e) {
+    // Do not leave a case that promises pictures it does not have.
+    await Promise.all(images.map((_, i) => deleteDoc(doc(db, POSTS, ref.id, "images", String(i))).catch(() => {})));
+    await deleteDoc(ref).catch(() => {});
+    throw e;
+  }
   return ref.id;
 };
 
-export const deletePost = (db, postId) => deleteDoc(doc(db, POSTS, postId));
+export const getPostImages = async (db, postId, count) => {
+  const out = [];
+  for (let i = 0; i < Math.min(count || 0, 2); i++) {
+    const snap = await getDoc(doc(db, POSTS, postId, "images", String(i)));
+    if (snap.exists()) out.push(snap.data().data);
+  }
+  return out;
+};
+
+export const deletePost = async (db, postId, imageCount = 0) => {
+  // Pictures first: their rules look at the post, which must still exist.
+  await Promise.all(Array.from({ length: Math.min(imageCount, 2) }, (_, i) => deleteDoc(doc(db, POSTS, postId, "images", String(i))).catch(() => {})));
+  await deleteDoc(doc(db, POSTS, postId));
+};
 
 export const likedSet = async (db, uid, postIds) => {
   const found = await Promise.all(postIds.map(async (id) => ((await getDoc(doc(db, POSTS, id, "likes", uid))).exists() ? id : null)));
@@ -290,8 +313,9 @@ export const bindApi = (db, uid) => ({
   verify: (id) => verifyDentist(db, uid, id),
   suspend: (id) => suspendDentist(db, id),
   listPosts: (cursor) => listPosts(db, cursor),
-  createPost: (post) => createPost(db, post),
-  deletePost: (postId) => deletePost(db, postId),
+  createPost: (post, images) => createPost(db, post, images),
+  getPostImages: (postId, count) => getPostImages(db, postId, count),
+  deletePost: (postId, imageCount) => deletePost(db, postId, imageCount),
   likedSet: (ids) => likedSet(db, uid, ids),
   setLike: (postId, on) => setLike(db, uid, postId, on),
   listComments: (postId) => listComments(db, postId),

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { SPECIALTIES } from "../connect/rules.js";
 import { POST_TYPES, LIMITS, POLL_MAX, validatePost, warningAdvice, typeLabel, initials } from "../connect/feed.js";
 import { dateKey } from "../reminders.js";
+import { MAX_IMAGES, compressImage } from "../connect/images.js";
 
 const field = "w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-aqua-400";
 
@@ -11,13 +12,24 @@ const field = "w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text
  */
 export default function Composer({ me, existing = null, onSubmit, onCancel }) {
   const editing = Boolean(existing);
-  const blank = { type: "case", title: "", body: "", tag: "", eventDate: "", venue: "", deidentified: false, options: ["", ""] };
+  const blank = { type: "case", title: "", body: "", tag: "", eventDate: "", venue: "", deidentified: false, options: ["", ""], images: [] };
   const [form, setForm] = useState(editing
-    ? { type: existing.type, title: existing.title, body: existing.body, tag: existing.tag || "", eventDate: existing.eventDate || "", venue: existing.venue || "", deidentified: false, options: existing.pollOptions || ["", ""] }
+    ? { type: existing.type, title: existing.title, body: existing.body, tag: existing.tag || "", eventDate: existing.eventDate || "", venue: existing.venue || "", deidentified: false, options: existing.pollOptions || ["", ""], images: [] }
     : blank);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(editing);
+  const pick = async (e) => {
+    const files = [...(e.target.files || [])];
+    e.target.value = "";
+    setError("");
+    for (const file of files.slice(0, MAX_IMAGES - form.images.length)) {
+      try {
+        const url = await compressImage(file);
+        setForm((f) => (f.images.length < MAX_IMAGES ? { ...f, images: [...f.images, url] } : f));
+      } catch (err) { setError(err.message || "Could not use that photo."); }
+    }
+  };
   const needsConfirm = form.type === "case" || form.type === "question";
 
   const submit = async (e) => {
@@ -28,7 +40,7 @@ export default function Composer({ me, existing = null, onSubmit, onCancel }) {
     setBusy(true);
     setError("");
     try {
-      await onSubmit(v.post);
+      await onSubmit(v.post, v.images);
       if (!editing) { setForm(blank); setOpen(false); }
     } catch {
       setError(editing ? "Could not save your changes. Check your connection and try again." : "Could not post. Check your connection and try again.");
@@ -94,10 +106,30 @@ export default function Composer({ me, existing = null, onSubmit, onCancel }) {
           {SPECIALTIES.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
         </select>
       </div>
+      {form.type === "case" && !editing && (
+        <div>
+          <span className="block text-xs font-semibold text-slate-600 mb-1">Images (optional, up to {MAX_IMAGES})</span>
+          <div className="flex flex-wrap gap-2 items-center">
+            {form.images.map((src, i) => (
+              <div key={i} className="relative">
+                <img src={src} alt={`Attached image ${i + 1}`} className="h-20 w-20 object-cover rounded-lg border border-rule" />
+                <button type="button" aria-label={`Remove image ${i + 1}`} onClick={() => setForm({ ...form, images: form.images.filter((_, j) => j !== i) })} className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-ink text-white text-xs font-bold">×</button>
+              </div>
+            ))}
+            {form.images.length < MAX_IMAGES && (
+              <label className="h-20 w-20 rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-center text-[11px] font-semibold text-slate-500 cursor-pointer hover:bg-enamel">
+                Add image
+                <input type="file" accept="image/*" multiple className="sr-only" aria-label="Add an image" onChange={pick} />
+              </label>
+            )}
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">Photos are shrunk before upload. Crop out faces, names and ID cards first; only radiographs and intra-oral photos belong here.</p>
+        </div>
+      )}
       {needsConfirm && (
         <label className="flex items-start gap-2 text-xs text-slate-700 bg-gold-50 border border-gold-500/40 rounded-lg p-3">
           <input type="checkbox" className="mt-0.5" checked={form.deidentified} onChange={(e) => setForm({ ...form, deidentified: e.target.checked })} />
-          <span>I have removed the patient's name, phone number and anything else that could identify them. Any image I describe shows no face or name.</span>
+          <span>I have removed the patient's name, phone number and anything else that could identify them. Any image I attach shows no face, name or ID.</span>
         </label>
       )}
       {error && <p role="alert" className="text-xs text-rose-600 font-medium">{error}</p>}

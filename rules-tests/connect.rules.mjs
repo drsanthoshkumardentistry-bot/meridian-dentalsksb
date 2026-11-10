@@ -407,3 +407,64 @@ describe("polls", () => {
     await assertFails(updateDoc(doc(as(env, "alice"), "connectPosts", "poll1"), { ...edit, v0: 99 }));
   });
 });
+
+describe("case images", () => {
+  const JPG = "data:image/jpeg;base64," + "A".repeat(500);
+  const img = (over = {}) => ({ data: JPG, createdAt: serverTimestamp(), ...over });
+  const withImages = (n) => seedPost("c1", { imageCount: n });
+
+  it("a case can declare one or two images, never more, and only a case can", async () => {
+    const db = as(env, "alice");
+    await assertSucceeds(setDoc(doc(db, "connectPosts", "i1"), newPost({ imageCount: 1 })));
+    await assertSucceeds(setDoc(doc(db, "connectPosts", "i2"), newPost({ imageCount: 2 })));
+    await assertFails(setDoc(doc(db, "connectPosts", "i3"), newPost({ imageCount: 3 })));
+    await assertFails(setDoc(doc(db, "connectPosts", "i4"), newPost({ imageCount: 0 })));
+    await assertFails(setDoc(doc(db, "connectPosts", "i5"), newPost({ type: "question", imageCount: 1 })));
+  });
+  it("the author adds the images the post declares", async () => {
+    await withImages(2);
+    const db = as(env, "alice");
+    await assertSucceeds(setDoc(doc(db, "connectPosts", "c1", "images", "0"), img()));
+    await assertSucceeds(setDoc(doc(db, "connectPosts", "c1", "images", "1"), img()));
+  });
+  it("cannot add more images than declared, or at other ids", async () => {
+    await withImages(1);
+    const db = as(env, "alice");
+    await assertFails(setDoc(doc(db, "connectPosts", "c1", "images", "1"), img()));
+    await assertFails(setDoc(doc(db, "connectPosts", "c1", "images", "2"), img()));
+  });
+  it("others cannot add images to someone else's post", async () => {
+    await withImages(1);
+    await assertFails(setDoc(doc(as(env, "bob"), "connectPosts", "c1", "images", "0"), img()));
+    await assertFails(setDoc(doc(anon(env), "connectPosts", "c1", "images", "0"), img()));
+  });
+  it("rejects non-JPEG data, oversize data, extra fields and a forged time", async () => {
+    await withImages(1);
+    const ref = doc(as(env, "alice"), "connectPosts", "c1", "images", "0");
+    await assertFails(setDoc(ref, img({ data: "http://evil.example/x.jpg" })));
+    await assertFails(setDoc(ref, img({ data: "data:image/jpeg;base64," + "A".repeat(200001) })));
+    await assertFails(setDoc(ref, img({ extra: 1 })));
+    await assertFails(setDoc(ref, img({ createdAt: new Date() })));
+  });
+  it("verified dentists can read images; pending and signed-out cannot", async () => {
+    await withImages(1);
+    await seed(env, (db) => setDoc(doc(db, "connectPosts", "c1", "images", "0"), { data: JPG, createdAt: new Date() }));
+    await assertSucceeds(getDoc(doc(as(env, "bob"), "connectPosts", "c1", "images", "0")));
+    await assertFails(getDoc(doc(as(env, "pat"), "connectPosts", "c1", "images", "0")));
+    await assertFails(getDoc(doc(anon(env), "connectPosts", "c1", "images", "0")));
+  });
+  it("images cannot be edited; the author and staff can remove them, others cannot", async () => {
+    await withImages(1);
+    await seed(env, (db) => setDoc(doc(db, "connectPosts", "c1", "images", "0"), { data: JPG, createdAt: new Date() }));
+    const at = (u) => doc(as(env, u), "connectPosts", "c1", "images", "0");
+    await assertFails(updateDoc(at("alice"), { data: JPG }));
+    await assertFails(deleteDoc(at("bob")));
+    await assertSucceeds(deleteDoc(at("admin")));
+    await seed(env, (db) => setDoc(doc(db, "connectPosts", "c1", "images", "0"), { data: JPG, createdAt: new Date() }));
+    await assertSucceeds(deleteDoc(at("alice")));
+  });
+  it("an author cannot add an image count when editing their post", async () => {
+    await seedPost("c2");
+    await assertFails(updateDoc(doc(as(env, "alice"), "connectPosts", "c2"), { imageCount: 2, editedAt: serverTimestamp() }));
+  });
+});
