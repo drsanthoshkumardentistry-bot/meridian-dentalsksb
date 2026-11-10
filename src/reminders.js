@@ -167,7 +167,7 @@ export const lastVisitDate = (patient, appointments = [], invoices = [], now = n
   return best;
 };
 
-const hasUpcomingAppointment = (patient, appointments, now) => {
+export const hasUpcomingAppointment = (patient, appointments, now) => {
   const todayKey = dateKey(now);
   return appointments.some((a) => {
     if (String(a.patientId) !== String(patient.id)) return false;
