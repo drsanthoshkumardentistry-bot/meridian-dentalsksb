@@ -127,3 +127,10 @@ html {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---- App shell: display face for page titles ---- */
+main h1,
+main h2 {
+  font-family: "Bricolage Grotesque", Figtree, ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
