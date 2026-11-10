@@ -6,11 +6,11 @@ const PERMANENT_LOWER = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36,
 const DECIDUOUS_UPPER = [55, 54, 53, 52, 51, 61, 62, 63, 64, 65];
 const DECIDUOUS_LOWER = [85, 84, 83, 82, 81, 71, 72, 73, 74, 75];
 
-function Tooth({ t, code, activeLabel, label, onTap }) {
+function Tooth({ t, code, activeLabel, label, onTap, planned }) {
   const info = toothInfo(t.num);
   const colors = STATUS_COLORS[code || "HLT"] || STATUS_COLORS.HLT;
   const charted = Boolean(code);
-  const aria = `Tooth ${t.num}, ${info.name}, ${charted ? label : "healthy"}. Press to mark as ${activeLabel}.`;
+  const aria = `Tooth ${t.num}, ${info.name}, ${charted ? label : "healthy"}${planned ? ", treatment planned" : ""}. Press to mark as ${activeLabel}.`;
   const press = (e) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -43,6 +43,19 @@ function Tooth({ t, code, activeLabel, label, onTap }) {
           strokeWidth={code === "FRC" ? 2.6 : 1.7}
           strokeDasharray={colors.dash}
         />
+        {planned && (
+          <rect
+            x={-t.w / 2 - 4}
+            y={-t.h / 2 - 4}
+            width={t.w + 8}
+            height={t.h + 8}
+            rx={r + 3}
+            fill="none"
+            stroke="#1d4ed8"
+            strokeWidth="1.8"
+            strokeDasharray="4 3"
+          />
+        )}
         {info.type === "molar" && (
           <path d={`M${-t.w / 2 + 6} 0 H${t.w / 2 - 6} M0 ${-t.h / 2 + 6} V${t.h / 2 - 6}`} stroke={colors.stroke} strokeOpacity="0.35" strokeWidth="1" fill="none" />
         )}
@@ -78,7 +91,8 @@ export default function Odontogram({
   onTap,
   onClear,
   isDeciduous,
-  onToggleDeciduous
+  onToggleDeciduous,
+  plannedTeeth = new Set()
 }) {
   const labelOf = (code) => palette.find((p) => p.id === code)?.label || code;
   const active = palette.find((p) => p.id === activeStatus) || palette[0];
@@ -154,10 +168,19 @@ export default function Odontogram({
           <text x="10" y="212" fontSize="11" fill="#6b7fa8">Patient's right</text>
           <text x="590" y="212" textAnchor="end" fontSize="11" fill="#6b7fa8">Patient's left</text>
           {[...upper, ...lower].map((t) => (
-            <Tooth key={t.num} t={t} code={conditions[t.num]} label={labelOf(conditions[t.num])} activeLabel={active.label} onTap={onTap} />
+            <Tooth key={t.num} t={t} code={conditions[t.num]} label={labelOf(conditions[t.num])} activeLabel={active.label} onTap={onTap} planned={plannedTeeth.has(t.num)} />
           ))}
         </svg>
       </div>
+
+      {plannedTeeth.size > 0 && (
+        <p className="flex items-center gap-2 text-xs text-slate-600">
+          <svg width="16" height="16" aria-hidden="true">
+            <rect x="1.5" y="1.5" width="13" height="13" rx="4.5" fill="none" stroke="#1d4ed8" strokeWidth="1.6" strokeDasharray="3 2.5" />
+          </svg>
+          Dashed blue outline: treatment planned for tooth {[...plannedTeeth].sort((a, b) => a - b).join(", ")}. Open the Treatment Plan tab for the estimate.
+        </p>
+      )}
 
       {/* Findings summary */}
       <div>

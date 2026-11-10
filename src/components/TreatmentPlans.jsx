@@ -4,10 +4,11 @@ import { TAX_CATEGORIES, formatINR } from "../billing.js";
 import { whatsappLink, hasWhatsAppConsent } from "../reminders.js";
 import {
   MAX_PLAN_ITEMS, validatePlan, createPlan, planTotals, approvePlan, declinePlan, canBill,
-  buildPlanMessage, buildPlanHtml,
+  buildPlanMessage, buildPlanHtml, suggestPlanItems,
 } from "../plans.js";
 
 const uid = (p) => `${p}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+const blankId = () => uid("PI");
 const blankItem = () => ({ id: uid("PI"), description: "", tooth: "", amount: "", taxCategory: "therapeutic" });
 const blankDraft = () => ({ title: "", items: [blankItem()], discount: "", notes: "" });
 
@@ -88,7 +89,8 @@ export default function TreatmentPlans({ patient, practiceProfile, onChange, onB
                 aria-label={`Plan item ${i + 1} tooth`}
                 value={it.tooth}
                 onChange={(e) => setItem(it.id, { tooth: e.target.value })}
-                placeholder="Tooth"
+                placeholder="Tooth, e.g. 16"
+                inputMode="numeric"
                 className="px-3 py-2 border border-slate-300 rounded-lg bg-white"
               />
               <input
@@ -125,15 +127,32 @@ export default function TreatmentPlans({ patient, practiceProfile, onChange, onB
               )}
             </div>
           ))}
-          {draft.items.length < MAX_PLAN_ITEMS && (
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            {draft.items.length < MAX_PLAN_ITEMS && (
+              <button
+                type="button"
+                onClick={() => setDraft({ ...draft, items: [...draft.items, blankItem()] })}
+                className="text-xs font-bold text-blue-700 inline-flex items-center gap-1"
+              >
+                <Plus className="w-3.5 h-3.5" /> Add treatment
+              </button>
+            )}
             <button
               type="button"
-              onClick={() => setDraft({ ...draft, items: [...draft.items, blankItem()] })}
+              onClick={() => {
+                const found = suggestPlanItems(patient.toothConditions, blankId);
+                if (!found.length) return showToast("Nothing on the chart needs treatment yet. Mark caries, fractures, calculus or missing teeth first.");
+                const used = new Set(draft.items.filter((x) => x.tooth || x.description).map((x) => `${x.description}|${x.tooth}`));
+                const fresh = found.filter((x) => !used.has(`${x.description}|${x.tooth}`));
+                const kept = draft.items.filter((x) => x.description || x.tooth || x.amount);
+                setDraft({ ...draft, items: [...kept, ...fresh].slice(0, MAX_PLAN_ITEMS) });
+                showToast("Added treatments from the chart. Enter an amount for each.");
+              }}
               className="text-xs font-bold text-blue-700 inline-flex items-center gap-1"
             >
-              <Plus className="w-3.5 h-3.5" /> Add treatment
+              Suggest from chart
             </button>
-          )}
+          </div>
           <div className="grid grid-cols-2 gap-2">
             <input
               type="number"

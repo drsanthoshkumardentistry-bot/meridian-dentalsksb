@@ -325,4 +325,32 @@ describe("demographics and required data", () => {
     fireEvent.click(tooth16());
     await waitFor(() => expect(stored("patients")[0].toothConditions[16]).toBeUndefined());
   });
+
+  it("plans can be suggested from the chart, and planned teeth show on the odontogram", async () => {
+    localStorage.setItem(KEY("patients"), JSON.stringify([
+      { id: "P-1", name: "Link Patient", phone: "9876543210", age: "30", gender: "Male", toothConditions: { 16: "CAR", 36: "SCL", 11: "RES" }, registeredDate: "01/11/2026" },
+    ]));
+    await openApp();
+    nav("Patients & Odontogram");
+    fireEvent.click(await screen.findByText("Link Patient"));
+    fireEvent.click(await screen.findByText("Treatment Plan"));
+    fireEvent.click(await screen.findByText(/New plan/i));
+    fireEvent.click(screen.getByText("Suggest from chart"));
+    expect(screen.getByLabelText("Plan item 1 tooth").value).toBe("16");
+    expect(screen.getByLabelText("Plan item 2 tooth").value).toBe("36");
+    expect(screen.queryByLabelText("Plan item 3 tooth")).toBeNull();
+    type(screen.getByLabelText("Plan title"), "Phase 1");
+    type(screen.getByLabelText("Plan item 1 amount"), "1200");
+    type(screen.getByLabelText("Plan item 2 amount"), "800");
+    type(screen.getByLabelText("Plan item 2 tooth"), "36, 77");
+    fireEvent.click(screen.getByText("Save plan"));
+    expect(await screen.findByText(/valid FDI numbers/i)).toBeTruthy();
+    type(screen.getByLabelText("Plan item 2 tooth"), "36, 37");
+    fireEvent.click(screen.getByText("Save plan"));
+    await waitFor(() => expect(stored("patients")[0].plans?.length).toBe(1));
+    fireEvent.click(screen.getByText("32-Tooth Odontogram"));
+    expect(await screen.findByLabelText(/^Tooth 16,.*treatment planned/)).toBeTruthy();
+    expect(screen.getByLabelText(/^Tooth 37,.*treatment planned/)).toBeTruthy();
+    expect(screen.getByLabelText(/^Tooth 11, /).getAttribute("aria-label")).not.toMatch(/planned/);
+  });
 });
