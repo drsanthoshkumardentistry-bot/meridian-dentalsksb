@@ -48,7 +48,7 @@ export default function BranchesCard({ branches, data, onChange, newId, onTransf
               <td className="tabular">{r.patients}</td>
               <td className="tabular">{r.todayAppointments}</td>
               <td className="tabular">{formatINR(r.billedThisMonthP)}</td>
-              <td className="text-right"><button type="button" aria-label={`Remove ${r.name}`} onClick={() => apply(removeBranch(branches, r.id, data))} className="text-slate-400 hover:text-rose-600 font-semibold">Remove</button></td>
+              <td className="text-right"><button type="button" aria-label={`Remove ${r.name}`} onClick={() => apply(removeBranch(branches, r.id, data))} className="text-slate-500 hover:text-rose-600 font-semibold">Remove</button></td>
             </tr>
           ))}
         </tbody>

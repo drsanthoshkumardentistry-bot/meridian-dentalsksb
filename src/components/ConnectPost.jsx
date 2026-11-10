@@ -104,7 +104,7 @@ function Thread({ post, api, me, admin, showToast, onCount, onAccept }) {
                       <button type="button" onClick={() => onAccept(post, isAnswer ? "" : c.id)} className="text-aqua-700 hover:underline font-semibold">{isAnswer ? "Remove answer mark" : "Mark as answer"}</button>
                     )}
                     {(c.authorId === api.uid || admin)
-                      ? <button type="button" onClick={() => remove(c)} className="text-slate-400 hover:text-rose-600 font-semibold">Delete</button>
+                      ? <button type="button" onClick={() => remove(c)} className="text-slate-500 hover:text-rose-600 font-semibold">Delete</button>
                       : <ReportMenu label={`Report comment by ${c.authorName}`} onPick={(r) => report(c, r)} />}
                   </div>
                 </div>
@@ -196,7 +196,7 @@ export default function PostCard({ post, api, me, admin, liked, saved, followed,
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-x-2 text-sm">
             <button type="button" onClick={() => onAuthor(author)} className="font-bold text-ink hover:text-brand-700 hover:underline text-left">{post.authorName}</button>
-            <BadgeCheck className="w-4 h-4 text-aqua-500" aria-label="Verified dentist" />
+            <BadgeCheck className="w-4 h-4 text-aqua-700" aria-label="Verified dentist" />
             {post.authorQualification && <span className="text-slate-500 text-xs">{post.authorQualification}</span>}
           </div>
           <div className="text-xs text-slate-500">{specialtyLabel(post.authorSpecialty)} · {timeAgo(toMillis(post.createdAt))}{post.editedAt ? " · edited" : ""}</div>

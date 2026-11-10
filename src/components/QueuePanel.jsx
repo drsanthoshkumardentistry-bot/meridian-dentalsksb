@@ -55,7 +55,7 @@ export default function QueuePanel({ queue, today, onAdd, onStatus, onRemove, no
                 {e.status === Q_STATUS.WAITING && <button type="button" onClick={() => onStatus(e, Q_STATUS.IN_CHAIR)} className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold">Call in</button>}
                 {e.status === Q_STATUS.IN_CHAIR && <button type="button" onClick={() => onStatus(e, Q_STATUS.DONE)} className="px-3 py-1.5 rounded-lg bg-ink bg-[#0b1b3a] text-white text-[11px] font-semibold">Mark done</button>}
                 {e.status === Q_STATUS.WAITING && <button type="button" onClick={() => onStatus(e, Q_STATUS.LEFT)} className="px-2 py-1.5 text-slate-500 hover:text-slate-700 text-[11px] font-semibold">Left</button>}
-                {closed && <button type="button" onClick={() => onRemove(e)} className="px-2 py-1.5 text-slate-400 hover:text-rose-600 text-[11px] font-semibold">Remove</button>}
+                {closed && <button type="button" onClick={() => onRemove(e)} className="px-2 py-1.5 text-slate-500 hover:text-rose-600 text-[11px] font-semibold">Remove</button>}
               </li>
             );
           })}

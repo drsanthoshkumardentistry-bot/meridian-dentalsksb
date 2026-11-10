@@ -76,7 +76,7 @@ export default function Composer({ me, existing = null, onSubmit, onCancel }) {
       <div>
         <label htmlFor="post-body" className="block text-xs font-semibold text-slate-600 mb-1">{form.type === "poll" ? "Details (optional)" : "Details"}</label>
         <textarea id="post-body" rows={4} className={field} maxLength={LIMITS.body} value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} placeholder={form.type === "case" ? "Age and sex, history, findings, what you tried, and what you want to know." : ""} />
-        <div className="text-[11px] text-slate-400 text-right">{form.body.length}/{LIMITS.body}</div>
+        <div className="text-[11px] text-slate-500 text-right">{form.body.length}/{LIMITS.body}</div>
       </div>
       {form.type === "poll" && (
         <fieldset className="space-y-2">

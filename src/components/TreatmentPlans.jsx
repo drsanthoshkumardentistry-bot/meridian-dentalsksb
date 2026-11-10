@@ -201,7 +201,7 @@ export default function TreatmentPlans({ patient, practiceProfile, onChange, onB
                   type="button"
                   aria-label={`Remove plan item ${i + 1}`}
                   onClick={() => setDraft({ ...draft, items: draft.items.filter((x) => x.id !== it.id) })}
-                  className="p-1.5 text-slate-400 hover:text-rose-500"
+                  className="p-1.5 text-slate-500 hover:text-rose-500"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -355,7 +355,7 @@ export default function TreatmentPlans({ patient, practiceProfile, onChange, onB
                   type="button"
                   aria-label={`Delete plan ${plan.title}`}
                   onClick={() => removePlan(plan)}
-                  className="ml-auto p-1.5 text-slate-400 hover:text-rose-500"
+                  className="ml-auto p-1.5 text-slate-500 hover:text-rose-500"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

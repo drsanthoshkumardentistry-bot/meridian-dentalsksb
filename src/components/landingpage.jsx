@@ -344,7 +344,7 @@ export default function LandingPage({
   };
 
   const inputClass =
-    "w-full px-3.5 py-2.5 border border-rule rounded-lg text-sm text-ink bg-white placeholder:text-slate-400";
+    "w-full px-3.5 py-2.5 border border-rule rounded-lg text-sm text-ink bg-white placeholder:text-slate-500";
 
   return (
     <div className="min-h-screen bg-white text-ink font-sans antialiased">
@@ -382,8 +382,8 @@ export default function LandingPage({
       <section id="top" className="relative overflow-hidden bg-white border-b border-rule">
         <div className="relative max-w-6xl mx-auto px-5 pt-14 pb-20 lg:pt-28 lg:pb-32 grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-14 lg:gap-16 items-center">
           <div className="space-y-6">
-            <p className="inline-flex items-center gap-2 text-sm font-medium text-brand-700 bg-brand-50 px-3 py-1 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-600" aria-hidden="true" />
+            <p className="inline-flex items-center gap-2 text-sm font-medium text-aqua-700 bg-aqua-50 px-3 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-aqua-500" aria-hidden="true" />
               Free during early access for dental clinics
             </p>
 
@@ -577,7 +577,7 @@ export default function LandingPage({
           <ol className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-6">
             {STEPS.map((step) => (
               <li key={step.n} className="md:border-t md:border-rule md:pt-5">
-                <span className="font-display font-bold text-3xl text-brand-600">{step.n}</span>
+                <span className="font-display font-bold text-3xl text-aqua-700">{step.n}</span>
                 <h3 className="mt-2 font-display font-bold text-lg">{step.title}</h3>
                 <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{step.text}</p>
               </li>
@@ -607,21 +607,21 @@ export default function LandingPage({
       <section className="max-w-6xl mx-auto px-5 pb-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
           <div className="flex gap-3.5">
-            <Lock className="w-5 h-5 mt-0.5 shrink-0 text-brand-600" aria-hidden="true" />
+            <Lock className="w-5 h-5 mt-0.5 shrink-0 text-aqua-700" aria-hidden="true" />
             <div>
               <h3 className="font-bold">Private workspace</h3>
               <p className="mt-1 text-sm text-slate-600 leading-relaxed">Each clinic's records are stored under its own sign-in and are not shared with other clinics. Only a verified email can open a workspace.</p>
             </div>
           </div>
           <div className="flex gap-3.5">
-            <Cloud className="w-5 h-5 mt-0.5 shrink-0 text-brand-600" aria-hidden="true" />
+            <Cloud className="w-5 h-5 mt-0.5 shrink-0 text-aqua-700" aria-hidden="true" />
             <div>
               <h3 className="font-bold">Cloud backup</h3>
               <p className="mt-1 text-sm text-slate-600 leading-relaxed">Your data is saved to the cloud and available on any device where you sign in.</p>
             </div>
           </div>
           <div className="flex gap-3.5">
-            <ShieldCheck className="w-5 h-5 mt-0.5 shrink-0 text-brand-600" aria-hidden="true" />
+            <ShieldCheck className="w-5 h-5 mt-0.5 shrink-0 text-aqua-700" aria-hidden="true" />
             <div>
               <h3 className="font-bold">Your data, your control</h3>
               <p className="mt-1 text-sm text-slate-600 leading-relaxed">Patients can opt out of WhatsApp messages, and you can ask us any time to export or delete your clinic's records.</p>
@@ -706,7 +706,7 @@ export default function LandingPage({
       <footer className="bg-white border-t border-rule text-slate-500 py-10 px-5 text-center text-sm space-y-1.5">
         <p className="font-display font-bold text-ink text-base">MeriDent</p>
         <p>StartupTN ref: STN99974 | MSME Udyam: UDYAM-TN-04-0139569</p>
-        <p className="text-slate-400 pt-2">© 2026 MeriDent. All rights reserved.</p>
+        <p className="text-slate-500 pt-2">© 2026 MeriDent. All rights reserved.</p>
       </footer>
     </div>
   );

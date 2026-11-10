@@ -95,7 +95,7 @@ export default function GlobalSearch({ patients, appointments, invoices, onPick 
 
   return (
     <div ref={boxRef} className="relative flex-1 max-w-md min-w-0">
-      <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" aria-hidden="true" />
+      <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5 pointer-events-none" aria-hidden="true" />
       <input
         ref={inputRef}
         type="search"

@@ -55,7 +55,7 @@ export default function Assessments({ patient, onSave, onRemove, newId }) {
         </section>
       </div>
       {error && <p role="alert" className="text-xs text-rose-600 font-medium">{error}</p>}
-      <p className="text-[11px] text-slate-400">Screening aids only. The dentist makes the final diagnosis.</p>
+      <p className="text-[11px] text-slate-500">Screening aids only. The dentist makes the final diagnosis.</p>
 
       <section aria-label="Assessment history" className="space-y-2">
         <h3 className="text-sm font-bold text-slate-900">History</h3>
@@ -65,7 +65,7 @@ export default function Assessments({ patient, onSave, onRemove, newId }) {
               <div className="font-semibold text-slate-900">{a.type === "caries" ? `Caries risk: ${a.result.level}` : `BPE: highest score ${a.result.highest}${a.result.furcation ? " (furcation)" : ""}`} <span className="font-normal text-slate-500">· {fmt(a.date)}</span></div>
               <div className="text-slate-600 mt-0.5">{a.type === "caries" ? `Recall every ${a.result.recallMonths} months. ${a.result.advice.join(". ")}.` : a.result.guidance}</div>
             </div>
-            <button type="button" onClick={() => onRemove(a)} aria-label="Delete assessment" className="text-slate-400 hover:text-rose-600 font-semibold">Delete</button>
+            <button type="button" onClick={() => onRemove(a)} aria-label="Delete assessment" className="text-slate-500 hover:text-rose-600 font-semibold">Delete</button>
           </div>
         ))}
       </section>
