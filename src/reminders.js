@@ -49,6 +49,14 @@ export const formatDateLong = (key) => {
   });
 };
 
+/** Patients can opt out of WhatsApp. Records without a consent object (older data) are treated as allowed. */
+export const hasWhatsAppConsent = (patient) => !patient || !patient.consent || patient.consent.whatsapp !== false;
+
+const consentFor = (patients, patientId) => {
+  if (!patientId) return true;
+  return hasWhatsAppConsent(patients.find((p) => String(p.id) === String(patientId)));
+};
+
 const INACTIVE = new Set(["cancelled", "canceled", "completed", "no show", "no-show"]);
 
 /**
@@ -57,7 +65,7 @@ const INACTIVE = new Set(["cancelled", "canceled", "completed", "no show", "no-s
  * - kind "sameDay": the appointment is today and has not started yet
  * Skips cancelled/completed visits, invalid phone numbers and reminders already sent.
  */
-export const dueAppointmentReminders = (appointments = [], now = new Date()) => {
+export const dueAppointmentReminders = (appointments = [], now = new Date(), patients = []) => {
   const today = dateKey(now);
   const tomorrow = dateKey(addDays(now, 1));
   const nowHHMM = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
@@ -65,6 +73,7 @@ export const dueAppointmentReminders = (appointments = [], now = new Date()) => 
   for (const appt of appointments) {
     if (!appt || INACTIVE.has(String(appt.status || "").toLowerCase())) continue;
     if (!whatsappNumber(appt.phone)) continue;
+    if (!consentFor(patients, appt.patientId)) continue;
     const sent = appt.reminders || {};
     if (appt.date === tomorrow && !sent.dayBefore) due.push({ appt, kind: "dayBefore" });
     else if (appt.date === today && String(appt.time || "") >= nowHHMM && !sent.sameDay) due.push({ appt, kind: "sameDay" });
@@ -93,6 +102,7 @@ export const duePaymentReminders = (invoices = [], patients = [], now = new Date
     if (!inv || balancePaise(inv) <= 0) continue;
     const phone = (byId.get(String(inv.patientId)) || {}).phone || inv.phone || "";
     if (!whatsappNumber(phone)) continue;
+    if (!consentFor(patients, inv.patientId)) continue;
     if (inv.lastReminderAt && new Date(inv.lastReminderAt).getTime() > cutoff) continue;
     due.push({ inv, phone });
   }
@@ -111,3 +121,88 @@ export const markAppointmentReminded = (appt, kind, now = new Date()) => ({
 });
 
 export const markInvoiceReminded = (inv, now = new Date()) => ({ ...inv, lastReminderAt: now.toISOString() });
+
+/* ----------------------------- Patient recall ----------------------------- */
+
+export const RECALL_OPTIONS = [3, 6, 12];
+export const DEFAULT_RECALL_MONTHS = 6;
+
+/** Reads "2026-11-10" (date inputs) and "10/11/2026" (en-IN dates saved by the app). */
+export const parseAnyDate = (value) => {
+  const str = String(value || "").trim();
+  let m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(str);
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12);
+  m = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/.exec(str);
+  if (m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), 12);
+  return null;
+};
+
+/** Whole months from `from` to `to` (a month counts once the same day-of-month has been reached). */
+export const monthsBetween = (from, to) => {
+  let months = (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
+  if (to.getDate() < from.getDate()) months -= 1;
+  return months;
+};
+
+/**
+ * Most recent visit on or before today: past appointments (not cancelled / no show),
+ * invoices for the patient, else the registration date.
+ */
+export const lastVisitDate = (patient, appointments = [], invoices = [], now = new Date()) => {
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+  let best = null;
+  const consider = (d) => {
+    if (d && d <= today && (!best || d > best)) best = d;
+  };
+  for (const a of appointments) {
+    if (String(a.patientId) !== String(patient.id)) continue;
+    const status = String(a.status || "").toLowerCase();
+    if (status === "cancelled" || status === "canceled" || status === "no show" || status === "no-show") continue;
+    consider(parseAnyDate(a.date));
+  }
+  for (const inv of invoices) {
+    if (String(inv.patientId) === String(patient.id)) consider(parseAnyDate(inv.date));
+  }
+  if (!best) consider(parseAnyDate(patient.registeredDate));
+  return best;
+};
+
+const hasUpcomingAppointment = (patient, appointments, now) => {
+  const todayKey = dateKey(now);
+  return appointments.some((a) => {
+    if (String(a.patientId) !== String(patient.id)) return false;
+    const status = String(a.status || "").toLowerCase();
+    if (status === "cancelled" || status === "canceled") return false;
+    return String(a.date || "") >= todayKey;
+  });
+};
+
+/**
+ * Patients due for a recall: last visit at least `recallMonths` ago (default 6),
+ * no appointment already booked, WhatsApp allowed, valid mobile, not nudged in the last 30 days.
+ * Oldest visits first.
+ */
+export const dueRecalls = (patients = [], appointments = [], invoices = [], now = new Date(), snoozeDays = 30) => {
+  const cutoff = now.getTime() - snoozeDays * 24 * 60 * 60 * 1000;
+  const due = [];
+  for (const patient of patients) {
+    if (!patient || !whatsappNumber(patient.phone) || !hasWhatsAppConsent(patient)) continue;
+    if (patient.lastRecallAt && new Date(patient.lastRecallAt).getTime() > cutoff) continue;
+    if (hasUpcomingAppointment(patient, appointments, now)) continue;
+    const last = lastVisitDate(patient, appointments, invoices, now);
+    if (!last) continue;
+    const months = monthsBetween(last, now);
+    const every = RECALL_OPTIONS.includes(Number(patient.recallMonths)) ? Number(patient.recallMonths) : DEFAULT_RECALL_MONTHS;
+    if (months >= every) due.push({ patient, lastVisit: last, months });
+  }
+  return due.sort((a, b) => a.lastVisit - b.lastVisit);
+};
+
+export const buildRecallMessage = ({ clinicName, clinicPhone, patient, months }) =>
+  `Hello ${patient.name},\n\n` +
+  `It has been ${months} months since your last visit to ${clinicName || "our dental clinic"}. ` +
+  `A routine check-up and cleaning helps catch problems early.\n\n` +
+  `Reply to this message${clinicPhone ? ` or call ${clinicPhone}` : ""} to book a convenient time.\n\n` +
+  `Thank you.`;
+
+export const markPatientRecalled = (patient, now = new Date()) => ({ ...patient, lastRecallAt: now.toISOString() });
