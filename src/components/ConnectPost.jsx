@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { specialtyLabel } from "../connect/rules.js";
 import {
-  typeLabel, REPORT_REASONS, LIMITS, validateComment, timeAgo, initials, eventIcs, eventIcsName, eventWhen, canAccept, isAnswered, postPatch,
+  typeLabel, pollResults, REPORT_REASONS, LIMITS, validateComment, timeAgo, initials, eventIcs, eventIcsName, eventWhen, canAccept, isAnswered, postPatch,
 } from "../connect/feed.js";
 import { toMillis } from "../connect/api.js";
 import Composer from "./ConnectComposer.jsx";
@@ -14,6 +14,7 @@ const field = "w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text
 const TYPE_TONE = {
   case: "bg-brand-50 text-brand-700 border-brand-100",
   question: "bg-aqua-50 text-aqua-700 border-aqua-100",
+  poll: "bg-sky-100 text-brand-700 border-sky-200",
   update: "bg-slate-100 text-ink border-slate-200",
   event: "bg-gold-50 text-gold-700 border-gold-500/40",
 };
@@ -121,8 +122,26 @@ function Thread({ post, api, me, admin, showToast, onCount, onAccept }) {
   );
 }
 
+function Poll({ post, vote, canSee, onVote }) {
+  const { total, rows } = pollResults(post);
+  const showResults = vote !== undefined || canSee;
+  return (
+    <div role="group" aria-label="Poll" className="space-y-2">
+      {rows.map((r) => showResults ? (
+        <div key={r.index} className={`relative overflow-hidden rounded-lg border px-3 py-2 text-sm ${vote === r.index ? "border-brand-500" : "border-slate-200"}`}>
+          <div className="absolute inset-y-0 left-0 bg-sky-100" style={{ width: `${r.pct}%` }} aria-hidden="true" />
+          <div className="relative flex justify-between gap-3"><span className={vote === r.index ? "font-bold text-ink" : "text-slate-800"}>{r.label}{vote === r.index ? " (your vote)" : ""}</span><span className="font-semibold text-slate-600 tabular">{r.pct}% · {r.votes}</span></div>
+        </div>
+      ) : (
+        <button key={r.index} type="button" onClick={() => onVote(post, r.index)} className="w-full text-left rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-sky-50 hover:border-brand-500">{r.label}</button>
+      ))}
+      <p className="text-xs text-slate-500">{total} {total === 1 ? "vote" : "votes"}{showResults ? "" : ". Vote to see the results."}</p>
+    </div>
+  );
+}
+
 /** One post in the feed. All changes go through the callbacks, so every list stays in step. */
-export default function PostCard({ post, api, me, admin, liked, saved, followed, onLike, onSave, onFollow, onDelete, onEdit, onAccept, onCount, onAuthor, showToast }) {
+export default function PostCard({ post, api, me, admin, liked, saved, followed, vote, onVote, onLike, onSave, onFollow, onDelete, onEdit, onAccept, onCount, onAuthor, showToast }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const mine = post.authorId === api.uid;
@@ -166,6 +185,7 @@ export default function PostCard({ post, api, me, admin, liked, saved, followed,
         <h3 className="font-display font-bold text-lg text-ink leading-snug">{post.title}</h3>
         <p className="mt-1 text-sm text-slate-700 whitespace-pre-wrap break-words leading-relaxed">{post.body}</p>
       </div>
+      {post.type === "poll" && <Poll post={post} vote={vote} canSee={mine} onVote={onVote} />}
       {post.type === "event" && (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-semibold text-gold-700 bg-gold-50 rounded-lg px-3 py-2">
           <span className="inline-flex items-center gap-1.5"><CalendarDays className="w-4 h-4" />{new Date(`${post.eventDate}T00:00:00`).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "long", year: "numeric" })}{eventWhen(post.eventDate) ? ` · ${eventWhen(post.eventDate)}` : ""}</span>

@@ -257,6 +257,22 @@ export const setSaved = async (db, uid, postId, on) => {
 export const countFollowers = async (db, uid) =>
   (await getCountFromServer(query(collection(db, FOLLOWS), where("followeeId", "==", uid)))).data().count;
 
+/** One vote per dentist: the vote record and the option's counter are written together. */
+export const castVote = async (db, uid, postId, option) => {
+  const batch = writeBatch(db);
+  batch.set(doc(db, POSTS, postId, "votes", uid), { option, createdAt: serverTimestamp() });
+  batch.update(doc(db, POSTS, postId), { [`v${option}`]: increment(1) });
+  await batch.commit();
+};
+/** Which option this dentist picked on each poll, as { postId: optionIndex }. */
+export const myVotes = async (db, uid, postIds) => {
+  const found = await Promise.all(postIds.map(async (id) => {
+    const snap = await getDoc(doc(db, POSTS, id, "votes", uid));
+    return snap.exists() ? [id, snap.data().option] : null;
+  }));
+  return Object.fromEntries(found.filter(Boolean));
+};
+
 /** Bind everything to one db and uid for the UI. */
 export const bindApi = (db, uid) => ({
   enabled: Boolean(db && uid),
@@ -295,4 +311,6 @@ export const bindApi = (db, uid) => ({
   listSaved: () => listSaved(db, uid),
   setSaved: (postId, on) => setSaved(db, uid, postId, on),
   countFollowers: () => countFollowers(db, uid),
+  vote: (postId, option) => castVote(db, uid, postId, option),
+  myVotes: (postIds) => myVotes(db, uid, postIds),
 });

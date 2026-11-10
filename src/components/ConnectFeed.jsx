@@ -31,7 +31,7 @@ export default function ConnectFeed({ api, me, admin, showToast }) {
 
   const card = (p) => (
     <PostCard key={p.id} post={p} api={api} me={me} admin={admin}
-      liked={f.liked.has(p.id)} saved={f.saved.has(p.id)} followed={f.following.has(p.authorId)}
+      vote={f.votes[p.id]} onVote={f.vote} liked={f.liked.has(p.id)} saved={f.saved.has(p.id)} followed={f.following.has(p.authorId)}
       onLike={f.like} onSave={f.save} onFollow={f.follow} onDelete={(post) => { if (window.confirm("Delete this post and its comments?")) f.remove(post); }}
       onEdit={f.edit} onAccept={f.accept} onCount={(id, d) => f.bump(id, "commentCount", d)} onAuthor={f.openAuthor} showToast={showToast} />
   );
