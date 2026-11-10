@@ -30,7 +30,7 @@ export default function ActivityLog({ entries }) {
         <ul className="divide-y divide-slate-100">
           {rows.map((e) => (
             <li key={e.id} className="py-2 flex flex-wrap gap-x-3 gap-y-0.5">
-              <span className="text-slate-400 tabular w-28 shrink-0">{when(e.at)}</span>
+              <span className="text-slate-500 tabular w-28 shrink-0">{when(e.at)}</span>
               <span className="flex-1 min-w-[200px] text-slate-800">{auditText(e)}</span>
               <span className="text-slate-500">{e.actorEmail} · {ROLE_LABEL[e.actorRole] || e.actorRole}</span>
             </li>

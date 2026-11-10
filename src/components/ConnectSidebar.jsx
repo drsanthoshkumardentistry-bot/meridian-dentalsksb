@@ -21,7 +21,7 @@ export function ProfileCard({ me, postCount, followers, followingCount, onMine, 
       <div className="p-3 lg:px-4 lg:pb-4 lg:pt-0 flex items-center gap-3 lg:block">
         <div className="lg:-mt-7"><Avatar name={me.fullName} size="lg" /></div>
         <div className="min-w-0 lg:mt-2">
-          <div className="flex items-center gap-1.5 font-display font-bold text-ink"><span className="truncate">{me.fullName}</span><BadgeCheck className="w-4 h-4 shrink-0 text-aqua-500" aria-label="Verified dentist" /></div>
+          <div className="flex items-center gap-1.5 font-display font-bold text-ink"><span className="truncate">{me.fullName}</span><BadgeCheck className="w-4 h-4 shrink-0 text-aqua-700" aria-label="Verified dentist" /></div>
           <div className="text-xs text-slate-500">{[me.qualification, specialtyLabel(me.specialty)].filter(Boolean).join(" · ")}</div>
         </div>
       </div>
@@ -89,7 +89,7 @@ export function TopicsCard({ posts, active, onPick }) {
   if (!topics.length) return null;
   return (
     <section className={`${card} p-4`} aria-label="Trending topics">
-      <h2 className={`${heading} flex items-center gap-2`}><Hash className="w-4 h-4 text-aqua-600" aria-hidden="true" /> Trending topics</h2>
+      <h2 className={`${heading} flex items-center gap-2`}><Hash className="w-4 h-4 text-aqua-700" aria-hidden="true" /> Trending topics</h2>
       <div className="mt-3 flex flex-wrap gap-2">
         {topics.map(({ tag, count }) => (
           <button key={tag} type="button" aria-pressed={active === tag} onClick={() => onPick(active === tag ? "" : tag)}
@@ -140,7 +140,7 @@ export function AuthorHeader({ info, count, followed, onFollow, onBack }) {
     <section className={`${card} p-4 flex flex-wrap items-center gap-3`} aria-label={`Posts by ${info.name}`}>
       <Avatar name={info.name} />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5 font-display font-bold text-ink">{info.name}<BadgeCheck className="w-4 h-4 text-aqua-500" aria-label="Verified dentist" /></div>
+        <div className="flex items-center gap-1.5 font-display font-bold text-ink">{info.name}<BadgeCheck className="w-4 h-4 text-aqua-700" aria-label="Verified dentist" /></div>
         <div className="text-xs text-slate-500">{[info.qualification, specialtyLabel(info.specialty)].filter(Boolean).join(" · ")}{count !== null ? ` · ${count} ${count === 1 ? "post" : "posts"}` : ""}</div>
       </div>
       <button type="button" onClick={() => onFollow(info.id, !followed)} aria-pressed={followed}

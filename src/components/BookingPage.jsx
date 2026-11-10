@@ -73,7 +73,7 @@ export default function BookingPage({ clinicId, loadPage, submit }) {
         <textarea id="bk-note" rows={2} maxLength={300} className={field} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></div>
       {error && <p role="alert" className="text-sm text-rose-600 font-medium">{error}</p>}
       <button type="submit" disabled={busy} className="w-full py-3 rounded-lg bg-[#1d4ed8] hover:bg-blue-800 text-white font-semibold text-sm disabled:opacity-60">{busy ? "Sending…" : "Send request"}</button>
-      <p className="text-[11px] text-slate-400">Your name and number are shared only with this clinic, to contact you about this visit. Do not use this form for emergencies.</p>
+      <p className="text-[11px] text-slate-500">Your name and number are shared only with this clinic, to contact you about this visit. Do not use this form for emergencies.</p>
     </form>
   );
 }

@@ -475,7 +475,7 @@ function Field({ label, required, hint, className = "", children }) {
         {required ? " *" : ""}
       </label>
       {children}
-      {hint ? <p className="text-[10px] text-slate-400 mt-1">{hint}</p> : null}
+      {hint ? <p className="text-[10px] text-slate-500 mt-1">{hint}</p> : null}
     </div>
   );
 }
@@ -2007,14 +2007,14 @@ export default function App() {
                             <span className="text-xs font-semibold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-100">
                               Age: {p.age || "N/A"} Yrs
                             </span>
-                            <span className="text-[10px] text-slate-400 font-normal">({p.gender})</span>
+                            <span className="text-[10px] text-slate-500 font-normal">({p.gender})</span>
                             {p.medicalAlert && (
                               <span className="text-[10px] font-bold bg-rose-50 text-rose-700 px-2 py-0.5 rounded border border-rose-200">
                                 ALERT: {p.medicalAlert}
                               </span>
                             )}
                           </div>
-                          <div className="text-xs text-slate-400 mt-1">
+                          <div className="text-xs text-slate-500 mt-1">
                             {p.phone}{patientLocation(p) ? ` • ${patientLocation(p)}` : ""} • Registered: {p.registeredDate}
                           </div>
                           <div className="text-xs text-slate-500 mt-0.5">
@@ -2027,7 +2027,7 @@ export default function App() {
                             <span className="inline-block whitespace-nowrap text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
                               {chartedCount} Teeth Charted
                             </span>
-                            <div className="text-[11px] text-slate-400 mt-1">Open Casesheet →</div>
+                            <div className="text-[11px] text-slate-500 mt-1">Open Casesheet →</div>
                           </div>
                           <button
                             type="button"
@@ -2039,7 +2039,7 @@ export default function App() {
                                 showToast(`Removed ${p.name}`);
                               }
                             }}
-                            className="p-1 text-slate-400 hover:text-rose-500 rounded"
+                            className="p-1 text-slate-500 hover:text-rose-500 rounded"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -2264,7 +2264,7 @@ export default function App() {
                       </div>
                     ))}
                   </div>
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-[10px] text-slate-500">
                     Patients whose last visit was 6+ months ago (or the interval set on their profile), with no visit booked. Opted-out patients are never listed.
                   </p>
                 </div>
@@ -2336,7 +2336,7 @@ export default function App() {
                           <div className="flex min-w-[640px]">
                             <div className="w-14 shrink-0 relative" style={{ height: grid.heightPx + 28, paddingTop: 28 }}>
                               {marks.map((m) => (
-                                <div key={m.hour} className="absolute right-2 text-[10px] text-slate-400 -translate-y-1.5" style={{ top: m.top + 28 }}>{formatTime12(`${m.hour}:00`)}</div>
+                                <div key={m.hour} className="absolute right-2 text-[10px] text-slate-500 -translate-y-1.5" style={{ top: m.top + 28 }}>{formatTime12(`${m.hour}:00`)}</div>
                               ))}
                             </div>
                             {grid.columns.map((col) => (
@@ -2389,11 +2389,11 @@ export default function App() {
                           <tr key={appt.id} className="hover:bg-enamel/60">
                             <td className="p-3.5">
                               <div className="font-bold text-slate-900">{appt.patientName}</div>
-                              <div className="text-[10px] text-slate-400">{appt.phone}</div>
+                              <div className="text-[10px] text-slate-500">{appt.phone}</div>
                             </td>
                             <td className="p-3.5 font-medium">
                               {appt.date === dateKey() ? "Today" : new Date(appt.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} at <strong>{formatTime12(appt.time)}</strong>
-                              {appt.doctor ? <div className="text-[10px] text-slate-400">{appt.doctor}</div> : null}
+                              {appt.doctor ? <div className="text-[10px] text-slate-500">{appt.doctor}</div> : null}
                             </td>
                             <td className="p-3.5 text-slate-600">{appt.chair}</td>
                             <td className="p-3.5 font-semibold text-blue-700">{appt.procedure}</td>
@@ -2410,7 +2410,7 @@ export default function App() {
                               </select>
                               {needsUpdate(appt) ? <div className="text-[10px] font-semibold text-amber-600 mt-1">Mark the outcome</div> : null}
                               {appt.reminders && (appt.reminders.dayBefore || appt.reminders.sameDay) ? (
-                                <div className="text-[10px] text-slate-400 mt-1">Reminder sent</div>
+                                <div className="text-[10px] text-slate-500 mt-1">Reminder sent</div>
                               ) : null}
                             </td>
                             <td className="p-3.5 text-center space-x-2 whitespace-nowrap">
@@ -2423,7 +2423,7 @@ export default function App() {
                               <button
                                 aria-label={`Delete appointment for ${appt.patientName}`}
                                 onClick={() => { if (confirm(`Delete the appointment for ${appt.patientName}? To keep a record, set its status to Cancelled instead.`)) setAppointments((prev) => prev.filter((x) => x.id !== appt.id)); logAudit("appointment.delete", appt.patientName, `${appt.date} ${appt.time}`); }}
-                                className="p-1 text-slate-400 hover:text-rose-500"
+                                className="p-1 text-slate-500 hover:text-rose-500"
                               >
                                 <Trash2 className="w-3.5 h-3.5 inline" />
                               </button>
@@ -2580,13 +2580,13 @@ export default function App() {
                           <td className="p-4">
                             <div className="font-bold text-blue-700">{inv.id}</div>
                             {balancePaise(inv) > 0 && invoiceAgeDays(inv) !== null ? (
-                              <div className="text-[10px] text-slate-400">{invoiceAgeDays(inv)} {invoiceAgeDays(inv) === 1 ? "day" : "days"} old</div>
+                              <div className="text-[10px] text-slate-500">{invoiceAgeDays(inv)} {invoiceAgeDays(inv) === 1 ? "day" : "days"} old</div>
                             ) : null}
                           </td>
                           <td className="p-4 font-semibold">{inv.patient}</td>
                           <td className="p-4 text-slate-600">
                             {inv.paymentMode || "Cash"}
-                            {inv.treatment ? <div className="text-[10px] text-slate-400 max-w-[14rem] truncate">{inv.treatment}</div> : null}
+                            {inv.treatment ? <div className="text-[10px] text-slate-500 max-w-[14rem] truncate">{inv.treatment}</div> : null}
                           </td>
                           <td className="p-4">
                             <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
@@ -2600,7 +2600,7 @@ export default function App() {
                           </td>
                           <td className="p-4 font-bold text-sm">
                             ₹{formatINR(inv.totalP)}
-                            {inv.gstRate > 0 ? <div className="text-[10px] font-normal text-slate-400">incl. GST {inv.gstRate}%</div> : null}
+                            {inv.gstRate > 0 ? <div className="text-[10px] font-normal text-slate-500">incl. GST {inv.gstRate}%</div> : null}
                           </td>
                           <td className={`p-4 font-bold text-sm ${balancePaise(inv) > 0 ? "text-rose-600" : "text-emerald-600"}`}>₹{formatINR(balancePaise(inv))}</td>
                           <td className="p-4 text-center space-x-1.5 whitespace-nowrap">
@@ -2636,7 +2636,7 @@ export default function App() {
                                 );
                               }
                               return inv.lastReminderAt ? (
-                                <span className="text-[10px] text-slate-400">Reminded {new Date(inv.lastReminderAt).toLocaleDateString("en-IN")}</span>
+                                <span className="text-[10px] text-slate-500">Reminded {new Date(inv.lastReminderAt).toLocaleDateString("en-IN")}</span>
                               ) : null;
                             })()}
                           </td>
@@ -2768,7 +2768,7 @@ export default function App() {
                   <span>Total GST payable</span>
                   <span>₹{formatINR(reportGst.sum.taxP)}</span>
                 </div>
-                <p className="text-[10px] text-slate-400">
+                <p className="text-[10px] text-slate-500">
                   GST is counted on the invoice date. Money received is counted on the payment date. Please have your accountant verify before filing.
                 </p>
               </div>
@@ -2871,7 +2871,7 @@ export default function App() {
                               <td className="p-3.5 text-slate-600">{item.category}</td>
                               <td className="p-3.5">
                                 <span className="font-bold text-sm tabular">{item.quantity}</span> {item.unit}
-                                <div className="text-[10px] text-slate-400">Reorder at {item.minThreshold}</div>
+                                <div className="text-[10px] text-slate-500">Reorder at {item.minThreshold}</div>
                               </td>
                               <td className="p-3.5">
                                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
@@ -2881,7 +2881,7 @@ export default function App() {
                                 </span>
                               </td>
                               <td className="p-3.5">
-                                {st.days === null ? <span className="text-slate-400">Not set</span> : st.expired ? (
+                                {st.days === null ? <span className="text-slate-500">Not set</span> : st.expired ? (
                                   <span className="font-bold text-rose-600">Expired {Math.abs(st.days)} {Math.abs(st.days) === 1 ? "day" : "days"} ago</span>
                                 ) : st.expiringSoon ? (
                                   <span className="font-bold text-amber-600">In {st.days} {st.days === 1 ? "day" : "days"}</span>
@@ -2901,7 +2901,7 @@ export default function App() {
                                   />
                                   <button onClick={() => handleStockAdjust(item.id, -n)} aria-label={`Use ${n} of ${item.name}`} className="px-2.5 py-1 bg-slate-100 rounded font-semibold text-slate-700 hover:bg-slate-200">Use</button>
                                   <button onClick={() => handleStockAdjust(item.id, n)} aria-label={`Receive ${n} of ${item.name}`} className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded font-semibold hover:bg-blue-100">Receive</button>
-                                  <button onClick={() => handleRemoveStock(item)} aria-label={`Remove ${item.name}`} className="p-1 text-slate-400 hover:text-rose-600"><X className="w-3.5 h-3.5" /></button>
+                                  <button onClick={() => handleRemoveStock(item)} aria-label={`Remove ${item.name}`} className="p-1 text-slate-500 hover:text-rose-600"><X className="w-3.5 h-3.5" /></button>
                                 </div>
                               </td>
                             </tr>
@@ -2952,7 +2952,7 @@ export default function App() {
 
               {employees.length === 0 ? (
                 <div className="bg-white rounded-xl border border-rule p-12 text-center space-y-3 shadow-xs">
-                  <Briefcase className="w-10 h-10 text-slate-400 mx-auto" />
+                  <Briefcase className="w-10 h-10 text-slate-500 mx-auto" />
                   <h3 className="text-sm font-bold text-slate-800">No Staff Added</h3>
                   <p className="text-xs text-slate-500">Add dental specialists, assistants, and hygienists to assign operatory duties.</p>
                 </div>
@@ -3035,7 +3035,7 @@ export default function App() {
                                 showToast(`Removed ${emp.name}`);
                               }
                             }}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 rounded cursor-pointer"
+                            className="p-1.5 text-slate-500 hover:text-rose-600 rounded cursor-pointer"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -3283,9 +3283,9 @@ export default function App() {
 
           {/* TAB 8: DASHBOARD OVERVIEW */}
           {activeNav !== "Practice Profile" && (!practiceProfile.drName || !practiceProfile.state || !practiceProfile.councilRegNumber) && (
-            <div className="mt-5 mb-6 rounded-xl border border-gold-500/40 bg-gold-50 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="text-sm text-gold-700">
-                <strong>Complete your clinic profile.</strong> Add the doctor name, state and Dental Council registration number so
+            <div className="mt-5 mb-6 rounded-xl border border-brand-100 bg-brand-50 p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+              <div className="text-sm text-slate-700">
+                <strong className="text-brand-700">Complete your clinic profile.</strong> Add the doctor name, state and Dental Council registration number so
                 prescriptions and invoices are correct.
               </div>
               <button
@@ -3313,7 +3313,7 @@ export default function App() {
               <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
                 {[
                   { title: "Patients", value: patients.length, note: "Registered patient records", icon: <UsersRound className="w-5 h-5" />, tone: "bg-blue-50 text-blue-600" },
-                  { title: "Visits Today", value: diarySum.today, note: diarySum.tomorrow ? `${diarySum.tomorrow} tomorrow` : "Active bookings today", icon: <CalendarDays className="w-5 h-5" />, tone: "bg-aqua-50 text-aqua-600" },
+                  { title: "Visits Today", value: diarySum.today, note: diarySum.tomorrow ? `${diarySum.tomorrow} tomorrow` : "Active bookings today", icon: <CalendarDays className="w-5 h-5" />, tone: "bg-aqua-50 text-aqua-700" },
                   { title: "Collected this month", value: `₹${formatINR(billing.collectedP)}`, note: `₹${formatINR(billing.billedP)} billed this month`, icon: <IndianRupee className="w-5 h-5" />, tone: "bg-emerald-50 text-emerald-600" },
                   { title: "Outstanding", value: `₹${formatINR(billing.outstandingP)}`, note: billing.overdueCount ? `${billing.overdueCount} overdue, ₹${formatINR(billing.overdueP)}` : "Unpaid balance across invoices", icon: <Wallet className="w-5 h-5" />, tone: billing.overdueCount ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600" },
                 ].map((card) => (
@@ -3348,7 +3348,7 @@ export default function App() {
                         a.count > 0 ? "border-blue-200 bg-blue-50 hover:bg-blue-100" : "border-rule bg-enamel hover:bg-slate-100"
                       }`}
                     >
-                      <div className={`text-2xl font-bold ${a.count > 0 ? "text-blue-700" : "text-slate-400"}`}>{a.count}</div>
+                      <div className={`text-2xl font-bold ${a.count > 0 ? "text-blue-700" : "text-slate-500"}`}>{a.count}</div>
                       <div className="text-xs font-semibold text-slate-700 mt-0.5">{a.label}</div>
                       <div className="text-[11px] text-slate-500 mt-1 leading-snug">{a.count > 0 ? "Tap to send ›" : "Nothing to send"}</div>
                     </button>
@@ -3373,7 +3373,7 @@ export default function App() {
                             <span className="font-semibold text-slate-900">{a.patientName}</span>
                             <span className="text-slate-500"> · {a.procedure}</span>
                           </span>
-                          <span className="text-xs text-slate-400 shrink-0">{String(a.chair || "").split(" (")[0]}</span>
+                          <span className="text-xs text-slate-500 shrink-0">{String(a.chair || "").split(" (")[0]}</span>
                         </li>
                       ))}
                     </ul>
@@ -3424,7 +3424,7 @@ export default function App() {
                         <div key={`${day.label}-${index}`} className="flex-1 h-full flex flex-col justify-end items-center gap-2">
                           <span className="text-xs font-semibold text-slate-600">{day.value || ""}</span>
                           <div className={`w-full max-w-12 rounded-t-lg transition-all ${day.value ? "bg-blue-500" : "bg-slate-100"}`} style={{ height: `${height}px` }} />
-                          <span className="text-xs text-slate-400 pb-2">{day.label}</span>
+                          <span className="text-xs text-slate-500 pb-2">{day.label}</span>
                         </div>
                       );
                     })}
@@ -3446,7 +3446,7 @@ export default function App() {
                             {day.value ? `₹${day.value.toLocaleString("en-IN", { maximumFractionDigits: 0 })}` : ""}
                           </span>
                           <div className={`w-full rounded-t-lg transition-all ${day.value ? "bg-emerald-500" : "bg-slate-100"}`} style={{ height: `${height}px` }} />
-                          <span className="text-xs text-slate-400 pb-2">{day.label}</span>
+                          <span className="text-xs text-slate-500 pb-2">{day.label}</span>
                         </div>
                       );
                     })}
@@ -3470,7 +3470,7 @@ export default function App() {
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-base font-bold text-slate-900">Add Staff Member</h3>
-              <button type="button" onClick={() => setIsAddStaffOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+              <button type="button" onClick={() => setIsAddStaffOpen(false)} className="text-slate-500 hover:text-slate-600 cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -3604,7 +3604,7 @@ export default function App() {
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-base font-bold text-slate-900">Leave</h3>
-              <button type="button" onClick={() => setIsLeaveModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+              <button type="button" onClick={() => setIsLeaveModalOpen(false)} className="text-slate-500 hover:text-slate-600 cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -3684,7 +3684,7 @@ export default function App() {
                             <button type="button" onClick={() => update((x) => setLeaveStatus(x, l.id, "Rejected"))} aria-label={`Reject leave from ${l.startDate}`} className="px-2 py-1 rounded bg-slate-100 text-slate-700 font-semibold">Reject</button>
                           </>
                         )}
-                        <button type="button" onClick={() => update((x) => removeLeave(x, l.id))} aria-label={`Delete leave from ${l.startDate}`} className="p-1 text-slate-400 hover:text-rose-600"><X className="w-3.5 h-3.5" /></button>
+                        <button type="button" onClick={() => update((x) => removeLeave(x, l.id))} aria-label={`Delete leave from ${l.startDate}`} className="p-1 text-slate-500 hover:text-rose-600"><X className="w-3.5 h-3.5" /></button>
                       </div>
                     </div>
                   ))}
@@ -3723,7 +3723,7 @@ export default function App() {
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-base font-bold text-slate-900">Performance reviews</h3>
-              <button type="button" onClick={() => setIsPerformanceModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+              <button type="button" onClick={() => setIsPerformanceModalOpen(false)} className="text-slate-500 hover:text-slate-600 cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -3830,12 +3830,12 @@ export default function App() {
                       <span>Yrs ({activePatient.gender || "Female"})</span>
                     </div>
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">{activePatient.phone}{patientLocation(activePatient) ? ` • ${patientLocation(activePatient)}` : ""}</div>
+                  <div className="text-xs text-slate-500 mt-0.5">{activePatient.phone}{patientLocation(activePatient) ? ` • ${patientLocation(activePatient)}` : ""}</div>
                 </div>
 
                 <button
                   onClick={() => setIsChartModalOpen(false)}
-                  className="text-slate-400 hover:text-slate-600 p-1"
+                  className="text-slate-500 hover:text-slate-600 p-1"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -4015,7 +4015,7 @@ export default function App() {
                               type="button"
                               aria-label={`Delete visit note from ${v.date}`}
                               onClick={() => { if (confirm("Delete this visit note?")) setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? removeVisit(p, v.id) : p))); }}
-                              className="text-slate-400 hover:text-rose-600"
+                              className="text-slate-500 hover:text-rose-600"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -4081,7 +4081,7 @@ export default function App() {
 
                   <div className="space-y-2">
                     {(activePatient.referrals || []).length === 0 ? (
-                      <div className="p-6 text-center text-xs text-slate-400 bg-enamel rounded-xl">
+                      <div className="p-6 text-center text-xs text-slate-500 bg-enamel rounded-xl">
                         No specialty referrals queued. Route directives to OMFS, Perio, Cons, or Prostho above.
                       </div>
                     ) : (
@@ -4093,7 +4093,7 @@ export default function App() {
                             </span>
                             <div>
                               <span className="font-bold text-slate-900 uppercase">{r.treatment}</span>
-                              <span className="text-slate-400 font-mono ml-2">Tooth/Arch: <strong>{r.toothRegion}</strong></span>
+                              <span className="text-slate-500 font-mono ml-2">Tooth/Arch: <strong>{r.toothRegion}</strong></span>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -4249,7 +4249,7 @@ export default function App() {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1.5">
+                    <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1.5">
                       Quick-Select Dental Presets:
                     </label>
                     <div className="flex flex-wrap gap-2">
@@ -4262,7 +4262,7 @@ export default function App() {
                         >
                           <Plus className="w-3 h-3 text-blue-600" />
                           <span className="font-semibold">{med.name}</span>
-                          <span className="text-[10px] text-slate-400">({med.frequency})</span>
+                          <span className="text-[10px] text-slate-500">({med.frequency})</span>
                         </button>
                       ))}
                     </div>
@@ -4283,7 +4283,7 @@ export default function App() {
                       <tbody className="divide-y divide-slate-100">
                         {(activePatient.prescriptions || []).length === 0 ? (
                           <tr>
-                            <td colSpan={6} className="p-4 text-center text-slate-400 italic">
+                            <td colSpan={6} className="p-4 text-center text-slate-500 italic">
                               No medications prescribed yet. Tap presets above to add.
                             </td>
                           </tr>
@@ -4292,7 +4292,7 @@ export default function App() {
                             <tr key={p.id}>
                               <td className="p-3">
                                 <div className="font-bold text-slate-800">{p.drug}</div>
-                                <div className="text-[10px] text-slate-400">{p.generic}</div>
+                                <div className="text-[10px] text-slate-500">{p.generic}</div>
                               </td>
                               <td className="p-3 font-medium text-slate-700">{p.dosage}</td>
                               <td className="p-3">
@@ -4438,7 +4438,7 @@ export default function App() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="border border-rule rounded-xl p-4 bg-white">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
                         Conditions
                       </div>
                       <input
@@ -4513,7 +4513,7 @@ export default function App() {
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-sm font-bold text-slate-900">Add New Patient</h3>
-              <button type="button" onClick={() => setIsAddPatientOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <button type="button" onClick={() => setIsAddPatientOpen(false)} className="text-slate-500 hover:text-slate-600">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -4805,7 +4805,7 @@ export default function App() {
               />
               <span className="text-slate-700">OK to send appointment reminders and prescriptions on WhatsApp.</span>
             </label>
-            <p className="text-[10px] text-slate-400">Only collect what you need. Never enter Aadhaar numbers.</p>
+            <p className="text-[10px] text-slate-500">Only collect what you need. Never enter Aadhaar numbers.</p>
 
             <div className="pt-2 flex justify-end gap-2">
               <button
@@ -4835,7 +4835,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setIsAddApptOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-500 hover:text-slate-600"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -4993,7 +4993,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={closeInvoiceModal}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-500 hover:text-slate-600"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -5076,7 +5076,7 @@ export default function App() {
                           onClick={() =>
                             setNewInvoiceForm({ ...newInvoiceForm, items: newInvoiceForm.items.filter((x) => x.id !== it.id) })
                           }
-                          className="p-1.5 text-slate-400 hover:text-rose-500"
+                          className="p-1.5 text-slate-500 hover:text-rose-500"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -5194,7 +5194,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setIsAddStockOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-500 hover:text-slate-600"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -5297,14 +5297,14 @@ export default function App() {
           <div className="bg-white rounded-xl border border-rule w-full max-w-sm p-6 text-center space-y-4 shadow-xl max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b pb-2 border-slate-100">
               <span className="text-xs font-bold text-slate-700">Collect payment · {qrInvoice.id}</span>
-              <button onClick={() => setActiveUpiQrInvoice(null)} className="text-slate-400 hover:text-slate-600" aria-label="Close">
+              <button onClick={() => setActiveUpiQrInvoice(null)} className="text-slate-500 hover:text-slate-600" aria-label="Close">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div>
               <div className="text-[11px] text-slate-500">{qrInvoice.patient}</div>
-              <div className="text-xl font-bold text-slate-900">₹{formatINR(qrBalanceP)} <span className="text-xs font-medium text-slate-400">due</span></div>
+              <div className="text-xl font-bold text-slate-900">₹{formatINR(qrBalanceP)} <span className="text-xs font-medium text-slate-500">due</span></div>
               <div className="text-[11px] text-slate-500">Total ₹{formatINR(qrInvoice.totalP)} · Paid ₹{formatINR(paidPaise(qrInvoice))}</div>
             </div>
 
@@ -5316,7 +5316,7 @@ export default function App() {
                       {upiQrDataUrl ? (
                         <img src={upiQrDataUrl} alt="UPI payment QR" className="w-44 h-44" />
                       ) : (
-                        <div className="w-44 h-44 flex items-center justify-center text-[11px] text-slate-400">Preparing QR…</div>
+                        <div className="w-44 h-44 flex items-center justify-center text-[11px] text-slate-500">Preparing QR…</div>
                       )}
                     </div>
                     <div className="text-[10px] text-slate-500 font-mono">{practiceProfile.upiId}</div>

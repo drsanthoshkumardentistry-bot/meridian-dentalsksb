@@ -50,7 +50,7 @@ export default function ConnectFeed({ api, me, admin, showToast }) {
 
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative flex-1 min-w-[12rem]">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
+            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
             <input type="search" aria-label="Search posts" placeholder="Search posts, topics and colleagues" value={view.query} onChange={(e) => f.setView({ query: e.target.value })}
               className="w-full pl-9 pr-3 py-2 border border-rule rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-aqua-400" />
           </div>

@@ -14,7 +14,7 @@ export default {
       colors: {
         brand: { 50: "#eff6ff", 100: "#dbeafe", 500: "#2563eb", 600: "#1d4ed8", 700: "#1e40af", 900: "#1e3a8a" },
         aqua: { 50: "#e8fbfd", 100: "#c6f3f8", 300: "#5fd6e4", 400: "#2cc4d6", 500: "#0fb0c4", 600: "#0b93a6", 700: "#0b7585" },
-        gold: { 50: "#fff8e6", 500: "#f5a524", 700: "#b45f06" },
+        gold: { 50: "#fff8e6", 500: "#f5a524", 700: "#9a5200" },
         sky: { 50: "#f3f8ff", 100: "#e6f1ff", 200: "#cfe3ff" },
         ink: "#0f1c33",
         enamel: "#f7f9fc",
