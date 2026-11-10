@@ -5,6 +5,7 @@
  * File: src/App.jsx
  * ============================================================================== */
 
+import Odontogram from "./components/Odontogram.jsx";
 import TreatmentPlans from "./components/TreatmentPlans.jsx";
 import { planToInvoiceItems, markPlanBilled } from "./plans.js";
 import React, { useState, useEffect, useRef } from "react";
@@ -102,14 +103,14 @@ const CLINICAL_PALETTE = [
   { id: "RES", label: "Restored", border: "border-sky-200", bg: "bg-sky-50/60", text: "text-sky-600" },
   { id: "RCT", label: "RCT Done", border: "border-purple-200", bg: "bg-purple-50/60", text: "text-purple-600" },
   { id: "CRW", label: "Crown", border: "border-amber-200", bg: "bg-amber-50/60", text: "text-amber-600" },
-  { id: "BRG", label: "Bridging (Under Cr...", border: "border-indigo-200", bg: "bg-indigo-50/60", text: "text-indigo-600" },
+  { id: "BRG", label: "Bridge (under crown)", border: "border-indigo-200", bg: "bg-indigo-50/60", text: "text-indigo-600" },
   { id: "IMP", label: "Implanted", border: "border-teal-200", bg: "bg-teal-50/60", text: "text-teal-600" },
   { id: "FRC", label: "Fractured (Trauma)", border: "border-rose-400 ring-2 ring-rose-200", bg: "bg-rose-50", text: "text-rose-700" },
   { id: "SPC", label: "Spacing", border: "border-cyan-200", bg: "bg-cyan-50/60", text: "text-cyan-600" },
   { id: "ATT", label: "Attrited", border: "border-orange-200", bg: "bg-orange-50/60", text: "text-orange-600" },
-  { id: "MAL", label: "Malaligned (Under...", border: "border-fuchsia-200", bg: "bg-fuchsia-50/60", text: "text-fuchsia-600" },
+  { id: "MAL", label: "Malaligned", border: "border-fuchsia-200", bg: "bg-fuchsia-50/60", text: "text-fuchsia-600" },
   { id: "PRM", label: "Paramolar", border: "border-pink-200", bg: "bg-pink-50/60", text: "text-pink-600" },
-  { id: "SCL", label: "Scaling (Calculus / ...", border: "border-yellow-200", bg: "bg-yellow-50/60", text: "text-yellow-600" },
+  { id: "SCL", label: "Calculus (scaling)", border: "border-yellow-200", bg: "bg-yellow-50/60", text: "text-yellow-600" },
   { id: "DEF", label: "Deformities", border: "border-purple-200", bg: "bg-purple-50/60", text: "text-purple-600" },
   { id: "BND", label: "Bone Deformations", border: "border-slate-200", bg: "bg-slate-50", text: "text-slate-600" },
   { id: "MIS", label: "Missing / Extracted", border: "border-slate-300", bg: "bg-slate-100", text: "text-slate-600" },
@@ -789,7 +790,7 @@ export default function App() {
 
   // Odontogram Screen Local State
   const [isDeciduous, setIsDeciduous] = useState(false);
-  const [activePaletteStatus, setActivePaletteStatus] = useState("FRC");
+  const [activePaletteStatus, setActivePaletteStatus] = useState("CAR");
 
   // Inter-Departmental Referrals State
   const [refTreatment, setRefTreatment] = useState("");
@@ -3181,112 +3182,18 @@ export default function App() {
 
               {/* TAB 1: 32-TOOTH ODONTOGRAM */}
               {activeModalTab === "32-Tooth Odontogram" && (
-                <div className="space-y-5">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-1 gap-2">
-                    <div className="text-[11px] font-bold text-slate-800 tracking-wider uppercase">
-                      CLINICAL ODONTOGRAM PALETTE (SELECT STATUS, THEN TAP TOOTH)
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] text-slate-400">
-                        {isDeciduous ? "Pediatric Primary FDI (20)" : "Adult Upper & Lower FDI (32)"}
-                      </span>
-                      <button
-                        onClick={() => setIsDeciduous(!isDeciduous)}
-                        className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200"
-                      >
-                        {isDeciduous ? "Switch to Adult (32)" : "Switch to Deciduous (20)"}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
-                    {CLINICAL_PALETTE.map((item) => {
-                      const isSelected = activePaletteStatus === item.id;
-                      return (
-                        <button
-                          key={item.id}
-                          onClick={() => setActivePaletteStatus(item.id)}
-                          className={`px-2.5 py-1.5 rounded-lg text-xs text-left truncate font-medium border transition-all ${
-                            item.border
-                          } ${item.bg} ${item.text} ${
-                            isSelected ? "ring-2 ring-blue-500 font-bold scale-[1.02]" : "hover:opacity-90"
-                          }`}
-                        >
-                          {item.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Upper Arch */}
-                  <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-100">
-                    <div className="text-[10px] font-bold tracking-widest text-slate-400 uppercase text-center mb-2">
-                      {isDeciduous ? "Upper Arch (Deciduous Maxillary)" : "Upper Arch (Maxillary)"}
-                    </div>
-                    <div className="flex justify-center flex-wrap gap-1.5">
-                      {(isDeciduous ? DECIDUOUS_UPPER : PERMANENT_UPPER).map((num) => {
-                        const code = activePatient.toothConditions?.[num];
-                        const found = CLINICAL_PALETTE.find((p) => p.id === code);
-                        return (
-                          <button
-                            key={num}
-                            onClick={() => handleToothTap(num)}
-                            className={`w-10 h-12 rounded-lg border flex flex-col items-center justify-center transition-all bg-white shadow-2xs ${
-                              found ? `${found.border} ${found.bg}` : "border-emerald-300 text-emerald-700"
-                            }`}
-                          >
-                            <span className="text-xs font-bold text-slate-800">{num}</span>
-                            <span className={`text-[9px] font-semibold ${found ? found.text : "text-emerald-600"}`}>
-                              {code || "HLT"}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Lower Arch */}
-                  <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-100">
-                    <div className="text-[10px] font-bold tracking-widest text-slate-400 uppercase text-center mb-2">
-                      {isDeciduous ? "Lower Arch (Deciduous Mandibular)" : "Lower Arch (Mandibular)"}
-                    </div>
-                    <div className="flex justify-center flex-wrap gap-1.5">
-                      {(isDeciduous ? DECIDUOUS_LOWER : PERMANENT_LOWER).map((num) => {
-                        const code = activePatient.toothConditions?.[num];
-                        const found = CLINICAL_PALETTE.find((p) => p.id === code);
-                        return (
-                          <button
-                            key={num}
-                            onClick={() => handleToothTap(num)}
-                            className={`w-10 h-12 rounded-lg border flex flex-col items-center justify-center transition-all bg-white shadow-2xs ${
-                              found ? `${found.border} ${found.bg}` : "border-emerald-300 text-emerald-700"
-                            }`}
-                          >
-                            <span className="text-xs font-bold text-slate-800">{num}</span>
-                            <span className={`text-[9px] font-semibold ${found ? found.text : "text-emerald-600"}`}>
-                              {code || "HLT"}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="pt-2">
-                    <div className="text-xs font-bold text-slate-800 mb-2">Active Odontogram Findings:</div>
-                    <div className="flex flex-wrap gap-2">
-                      {Object.keys(activePatient.toothConditions || {}).length === 0 ? (
-                        <span className="text-xs text-slate-400 italic">No specific pathology recorded. Tap teeth above.</span>
-                      ) : (
-                        Object.entries(activePatient.toothConditions || {}).map(([t, c]) => (
-                          <span key={t} className="text-xs bg-slate-50 border border-slate-200 px-3 py-1 rounded-md text-slate-700 font-mono">
-                            Tooth {t}: <strong className="text-slate-900">{c}</strong>
-                          </span>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <Odontogram
+                  conditions={activePatient.toothConditions || {}}
+                  palette={CLINICAL_PALETTE}
+                  activeStatus={activePaletteStatus}
+                  onSelectStatus={setActivePaletteStatus}
+                  onTap={handleToothTap}
+                  onClear={() => {
+                    if (confirm("Clear every finding on this chart?")) updateActivePatient({ toothConditions: {} });
+                  }}
+                  isDeciduous={isDeciduous}
+                  onToggleDeciduous={() => setIsDeciduous(!isDeciduous)}
+                />
               )}
 
               {/* TAB 2: DEPARTMENT REFERRALS ROUTER */}

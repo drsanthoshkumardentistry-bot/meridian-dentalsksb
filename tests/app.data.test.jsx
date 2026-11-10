@@ -304,4 +304,25 @@ describe("demographics and required data", () => {
     await waitFor(() => expect(stored("patients")[0].plans[0].status).toBe("Billed"));
     expect(stored("patients")[0].plans[0].invoiceId).toBe(stored("invoices")[0].id);
   });
+
+  it("odontogram: tap to mark, tap again to clear, and findings are summarised", async () => {
+    localStorage.setItem(KEY("patients"), JSON.stringify([
+      { id: "P-1", name: "Chart Patient", phone: "9876543210", age: "30", gender: "Male", toothConditions: {}, registeredDate: "01/11/2026" },
+    ]));
+    await openApp();
+    nav("Patients & Odontogram");
+    fireEvent.click(await screen.findByText("Chart Patient"));
+    fireEvent.click(await screen.findByRole("radio", { name: /Caries/ }));
+    const tooth16 = () => screen.getByLabelText(/^Tooth 16, Upper right first molar/);
+    fireEvent.click(tooth16());
+    await waitFor(() => expect(stored("patients")[0].toothConditions).toEqual({ 16: "CAR" }));
+    expect(tooth16().getAttribute("aria-label")).toMatch(/Caries/);
+    expect(screen.getByText(/teeth 16|tooth 16/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("radio", { name: /Restored/ }));
+    fireEvent.keyDown(screen.getByLabelText(/^Tooth 26,/), { key: "Enter" });
+    await waitFor(() => expect(stored("patients")[0].toothConditions[26]).toBe("RES"));
+    fireEvent.click(screen.getByRole("radio", { name: /Caries/ }));
+    fireEvent.click(tooth16());
+    await waitFor(() => expect(stored("patients")[0].toothConditions[16]).toBeUndefined());
+  });
 });
