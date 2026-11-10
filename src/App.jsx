@@ -6,16 +6,20 @@
  * ============================================================================== */
 
 import { AGING_BUCKETS, agingSummary, filterInvoices, invoiceAgeDays } from "./receivables.js";
+import Connect from "./components/Connect.jsx";
+import { bindApi } from "./connect/api.js";
+import { geocodeAddress } from "./connect/geo.js";
 import Odontogram from "./components/Odontogram.jsx";
 import TreatmentPlans from "./components/TreatmentPlans.jsx";
 import { planToInvoiceItems, markPlanBilled, plannedTeeth } from "./plans.js";
 import { createShare, fetchShare, deleteShare } from "./planShare.js";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Menu,
   X,
   Search,
   Plus,
+  Network,
   Trash2,
   Share2,
   Eye,
@@ -1167,6 +1171,7 @@ export default function App() {
   const duePayReminders = duePaymentReminders(invoices.map(normalizeInvoice), patients);
   const [showAllRecalls, setShowAllRecalls] = useState(false);
   const [invoiceFilter, setInvoiceFilter] = useState("all");
+  const connectApi = useMemo(() => bindApi(db, CLINIC_ID), [CLINIC_ID]);
   const aging = agingSummary(invoices);
   const visibleInvoices = filterInvoices(invoices, invoiceFilter);
 
@@ -1630,6 +1635,7 @@ export default function App() {
               { label: "Patients & Odontogram", icon: <Users className="w-4 h-4" /> },
               { label: "OPG & Diagnosis Studio", icon: <Sun className="w-4 h-4" /> },
               { label: "Dental Insurance & Invoices", icon: <DollarSign className="w-4 h-4" /> },
+              { label: "MeriDent Connect", icon: <Network className="w-4 h-4" /> },
               { label: "Reports", icon: <BarChart3 className="w-4 h-4" /> },
               { label: "Stock Maintenance", icon: <Package className="w-4 h-4" /> },
               { label: "Employee Roles & Roster", icon: <Briefcase className="w-4 h-4" /> },
@@ -2302,6 +2308,17 @@ export default function App() {
                 </div>
               )}
             </div>
+          )}
+
+          {/* MERIDENT CONNECT */}
+          {activeNav === "MeriDent Connect" && (
+            <Connect
+              api={connectApi}
+              uid={CLINIC_ID}
+              showToast={showToast}
+              geocode={geocodeAddress}
+              defaults={{ clinicName: practiceProfile.name, clinicAddress: practiceProfile.address, phone: practiceProfile.phone }}
+            />
           )}
 
           {/* REPORTS */}

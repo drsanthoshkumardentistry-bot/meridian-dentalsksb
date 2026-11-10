@@ -1,6 +1,23 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+    function dentistDoc(uid) {
+      return /databases/$(database)/documents/connectDentists/$(uid);
+    }
+    function isVerified() {
+      return signedIn()
+          && exists(dentistDoc(request.auth.uid))
+          && get(dentistDoc(request.auth.uid)).data.status == 'verified';
+    }
+    function isAdmin() {
+      return signedIn()
+          && exists(/databases/$(database)/documents/connectAdmins/$(request.auth.uid));
+    }
+
     // Each signed-in account can only access its own clinic: clinics/{its own uid}/**
     // Accounts created with email and password must also have verified their email address.
     match /clinics/{clinicId}/{document=**} {
@@ -36,6 +53,94 @@ service cloud.firestore {
                         && request.resource.data.decision in ['approved', 'declined']
                         && request.resource.data.decidedName is string
                         && request.resource.data.decidedName.size() <= 80);
+    }
+
+    // ---------------- MeriDent Connect: closed network of verified dentists ----------------
+
+    // MeriDent staff. Documents here are created by hand in the Firebase console, never by the app.
+    match /connectAdmins/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow list, write: if false;
+    }
+
+    // Private profile: registration details. Only the owner and staff can read it.
+    // Nobody can verify themselves: status can only be changed by staff.
+    match /connectDentists/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow list: if isAdmin();
+
+      allow create: if signedIn() && request.auth.uid == uid
+                    && request.resource.data.status == 'pending'
+                    && request.resource.data.listed == false
+                    && !('verifiedBy' in request.resource.data);
+
+      allow update: if isAdmin()
+                    || (signedIn() && request.auth.uid == uid
+                        && ((resource.data.status == 'pending'
+                             && request.resource.data.status == 'pending'
+                             && request.resource.data.listed == false
+                             && !('verifiedBy' in request.resource.data))
+                            || (resource.data.status == 'verified'
+                                && request.resource.data.diff(resource.data).affectedKeys()
+                                     .hasOnly(['timings', 'phone', 'whatsapp', 'emergencyAvailable',
+                                               'acceptingReferrals', 'listed']))));
+      allow delete: if false;
+    }
+
+    // Searchable listing. Only verified dentists can read it. A dentist can publish or remove
+    // only their own entry, and the name, specialty and location must match the verified profile.
+    match /connectDirectory/{uid} {
+      allow get, list: if isVerified();
+      allow create, update: if isVerified() && request.auth.uid == uid
+                            && request.resource.data.geohash == get(dentistDoc(uid)).data.geohash
+                            && request.resource.data.geo == get(dentistDoc(uid)).data.geo
+                            && request.resource.data.fullName == get(dentistDoc(uid)).data.fullName
+                            && request.resource.data.specialty == get(dentistDoc(uid)).data.specialty;
+      allow delete: if signedIn() && (request.auth.uid == uid || isAdmin());
+    }
+
+    // Consult requests. Only the sender and the receiving dentist can read one, and only the
+    // receiver can change its status. A request can only be created together with its audit entry,
+    // and case details can only be stored together with recorded consent.
+    match /connectConsults/{consultId} {
+      allow read: if isVerified()
+                  && (request.auth.uid == resource.data.fromId || request.auth.uid == resource.data.toId);
+
+      allow create: if isVerified()
+                    && request.auth.uid == request.resource.data.fromId
+                    && request.resource.data.toId != request.auth.uid
+                    && exists(/databases/$(database)/documents/connectDirectory/$(request.resource.data.toId))
+                    && request.resource.data.status == 'sent'
+                    && request.resource.data.urgency in ['routine', 'soon', 'urgent']
+                    && request.resource.data.patientRef is string
+                    && request.resource.data.patientRef.size() <= 12
+                    && (request.resource.data.get('caseSummary', null) == null
+                        || (request.resource.data.caseSummary is string
+                            && request.resource.data.caseSummary.size() <= 1500
+                            && request.resource.data.get('consentVersion', null) != null
+                            && request.resource.data.get('consentAt', null) != null))
+                    && existsAfter(/databases/$(database)/documents/connectAudit/$('consult_' + consultId));
+
+      allow update: if isVerified()
+                    && request.auth.uid == resource.data.toId
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['status', 'reportBack', 'updatedAt'])
+                    && ((resource.data.status == 'sent'
+                         && request.resource.data.status in ['accepted', 'declined'])
+                        || (resource.data.status == 'accepted'
+                            && request.resource.data.status == 'completed'))
+                    && (request.resource.data.get('reportBack', null) == null
+                        || request.resource.data.reportBack.size() <= 1500)
+                    && existsAfter(/databases/$(database)/documents/connectAudit/$('status_' + consultId + '_' + request.resource.data.status));
+
+      allow delete: if false;
+    }
+
+    // Append-only audit log. Staff can read it; nobody can change or delete an entry.
+    match /connectAudit/{entryId} {
+      allow create: if isVerified() && request.resource.data.actorId == request.auth.uid;
+      allow read: if isAdmin();
+      allow update, delete: if false;
     }
   }
 }
