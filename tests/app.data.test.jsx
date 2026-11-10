@@ -525,4 +525,67 @@ describe("demographics and required data", () => {
     await waitFor(() => expect(stored("employees")[0].reviews.length).toBe(1));
     expect(stored("employees")[0].reviews[0].rating).toBe(4);
   });
+
+  it("header search finds patients by phone digits and opens the patient file", async () => {
+    localStorage.setItem(KEY("patients"), JSON.stringify([
+      { id: "P-1", name: "Asha Devi", phone: "9876543210", age: "34", gender: "Female", toothConditions: {}, registeredDate: "01/11/2026" },
+      { id: "P-2", name: "Ravi Kumar", phone: "9000011111", age: "40", gender: "Male", toothConditions: {}, registeredDate: "01/11/2026" },
+    ]));
+    await openApp();
+    const box = await screen.findByRole("combobox", { name: /Search patients/ });
+    fireEvent.change(box, { target: { value: "90000" } });
+    fireEvent.click(await screen.findByRole("button", { name: /Ravi Kumar/ }));
+    expect(await screen.findByTestId("patient-summary")).toBeTruthy();
+    expect(screen.getAllByText("Ravi Kumar").length).toBeGreaterThan(0);
+  });
+
+  it("header search says plainly when nothing matches", async () => {
+    await openApp();
+    fireEvent.change(await screen.findByRole("combobox", { name: /Search patients/ }), { target: { value: "zzzzz" } });
+    expect(await screen.findByText(/Nothing found for "zzzzz"/)).toBeTruthy();
+  });
+
+  it("patient file: summary shows dues and next visit, and visit notes are saved newest first", async () => {
+    const day = (n) => { const d = new Date(Date.now() + n * 86400000); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+    localStorage.setItem(KEY("patients"), JSON.stringify([
+      { id: "P-1", name: "Note Patient", phone: "9876543210", age: "30", gender: "Male", toothConditions: {}, registeredDate: "01/11/2026" },
+    ]));
+    localStorage.setItem(KEY("invoices"), JSON.stringify([
+      { id: "INV/1", patientId: "P-1", patient: "Note Patient", paymentMode: "Cash", treatment: "Scaling", subtotalP: 100000, discountP: 0, taxableP: 100000, gstRate: 0, cgstP: 0, sgstP: 0, taxP: 0, totalP: 100000, payments: [{ date: "01/11/2026", mode: "Cash", amountP: 25000 }], date: "01/11/2026" },
+    ]));
+    localStorage.setItem(KEY("appointments"), JSON.stringify([
+      { id: "A1", patientId: "P-1", patientName: "Note Patient", phone: "9876543210", date: day(3), time: "10:00", chair: "Chair 1 (Main Operatory)", doctor: "Dr T", procedure: "RCT", status: "Confirmed" },
+    ]));
+    await openApp();
+    nav("Patients & Odontogram");
+    fireEvent.click(await screen.findByText("Note Patient"));
+    const sum = await screen.findByTestId("patient-summary");
+    expect(within(sum).getByText("Balance due").nextSibling.textContent).toBe("₹750.00");
+    expect(within(sum).getByText("Next visit").nextSibling.textContent).toMatch(/10:00 AM/);
+    fireEvent.click(screen.getByRole("button", { name: "Visit Notes" }));
+    fireEvent.submit((await screen.findByText("Save visit note")).closest("form"));
+    expect(await screen.findByText(/Write at least a complaint/)).toBeTruthy();
+    type(screen.getByLabelText("Chief complaint"), "Pain lower left");
+    type(screen.getByLabelText("Treatment done"), "Cleaning of tooth 36");
+    fireEvent.submit(screen.getByText("Save visit note").closest("form"));
+    await waitFor(() => expect(stored("patients")[0].visits.length).toBe(1));
+    expect(stored("patients")[0].visits[0]).toMatchObject({ complaint: "Pain lower left", treatment: "Cleaning of tooth 36" });
+    expect(await screen.findByText("Cleaning of tooth 36")).toBeTruthy();
+  });
+
+  it("diary day view shows visits on the chosen day and steps between days", async () => {
+    const key = (n) => { const d = new Date(Date.now() + n * 86400000); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+    localStorage.setItem(KEY("appointments"), JSON.stringify([
+      { id: "A1", patientName: "Today Tara", phone: "9876543210", date: key(0), time: "10:30", chair: "Chair 1 (Main Operatory)", doctor: "Dr T", procedure: "Scaling", status: "Confirmed", reminders: { dayBefore: "x", sameDay: "x" } },
+      { id: "A2", patientName: "Tomorrow Tej", phone: "9876543210", date: key(1), time: "14:00", chair: "Chair 2 (Pediatric / Perio)", doctor: "Dr T", procedure: "Filling", status: "Confirmed", reminders: { dayBefore: "x", sameDay: "x" } },
+    ]));
+    await openApp();
+    nav("Appointments Diary");
+    fireEvent.click(await screen.findByRole("button", { name: "Day view" }));
+    const grid = await screen.findByTestId("day-view");
+    expect(within(grid).getByText(/Today Tara/)).toBeTruthy();
+    expect(within(grid).queryByText(/Tomorrow Tej/)).toBeNull();
+    fireEvent.click(within(grid).getByRole("button", { name: "Next day" }));
+    expect(within(screen.getByTestId("day-view")).getByText(/Tomorrow Tej/)).toBeTruthy();
+  });
 });
