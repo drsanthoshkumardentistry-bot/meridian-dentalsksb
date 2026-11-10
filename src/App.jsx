@@ -38,7 +38,12 @@ import { bindApi } from "./connect/api.js";
 import { geocodeAddress } from "./connect/geo.js";
 import Odontogram from "./components/Odontogram.jsx";
 import TreatmentPlans from "./components/TreatmentPlans.jsx";
-import { planToInvoiceItems, markPlanBilled, plannedTeeth } from "./plans.js";
+import { planToInvoiceItems, markPlanBilled, plannedTeeth, planTotals } from "./plans.js";
+import FollowUpPanels, { ReviewInvites } from "./components/FollowUpPanels.jsx";
+import {
+  dueFeedbackRequests, awaitingRatings, lowRatings, feedbackSummary, buildFeedbackMessage, markFeedbackAsked, recordRating, resolveFeedback,
+  buildReviewMessage, markReviewAsked, isValidReviewLink, duePlanFollowUps, buildPlanFollowUp, markPlanFollowedUp
+} from "./followup.js";
 import { createShare, fetchShare, deleteShare } from "./planShare.js";
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
@@ -558,7 +563,8 @@ const DEFAULT_PROFILE = {
   gstin: "",
   dentalCouncil: "",
   councilRegNumber: "",
-  onlineBooking: false
+  onlineBooking: false,
+  reviewLink: ""
 };
 
 export default function App() {
@@ -1356,6 +1362,11 @@ export default function App() {
   const dueApptReminders = dueAppointmentReminders(appointments, new Date(), patients);
   const dueRecallList = dueRecalls(patients, appointments, invoices.map(normalizeInvoice));
   const duePayReminders = duePaymentReminders(invoices.map(normalizeInvoice), patients);
+  const feedbackDue = dueFeedbackRequests(appointments, patients);
+  const awaitingList = awaitingRatings(appointments);
+  const lowList = lowRatings(appointments);
+  const feedbackStats = feedbackSummary(appointments);
+  const planFollowUps = duePlanFollowUps(patients, appointments);
   const [showAllRecalls, setShowAllRecalls] = useState(false);
   const [invoiceFilter, setInvoiceFilter] = useState("all");
   const connectApi = useMemo(() => bindApi(db, CLINIC_ID), [CLINIC_ID]);
@@ -1423,6 +1434,32 @@ export default function App() {
     window.open(link, "_blank", "noopener,noreferrer");
     setPatients((prev) => prev.map((p) => (p.id === patient.id ? markPatientRecalled(p) : p)));
   };
+
+  const patchAppt = (id, fn) => setAppointments((prev) => prev.map((a) => (a.id === id ? fn(a) : a)));
+  const openWhatsApp = (phone, text) => {
+    const link = whatsappLink(phone, text);
+    if (!link) { showToast("This patient has no valid mobile number"); return false; }
+    window.open(link, "_blank", "noopener,noreferrer");
+    return true;
+  };
+  const askFeedback = (appt) => {
+    if (openWhatsApp(appt.phone, buildFeedbackMessage({ clinicName: practiceProfile.name, appt }))) patchAppt(appt.id, (a) => markFeedbackAsked(a));
+  };
+  const rateFeedback = (appt, rating, comment) => {
+    patchAppt(appt.id, (a) => recordRating(a, rating, comment));
+    showToast(rating <= 3 ? "Saved. This patient is flagged so you can call them." : "Rating saved");
+  };
+  const handleFeedback = (appt) => patchAppt(appt.id, (a) => resolveFeedback(a));
+  const inviteReview = (appt) => {
+    if (openWhatsApp(appt.phone, buildReviewMessage({ clinicName: practiceProfile.name, appt, reviewLink: practiceProfile.reviewLink }))) patchAppt(appt.id, (a) => markReviewAsked(a));
+  };
+  const followUpPlan = ({ patient, plan }) => {
+    const totalP = planTotals(plan).totalP;
+    if (openWhatsApp(patient.phone, buildPlanFollowUp({ clinicName: practiceProfile.name, clinicPhone: practiceProfile.phone, patient, plan, totalP }))) {
+      setPatients((prev) => prev.map((p) => (p.id === patient.id ? markPlanFollowedUp(p, plan.id) : p)));
+    }
+  };
+  const snoozePlan = ({ patient, plan }) => setPatients((prev) => prev.map((p) => (p.id === patient.id ? markPlanFollowedUp(p, plan.id) : p)));
 
   // "Not now": hides this patient from the recall list for 30 days
   const snoozeRecall = ({ patient }) => {
@@ -2269,6 +2306,13 @@ export default function App() {
                   </p>
                 </div>
               )}
+
+              <FollowUpPanels
+                feedbackDue={feedbackDue} awaiting={awaitingList} low={lowList} plansDue={planFollowUps} summary={feedbackStats}
+                reviewLink={practiceProfile.reviewLink} canWrite={canWrite(role, "appointments")}
+                onAsk={askFeedback} onRate={rateFeedback} onResolve={handleFeedback} onPlan={followUpPlan} onSnoozePlan={snoozePlan}
+              />
+              <ReviewInvites appointments={appointments} reviewLink={practiceProfile.reviewLink} onReview={inviteReview} />
 
               <BookingRequests requests={bookingRequests} onConfirm={confirmBooking} onDecline={declineBooking} onContact={contactBooking} />
               <QueuePanel queue={queue} today={dateKey()} onAdd={handleAddWalkIn} onStatus={handleQueueStatus} onRemove={handleQueueRemove} />
@@ -3173,6 +3217,23 @@ export default function App() {
                   )}
                 </div>
 
+                <div>
+                  <label htmlFor="review-link" className="block font-semibold text-slate-600 mb-1">Google review link (optional)</label>
+                  <input
+                    id="review-link"
+                    type="url"
+                    value={practiceProfile.reviewLink || ""}
+                    onChange={(e) => setPracticeProfile({ ...practiceProfile, reviewLink: e.target.value })}
+                    placeholder="https://g.page/r/..."
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                  />
+                  {practiceProfile.reviewLink && !isValidReviewLink(practiceProfile.reviewLink) ? (
+                    <p className="text-[10px] text-rose-600 mt-1">Paste the full link starting with https://</p>
+                  ) : (
+                    <p className="text-[10px] text-slate-500 mt-1">Patients who rate you 4 or 5 can be sent this link to leave a public review.</p>
+                  )}
+                </div>
+
                 <div className="sm:col-span-2">
                   <label className="block font-semibold text-slate-600 mb-1">Clinic Address</label>
                   <input
@@ -3386,6 +3447,7 @@ export default function App() {
                     const items = [
                       { n: billing.overdueCount, text: `${billing.overdueCount} overdue ${billing.overdueCount === 1 ? "invoice" : "invoices"}, ₹${formatINR(billing.overdueP)}`, to: "Billing & Invoices" },
                       { n: diarySum.needsUpdate, text: `${diarySum.needsUpdate} past ${diarySum.needsUpdate === 1 ? "visit has" : "visits have"} no outcome marked`, to: "Appointments Diary" },
+                      { n: lowList.length, text: `${lowList.length} low patient ${lowList.length === 1 ? "rating needs" : "ratings need"} a call`, to: "Appointments Diary" },
                       { n: stockSum.out + stockSum.low, text: `${stockSum.out + stockSum.low} ${stockSum.out + stockSum.low === 1 ? "item" : "items"} to reorder`, to: "Stock Maintenance" },
                       { n: stockSum.expired + stockSum.expiring, text: `${stockSum.expired + stockSum.expiring} ${stockSum.expired + stockSum.expiring === 1 ? "item" : "items"} expired or expiring soon`, to: "Stock Maintenance" },
                     ].filter((x) => x.n > 0);
