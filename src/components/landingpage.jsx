@@ -70,6 +70,7 @@ const FEATURE_GROUPS = [
       { icon: Users, title: "Walk-in queue & triage", text: "Give each walk-in a token, mark urgent cases to go first, see how long each person has waited, and call them in from the diary." },
       { icon: Calendar, title: "Online booking page", text: "Switch on a link you can share on WhatsApp or Instagram. Patients send a request, you confirm it, and it lands in your diary with a WhatsApp confirmation ready." },
       { icon: MessageCircle, title: "Patient feedback", text: "After a visit, one tap opens WhatsApp asking for a rating from 1 to 5. Record the reply, get a flag when someone is unhappy, and send a review link to happy patients." },
+      { icon: Package, title: "Lab order tracking", text: "Send crowns, bridges and dentures to a lab with a due date. See what is late, message the lab on WhatsApp, and tell the patient the moment their work is back." },
       { icon: ClipboardList, title: "Treatment plan follow-up", text: "See estimates patients have not answered and approved plans nobody has booked, and nudge them on WhatsApp with one tap." },
       { icon: Wallet, title: "Dues and overdue tracking", text: "Set a due date, see unpaid money by age, filter to overdue invoices, search by patient and export the list to a spreadsheet." }
     ]
@@ -106,8 +107,7 @@ const STEPS = [
 
 const COMING_NEXT = [
   "Automatic WhatsApp sending",
-  "Radiograph cloud storage",
-  "Lab order tracking"
+  "Radiograph cloud storage"
 ];
 
 const FAQS = [
