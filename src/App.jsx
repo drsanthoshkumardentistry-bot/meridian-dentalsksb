@@ -2697,6 +2697,34 @@ export default function App() {
                 ))}
               </div>
 
+              <section className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm" data-testid="today-actions">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <h2 className="text-base font-bold text-slate-900">Today's actions</h2>
+                  {dueApptReminders.length + dueRecallList.length + duePayReminders.length === 0 && (
+                    <span className="text-xs rounded-full bg-emerald-50 text-emerald-700 px-3 py-1 font-semibold">All caught up</span>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    { label: "Appointment reminders", count: dueApptReminders.length, to: "Appointments Diary" },
+                    { label: "Patients due for recall", count: dueRecallList.length, to: "Appointments Diary" },
+                    { label: "Payments to chase", count: duePayReminders.length, to: "Appointments Diary" },
+                  ].map((a) => (
+                    <button
+                      key={a.label}
+                      onClick={() => setActiveNav(a.to)}
+                      className={`text-left rounded-xl border p-4 transition-colors ${
+                        a.count > 0 ? "border-blue-200 bg-blue-50 hover:bg-blue-100" : "border-slate-200 bg-slate-50 hover:bg-slate-100"
+                      }`}
+                    >
+                      <div className={`text-2xl font-bold ${a.count > 0 ? "text-blue-700" : "text-slate-400"}`}>{a.count}</div>
+                      <div className="text-xs font-semibold text-slate-700 mt-0.5">{a.label}</div>
+                      <div className="text-[11px] text-slate-400 mt-1">{a.count > 0 ? "Tap to send on WhatsApp ›" : "Nothing to send"}</div>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
                 <section className="xl:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 md:p-6 shadow-sm">
                   <div className="flex items-start justify-between gap-3 mb-5">
