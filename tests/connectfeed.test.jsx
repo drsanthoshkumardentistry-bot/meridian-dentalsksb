@@ -17,6 +17,7 @@ const makeApi = (o = {}) => ({
   report: vi.fn(async () => {}), listReports: vi.fn(async () => []), getPost: vi.fn(async () => null), dismissReport: vi.fn(async () => {}),
   listPostsBy: vi.fn(async () => []), listUpcomingEvents: vi.fn(async () => []), updatePost: vi.fn(async () => {}), setAccepted: vi.fn(async () => {}),
   vote: vi.fn(async () => {}), myVotes: vi.fn(async () => ({})), savedIds: vi.fn(async () => new Set()), listSaved: vi.fn(async () => []), setSaved: vi.fn(async () => {}), countFollowers: vi.fn(async () => 0),
+  getPostImages: vi.fn(async () => []),
   ...o,
 });
 const mount = (api, admin = false, toast = vi.fn()) => render(<ConnectFeed api={api} me={me} admin={admin} showToast={toast} />);
@@ -106,7 +107,7 @@ describe("feed basics", () => {
     await waitFor(() => expect(api.report).toHaveBeenCalledWith({ postId: "p1", reason: "Spam or advertising" }));
     vi.spyOn(window, "confirm").mockReturnValue(true);
     fireEvent.click(within(await article("My tip")).getByText("Delete"));
-    await waitFor(() => expect(api.deletePost).toHaveBeenCalledWith("p2"));
+    await waitFor(() => expect(api.deletePost).toHaveBeenCalledWith("p2", 0));
     await waitFor(() => expect(screen.queryByRole("article", { name: "My tip" })).toBeNull());
   });
 
@@ -391,5 +392,62 @@ describe("polls", () => {
     fireEvent.click(screen.getByText("Post"));
     await waitFor(() => expect(api.createPost).toHaveBeenCalledTimes(1));
     expect(api.createPost.mock.calls[0][0]).toMatchObject({ type: "poll", pollOptions: ["Diamond", "Carbide", "Ceramic"], v0: 0, v1: 0, v2: 0 });
+  });
+});
+
+describe("case images", () => {
+  const JPG = "data:image/jpeg;base64," + "A".repeat(100);
+  const stubCanvas = () => {
+    globalThis.createImageBitmap = vi.fn(async () => ({ width: 2000, height: 1000 }));
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({ fillRect() {}, drawImage() {}, set fillStyle(v) {} });
+    vi.spyOn(HTMLCanvasElement.prototype, "toDataURL").mockReturnValue(JPG);
+  };
+
+  it("attaches up to two photos to a case and sends them with the post", async () => {
+    stubCanvas();
+    const api = makeApi();
+    mount(api);
+    fireEvent.click(await screen.findByText(/Start a discussion/));
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Swelling in 36" } });
+    fireEvent.change(screen.getByLabelText("Details"), { target: { value: "Female, 34, swelling in 36 for two days, no fever." } });
+    const file = new File(["x"], "a.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByLabelText("Add an image"), { target: { files: [file, file, file] } });
+    await waitFor(() => expect(screen.getAllByAltText(/Attached image/)).toHaveLength(2));
+    expect(screen.queryByLabelText("Add an image")).toBeNull();
+    fireEvent.click(screen.getByLabelText("Remove image 1"));
+    expect(screen.getAllByAltText(/Attached image/)).toHaveLength(1);
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByText("Post"));
+    await waitFor(() => expect(api.createPost).toHaveBeenCalledTimes(1));
+    expect(api.createPost.mock.calls[0][0]).toMatchObject({ type: "case", imageCount: 1 });
+    expect(api.createPost.mock.calls[0][1]).toEqual([JPG]);
+  });
+
+  it("does not offer images on other post types", async () => {
+    mount(makeApi());
+    fireEvent.click(await screen.findByText(/Start a discussion/));
+    fireEvent.click(screen.getByRole("radio", { name: "Ask peers" }));
+    expect(screen.queryByLabelText("Add an image")).toBeNull();
+  });
+
+  it("shows a case's images on the card and opens one full size", async () => {
+    const api = makeApi({ listPosts: vi.fn(async () => ({ posts: [post({ imageCount: 2 })], cursor: null })), getPostImages: vi.fn(async () => [JPG, JPG]) });
+    mount(api);
+    const card = within(await article("Abscess after RCT"));
+    expect(await card.findAllByAltText(/Case image/)).toHaveLength(2);
+    expect(api.getPostImages).toHaveBeenCalledWith("p1", 2);
+    fireEvent.click(card.getByLabelText("View image 1 of 2 full size"));
+    expect(screen.getByRole("dialog", { name: "Case image" })).toBeTruthy();
+    fireEvent.click(screen.getByLabelText("Close image"));
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("passes the image count when deleting so the pictures go first", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const api = makeApi({ uid: "other", listPosts: vi.fn(async () => ({ posts: [post({ imageCount: 1 })], cursor: null })), getPostImages: vi.fn(async () => [JPG]) });
+    mount(api);
+    const card = within(await article("Abscess after RCT"));
+    fireEvent.click(card.getByRole("button", { name: /Delete/ }));
+    await waitFor(() => expect(api.deletePost).toHaveBeenCalledWith("p1", 1));
   });
 });
