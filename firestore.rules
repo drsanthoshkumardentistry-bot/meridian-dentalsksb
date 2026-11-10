@@ -55,6 +55,35 @@ service cloud.firestore {
                         && request.resource.data.decidedName.size() <= 80);
     }
 
+    // Online booking. The page document is public to read by id (never listable) and only the clinic
+    // can write it. Anyone may create a request, but only a small validated shape and only while
+    // the clinic has booking switched on. Only the clinic can read, answer or delete requests.
+    match /bookingPages/{clinicId} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if request.auth != null && request.auth.uid == clinicId
+                   && request.auth.token.email_verified == true;
+    }
+    match /bookingRequests/{requestId} {
+      allow create: if request.resource.data.keys().hasOnly(['clinicId', 'name', 'phone', 'date', 'slot', 'service', 'note', 'status', 'createdAt'])
+                    && request.resource.data.status == 'new'
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80
+                    && request.resource.data.phone is string && request.resource.data.phone.size() == 10
+                    && request.resource.data.date is string && request.resource.data.date.size() == 10
+                    && request.resource.data.slot in ['Morning', 'Afternoon', 'Evening']
+                    && request.resource.data.service is string && request.resource.data.service.size() <= 60
+                    && request.resource.data.note is string && request.resource.data.note.size() <= 300
+                    && request.resource.data.clinicId is string
+                    && get(/databases/$(database)/documents/bookingPages/$(request.resource.data.clinicId)).data.enabled == true;
+      allow read, delete: if request.auth != null && request.auth.uid == resource.data.clinicId
+                          && request.auth.token.email_verified == true;
+      allow update: if request.auth != null && request.auth.uid == resource.data.clinicId
+                    && request.auth.token.email_verified == true
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'handledAt'])
+                    && request.resource.data.status in ['confirmed', 'declined'];
+    }
+
     // ---------------- MeriDent Connect: closed network of verified dentists ----------------
 
     // MeriDent staff. Documents here are created by hand in the Firebase console, never by the app.
