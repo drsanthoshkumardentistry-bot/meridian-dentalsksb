@@ -47,7 +47,8 @@ import {
   ShieldAlert,
   ClipboardCheck,
   Bell,
-  Star
+  Star,
+  BarChart3
 } from "lucide-react";
 
 // Safe dynamic import from ./firebase
@@ -63,6 +64,10 @@ import {
   whatsappLink, markAppointmentReminded, markInvoiceReminded, formatTime12,
   dueRecalls, buildRecallMessage, markPatientRecalled, RECALL_OPTIONS, DEFAULT_RECALL_MONTHS,
 } from "./reminders";
+import {
+  MODE_KEYS, currentMonthKey, collectionsForMonth, gstSummaryForMonth, outstandingTotalP,
+  collectionsCsv, gstRegisterCsv, buildReportHtml, monthLabel,
+} from "./reports";
 import {
   TAX_CATEGORIES, computeInvoiceTotals, nextInvoiceNumber, normalizeInvoice, addPayment,
   paidPaise, balancePaise, paymentStatus, buildUpiUri, isValidUpiId, buildInvoiceHtml, formatINR, toPaise,
@@ -1123,6 +1128,34 @@ export default function App() {
     showToast(`Appointment booked for ${appt.patientName} on ${appt.date}`);
   };
 
+  // --- Reports ---
+  const [reportMonth, setReportMonth] = useState(currentMonthKey());
+  const reportInvoices = invoices;
+  const reportCollections = collectionsForMonth(reportInvoices, reportMonth);
+  const reportGst = gstSummaryForMonth(reportInvoices, reportMonth);
+
+  const downloadCsv = (csv, name) => {
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const printReport = () => {
+    const win = window.open("", "_blank");
+    if (!win) {
+      showToast("Allow pop-ups to print the report");
+      return;
+    }
+    win.document.write(buildReportHtml(reportInvoices, reportMonth, practiceProfile));
+    win.document.close();
+  };
+
   // --- WhatsApp reminders (opens WhatsApp with the message ready; the clinic taps Send) ---
   const dueApptReminders = dueAppointmentReminders(appointments, new Date(), patients);
   const dueRecallList = dueRecalls(patients, appointments, invoices.map(normalizeInvoice));
@@ -1565,6 +1598,7 @@ export default function App() {
               { label: "Patients & Odontogram", icon: <Users className="w-4 h-4" /> },
               { label: "OPG & Diagnosis Studio", icon: <Sun className="w-4 h-4" /> },
               { label: "Dental Insurance & Invoices", icon: <DollarSign className="w-4 h-4" /> },
+              { label: "Reports", icon: <BarChart3 className="w-4 h-4" /> },
               { label: "Stock Maintenance", icon: <Package className="w-4 h-4" /> },
               { label: "Employee Roles & Roster", icon: <Briefcase className="w-4 h-4" /> },
               { label: "Practice Profile", icon: <UserCheck className="w-4 h-4" /> },
@@ -2148,6 +2182,121 @@ export default function App() {
                   </table>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* REPORTS */}
+          {activeNav === "Reports" && (
+            <div className="space-y-6" data-testid="reports-screen">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h1 className="text-xl font-bold text-slate-900">Reports</h1>
+                  <p className="text-xs text-slate-500">Daily collections and GST summary for your accountant</p>
+                </div>
+                <input
+                  type="month"
+                  aria-label="Report month"
+                  value={reportMonth}
+                  max={currentMonthKey()}
+                  onChange={(e) => e.target.value && setReportMonth(e.target.value)}
+                  className="px-3 py-2 border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none bg-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {[
+                  { label: "Received", value: reportCollections.totals.totalP, tone: "text-emerald-700" },
+                  { label: "GST payable", value: reportGst.sum.taxP, tone: "text-blue-700" },
+                  { label: "Invoiced (incl. GST)", value: reportGst.sum.totalP, tone: "text-slate-900" },
+                  { label: "Outstanding (all time)", value: outstandingTotalP(reportInvoices), tone: "text-rose-600" },
+                ].map((c) => (
+                  <div key={c.label} className="bg-white border border-slate-200 rounded-xl p-4">
+                    <div className="text-[11px] font-semibold text-slate-500">{c.label}</div>
+                    <div className={`text-lg font-bold mt-1 ${c.tone}`}>₹{formatINR(c.value)}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => downloadCsv(collectionsCsv(reportInvoices, reportMonth), `collections-${reportMonth}.csv`)}
+                  className="px-3 py-2 bg-white border border-slate-200 hover:bg-blue-50 rounded-lg text-xs font-semibold text-slate-800 inline-flex items-center gap-1.5"
+                >
+                  <Download className="w-3.5 h-3.5" /> Collections (spreadsheet)
+                </button>
+                <button
+                  onClick={() => downloadCsv(gstRegisterCsv(reportInvoices, reportMonth), `gst-register-${reportMonth}.csv`)}
+                  className="px-3 py-2 bg-white border border-slate-200 hover:bg-blue-50 rounded-lg text-xs font-semibold text-slate-800 inline-flex items-center gap-1.5"
+                >
+                  <Download className="w-3.5 h-3.5" /> GST register (spreadsheet)
+                </button>
+                <button
+                  onClick={printReport}
+                  className="px-3 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold"
+                >
+                  Print / save as PDF
+                </button>
+              </div>
+
+              <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto">
+                <div className="px-4 pt-3 text-xs font-bold text-slate-900">Money received · {monthLabel(reportMonth)}</div>
+                {reportCollections.days.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-slate-500">No payments recorded this month.</div>
+                ) : (
+                  <table className="w-full text-left text-xs mt-2">
+                    <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-y border-slate-200">
+                      <tr>
+                        <th className="p-3">Date</th>
+                        {MODE_KEYS.map((m) => (
+                          <th key={m} className="p-3 text-right">{m}</th>
+                        ))}
+                        <th className="p-3 text-right">Total (₹)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {reportCollections.days.map((d) => (
+                        <tr key={d.date}>
+                          <td className="p-3 font-semibold">{d.date}</td>
+                          {MODE_KEYS.map((m) => (
+                            <td key={m} className="p-3 text-right text-slate-600">{d.byMode[m] ? formatINR(d.byMode[m]) : "–"}</td>
+                          ))}
+                          <td className="p-3 text-right font-bold">{formatINR(d.totalP)}</td>
+                        </tr>
+                      ))}
+                      <tr className="bg-slate-50 font-bold">
+                        <td className="p-3">Total</td>
+                        {MODE_KEYS.map((m) => (
+                          <td key={m} className="p-3 text-right">{formatINR(reportCollections.totals.byMode[m])}</td>
+                        ))}
+                        <td className="p-3 text-right">{formatINR(reportCollections.totals.totalP)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              <div className="bg-white border border-slate-200 rounded-xl p-4 text-xs space-y-2">
+                <div className="font-bold text-slate-900">GST summary · invoices raised in {monthLabel(reportMonth)}</div>
+                {[
+                  ["Invoices", String(reportGst.sum.invoices)],
+                  ["Exempt services (therapeutic)", `₹${formatINR(reportGst.sum.exemptP)}`],
+                  ["Taxable services (cosmetic)", `₹${formatINR(reportGst.sum.taxableAt18P)}`],
+                  ["CGST collected", `₹${formatINR(reportGst.sum.cgstP)}`],
+                  ["SGST collected", `₹${formatINR(reportGst.sum.sgstP)}`],
+                ].map(([k, v]) => (
+                  <div key={k} className="flex justify-between text-slate-600">
+                    <span>{k}</span>
+                    <span className="font-semibold text-slate-900">{v}</span>
+                  </div>
+                ))}
+                <div className="flex justify-between border-t border-slate-100 pt-2 font-bold text-slate-900">
+                  <span>Total GST payable</span>
+                  <span>₹{formatINR(reportGst.sum.taxP)}</span>
+                </div>
+                <p className="text-[10px] text-slate-400">
+                  GST is counted on the invoice date. Money received is counted on the payment date. Please have your accountant verify before filing.
+                </p>
+              </div>
             </div>
           )}
 
