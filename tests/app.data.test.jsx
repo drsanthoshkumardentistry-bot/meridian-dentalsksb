@@ -353,4 +353,31 @@ describe("demographics and required data", () => {
     expect(screen.getByLabelText(/^Tooth 37,.*treatment planned/)).toBeTruthy();
     expect(screen.getByLabelText(/^Tooth 11, /).getAttribute("aria-label")).not.toMatch(/planned/);
   });
+
+  it("invoice screen shows unpaid money by age and filters to unpaid, oldest first", async () => {
+    const ago = (d) => new Date(Date.now() - d * 86400000).toLocaleDateString("en-IN");
+    const mk = (id, d, totalP, paidP = 0) => ({
+      id, patientId: "", patient: id, paymentMode: "Cash", provider: "Self Pay", claimId: "", status: "Self-Pay",
+      treatment: "Scaling", subtotalP: totalP, discountP: 0, taxableP: totalP, gstRate: 0, cgstP: 0, sgstP: 0, taxP: 0, totalP,
+      payments: paidP ? [{ date: ago(d), mode: "Cash", amountP: paidP }] : [], date: ago(d),
+    });
+    localStorage.setItem(KEY("invoices"), JSON.stringify([
+      mk("INV/FRESH", 2, 100000), mk("INV/PAID", 3, 50000, 50000), mk("INV/OLD", 90, 250000),
+    ]));
+    await openApp();
+    nav("Dental Insurance & Invoices");
+    const panel = await screen.findByTestId("receivables");
+    expect(within(panel).getByText("₹2,500.00").closest("button").textContent).toMatch(/Over 60 days/);
+    expect(within(panel).getByText("₹1,000.00").closest("button").textContent).toMatch(/Up to 7 days/);
+    expect(screen.getByText("INV/PAID")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /Unpaid \(2\)/ }));
+    expect(screen.queryByText("INV/PAID")).toBeNull();
+    const rows = screen.getAllByRole("row").slice(1).map((r) => r.textContent);
+    expect(rows[0]).toMatch(/INV\/OLD/);
+    expect(rows[0]).toMatch(/90 days old/);
+    expect(rows[1]).toMatch(/INV\/FRESH/);
+    fireEvent.click(within(panel).getByText("₹2,500.00").closest("button"));
+    expect(screen.queryByText("INV/FRESH")).toBeNull();
+    expect(screen.getByText("INV/OLD")).toBeTruthy();
+  });
 });
