@@ -24,7 +24,11 @@ import {
   Sun,
   TrendingUp,
   Users,
-  WifiOff
+  WifiOff,
+  Wallet,
+  Briefcase,
+  LayoutDashboard,
+  Network
 } from "lucide-react";
 
 const WHATSAPP_NUMBER = "919043205927";
@@ -32,31 +36,40 @@ const DEMO_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
   "Hi, I'd like a demo of MeriDent for my dental clinic."
 )}`;
 
-/* Features grouped by where in the day they happen. */
+/* Features grouped by where in the day they happen. Only things the app does today. */
 const FEATURE_GROUPS = [
   {
     heading: "At the chair",
     items: [
-      { icon: Users, title: "32-tooth FDI odontogram", text: "Chart permanent and deciduous teeth with a clinical status palette, plus diagnosis and trauma notes for every patient." },
-      { icon: Sun, title: "OPG & diagnosis studio", text: "Upload a panoramic film, invert the negative, measure with the caliper, and save findings next to the chart." },
-      { icon: ClipboardList, title: "Treatment plans & estimates", text: "Price a plan tooth by tooth, send the estimate on WhatsApp or print it, mark it approved, then turn it into an invoice." },
+      { icon: Users, title: "32-tooth FDI odontogram", text: "Chart adult and primary teeth. A tooth can hold several findings at once, such as caries, a root canal and a crown, and each one can be removed on its own." },
+      { icon: Sun, title: "OPG & diagnosis studio", text: "Open a panoramic film at full size, zoom in, adjust brightness and contrast, and invert the negative. Calibrate against an object of known length to measure in millimetres." },
+      { icon: ClipboardList, title: "Treatment plans & estimates", text: "Price a plan tooth by tooth and send the patient a link on WhatsApp. They approve or decline from their phone, with no sign-in. Approved plans turn into an invoice." },
       { icon: FileText, title: "Prescriptions & referrals", text: "Add medicines from presets and share the prescription on WhatsApp. Refer patients between departments." }
     ]
   },
   {
     heading: "At the desk",
     items: [
-      { icon: Calendar, title: "Appointments diary", text: "Book chair and doctor slots and send a WhatsApp confirmation with one tap." },
+      { icon: Calendar, title: "Appointments diary", text: "Book by chair and doctor, with a warning before you double-book. See today and upcoming visits, and mark each one Completed, No show or Cancelled." },
       { icon: BarChart3, title: "GST billing & UPI QR", text: "Invoices with GST where it applies (therapeutic care is exempt), part payments, a scannable UPI QR for the exact balance, and printable invoices and receipts." },
       { icon: ReceiptText, title: "Multi-item invoices", text: "Bill several treatments on one invoice and mix GST-exempt and 18% work. Discounts are shared out fairly across the items." },
-      { icon: Package, title: "Stock & staff roster", text: "Low-stock alerts for consumables, plus staff roles, shifts and licence expiry dates." }
+      { icon: Wallet, title: "Dues and overdue tracking", text: "Set a due date, see unpaid money by age, filter to overdue invoices, search by patient and export the list to a spreadsheet." }
     ]
   },
   {
-    heading: "After the visit",
+    heading: "Running the clinic",
     items: [
+      { icon: Package, title: "Stock with reorder and expiry alerts", text: "Set a reorder level and an expiry date for each item. See what is low or expiring, and send a reorder list to your supplier on WhatsApp." },
+      { icon: Briefcase, title: "Staff roster, leave and reviews", text: "Track licence expiry, approve leave, and record performance reviews. Alerts come from your own saved dates." },
+      { icon: LayoutDashboard, title: "Today at a glance", text: "A dashboard with today's schedule, money collected this month, what is outstanding, and a short list of what needs your attention." },
+      { icon: TrendingUp, title: "Reports for your accountant", text: "Daily collections by cash, UPI and card, plus a monthly GST summary. Download a spreadsheet or print a PDF." }
+    ]
+  },
+  {
+    heading: "Beyond your clinic",
+    items: [
+      { icon: Network, title: "MeriDent Connect", text: "A closed network of dentists verified by our team. Find a nearby specialist and send a consult request. Patient names are never shared, and case notes go only with recorded consent." },
       { icon: Bell, title: "WhatsApp reminders & recall", text: "See who to remind for tomorrow, who owes a balance, and who is due for a 6-month check-up. One tap opens WhatsApp with the message ready. Patients can opt out." },
-      { icon: TrendingUp, title: "Reports for your accountant", text: "Daily collections by cash, UPI and card, plus a monthly GST summary. Download a spreadsheet or print a PDF." },
       { icon: WifiOff, title: "Works with weak internet", text: "Keep working when the connection drops. Your changes save on the device and sync to the cloud when you are back online." }
     ]
   }
@@ -98,6 +111,14 @@ const FAQS = [
     a: "Yes. MeriDent runs in your phone or laptop browser. There is nothing to install."
   },
   {
+    q: "Does MeriDent handle insurance claims?",
+    a: "No. MeriDent is built for what patients pay the clinic: GST invoices, part payments, dues and UPI collection. It does not manage insurance or TPA claims."
+  },
+  {
+    q: "What is MeriDent Connect?",
+    a: "A closed network for dentists. Our team checks each dentist's registration before they can see the directory or send a request. You can find a nearby colleague and send a consult request. Patient names are never shared, and case notes are included only when consent is recorded."
+  },
+  {
     q: "Can you move my existing records in?",
     a: "Yes. Message us on WhatsApp and we will help you move your patient list across."
   }
@@ -108,7 +129,7 @@ const FAQS = [
  * Teeth sit on an arc; widths follow real anatomy (molars wide, incisors narrow).
  * ---------------------------------------------------------------------------- */
 const ARCH = [
-  ["18", 34, "x"], ["17", 40, "ok"], ["16", 44, "crown"], ["15", 30, "ok"], ["14", 30, "ok"],
+  ["18", 34, "x"], ["17", 40, "ok"], ["16", 44, "multi"], ["15", 30, "ok"], ["14", 30, "ok"],
   ["13", 28, "ok"], ["12", 26, "ok"], ["11", 30, "ok"],
   ["21", 30, "ok"], ["22", 26, "plan"], ["23", 28, "ok"], ["24", 30, "ok"], ["25", 30, "fill"],
   ["26", 44, "ok"], ["27", 40, "ok"], ["28", 34, "x"]
@@ -118,6 +139,7 @@ const TOOTH_STYLE = {
   ok: { fill: "#ffffff", stroke: "#93b4f5", dash: undefined },
   fill: { fill: "#1d4ed8", stroke: "#1d4ed8", dash: undefined },
   crown: { fill: "#0b1b3a", stroke: "#0b1b3a", dash: undefined },
+  multi: { fill: "#0b1b3a", stroke: "#0b1b3a", dash: undefined },
   plan: { fill: "#dbe7ff", stroke: "#1d4ed8", dash: "3 2" },
   x: { fill: "none", stroke: "#b8c9ea", dash: "2 3" }
 };
@@ -158,7 +180,7 @@ function archGeometry() {
 function ToothArch() {
   const teeth = archGeometry();
   return (
-    <svg viewBox="0 0 500 190" role="img" aria-label="Sample odontogram: upper arch with a filling, a crown, a planned treatment and two missing teeth" className="w-full h-auto">
+    <svg viewBox="0 0 500 190" role="img" aria-label="Sample odontogram: upper arch with a filling, a tooth with a crown and two other findings, a planned treatment and two missing teeth" className="w-full h-auto">
       {teeth.map((t) => {
         const st = TOOTH_STYLE[t.state];
         return (
@@ -176,6 +198,12 @@ function ToothArch() {
                   strokeWidth="1.6"
                   strokeDasharray={st.dash}
                 />
+                {t.state === "multi" && (
+                  <>
+                    <circle cx={-6} cy={t.h / 2 - 7} r="3.2" fill="#93b4f5" stroke="#fff" strokeWidth="1" />
+                    <circle cx={6} cy={t.h / 2 - 7} r="3.2" fill="#e11d48" stroke="#fff" strokeWidth="1" />
+                  </>
+                )}
               </g>
             </g>
             <text x={t.lx.toFixed(1)} y={(t.ly + 3).toFixed(1)} textAnchor="middle" fontSize="9" fill="#6b7fa8" style={{ fontVariantNumeric: "tabular-nums" }}>
@@ -191,7 +219,7 @@ function ToothArch() {
 function ChartLegend() {
   const items = [
     ["Filling", "#1d4ed8", "#1d4ed8", undefined],
-    ["Crown", "#0b1b3a", "#0b1b3a", undefined],
+    ["Several findings", "#0b1b3a", "#0b1b3a", undefined],
     ["Planned", "#dbe7ff", "#1d4ed8", "3 2"],
     ["Missing", "none", "#b8c9ea", "2 3"]
   ];
@@ -341,7 +369,7 @@ export default function LandingPage({
             </h1>
 
             <p className="text-base sm:text-lg text-slate-600 max-w-xl leading-relaxed">
-              MeriDent is a practice manager for Indian dental clinics: a 32-tooth odontogram, treatment plans, GST invoices with a UPI QR, and WhatsApp reminders. It runs in your browser, so there is nothing to install.
+              MeriDent is a practice manager for Indian dental clinics: a 32-tooth odontogram, treatment plans patients can approve from their phone, GST invoices with a UPI QR, stock and staff, and WhatsApp reminders. It runs in your browser, so there is nothing to install.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-1">
@@ -494,7 +522,7 @@ export default function LandingPage({
           <h2 className="font-display font-extrabold text-3xl sm:text-4xl tracking-[-0.02em] leading-tight">What you can do today</h2>
           <p className="mt-3 text-base text-slate-600">Everything below is in the app now, grouped by where it happens in a clinic day.</p>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-x-10 gap-y-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-14 gap-y-12">
           {FEATURE_GROUPS.map((group) => (
             <div key={group.heading}>
               <h3 className="font-display font-bold text-xl text-brand-700 pb-3 border-b-2 border-brand-600">{group.heading}</h3>
