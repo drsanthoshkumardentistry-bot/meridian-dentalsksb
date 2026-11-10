@@ -7,6 +7,7 @@
 
 import { AGING_BUCKETS, agingSummary, filterInvoices, invoiceAgeDays } from "./receivables.js";
 import { toggleFinding, normalizeConditions, chartedCount as chartedTeeth } from "./odontogram.js";
+import { billingSummary, invoiceView, invoicesCsv, buildInvoiceMessage, isOverdue, daysOverdue, dueDateIn } from "./billingView.js";
 import OpgViewer from "./components/OpgViewer.jsx";
 import Connect from "./components/Connect.jsx";
 import { bindApi } from "./connect/api.js";
@@ -838,6 +839,7 @@ export default function App() {
     items: [blankInvoiceItem()],
     discount: "",
     advance: "",
+    dueDate: "",
   });
   const [payForm, setPayForm] = useState({ amount: "", mode: "Cash" });
   const [upiQrDataUrl, setUpiQrDataUrl] = useState("");
@@ -1170,7 +1172,23 @@ export default function App() {
   const [invoiceFilter, setInvoiceFilter] = useState("all");
   const connectApi = useMemo(() => bindApi(db, CLINIC_ID), [CLINIC_ID]);
   const aging = agingSummary(invoices);
-  const visibleInvoices = filterInvoices(invoices, invoiceFilter);
+  const [invoiceQuery, setInvoiceQuery] = useState("");
+  const visibleInvoices = invoiceView(invoices, { status: invoiceFilter, query: invoiceQuery });
+  const billing = billingSummary(invoices);
+  const overdueList = invoiceView(invoices, { status: "overdue" });
+
+  const sendInvoiceToPatient = (inv) => {
+    const patient = patients.find((p) => p.id === inv.patientId) || patients.find((p) => p.name === inv.patient);
+    const link = whatsappLink(
+      patient?.phone,
+      buildInvoiceMessage({ clinicName: practiceProfile.name, inv, upiId: isValidUpiId(practiceProfile.upiId) ? practiceProfile.upiId : "" })
+    );
+    if (!link) {
+      showToast("This patient has no valid mobile number");
+      return;
+    }
+    window.open(link, "_blank", "noopener,noreferrer");
+  };
 
   const sendApptReminder = ({ appt, kind }) => {
     const link = whatsappLink(
@@ -1310,6 +1328,7 @@ export default function App() {
       total: (totals.totalP / 100).toLocaleString("en-IN"),
       rawAmount: String(totals.totalP / 100),
       date: today,
+      ...(newInvoiceForm.dueDate ? { dueDate: newInvoiceForm.dueDate } : {}),
     };
     setInvoices([inv, ...invoices]);
     if (newInvoiceForm.planId && newInvoiceForm.patientId) {
@@ -1331,6 +1350,7 @@ export default function App() {
       items: [blankInvoiceItem()],
       discount: "",
       advance: "",
+      dueDate: "",
     });
     setIsAddInvoiceOpen(false);
     showToast(`Invoice ${inv.id} generated for ₹${formatINR(inv.totalP)}`);
@@ -1611,7 +1631,7 @@ export default function App() {
               { label: "Appointments Diary", icon: <Calendar className="w-4 h-4" /> },
               { label: "Patients & Odontogram", icon: <Users className="w-4 h-4" /> },
               { label: "OPG & Diagnosis Studio", icon: <Sun className="w-4 h-4" /> },
-              { label: "Dental Insurance & Invoices", icon: <DollarSign className="w-4 h-4" /> },
+              { label: "Billing & Invoices", icon: <DollarSign className="w-4 h-4" /> },
               { label: "MeriDent Connect", icon: <Network className="w-4 h-4" /> },
               { label: "Reports", icon: <BarChart3 className="w-4 h-4" /> },
               { label: "Stock Maintenance", icon: <Package className="w-4 h-4" /> },
@@ -2066,12 +2086,12 @@ export default function App() {
           )}
 
           {/* TAB 4: DENTAL INSURANCE & INVOICES */}
-          {activeNav === "Dental Insurance & Invoices" && (
+          {activeNav === "Billing & Invoices" && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-xl font-bold text-slate-900">Dental Insurance & Invoices</h1>
-                  <p className="text-xs text-slate-500">GST invoices, part payments & UPI collection · Outstanding ₹{totalOutstanding.toLocaleString("en-IN")}</p>
+                  <h1 className="text-xl font-bold text-slate-900">Billing & Invoices</h1>
+                  <p className="text-xs text-slate-500">GST invoices, part payments, insurance claims and UPI collection</p>
                 </div>
                 <button
                   onClick={() => setIsAddInvoiceOpen(true)}
@@ -2080,6 +2100,22 @@ export default function App() {
                   <Plus className="w-4 h-4" /> New Invoice
                 </button>
               </div>
+
+              {invoices.length > 0 && (
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-testid="billing-summary">
+                  {[
+                    { label: "Billed this month", value: billing.billedP, tone: "text-slate-900" },
+                    { label: "Collected this month", value: billing.collectedP, tone: "text-emerald-700" },
+                    { label: "Outstanding (all time)", value: billing.outstandingP, tone: billing.outstandingP ? "text-rose-600" : "text-slate-900" },
+                    { label: `Overdue${billing.overdueCount ? ` (${billing.overdueCount})` : ""}`, value: billing.overdueP, tone: billing.overdueP ? "text-rose-600" : "text-slate-900" },
+                  ].map((c) => (
+                    <div key={c.label} className="bg-white border border-slate-200 rounded-xl p-4">
+                      <div className="text-[11px] font-semibold text-slate-500">{c.label}</div>
+                      <div className={`text-lg font-bold mt-1 tabular ${c.tone}`}>₹{formatINR(c.value)}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {aging.count > 0 && (
                 <div className="space-y-3" data-testid="receivables">
@@ -2114,6 +2150,9 @@ export default function App() {
                   {[
                     ["all", "All invoices"],
                     ["unpaid", `Unpaid (${aging.count})`],
+                    ["part", "Part paid"],
+                    ["paid", "Paid"],
+                    ["overdue", `Overdue (${overdueList.length})`],
                   ].map(([id, label]) => (
                     <button
                       key={id}
@@ -2127,6 +2166,21 @@ export default function App() {
                       {label}
                     </button>
                   ))}
+                  <input
+                    type="search"
+                    aria-label="Search invoices"
+                    value={invoiceQuery}
+                    onChange={(e) => setInvoiceQuery(e.target.value)}
+                    placeholder="Search patient, invoice or claim"
+                    className="ml-auto w-full sm:w-64 px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => downloadCsv(invoicesCsv(visibleInvoices), `invoices-${new Date().toISOString().slice(0, 10)}.csv`)}
+                    className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-blue-50 rounded-lg font-semibold text-slate-800 inline-flex items-center gap-1.5"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Export list
+                  </button>
                   {AGING_BUCKETS.some((b) => b.id === invoiceFilter) && (
                     <span className="text-slate-500">Showing {AGING_BUCKETS.find((b) => b.id === invoiceFilter).label}, oldest first</span>
                   )}
@@ -2163,7 +2217,7 @@ export default function App() {
                     <tbody className="divide-y divide-slate-100">
                       {visibleInvoices.length === 0 && (
                         <tr>
-                          <td colSpan={7} className="p-8 text-center text-slate-500">Nothing to show here. Every invoice in this view is paid.</td>
+                          <td colSpan={7} className="p-8 text-center text-slate-500">{invoiceQuery ? "No invoice matches your search." : "Nothing to show in this view."}</td>
                         </tr>
                       )}
                       {visibleInvoices.map(normalizeInvoice).map((inv) => (
@@ -2184,6 +2238,11 @@ export default function App() {
                             <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
                               {paymentStatus(inv)}
                             </span>
+                            {isOverdue(inv) ? (
+                              <div className="text-[10px] font-bold text-rose-600 mt-1">Overdue by {daysOverdue(inv)} {daysOverdue(inv) === 1 ? "day" : "days"}</div>
+                            ) : balancePaise(inv) > 0 && inv.dueDate ? (
+                              <div className="text-[10px] text-slate-500 mt-1">Due {new Date(inv.dueDate).toLocaleDateString("en-IN")}</div>
+                            ) : null}
                             {inv.status && inv.claimId ? <div className="text-[10px] text-slate-400 mt-1">{inv.status}</div> : null}
                           </td>
                           <td className="p-4 font-bold text-sm">
@@ -2197,6 +2256,13 @@ export default function App() {
                               className="px-3 py-1.5 bg-slate-100 hover:bg-blue-50 border border-slate-200 text-slate-800 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5"
                             >
                               <QrCode className="w-3.5 h-3.5" /> {balancePaise(inv) > 0 ? "Collect" : "Payments"}
+                            </button>
+                            <button
+                              onClick={() => sendInvoiceToPatient(inv)}
+                              className="px-3 py-1.5 bg-white hover:bg-emerald-50 border border-slate-200 text-slate-800 rounded-lg text-xs font-semibold"
+                              aria-label={`Send invoice ${inv.id} on WhatsApp`}
+                            >
+                              Send
                             </button>
                             <button
                               onClick={() => handlePrintInvoice(inv, false)}
@@ -3408,7 +3474,7 @@ export default function App() {
                       planId: plan.id,
                     });
                     setIsChartModalOpen(false);
-                    setActiveNav("Dental Insurance & Invoices");
+                    setActiveNav("Billing & Invoices");
                     setIsAddInvoiceOpen(true);
                   }}
                 />
@@ -4342,6 +4408,28 @@ export default function App() {
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                 />
               </div>
+            </div>
+
+            <div>
+              <label htmlFor="inv-due" className="block font-semibold text-slate-600 mb-1">Payment due by (optional)</label>
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  id="inv-due"
+                  type="date"
+                  value={newInvoiceForm.dueDate || ""}
+                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, dueDate: e.target.value })}
+                  className="px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+                />
+                {[["On visit", 0], ["7 days", 7], ["15 days", 15], ["30 days", 30]].map(([label, d]) => (
+                  <button key={label} type="button" onClick={() => setNewInvoiceForm({ ...newInvoiceForm, dueDate: dueDateIn(d) })} className="px-2.5 py-1.5 rounded-full border border-slate-200 bg-white hover:bg-blue-50 font-semibold text-slate-700">
+                    {label}
+                  </button>
+                ))}
+                {newInvoiceForm.dueDate && (
+                  <button type="button" onClick={() => setNewInvoiceForm({ ...newInvoiceForm, dueDate: "" })} className="text-slate-500 hover:text-rose-600">Clear</button>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1">Unpaid invoices are flagged Overdue after this date.</p>
             </div>
 
             {(() => {
