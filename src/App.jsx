@@ -11,6 +11,10 @@ import { billingSummary, invoiceView, invoicesCsv, buildInvoiceMessage, isOverdu
 import { adjustStock, buildStockItem, stockState, stockSummary, stockView, buildReorderMessage } from "./stock.js";
 import { APPT_STATUSES, findClash, diarySummary, diaryView, withStatus, needsUpdate } from "./diary.js";
 import { LEAVE_TYPES, buildLeave, setLeaveStatus, removeLeave, leaveDays, onLeaveOn, buildReview, averageRating, staffAlerts } from "./staff.js";
+import GlobalSearch from "./components/GlobalSearch.jsx";
+import { patientSummary } from "./patientSummary.js";
+import { buildVisit, addVisit, removeVisit } from "./visits.js";
+import { shiftDay, dayGrid, hourMarks } from "./dayView.js";
 import OpgViewer from "./components/OpgViewer.jsx";
 import Connect from "./components/Connect.jsx";
 import { bindApi } from "./connect/api.js";
@@ -663,7 +667,7 @@ export default function App() {
   // Navigation State
   const [activeNav, setActiveNav] = useState("Patients & Odontogram");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(""); // filters the Patients list only
   const [toastMessage, setToastMessage] = useState(null);
 
   // --- PERSISTENT DATA STORES (isolated per signed-in account) ---
@@ -1187,6 +1191,8 @@ export default function App() {
   const aging = agingSummary(invoices);
   const [invoiceQuery, setInvoiceQuery] = useState("");
   const [diaryViewId, setDiaryViewId] = useState("upcoming");
+  const [dayDate, setDayDate] = useState(dateKey());
+  const [visitForm, setVisitForm] = useState({ complaint: "", findings: "", treatment: "", advice: "", nextVisit: "", date: "" });
   const [diaryQuery, setDiaryQuery] = useState("");
   const visibleInvoices = invoiceView(invoices, { status: invoiceFilter, query: invoiceQuery });
   const billing = billingSummary(invoices);
@@ -1702,17 +1708,28 @@ export default function App() {
             <div className="font-display text-lg font-bold text-ink tracking-tight">{activeNav}</div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="relative hidden sm:block w-72 md:w-96">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search records, teeth, bills..."
-                className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              />
-            </div>
+          <div className="flex items-center gap-4 flex-1 justify-end min-w-0">
+            <GlobalSearch
+              patients={patients}
+              appointments={appointments}
+              invoices={invoices}
+              onPick={(type, item) => {
+                if (type === "patient") {
+                  setActiveNav("Patients & Odontogram");
+                  setSelectedPatientId(item.id);
+                  setActiveModalTab("32-Tooth Odontogram");
+                  setIsChartModalOpen(true);
+                } else if (type === "appointment") {
+                  setActiveNav("Appointments Diary");
+                  setDiaryViewId("all");
+                  setDiaryQuery(item.patientName);
+                } else {
+                  setActiveNav("Billing & Invoices");
+                  setInvoiceFilter("all");
+                  setInvoiceQuery(item.id);
+                }
+              }}
+            />
             <div
               title={authUser.email}
               className="w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-bold"
@@ -1740,14 +1757,24 @@ export default function App() {
                 </button>
               </div>
 
+              {patients.length > 0 && (
+                <input
+                  type="search"
+                  aria-label="Filter patients"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Filter by name or phone"
+                  className="mb-4 w-full sm:w-80 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none"
+                />
+              )}
               {filteredPatients.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
                   <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
                     <Users className="w-6 h-6" />
                   </div>
-                  <h3 className="text-sm font-bold text-slate-800">No Patient Records Yet</h3>
+                  <h3 className="text-sm font-bold text-slate-800">{patients.length ? "No patient matches your filter" : "No Patient Records Yet"}</h3>
                   <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    Click "Add Patient" to register a clinical case sheet with dental odontogram and systemic review.
+                    {patients.length ? "Try a different name or phone number." : 'Click "Add Patient" to register a clinical case sheet with dental odontogram and systemic review.'}
                   </p>
                 </div>
               ) : (
@@ -2057,7 +2084,7 @@ export default function App() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 text-xs" role="group" aria-label="Show appointments">
-                    {[["today", "Today"], ["upcoming", "Upcoming"], ["past", "Past"], ["update", `Needs a status (${dsum.needsUpdate})`], ["all", "All"]].map(([id, label]) => (
+                    {[["day", "Day view"], ["today", "Today"], ["upcoming", "Upcoming"], ["past", "Past"], ["update", `Needs a status (${dsum.needsUpdate})`], ["all", "All"]].map(([id, label]) => (
                       <button
                         key={id}
                         type="button"
@@ -2078,6 +2105,55 @@ export default function App() {
                     />
                   </div>
 
+                  {diaryViewId === "day" ? (() => {
+                    const grid = dayGrid(appointments, dayDate, ["Chair 1 (Main Operatory)", "Chair 2 (Pediatric / Perio)", "Chair 3 (Prosthodontics)"]);
+                    const marks = hourMarks();
+                    return (
+                      <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-4 space-y-3" data-testid="day-view">
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                          <button type="button" aria-label="Previous day" onClick={() => setDayDate(shiftDay(dayDate, -1))} className="px-2.5 py-1.5 border border-slate-200 rounded-lg font-bold hover:bg-blue-50">‹</button>
+                          <input type="date" aria-label="Day to show" value={dayDate} onChange={(e) => e.target.value && setDayDate(e.target.value)} className="px-2.5 py-1.5 border border-slate-300 rounded-lg" />
+                          <button type="button" aria-label="Next day" onClick={() => setDayDate(shiftDay(dayDate, 1))} className="px-2.5 py-1.5 border border-slate-200 rounded-lg font-bold hover:bg-blue-50">›</button>
+                          <button type="button" onClick={() => setDayDate(dateKey())} className="px-3 py-1.5 border border-slate-200 rounded-lg font-semibold hover:bg-blue-50">Today</button>
+                          <span className="ml-auto text-slate-500">{grid.total} {grid.total === 1 ? "visit" : "visits"} on {new Date(dayDate).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}</span>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <div className="flex min-w-[640px]">
+                            <div className="w-14 shrink-0 relative" style={{ height: grid.heightPx + 28, paddingTop: 28 }}>
+                              {marks.map((m) => (
+                                <div key={m.hour} className="absolute right-2 text-[10px] text-slate-400 -translate-y-1.5" style={{ top: m.top + 28 }}>{formatTime12(`${m.hour}:00`)}</div>
+                              ))}
+                            </div>
+                            {grid.columns.map((col) => (
+                              <div key={col.chair} className="flex-1 min-w-[170px] border-l border-slate-200">
+                                <div className="h-7 px-2 text-[11px] font-bold text-slate-700 truncate" title={col.chair}>{col.chair.split(" (")[0]}</div>
+                                <div className="relative" style={{ height: grid.heightPx }}>
+                                  {marks.map((m) => (
+                                    <div key={m.hour} className="absolute left-0 right-0 border-t border-slate-100" style={{ top: m.top }} />
+                                  ))}
+                                  {col.items.map(({ appt, top, height }) => (
+                                    <div
+                                      key={appt.id}
+                                      className={`absolute left-1 right-1 rounded-md border px-2 py-0.5 text-[11px] overflow-hidden ${
+                                        appt.status === "Completed" ? "bg-emerald-50 border-emerald-300 text-emerald-900" : appt.status === "No show" ? "bg-rose-50 border-rose-300 text-rose-900" : "bg-blue-50 border-blue-300 text-blue-900"
+                                      }`}
+                                      style={{ top, height: height - 2 }}
+                                      title={`${appt.patientName}: ${appt.procedure} (${appt.status || "Confirmed"})`}
+                                    >
+                                      <span className="font-bold">{formatTime12(appt.time)}</span> {appt.patientName}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        {grid.offHours.length > 0 && (
+                          <p className="text-[11px] text-amber-700">Outside clinic hours: {grid.offHours.map((a) => `${a.patientName} at ${formatTime12(a.time)}`).join(", ")}</p>
+                        )}
+                      </div>
+                    );
+                  })() : (
                   <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto shadow-xs">
                     <table className="w-full text-left text-xs">
                       <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-b border-slate-200">
@@ -2142,6 +2218,7 @@ export default function App() {
                       </tbody>
                     </table>
                   </div>
+                  )}
                 </>
                 );
               })()}
@@ -3513,10 +3590,36 @@ export default function App() {
                 </div>
               )}
 
+              {/* PATIENT SUMMARY */}
+              {(() => {
+                const sm = patientSummary(activePatient, invoices, appointments);
+                return (
+                  <div className="mb-4 grid grid-cols-2 lg:grid-cols-4 gap-2 text-xs" data-testid="patient-summary">
+                    <div className={`rounded-xl border px-3 py-2 ${sm.dueP > 0 ? "border-rose-200 bg-rose-50" : "border-slate-200 bg-slate-50"}`}>
+                      <div className="text-[11px] text-slate-500">Balance due</div>
+                      <div className={`font-bold text-sm ${sm.dueP > 0 ? "text-rose-700" : "text-slate-900"}`}>₹{formatINR(sm.dueP)}</div>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                      <div className="text-[11px] text-slate-500">Next visit</div>
+                      <div className="font-bold text-sm text-slate-900">{sm.nextAppt ? `${new Date(sm.nextAppt.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}, ${formatTime12(sm.nextAppt.time)}` : "None booked"}</div>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                      <div className="text-[11px] text-slate-500">Last visit</div>
+                      <div className="font-bold text-sm text-slate-900">{sm.lastVisitDate ? new Date(sm.lastVisitDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "Not recorded"}</div>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                      <div className="text-[11px] text-slate-500">Open treatment plans</div>
+                      <div className="font-bold text-sm text-slate-900">{sm.plansOpen}</div>
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Exact Tab Pills */}
               <div className="flex flex-wrap items-center gap-2 mt-2 mb-6">
                 {[
                   "32-Tooth Odontogram",
+                  "Visit Notes",
                   "Department Referrals",
                   "Diagnosis & Trauma",
                   "Systemic Review",
@@ -3558,6 +3661,88 @@ export default function App() {
                   onToggleDeciduous={() => setIsDeciduous(!isDeciduous)}
                   plannedTeeth={plannedTeeth(activePatient.plans)}
                 />
+              )}
+
+              {/* VISIT NOTES */}
+              {activeModalTab === "Visit Notes" && (
+                <div className="space-y-5" data-testid="visit-notes">
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const built = buildVisit(visitForm, newId("VN"));
+                      if (!built.ok) {
+                        showToast(built.error);
+                        return;
+                      }
+                      setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? addVisit(p, built.visit) : p)));
+                      setVisitForm({ complaint: "", findings: "", treatment: "", advice: "", nextVisit: "", date: "" });
+                      showToast("Visit note saved");
+                    }}
+                    className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 grid sm:grid-cols-2 gap-3 text-xs"
+                  >
+                    {[
+                      ["complaint", "Chief complaint", "e.g. Pain on chewing, lower left"],
+                      ["findings", "Findings", "e.g. Deep caries 36, tender to percussion"],
+                      ["treatment", "Treatment done", "e.g. Access opening and cleaning, tooth 36"],
+                      ["advice", "Advice and medicines", "e.g. Soft diet, analgesic if needed"],
+                    ].map(([key, label, ph]) => (
+                      <div key={key}>
+                        <label htmlFor={`visit-${key}`} className="block font-semibold text-slate-600 mb-1">{label}</label>
+                        <textarea
+                          id={`visit-${key}`}
+                          rows="2"
+                          value={visitForm[key]}
+                          onChange={(e) => setVisitForm({ ...visitForm, [key]: e.target.value })}
+                          placeholder={ph}
+                          className="w-full p-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none"
+                        />
+                      </div>
+                    ))}
+                    <div>
+                      <label htmlFor="visit-date" className="block font-semibold text-slate-600 mb-1">Visit date</label>
+                      <input id="visit-date" type="date" max={dateKey()} value={visitForm.date || dateKey()} onChange={(e) => setVisitForm({ ...visitForm, date: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none" />
+                    </div>
+                    <div>
+                      <label htmlFor="visit-next" className="block font-semibold text-slate-600 mb-1">Next visit plan</label>
+                      <input id="visit-next" type="text" value={visitForm.nextVisit} onChange={(e) => setVisitForm({ ...visitForm, nextVisit: e.target.value })} placeholder="e.g. Obturation and crown prep in 1 week" className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none" />
+                    </div>
+                    <div className="sm:col-span-2 flex justify-end">
+                      <button type="submit" className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg font-semibold">Save visit note</button>
+                    </div>
+                  </form>
+
+                  {(activePatient.visits || []).length === 0 ? (
+                    <p className="text-sm text-slate-500">No visit notes yet. Record what you found and did at each visit so the next one starts with the history.</p>
+                  ) : (
+                    <ol className="space-y-3">
+                      {(activePatient.visits || []).map((v) => (
+                        <li key={v.id} className="rounded-xl border border-slate-200 bg-white p-4 text-xs">
+                          <div className="flex items-center justify-between gap-3 mb-2">
+                            <span className="font-bold text-sm text-slate-900">{new Date(v.date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</span>
+                            <button
+                              type="button"
+                              aria-label={`Delete visit note from ${v.date}`}
+                              onClick={() => { if (confirm("Delete this visit note?")) setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? removeVisit(p, v.id) : p))); }}
+                              className="text-slate-400 hover:text-rose-600"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-2">
+                            {[["Complaint", v.complaint], ["Findings", v.findings], ["Treatment done", v.treatment], ["Advice", v.advice], ["Next visit", v.nextVisit]]
+                              .filter(([, val]) => val)
+                              .map(([k, val]) => (
+                                <div key={k}>
+                                  <dt className="text-[11px] font-semibold text-slate-500">{k}</dt>
+                                  <dd className="text-slate-800 whitespace-pre-wrap">{val}</dd>
+                                </div>
+                              ))}
+                          </dl>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </div>
               )}
 
               {/* TAB 2: DEPARTMENT REFERRALS ROUTER */}
