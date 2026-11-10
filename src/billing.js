@@ -22,16 +22,82 @@ export const gstRateFor = (taxCategory) => {
   return found ? found.rate : 0;
 };
 
-/** amount and discount are in rupees (what the dentist types). Discount is applied before tax. */
-export const computeInvoiceTotals = ({ amount, discount = 0, taxCategory = "therapeutic" }) => {
-  const subtotalP = Math.max(0, toPaise(amount));
+export const MAX_LINE_ITEMS = 20;
+
+/** Splits `total` paise across `weights` so the parts always add up exactly (largest remainder). */
+export const allocateProportionally = (total, weights) => {
+  const sum = weights.reduce((s, w) => s + w, 0);
+  if (total <= 0 || sum <= 0) return weights.map(() => 0);
+  const raw = weights.map((w) => (total * w) / sum);
+  const parts = raw.map(Math.floor);
+  let left = total - parts.reduce((s, v) => s + v, 0);
+  const order = raw.map((r, i) => ({ i, frac: r - Math.floor(r) })).sort((x, y) => y.frac - x.frac || x.i - y.i);
+  for (let k = 0; left > 0 && k < order.length; k += 1, left -= 1) parts[order[k].i] += 1;
+  return parts;
+};
+
+/**
+ * Multi-item invoice. items: [{ description, amount (rupees), taxCategory }].
+ * The discount is shared across items in proportion to their amounts, then GST is worked out per item,
+ * so a bill can mix therapeutic (exempt) and cosmetic (18%) work correctly.
+ */
+export const computeLineItemTotals = ({ items = [], discount = 0 }) => {
+  const base = items.map((it) => ({
+    description: String(it.description || "").trim(),
+    taxCategory: it.taxCategory || "therapeutic",
+    amountP: Math.max(0, toPaise(it.amount)),
+  }));
+  const subtotalP = base.reduce((s, l) => s + l.amountP, 0);
   const discountP = Math.min(subtotalP, Math.max(0, toPaise(discount)));
-  const taxableP = subtotalP - discountP;
-  const gstRate = gstRateFor(taxCategory);
-  const taxP = Math.round((taxableP * gstRate) / 100);
-  const cgstP = Math.floor(taxP / 2);
-  const sgstP = taxP - cgstP;
-  return { subtotalP, discountP, taxableP, gstRate, cgstP, sgstP, taxP, totalP: taxableP + taxP };
+  const shares = allocateProportionally(discountP, base.map((l) => l.amountP));
+  const lines = base.map((l, i) => {
+    const taxableP = l.amountP - shares[i];
+    const gstRate = gstRateFor(l.taxCategory);
+    const taxP = Math.round((taxableP * gstRate) / 100);
+    const cgstP = Math.floor(taxP / 2);
+    return { ...l, discountP: shares[i], taxableP, gstRate, taxP, cgstP, sgstP: taxP - cgstP, totalP: taxableP + taxP };
+  });
+  const sum = (key) => lines.reduce((s, l) => s + l[key], 0);
+  const taxableP = sum("taxableP");
+  const taxableGstP = lines.filter((l) => l.gstRate > 0).reduce((s, l) => s + l.taxableP, 0);
+  return {
+    lines,
+    subtotalP,
+    discountP,
+    taxableP,
+    exemptP: taxableP - taxableGstP,
+    taxableGstP,
+    gstRate: lines.reduce((m, l) => Math.max(m, l.gstRate), 0),
+    cgstP: sum("cgstP"),
+    sgstP: sum("sgstP"),
+    taxP: sum("taxP"),
+    totalP: sum("totalP"),
+  };
+};
+
+/** Single-amount invoice (kept for existing callers). */
+export const computeInvoiceTotals = ({ amount, discount = 0, taxCategory = "therapeutic" }) => {
+  const { lines, exemptP, taxableGstP, ...t } = computeLineItemTotals({ items: [{ amount, taxCategory }], discount });
+  return t;
+};
+
+/** Lines of any invoice. Older single-amount invoices become one line. */
+export const invoiceLines = (inv) => {
+  if (Array.isArray(inv.lines) && inv.lines.length > 0) return inv.lines;
+  return [
+    {
+      description: inv.treatment || "",
+      taxCategory: inv.taxCategory || "therapeutic",
+      amountP: inv.subtotalP || 0,
+      discountP: inv.discountP || 0,
+      taxableP: inv.taxableP || 0,
+      gstRate: inv.gstRate || 0,
+      taxP: inv.taxP || 0,
+      cgstP: inv.cgstP || 0,
+      sgstP: inv.sgstP || 0,
+      totalP: inv.totalP || 0,
+    },
+  ];
 };
 
 export const financialYear = (date = new Date()) => {
@@ -118,6 +184,16 @@ export const buildInvoiceHtml = (inv, profile = {}, { receipt = false } = {}) =>
       ? `<tr><td>CGST @ ${inv.gstRate / 2}%</td><td class="r">₹${formatINR(inv.cgstP)}</td></tr>
          <tr><td>SGST @ ${inv.gstRate / 2}%</td><td class="r">₹${formatINR(inv.sgstP)}</td></tr>`
       : `<tr><td>GST</td><td class="r">Exempt (therapeutic dental service)</td></tr>`;
+  const lines = invoiceLines(inv);
+  const lineRows =
+    lines.length > 1
+      ? `<h2>Treatments</h2><table>${lines
+          .map(
+            (l) =>
+              `<tr><td>${esc(l.description)}</td><td class="muted">${l.gstRate > 0 ? `GST ${l.gstRate}%` : "GST exempt"}</td><td class="r">₹${formatINR(l.amountP)}</td></tr>`
+          )
+          .join("")}</table>`
+      : `<h2>Treatment</h2><div>${esc(inv.treatment)}</div>`;
   const payRows = (inv.payments || [])
     .map((p) => `<tr><td>${esc(p.date)} · ${esc(p.mode)}</td><td class="r">₹${formatINR(p.amountP)}</td></tr>`)
     .join("");
@@ -138,7 +214,7 @@ ${profile.regNumber ? `<div class="muted">Reg: ${esc(profile.regNumber)}</div>` 
 <div><b>${esc(inv.id)}</b></div><div class="muted">${esc(inv.date)}</div></div></div>
 <h2>Billed to</h2><div><b>${esc(inv.patient)}</b></div>
 ${inv.claimId ? `<div class="muted">Claim: ${esc(inv.claimId)} · ${esc(inv.provider)}</div>` : ""}
-<h2>Treatment</h2><div>${esc(inv.treatment)}</div>
+${lineRows}
 <table>
 <tr><td>Amount</td><td class="r">₹${formatINR(inv.subtotalP)}</td></tr>
 ${inv.discountP > 0 ? `<tr><td>Discount</td><td class="r">− ₹${formatINR(inv.discountP)}</td></tr>` : ""}

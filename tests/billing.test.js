@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-  computeInvoiceTotals, toPaise, nextInvoiceNumber, financialYear, normalizeInvoice,
+  computeInvoiceTotals, computeLineItemTotals, allocateProportionally, invoiceLines, toPaise, nextInvoiceNumber, financialYear, normalizeInvoice,
   addPayment, balancePaise, paymentStatus, buildUpiUri, isValidUpiId, buildInvoiceHtml,
 } from "../src/billing.js";
 
@@ -87,5 +87,85 @@ describe("UPI and print", () => {
     const html = buildInvoiceHtml(inv, { name: "C" });
     expect(html).not.toContain("<script>alert(1)");
     expect(html).toContain("a&amp;b");
+  });
+});
+
+describe("multi-item invoices", () => {
+  it("shares a discount without losing a paisa", () => {
+    expect(allocateProportionally(100, [1, 1, 1]).reduce((a, b) => a + b, 0)).toBe(100);
+    expect(allocateProportionally(1, [1, 1, 1]).reduce((a, b) => a + b, 0)).toBe(1);
+    expect(allocateProportionally(0, [5, 5])).toEqual([0, 0]);
+    expect(allocateProportionally(50, [0, 0])).toEqual([0, 0]);
+  });
+  it("mixes exempt and 18% items correctly", () => {
+    const t = computeLineItemTotals({
+      items: [
+        { description: "Root canal", amount: 5000, taxCategory: "therapeutic" },
+        { description: "Whitening", amount: 10000, taxCategory: "cosmetic" },
+      ],
+    });
+    expect(t.subtotalP).toBe(1500000);
+    expect(t.exemptP).toBe(500000);
+    expect(t.taxableGstP).toBe(1000000);
+    expect(t.taxP).toBe(180000);
+    expect(t.cgstP + t.sgstP).toBe(t.taxP);
+    expect(t.totalP).toBe(1680000);
+    expect(t.gstRate).toBe(18);
+  });
+  it("applies a discount proportionally, so GST falls on the discounted taxable value", () => {
+    const t = computeLineItemTotals({
+      items: [
+        { description: "A", amount: 5000, taxCategory: "therapeutic" },
+        { description: "B", amount: 10000, taxCategory: "cosmetic" },
+      ],
+      discount: 1500,
+    });
+    // discount 1500 split 500 / 1000
+    expect(t.lines[0].discountP).toBe(50000);
+    expect(t.lines[1].discountP).toBe(100000);
+    expect(t.lines[1].taxableP).toBe(900000);
+    expect(t.taxP).toBe(162000);
+    expect(t.totalP).toBe(450000 + 900000 + 162000);
+    expect(t.discountP).toBe(150000);
+  });
+  it("matches the single-amount calculation for one item", () => {
+    const one = computeInvoiceTotals({ amount: 10000, discount: 2000, taxCategory: "cosmetic" });
+    const many = computeLineItemTotals({ items: [{ description: "x", amount: 10000, taxCategory: "cosmetic" }], discount: 2000 });
+    expect(many.totalP).toBe(one.totalP);
+    expect(many.taxP).toBe(one.taxP);
+    expect(many.cgstP).toBe(one.cgstP);
+  });
+  it("totals always equal the sum of the lines, even with awkward paise", () => {
+    const t = computeLineItemTotals({
+      items: [
+        { description: "a", amount: 333.33, taxCategory: "cosmetic" },
+        { description: "b", amount: 777.77, taxCategory: "cosmetic" },
+        { description: "c", amount: 0.99, taxCategory: "therapeutic" },
+      ],
+      discount: 100.01,
+    });
+    expect(t.lines.reduce((s, l) => s + l.totalP, 0)).toBe(t.totalP);
+    expect(t.lines.reduce((s, l) => s + l.discountP, 0)).toBe(t.discountP);
+    expect(t.cgstP + t.sgstP).toBe(t.taxP);
+  });
+  it("old invoices read as one line", () => {
+    const old = normalizeInvoice({ id: "O", rawAmount: "800", treatment: "Scaling" });
+    const lines = invoiceLines(old);
+    expect(lines).toHaveLength(1);
+    expect(lines[0].description).toBe("Scaling");
+    expect(lines[0].amountP).toBe(80000);
+  });
+  it("prints each item with its GST treatment", () => {
+    const t = computeLineItemTotals({
+      items: [
+        { description: "Root canal", amount: 5000, taxCategory: "therapeutic" },
+        { description: "Whitening", amount: 10000, taxCategory: "cosmetic" },
+      ],
+    });
+    const inv = normalizeInvoice({ id: "X", patient: "Ravi", treatment: "Root canal, Whitening", ...t, payments: [] });
+    const html = buildInvoiceHtml(inv, { name: "C" });
+    expect(html).toContain("Root canal");
+    expect(html).toContain("GST exempt");
+    expect(html).toContain("GST 18%");
   });
 });

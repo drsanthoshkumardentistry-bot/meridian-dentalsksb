@@ -230,4 +230,42 @@ describe("demographics and required data", () => {
     expect(await screen.findByText(/more than the balance/i)).toBeTruthy();
     expect(stored("invoices")[0].payments.length).toBe(1);
   });
+
+  it("bills several treatments on one invoice, mixing exempt and 18% GST", async () => {
+    await openApp();
+    nav("Dental Insurance & Invoices");
+    fireEvent.click(await screen.findByText("New Invoice"));
+    const form = (await screen.findAllByText("Patient Name *"))[0].closest("form");
+    type(form.querySelector('input[list="patient-options"]'), "Multi Client");
+    type(form.querySelector('input[placeholder^="e.g. Root Canal"]'), "Root Canal");
+    type(form.querySelector('input[type="number"]'), "5000");
+    fireEvent.click(within(form).getByText(/Add another treatment/i));
+    type(within(form).getByLabelText("Treatment 2 description"), "Whitening");
+    type(within(form).getByLabelText("Treatment 2 amount before tax"), "2000");
+    type(within(form).getByLabelText("Treatment 2 tax category"), "cosmetic");
+    fireEvent.submit(form);
+    await waitFor(() => expect(stored("invoices").length).toBe(1));
+    const inv = stored("invoices")[0];
+    expect(inv.lines.length).toBe(2);
+    expect(inv.treatment).toBe("Root Canal, Whitening");
+    expect(inv.taxP).toBe(36000);
+    expect(inv.totalP).toBe(736000);
+  });
+
+  it("rejects a second treatment row with no amount, and rows can be removed", async () => {
+    await openApp();
+    nav("Dental Insurance & Invoices");
+    fireEvent.click(await screen.findByText("New Invoice"));
+    const form = (await screen.findAllByText("Patient Name *"))[0].closest("form");
+    type(form.querySelector('input[list="patient-options"]'), "Row Client");
+    type(form.querySelector('input[placeholder^="e.g. Root Canal"]'), "Filling");
+    type(form.querySelector('input[type="number"]'), "800");
+    fireEvent.click(within(form).getByText(/Add another treatment/i));
+    fireEvent.submit(form);
+    expect(await screen.findByText(/bill amount greater than zero/i)).toBeTruthy();
+    expect(stored("invoices").length).toBe(0);
+    fireEvent.click(within(form).getByLabelText("Remove treatment 2"));
+    fireEvent.submit(form);
+    await waitFor(() => expect(stored("invoices").length).toBe(1));
+  });
 });

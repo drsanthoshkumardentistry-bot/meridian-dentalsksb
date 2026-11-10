@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   collectionsForMonth, gstSummaryForMonth, outstandingTotalP, csvCell, toCsv, collectionsCsv, gstRegisterCsv, buildReportHtml,
 } from "../src/reports.js";
-import { computeInvoiceTotals } from "../src/billing.js";
+import { computeInvoiceTotals, computeLineItemTotals } from "../src/billing.js";
 
 const mk = (id, date, amount, cat, payments, extra = {}) => ({
   id, date, patient: "P " + id, treatment: "Work", taxCategory: cat, ...computeInvoiceTotals({ amount, taxCategory: cat }), payments, ...extra,
@@ -92,5 +92,22 @@ describe("printable report", () => {
     expect(html).not.toContain("<b>Clinic</b>");
     expect(html).toContain("&lt;b&gt;Clinic");
     expect(html).toContain("1,800.00");
+  });
+});
+
+describe("GST summary with mixed invoices", () => {
+  it("splits a mixed invoice into exempt and taxable parts", () => {
+    const t = computeLineItemTotals({
+      items: [
+        { description: "RCT", amount: 5000, taxCategory: "therapeutic" },
+        { description: "Whitening", amount: 10000, taxCategory: "cosmetic" },
+      ],
+    });
+    const mixed = [{ id: "M", date: "05/11/2026", patient: "R", treatment: "RCT, Whitening", ...t, payments: [] }];
+    const { sum, rows } = gstSummaryForMonth(mixed, "2026-11");
+    expect(sum.exemptP).toBe(500000);
+    expect(sum.taxableAt18P).toBe(1000000);
+    expect(sum.taxP).toBe(180000);
+    expect(rows[0].category).toBe("Mixed");
   });
 });
