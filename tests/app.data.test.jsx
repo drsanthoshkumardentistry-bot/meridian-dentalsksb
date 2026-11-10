@@ -443,4 +443,55 @@ describe("demographics and required data", () => {
     fireEvent.click(screen.getByRole("button", { name: "Clear" }));
     expect(screen.getByLabelText(/Payment due by/).value).toBe("");
   });
+
+  it("stock screen: warns on low and expiring items, adjusts by an amount, never below zero", async () => {
+    const soon = new Date(Date.now() + 5 * 86400000);
+    const iso = `${soon.getFullYear()}-${String(soon.getMonth() + 1).padStart(2, "0")}-${String(soon.getDate()).padStart(2, "0")}`;
+    localStorage.setItem(KEY("inventory"), JSON.stringify([
+      { id: "S1", name: "Composite", category: "Restorative", unit: "Syringes", quantity: 3, minThreshold: 5, status: "Low Stock" },
+      { id: "S2", name: "Anaesthetic", category: "Medications", unit: "Vials", quantity: 40, minThreshold: 10, status: "In Stock", expiry: iso },
+    ]));
+    await openApp();
+    nav("Stock Maintenance");
+    const sum = await screen.findByTestId("stock-summary");
+    expect(within(sum).getByText("Running low").nextSibling.textContent).toBe("1");
+    expect(within(sum).getByText("Expired or expiring").nextSibling.textContent).toBe("1");
+    expect(screen.getByText("In 5 days")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /Needs reorder \(1\)/ }));
+    expect(screen.getByText("Composite")).toBeTruthy();
+    expect(screen.queryByText("Anaesthetic")).toBeNull();
+    fireEvent.change(screen.getByLabelText("Amount for Composite"), { target: { value: "10" } });
+    fireEvent.click(screen.getByRole("button", { name: "Use 10 of Composite" }));
+    await waitFor(() => expect(stored("inventory")[0].quantity).toBe(0));
+    expect(screen.getAllByText("Out of stock").length).toBe(2);
+    fireEvent.change(screen.getByLabelText("Amount for Composite"), { target: { value: "12" } });
+    fireEvent.click(screen.getByRole("button", { name: "Receive 12 of Composite" }));
+    await waitFor(() => expect(stored("inventory")[0].quantity).toBe(12));
+    expect(stored("inventory")[0].status).toBe("In Stock");
+  });
+
+  it("diary: shows upcoming first, flags visits needing an outcome, and lets the status be set", async () => {
+    const key = (n) => { const d = new Date(Date.now() + n * 86400000); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+    const mk = (id, name, date, time, status = "Confirmed") => ({ id, patientName: name, phone: "9876543210", date, time, chair: "Chair 1 (Main Operatory)", doctor: "Dr T", procedure: "Scaling", status, reminders: { dayBefore: "x", sameDay: "x" } });
+    localStorage.setItem(KEY("appointments"), JSON.stringify([
+      mk("A1", "Old Visit", key(-3), "10:00"),
+      mk("A2", "Later Visit", key(4), "10:00"),
+      mk("A3", "Soon Visit", key(2), "09:00"),
+    ]));
+    await openApp();
+    nav("Appointments Diary");
+    const sum = await screen.findByTestId("diary-summary");
+    expect(within(sum).getByText("Needs a status").nextSibling.textContent).toBe("1");
+    expect(within(sum).getByText("Upcoming").nextSibling.textContent).toBe("2");
+    const names = () => screen.getAllByRole("row").slice(1).map((r) => r.textContent);
+    expect(names()[0]).toMatch(/Soon Visit/);
+    expect(names()[1]).toMatch(/Later Visit/);
+    expect(screen.queryByText("Old Visit")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Needs a status \(1\)/ }));
+    expect(screen.getByText("Old Visit")).toBeTruthy();
+    expect(screen.getByText("Mark the outcome")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Status for Old Visit"), { target: { value: "Completed" } });
+    await waitFor(() => expect(stored("appointments").find((a) => a.id === "A1").status).toBe("Completed"));
+    expect(screen.queryByText("Mark the outcome")).toBeNull();
+  });
 });

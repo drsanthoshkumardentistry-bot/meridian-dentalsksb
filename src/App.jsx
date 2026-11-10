@@ -8,6 +8,8 @@
 import { AGING_BUCKETS, agingSummary, filterInvoices, invoiceAgeDays } from "./receivables.js";
 import { toggleFinding, normalizeConditions, chartedCount as chartedTeeth } from "./odontogram.js";
 import { billingSummary, invoiceView, invoicesCsv, buildInvoiceMessage, isOverdue, daysOverdue, dueDateIn } from "./billingView.js";
+import { adjustStock, buildStockItem, stockState, stockSummary, stockView, buildReorderMessage } from "./stock.js";
+import { APPT_STATUSES, findClash, diarySummary, diaryView, withStatus, needsUpdate } from "./diary.js";
 import OpgViewer from "./components/OpgViewer.jsx";
 import Connect from "./components/Connect.jsx";
 import { bindApi } from "./connect/api.js";
@@ -72,7 +74,7 @@ import { AppLoading, VerifyEmailScreen, IdleWarning } from "./components/AuthScr
 import { friendlyAuthError, usesPasswordLogin } from "./authErrors";
 import QRCode from "qrcode";
 import {
-  dueAppointmentReminders, buildAppointmentReminder, duePaymentReminders, buildPaymentReminder,
+  dateKey, dueAppointmentReminders, buildAppointmentReminder, duePaymentReminders, buildPaymentReminder,
   whatsappLink, markAppointmentReminded, markInvoiceReminded, formatTime12,
   dueRecalls, buildRecallMessage, markPatientRecalled, RECALL_OPTIONS, DEFAULT_RECALL_MONTHS,
 } from "./reminders";
@@ -789,7 +791,7 @@ export default function App() {
   const [performanceForm, setPerformanceForm] = useState({
     employeeName: "",
     reviewerName: "",
-    date: new Date().toISOString().split("T")[0],
+    date: dateKey(),
     rating: 4,
     notes: ""
   });
@@ -817,7 +819,7 @@ export default function App() {
     patientName: "",
     phone: "",
     age: "",
-    date: new Date().toISOString().split("T")[0],
+    date: dateKey(),
     time: "10:30",
     chair: "Chair 1 (Main Operatory)",
     doctor: "",
@@ -849,7 +851,11 @@ export default function App() {
     quantity: 10,
     unit: "Syringes",
     minThreshold: 5,
+    expiry: "",
   });
+  const [stockQuery, setStockQuery] = useState("");
+  const [stockViewId, setStockViewId] = useState("all");
+  const [stockQty, setStockQty] = useState({});
 
   const activePatient = patients.find((p) => p.id === selectedPatientId) || null;
 
@@ -1121,6 +1127,15 @@ export default function App() {
       showToast("Choose the attending doctor");
       return;
     }
+    const clash = findClash(appointments, newApptForm);
+    if (clash) {
+      showToast(
+        clash.reason === "chair"
+          ? `${clash.appt.chair} is already booked at ${formatTime12(clash.appt.time)} for ${clash.appt.patientName}. Pick another time or chair.`
+          : `${clash.appt.doctor} is already booked at ${formatTime12(clash.appt.time)} for ${clash.appt.patientName}. Pick another time or doctor.`
+      );
+      return;
+    }
     const appt = {
       id: newId("APT"),
       ...newApptForm,
@@ -1170,6 +1185,8 @@ export default function App() {
   const connectApi = useMemo(() => bindApi(db, CLINIC_ID), [CLINIC_ID]);
   const aging = agingSummary(invoices);
   const [invoiceQuery, setInvoiceQuery] = useState("");
+  const [diaryViewId, setDiaryViewId] = useState("upcoming");
+  const [diaryQuery, setDiaryQuery] = useState("");
   const visibleInvoices = invoiceView(invoices, { status: invoiceFilter, query: invoiceQuery });
   const billing = billingSummary(invoices);
   const overdueList = invoiceView(invoices, { status: "overdue" });
@@ -1277,7 +1294,7 @@ export default function App() {
     if (newInvoiceForm.planId) {
       setNewInvoiceForm({
         patientId: "", patientName: "", paymentMode: "Cash",
-        status: "Self-Pay Completed", items: [blankInvoiceItem()], discount: "", advance: "",
+        items: [blankInvoiceItem()], discount: "", advance: "", dueDate: "",
       });
     }
     setIsAddInvoiceOpen(false);
@@ -1372,36 +1389,34 @@ export default function App() {
   };
 
   const handleStockAdjust = (stockId, delta) => {
-    setInventory((prev) =>
-      prev.map((item) => {
-        if (item.id === stockId) {
-          const nextQty = Math.max(0, item.quantity + delta);
-          return {
-            ...item,
-            quantity: nextQty,
-            status: nextQty <= item.minThreshold ? "Low Stock" : "In Stock",
-          };
-        }
-        return item;
-      })
-    );
+    setInventory((prev) => prev.map((item) => (item.id === stockId ? adjustStock(item, delta) : item)));
   };
 
   const handleCreateStock = (e) => {
     e.preventDefault();
-    if (!newStockForm.name.trim()) return;
-    const item = {
-      id: newId("STK"),
-      name: newStockForm.name,
-      category: newStockForm.category,
-      quantity: parseInt(newStockForm.quantity || 0, 10),
-      unit: newStockForm.unit,
-      minThreshold: parseInt(newStockForm.minThreshold || 0, 10),
-      status: parseInt(newStockForm.quantity || 0, 10) <= parseInt(newStockForm.minThreshold || 0, 10) ? "Low Stock" : "In Stock",
-    };
-    setInventory([...inventory, item]);
+    const built = buildStockItem(newStockForm, newId("STK"));
+    if (!built.ok) {
+      showToast(built.error);
+      return;
+    }
+    setInventory([...inventory, built.item]);
+    setNewStockForm({ name: "", category: "Restorative", quantity: 10, unit: "Syringes", minThreshold: 5, expiry: "" });
     setIsAddStockOpen(false);
-    showToast(`Added ${item.name} to stock`);
+    showToast(`Added ${built.item.name} to stock`);
+  };
+
+  const handleRemoveStock = (item) => {
+    if (!confirm(`Remove ${item.name} from stock?`)) return;
+    setInventory((prev) => prev.filter((x) => x.id !== item.id));
+  };
+
+  const sendReorderList = () => {
+    const text = buildReorderMessage({ clinicName: practiceProfile.name, items: inventory });
+    if (!text) {
+      showToast("Nothing needs reordering right now");
+      return;
+    }
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
   };
 
   const handleCreateStaff = (e) => {
@@ -1473,7 +1488,7 @@ export default function App() {
 
   const todayKey = dashboardDateKey(new Date().toLocaleDateString("en-IN"));
   const todayAppointments = appointments.filter((appointment) => dashboardDateKey(appointment.date) === todayKey).length;
-  const lowStockCount = inventory.filter((item) => item.status === "Low Stock" || Number(item.quantity) <= Number(item.minThreshold)).length;
+  const lowStockCount = inventory.filter((item) => { const st = stockState(item); return st.out || st.low; }).length;
 
   const doctorOptions = Array.from(
     new Set([practiceProfile.drName, ...employees.filter((e) => e.active !== false).map((e) => e.name)].filter(Boolean))
@@ -2019,59 +2034,117 @@ export default function App() {
               {appointments.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
                   <Calendar className="w-10 h-10 text-blue-600 mx-auto" />
-                  <h3 className="text-sm font-bold text-slate-800">No Appointments Scheduled</h3>
+                  <h3 className="text-sm font-bold text-slate-800">No appointments yet</h3>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto">Book a visit to see today's list, get reminders ready to send, and avoid double-booking a chair.</p>
                 </div>
-              ) : (
-                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-b border-slate-200">
-                      <tr>
-                        <th className="p-3.5">ID / Patient</th>
-                        <th className="p-3.5">Date & Slot</th>
-                        <th className="p-3.5">Operatory Chair</th>
-                        <th className="p-3.5">Procedure</th>
-                        <th className="p-3.5">Status</th>
-                        <th className="p-3.5 text-center">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {appointments.map((appt) => (
-                        <tr key={appt.id} className="hover:bg-slate-50/60">
-                          <td className="p-3.5">
-                            <div className="font-bold text-slate-900">{appt.patientName}</div>
-                            <div className="text-[10px] text-slate-400">{appt.phone}</div>
-                          </td>
-                          <td className="p-3.5 font-medium">{appt.date} at <strong>{appt.time}</strong></td>
-                          <td className="p-3.5 text-slate-600">{appt.chair}</td>
-                          <td className="p-3.5 font-semibold text-blue-700">{appt.procedure}</td>
-                          <td className="p-3.5">
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              {appt.status}
-                            </span>
-                            {appt.reminders && (appt.reminders.dayBefore || appt.reminders.sameDay) ? (
-                              <div className="text-[10px] text-slate-400 mt-1">Reminder sent</div>
-                            ) : null}
-                          </td>
-                          <td className="p-3.5 text-center space-x-2">
-                            <button
-                              onClick={() => sendAppointmentWhatsApp(appt)}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-semibold inline-flex items-center gap-1"
-                            >
-                              <Send className="w-3 h-3" /> WhatsApp
-                            </button>
-                            <button
-                              onClick={() => setAppointments(appointments.filter((x) => x.id !== appt.id))}
-                              className="p-1 text-slate-400 hover:text-rose-500"
-                            >
-                              <Trash2 className="w-3.5 h-3.5 inline" />
-                            </button>
-                          </td>
+              ) : (() => {
+                const dsum = diarySummary(appointments);
+                const rows = diaryView(appointments, { view: diaryViewId, query: diaryQuery });
+                return (
+                <>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-testid="diary-summary">
+                    {[
+                      { label: "Today", value: dsum.today, tone: "text-slate-900" },
+                      { label: "Tomorrow", value: dsum.tomorrow, tone: "text-slate-900" },
+                      { label: "Upcoming", value: dsum.upcoming, tone: "text-slate-900" },
+                      { label: "Needs a status", value: dsum.needsUpdate, tone: dsum.needsUpdate ? "text-amber-600" : "text-slate-900" },
+                    ].map((c) => (
+                      <div key={c.label} className="bg-white border border-slate-200 rounded-xl p-4">
+                        <div className="text-[11px] font-semibold text-slate-500">{c.label}</div>
+                        <div className={`text-lg font-bold mt-1 tabular ${c.tone}`}>{c.value}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 text-xs" role="group" aria-label="Show appointments">
+                    {[["today", "Today"], ["upcoming", "Upcoming"], ["past", "Past"], ["update", `Needs a status (${dsum.needsUpdate})`], ["all", "All"]].map(([id, label]) => (
+                      <button
+                        key={id}
+                        type="button"
+                        aria-pressed={diaryViewId === id}
+                        onClick={() => setDiaryViewId(id)}
+                        className={`px-3 py-1.5 rounded-full border font-semibold ${diaryViewId === id ? "bg-ink text-white border-ink" : "bg-white text-slate-700 border-slate-200 hover:bg-blue-50"}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                    <input
+                      type="search"
+                      aria-label="Search appointments"
+                      value={diaryQuery}
+                      onChange={(e) => setDiaryQuery(e.target.value)}
+                      placeholder="Search patient, phone or doctor"
+                      className="ml-auto w-full sm:w-64 px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto shadow-xs">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-b border-slate-200">
+                        <tr>
+                          <th className="p-3.5">Patient</th>
+                          <th className="p-3.5">Date & time</th>
+                          <th className="p-3.5">Chair</th>
+                          <th className="p-3.5">Procedure</th>
+                          <th className="p-3.5">Status</th>
+                          <th className="p-3.5 text-center">Action</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {rows.length === 0 && (
+                          <tr><td colSpan={6} className="p-8 text-center text-slate-500">{diaryQuery ? "No appointment matches your search." : "No appointments in this view."}</td></tr>
+                        )}
+                        {rows.map((appt) => (
+                          <tr key={appt.id} className="hover:bg-slate-50/60">
+                            <td className="p-3.5">
+                              <div className="font-bold text-slate-900">{appt.patientName}</div>
+                              <div className="text-[10px] text-slate-400">{appt.phone}</div>
+                            </td>
+                            <td className="p-3.5 font-medium">
+                              {appt.date === dateKey() ? "Today" : new Date(appt.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} at <strong>{formatTime12(appt.time)}</strong>
+                              {appt.doctor ? <div className="text-[10px] text-slate-400">{appt.doctor}</div> : null}
+                            </td>
+                            <td className="p-3.5 text-slate-600">{appt.chair}</td>
+                            <td className="p-3.5 font-semibold text-blue-700">{appt.procedure}</td>
+                            <td className="p-3.5">
+                              <select
+                                aria-label={`Status for ${appt.patientName}`}
+                                value={APPT_STATUSES.includes(appt.status) ? appt.status : "Confirmed"}
+                                onChange={(e) => setAppointments((prev) => prev.map((x) => (x.id === appt.id ? withStatus(x, e.target.value) : x)))}
+                                className={`px-2 py-1 rounded-lg border text-[11px] font-bold bg-white ${
+                                  appt.status === "Completed" ? "border-emerald-300 text-emerald-700" : appt.status === "Cancelled" || appt.status === "No show" ? "border-rose-300 text-rose-700" : "border-blue-200 text-blue-700"
+                                }`}
+                              >
+                                {APPT_STATUSES.map((st) => (<option key={st}>{st}</option>))}
+                              </select>
+                              {needsUpdate(appt) ? <div className="text-[10px] font-semibold text-amber-600 mt-1">Mark the outcome</div> : null}
+                              {appt.reminders && (appt.reminders.dayBefore || appt.reminders.sameDay) ? (
+                                <div className="text-[10px] text-slate-400 mt-1">Reminder sent</div>
+                              ) : null}
+                            </td>
+                            <td className="p-3.5 text-center space-x-2 whitespace-nowrap">
+                              <button
+                                onClick={() => sendAppointmentWhatsApp(appt)}
+                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-semibold inline-flex items-center gap-1"
+                              >
+                                <Send className="w-3 h-3" /> WhatsApp
+                              </button>
+                              <button
+                                aria-label={`Delete appointment for ${appt.patientName}`}
+                                onClick={() => { if (confirm(`Delete the appointment for ${appt.patientName}? To keep a record, set its status to Cancelled instead.`)) setAppointments(appointments.filter((x) => x.id !== appt.id)); }}
+                                className="p-1 text-slate-400 hover:text-rose-500"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 inline" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+                );
+              })()}
             </div>
           )}
 
@@ -2166,7 +2239,7 @@ export default function App() {
                   />
                   <button
                     type="button"
-                    onClick={() => downloadCsv(invoicesCsv(visibleInvoices), `invoices-${new Date().toISOString().slice(0, 10)}.csv`)}
+                    onClick={() => downloadCsv(invoicesCsv(visibleInvoices), `invoices-${dateKey()}.csv`)}
                     className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-blue-50 rounded-lg font-semibold text-slate-800 inline-flex items-center gap-1.5"
                   >
                     <Download className="w-3.5 h-3.5" /> Export list
@@ -2411,65 +2484,145 @@ export default function App() {
           )}
 
           {/* TAB 5: STOCK MAINTENANCE */}
-          {activeNav === "Stock Maintenance" && (
+          {activeNav === "Stock Maintenance" && (() => {
+            const sum = stockSummary(inventory);
+            const rows = stockView(inventory, { view: stockViewId, query: stockQuery });
+            return (
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">Stock Maintenance</h1>
-                  <p className="text-xs text-slate-500">Operatory Consumables, Materials & Medications</p>
+                  <p className="text-xs text-slate-500">Consumables, materials and medicines: reorder levels and expiry dates</p>
                 </div>
-                <button
-                  onClick={() => setIsAddStockOpen(true)}
-                  className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
-                >
-                  <Plus className="w-4 h-4" /> Add Stock Item
-                </button>
+                <div className="flex gap-2">
+                  {inventory.length > 0 && (
+                    <button onClick={sendReorderList} className="px-3 py-2 bg-white border border-slate-200 hover:bg-emerald-50 rounded-lg text-xs font-semibold text-slate-800">
+                      Send reorder list
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setIsAddStockOpen(true)}
+                    className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                  >
+                    <Plus className="w-4 h-4" /> Add Stock Item
+                  </button>
+                </div>
               </div>
 
               {inventory.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
                   <Package className="w-10 h-10 text-blue-600 mx-auto" />
-                  <h3 className="text-sm font-bold text-slate-800">Inventory Empty</h3>
+                  <h3 className="text-sm font-bold text-slate-800">No stock items yet</h3>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto">Add the materials you use. Set a reorder level to be warned before you run out, and an expiry date to be warned before it lapses.</p>
                 </div>
               ) : (
-                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-b border-slate-200">
-                      <tr>
-                        <th className="p-3.5">Item Name</th>
-                        <th className="p-3.5">Category</th>
-                        <th className="p-3.5">Quantity on Hand</th>
-                        <th className="p-3.5">Status</th>
-                        <th className="p-3.5 text-center">Quick Adjust</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {inventory.map((item) => (
-                        <tr key={item.id} className="hover:bg-slate-50/60">
-                          <td className="p-3.5 font-bold text-slate-900">{item.name}</td>
-                          <td className="p-3.5 text-slate-600">{item.category}</td>
-                          <td className="p-3.5">
-                            <span className="font-bold text-sm">{item.quantity}</span> {item.unit}
-                          </td>
-                          <td className="p-3.5">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                              item.status === "Low Stock" ? "bg-amber-100 text-amber-800 border border-amber-300" : "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                            }`}>
-                              {item.status}
-                            </span>
-                          </td>
-                          <td className="p-3.5 text-center space-x-1.5">
-                            <button onClick={() => handleStockAdjust(item.id, -1)} className="px-2 py-1 bg-slate-100 rounded font-semibold text-slate-700">-1</button>
-                            <button onClick={() => handleStockAdjust(item.id, 5)} className="px-2 py-1 bg-blue-50 text-blue-700 rounded font-semibold">+5</button>
-                          </td>
+                <>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-testid="stock-summary">
+                    {[
+                      { label: "Items", value: sum.total, tone: "text-slate-900" },
+                      { label: "Out of stock", value: sum.out, tone: sum.out ? "text-rose-600" : "text-slate-900" },
+                      { label: "Running low", value: sum.low, tone: sum.low ? "text-amber-600" : "text-slate-900" },
+                      { label: "Expired or expiring", value: sum.expired + sum.expiring, tone: sum.expired ? "text-rose-600" : sum.expiring ? "text-amber-600" : "text-slate-900" },
+                    ].map((c) => (
+                      <div key={c.label} className="bg-white border border-slate-200 rounded-xl p-4">
+                        <div className="text-[11px] font-semibold text-slate-500">{c.label}</div>
+                        <div className={`text-lg font-bold mt-1 tabular ${c.tone}`}>{c.value}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 text-xs" role="group" aria-label="Show stock">
+                    {[["all", "All items"], ["reorder", `Needs reorder (${sum.out + sum.low})`], ["expiring", `Expiry (${sum.expired + sum.expiring})`]].map(([id, label]) => (
+                      <button
+                        key={id}
+                        type="button"
+                        aria-pressed={stockViewId === id}
+                        onClick={() => setStockViewId(id)}
+                        className={`px-3 py-1.5 rounded-full border font-semibold ${stockViewId === id ? "bg-ink text-white border-ink" : "bg-white text-slate-700 border-slate-200 hover:bg-blue-50"}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                    <input
+                      type="search"
+                      aria-label="Search stock"
+                      value={stockQuery}
+                      onChange={(e) => setStockQuery(e.target.value)}
+                      placeholder="Search item or category"
+                      className="ml-auto w-full sm:w-64 px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto shadow-xs">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] border-b border-slate-200">
+                        <tr>
+                          <th className="p-3.5">Item</th>
+                          <th className="p-3.5">Category</th>
+                          <th className="p-3.5">On hand</th>
+                          <th className="p-3.5">Status</th>
+                          <th className="p-3.5">Expiry</th>
+                          <th className="p-3.5 text-center">Update</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {rows.length === 0 && (
+                          <tr><td colSpan={6} className="p-8 text-center text-slate-500">{stockQuery ? "No item matches your search." : "Nothing needs attention here."}</td></tr>
+                        )}
+                        {rows.map((item) => {
+                          const st = stockState(item);
+                          const amount = stockQty[item.id] ?? "1";
+                          const n = Math.max(1, Math.floor(Number(amount)) || 1);
+                          return (
+                            <tr key={item.id} className="hover:bg-slate-50/60">
+                              <td className="p-3.5 font-bold text-slate-900">{item.name}</td>
+                              <td className="p-3.5 text-slate-600">{item.category}</td>
+                              <td className="p-3.5">
+                                <span className="font-bold text-sm tabular">{item.quantity}</span> {item.unit}
+                                <div className="text-[10px] text-slate-400">Reorder at {item.minThreshold}</div>
+                              </td>
+                              <td className="p-3.5">
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                  st.out ? "bg-rose-100 text-rose-800 border-rose-300" : st.low ? "bg-amber-100 text-amber-800 border-amber-300" : "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                }`}>
+                                  {st.out ? "Out of stock" : st.low ? "Low stock" : "In stock"}
+                                </span>
+                              </td>
+                              <td className="p-3.5">
+                                {st.days === null ? <span className="text-slate-400">Not set</span> : st.expired ? (
+                                  <span className="font-bold text-rose-600">Expired {Math.abs(st.days)} {Math.abs(st.days) === 1 ? "day" : "days"} ago</span>
+                                ) : st.expiringSoon ? (
+                                  <span className="font-bold text-amber-600">In {st.days} {st.days === 1 ? "day" : "days"}</span>
+                                ) : (
+                                  <span className="text-slate-600">{new Date(item.expiry).toLocaleDateString("en-IN")}</span>
+                                )}
+                              </td>
+                              <td className="p-3.5">
+                                <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    aria-label={`Amount for ${item.name}`}
+                                    value={amount}
+                                    onChange={(e) => setStockQty({ ...stockQty, [item.id]: e.target.value })}
+                                    className="w-14 px-2 py-1 border border-slate-300 rounded text-center"
+                                  />
+                                  <button onClick={() => handleStockAdjust(item.id, -n)} aria-label={`Use ${n} of ${item.name}`} className="px-2.5 py-1 bg-slate-100 rounded font-semibold text-slate-700 hover:bg-slate-200">Use</button>
+                                  <button onClick={() => handleStockAdjust(item.id, n)} aria-label={`Receive ${n} of ${item.name}`} className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded font-semibold hover:bg-blue-100">Receive</button>
+                                  <button onClick={() => handleRemoveStock(item)} aria-label={`Remove ${item.name}`} className="p-1 text-slate-400 hover:text-rose-600"><X className="w-3.5 h-3.5" /></button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </div>
-          )}
+            );
+          })()}
 
           {/* TAB 6: EMPLOYEE ROLES & ROSTER (Enhanced with Alerts, Leave & Performance Review) */}
           {activeNav === "Employee Roles & Roster" && (
@@ -3765,7 +3918,7 @@ export default function App() {
               <Field label="Date of Birth" hint="Optional. Fills the age automatically.">
                 <input
                   type="date"
-                  max={new Date().toISOString().split("T")[0]}
+                  max={dateKey()}
                   value={newPatientForm.dob}
                   onChange={(e) => {
                     const dob = e.target.value;
@@ -4482,7 +4635,7 @@ export default function App() {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-600 mb-1">Min. Threshold</label>
+                <label className="block font-semibold text-slate-600 mb-1">Reorder level</label>
                 <input
                   type="number"
                   value={newStockForm.minThreshold}
@@ -4490,6 +4643,17 @@ export default function App() {
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                 />
               </div>
+            </div>
+
+            <div>
+              <label htmlFor="stock-expiry" className="block font-semibold text-slate-600 mb-1">Expiry date (optional)</label>
+              <input
+                id="stock-expiry"
+                type="date"
+                value={newStockForm.expiry}
+                onChange={(e) => setNewStockForm({ ...newStockForm, expiry: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+              />
             </div>
 
             <div className="pt-2 flex justify-end gap-2">
@@ -4504,7 +4668,7 @@ export default function App() {
                 type="submit"
                 className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold"
               >
-                Save Consumable
+                Save item
               </button>
             </div>
           </form>
