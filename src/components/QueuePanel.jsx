@@ -44,7 +44,7 @@ export default function QueuePanel({ queue, today, onAdd, onStatus, onRemove, no
             const closed = e.status === Q_STATUS.DONE || e.status === Q_STATUS.LEFT;
             return (
               <li key={e.id} className={`py-2 flex flex-wrap items-center gap-3 ${closed ? "opacity-60" : ""}`}>
-                <span className="w-10 h-10 rounded-lg bg-blue-50 text-[#1d4ed8] font-bold flex items-center justify-center tabular" aria-label={`Token ${e.token}`}>{e.token}</span>
+                <span className="w-10 h-10 rounded-lg bg-aqua-50 text-aqua-700 font-bold flex items-center justify-center tabular" aria-label={`Token ${e.token}`}>{e.token}</span>
                 <div className="flex-1 min-w-[140px]">
                   <div className="text-sm font-semibold text-slate-900">
                     {e.name}

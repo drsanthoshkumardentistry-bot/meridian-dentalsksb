@@ -17,6 +17,8 @@ describe("landing page content", () => {
     expect(within(next).queryByText("Multi-item invoices")).toBeNull();
     expect(within(next).queryByText("Shareable treatment plans")).toBeNull();
     expect(within(next).getByText("Lab order tracking")).toBeTruthy();
+    expect(within(next).queryByText("Staff logins with roles")).toBeNull();
+    ["Walk-in queue & triage", "Online booking page", "Branches", "Team logins & activity log", "Draft visit notes from the chart", "Caries risk & gum screening"].forEach((t) => expect(screen.getByText(t)).toBeTruthy());
     expect(screen.getByText("Multi-item invoices")).toBeTruthy();
     expect(screen.getByText("Treatment plans & estimates")).toBeTruthy();
   });
@@ -28,7 +30,7 @@ describe("landing page content", () => {
     expect(within(faq).getByText("Does MeriDent send WhatsApp messages by itself?")).toBeTruthy();
     expect(faq.textContent).toMatch(/you tap Send/);
     expect(faq.textContent).toMatch(/free during early access/i);
-    expect(faq.querySelectorAll("details").length).toBe(8);
+    expect(faq.querySelectorAll("details").length).toBe(9);
   });
 
   it("makes no unverifiable claims (testimonials, user counts, compliance badges)", () => {

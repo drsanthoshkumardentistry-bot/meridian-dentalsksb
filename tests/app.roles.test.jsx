@@ -7,6 +7,7 @@ const h = vi.hoisted(() => ({
   member: null,
   writes: [],
   audit: [],
+  silent: false,
 }));
 
 vi.mock("firebase/auth", () => ({
@@ -22,7 +23,7 @@ vi.mock("firebase/firestore", () => ({
   collection: (_db, ...p) => ({ path: p.join("/"), isCol: true }),
   query: (c) => c, where: () => ({}), orderBy: () => ({}), limit: () => ({}),
   onSnapshot: (ref, cb) => {
-    if (ref.path.startsWith("clinicStaff/")) cb({ exists: () => Boolean(h.member), data: () => h.member });
+    if (ref.path.startsWith("clinicStaff/")) { if (!h.silent) cb({ exists: () => Boolean(h.member), data: () => h.member }); }
     else if (ref.isCol && ref.path.endsWith("/audit")) cb({ docs: h.audit.map((d) => ({ data: () => d })) });
     else if (ref.isCol) cb({ docs: [] });
     else cb({ exists: () => false, data: () => undefined });
@@ -40,7 +41,7 @@ const member = (o = {}) => ({ email: "staff@example.com", clinicId: "clinicA", c
 const type = (el, value) => fireEvent.change(el, { target: { value } });
 const navLabels = () => within(screen.getAllByRole("navigation")[0]).getAllByRole("button").map((b) => b.textContent.trim());
 
-beforeEach(() => { cleanup(); localStorage.clear(); h.writes.length = 0; h.audit = []; h.member = null; h.user = { ...h.user, uid: "u-staff", email: "staff@example.com" }; });
+beforeEach(() => { cleanup(); localStorage.clear(); h.writes.length = 0; h.audit = []; h.silent = false; h.member = null; h.user = { ...h.user, uid: "u-staff", email: "staff@example.com" }; });
 
 describe("role-based logins in the app", () => {
   it("limits a dentist's menu, works inside the owner's clinic, and never writes billing or staff data", async () => {
@@ -150,4 +151,13 @@ describe("activity log", () => {
     await screen.findByTestId("member-role");
     expect(screen.queryByTestId("activity-log")).toBeNull();
   });
+});
+
+describe("slow membership lookup", () => {
+  it("opens the person's own clinic instead of waiting forever", async () => {
+    h.silent = true;
+    render(<App />);
+    expect(await screen.findByText(/Checking your MeriDent session/i)).toBeTruthy();
+    expect((await screen.findAllByText("Patients & Odontogram", {}, { timeout: 7000 })).length).toBeGreaterThan(0);
+  }, 12000);
 });

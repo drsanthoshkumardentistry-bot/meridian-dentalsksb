@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { CARIES_FACTORS, BPE_SEXTANTS, BPE_CODES, buildAssessment, scoreCaries } from "../assessments.js";
 
-const tone = { Low: "text-emerald-700 bg-emerald-50 border-emerald-200", Moderate: "text-amber-700 bg-amber-50 border-amber-200", High: "text-rose-700 bg-rose-50 border-rose-200" };
+const tone = { Low: "text-emerald-700 bg-emerald-50 border-emerald-200", Moderate: "text-gold-700 bg-gold-50 border-gold-500/40", High: "text-rose-700 bg-rose-50 border-rose-200" };
 const fmt = (ymd) => new Date(`${ymd}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
 /** Caries risk and gum (BPE) screening, saved on the patient. */
