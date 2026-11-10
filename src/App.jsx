@@ -42,6 +42,9 @@ import { planToInvoiceItems, markPlanBilled, plannedTeeth, planTotals } from "./
 import ConsentForms from "./components/ConsentForms.jsx";
 import { consentHtml } from "./consent.js";
 import BranchCompare from "./components/BranchCompare.jsx";
+import DentistEarnings from "./components/DentistEarnings.jsx";
+import BookingShare from "./components/BookingShare.jsx";
+import { dentistEarnings, dentistEarningsCsv, cleanPct } from "./dentistReport.js";
 import { branchComparison, branchComparisonCsv } from "./branchReport.js";
 import LabOrders from "./components/LabOrders.jsx";
 import LabBoard from "./components/LabBoard.jsx";
@@ -977,6 +980,7 @@ export default function App() {
     discount: "",
     advance: "",
     dueDate: "",
+    doctor: "",
   });
   const [payForm, setPayForm] = useState({ amount: "", mode: "Cash" });
   const [upiQrDataUrl, setUpiQrDataUrl] = useState("");
@@ -1347,6 +1351,11 @@ export default function App() {
     [branches, allPatients, allAppointments, allInvoices, reportMonth, activeMember] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
+  const dentistCmp = useMemo(
+    () => dentistEarnings(scopeToBranches(allInvoices, allowedBranchIds), scopeToBranches(allAppointments, allowedBranchIds), reportMonth, practiceProfile.commissions),
+    [allInvoices, allAppointments, reportMonth, practiceProfile.commissions, activeMember] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
   const downloadCsv = (csv, name) => {
     const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -1533,7 +1542,7 @@ export default function App() {
     if (newInvoiceForm.planId) {
       setNewInvoiceForm({
         patientId: "", patientName: "", paymentMode: "Cash",
-        items: [blankInvoiceItem()], discount: "", advance: "", dueDate: "",
+        items: [blankInvoiceItem()], discount: "", advance: "", dueDate: "", doctor: "",
       });
     }
     setIsAddInvoiceOpen(false);
@@ -1570,6 +1579,7 @@ export default function App() {
       patientId: newInvoiceForm.patientId || "",
       patient: newInvoiceForm.patientName.trim(),
       paymentMode: newInvoiceForm.paymentMode,
+      ...(String(newInvoiceForm.doctor || "").trim() ? { doctor: String(newInvoiceForm.doctor).trim() } : {}),
       treatment: totals.lines.map((l) => l.description).join(", "),
       taxCategory: new Set(totals.lines.map((l) => l.taxCategory)).size === 1 ? totals.lines[0].taxCategory : "mixed",
       ...totals,
@@ -1598,6 +1608,7 @@ export default function App() {
       discount: "",
       advance: "",
       dueDate: "",
+      doctor: "",
     });
     setIsAddInvoiceOpen(false);
     showToast(`Invoice ${inv.id} generated for ₹${formatINR(inv.totalP)}`);
@@ -2758,6 +2769,15 @@ export default function App() {
                 ))}
               </div>
 
+              <DentistEarnings
+                report={dentistCmp}
+                ym={reportMonth}
+                commissions={practiceProfile.commissions || {}}
+                canEditRates={role === "owner"}
+                onRate={(name, v) => setPracticeProfile({ ...practiceProfile, commissions: { ...(practiceProfile.commissions || {}), [name]: v === "" ? "" : cleanPct(v) } })}
+                onDownload={() => downloadCsv(dentistEarningsCsv(dentistCmp, reportMonth), `dentists-${reportMonth}.csv`)}
+              />
+
               <BranchCompare cmp={branchCmp} ym={reportMonth} onDownload={() => downloadCsv(branchComparisonCsv(branchCmp, reportMonth), `branches-${reportMonth}.csv`)} />
 
               <div className="flex flex-wrap gap-2">
@@ -3165,6 +3185,7 @@ export default function App() {
                 {practiceProfile.onlineBooking ? (
                   <>
                     <p className="text-slate-600">Share this link on WhatsApp, Instagram or Google Business Profile. Patients send a request and you confirm it in the Appointments Diary.</p>
+                    <BookingShare url={bookingUrl(window.location.origin, CLINIC_ID)} clinicName={practiceProfile.name} onCopy={() => { navigator.clipboard?.writeText(bookingUrl(window.location.origin, CLINIC_ID)); showToast("Booking link copied"); }} />
                     <div className="flex flex-wrap gap-2 items-center">
                       <input readOnly aria-label="Booking link" value={bookingUrl(window.location.origin, CLINIC_ID)} onFocus={(e) => e.target.select()} className="flex-1 min-w-[220px] px-3 py-2 border border-slate-300 rounded-lg bg-white" />
                       <button type="button" onClick={() => { navigator.clipboard?.writeText(bookingUrl(window.location.origin, CLINIC_ID)); showToast("Booking link copied"); }} className="px-3 py-2 rounded-lg bg-[#1d4ed8] text-white font-semibold">Copy link</button>
@@ -5143,6 +5164,19 @@ export default function App() {
                   <option key={m}>{m}</option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <label htmlFor="invoice-doctor" className="block font-semibold text-slate-600 mb-1">Treated by</label>
+              <input
+                id="invoice-doctor"
+                type="text"
+                list="doctor-options"
+                value={newInvoiceForm.doctor || ""}
+                onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, doctor: e.target.value })}
+                placeholder="Dentist who did the work"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+              />
             </div>
 
             <div className="space-y-2">
