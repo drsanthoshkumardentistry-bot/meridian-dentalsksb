@@ -589,3 +589,55 @@ describe("demographics and required data", () => {
     expect(within(screen.getByTestId("day-view")).getByText(/Tomorrow Tej/)).toBeTruthy();
   });
 });
+
+describe("clinic suite in the app", () => {
+  const seedPatient = (extra = {}) => localStorage.setItem(KEY("patients"), JSON.stringify([
+    { id: "P1", name: "Note Patient", phone: "9876543210", age: "30", gender: "Female", toothConditions: { 16: ["CAR"], 26: ["SCL"] }, registeredDate: "01/11/2026", ...extra },
+  ]));
+
+  it("drafts a visit note from the chart without claiming treatment", async () => {
+    seedPatient();
+    await openApp();
+    nav("Patients & Odontogram");
+    fireEvent.click(await screen.findByText("Note Patient"));
+    fireEvent.click(await screen.findByRole("button", { name: "Visit Notes" }));
+    fireEvent.click(screen.getByText("Draft from chart"));
+    expect(screen.getByLabelText("Findings").value).toBe("Caries: 16. Calculus (scaling): 26.");
+    expect(screen.getByLabelText("Advice and medicines").value).toMatch(/Restore carious teeth/);
+    expect(screen.getByLabelText("Treatment done").value).toBe("");
+  });
+
+  it("saves a caries assessment on the patient", async () => {
+    seedPatient();
+    await openApp();
+    nav("Patients & Odontogram");
+    fireEvent.click(await screen.findByText("Note Patient"));
+    fireEvent.click(await screen.findByRole("button", { name: "Assessments" }));
+    fireEvent.click(screen.getByLabelText(/Sugary food/));
+    fireEvent.click(screen.getByText("Save caries risk"));
+    await waitFor(() => expect(stored("patients")[0].assessments.length).toBe(1));
+    expect(stored("patients")[0].assessments[0].result.level).toBe("Low");
+  });
+
+  it("issues walk-in tokens in the diary and stores the queue", async () => {
+    await openApp();
+    nav("Appointments Diary");
+    const q = await screen.findByTestId("walkin-queue");
+    type(within(q).getByLabelText("Walk-in patient name"), "Walk Wali");
+    type(within(q).getByLabelText("Triage priority"), "Urgent");
+    fireEvent.click(within(q).getByText("Add to queue"));
+    await waitFor(() => expect(stored("queue").length).toBe(1));
+    expect(stored("queue")[0]).toMatchObject({ name: "Walk Wali", token: 1, priority: "Urgent", status: "Waiting" });
+    fireEvent.click(within(q).getByText("Call in"));
+    await waitFor(() => expect(stored("queue")[0].status).toBe("In chair"));
+  });
+
+  it("shows the booking link only when online booking is switched on", async () => {
+    await openApp();
+    nav("Practice Profile");
+    const box = await screen.findByTestId("booking-settings");
+    expect(within(box).queryByLabelText("Booking link")).toBeNull();
+    fireEvent.click(within(box).getByLabelText(/Accept online appointment requests/));
+    expect(within(box).getByLabelText("Booking link").value).toMatch(/\?book=u-test$/);
+  });
+});

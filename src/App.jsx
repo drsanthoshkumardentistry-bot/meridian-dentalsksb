@@ -12,6 +12,14 @@ import { adjustStock, buildStockItem, stockState, stockSummary, stockView, build
 import { APPT_STATUSES, findClash, diarySummary, diaryView, withStatus, needsUpdate } from "./diary.js";
 import { LEAVE_TYPES, buildLeave, setLeaveStatus, removeLeave, leaveDays, onLeaveOn, buildReview, averageRating, staffAlerts } from "./staff.js";
 import GlobalSearch from "./components/GlobalSearch.jsx";
+import QueuePanel from "./components/QueuePanel.jsx";
+import BookingRequests from "./components/BookingRequests.jsx";
+import Assessments from "./components/Assessments.jsx";
+import { draftVisitNote } from "./clinicalNote.js";
+import { addAssessment, removeAssessment } from "./assessments.js";
+import { addWalkIn, setQueueStatus, pruneQueue } from "./queue.js";
+import { buildBookingPage, bookingUrl, requestToAppointment } from "./booking.js";
+import { publishBookingPage, watchBookingRequests, markBookingRequest } from "./bookingStore.js";
 import { patientSummary } from "./patientSummary.js";
 import { buildVisit, addVisit, removeVisit } from "./visits.js";
 import { shiftDay, dayGrid, hourMarks } from "./dayView.js";
@@ -81,8 +89,7 @@ import QRCode from "qrcode";
 import {
   dateKey, dueAppointmentReminders, buildAppointmentReminder, duePaymentReminders, buildPaymentReminder,
   whatsappLink, markAppointmentReminded, markInvoiceReminded, formatTime12,
-  dueRecalls, buildRecallMessage, markPatientRecalled, RECALL_OPTIONS, DEFAULT_RECALL_MONTHS,
-} from "./reminders";
+  dueRecalls, buildRecallMessage, markPatientRecalled, RECALL_OPTIONS, DEFAULT_RECALL_MONTHS, whatsappNumber } from "./reminders";
 import {
   MODE_KEYS, currentMonthKey, collectionsForMonth, gstSummaryForMonth, outstandingTotalP,
   collectionsCsv, gstRegisterCsv, buildReportHtml, monthLabel,
@@ -532,7 +539,8 @@ const DEFAULT_PROFILE = {
   state: "",
   gstin: "",
   dentalCouncil: "",
-  councilRegNumber: ""
+  councilRegNumber: "",
+  onlineBooking: false
 };
 
 export default function App() {
@@ -676,6 +684,8 @@ export default function App() {
   const [invoices, setInvoices] = useState([]);
   const [inventory, setInventory] = useState([]);
   const [employees, setEmployees] = useState(DEFAULT_EMPLOYEES);
+  const [queue, setQueue] = useState([]);
+  const [bookingRequests, setBookingRequests] = useState([]);
   const [practiceProfile, setPracticeProfile] = useState(DEFAULT_PROFILE);
   const [hydratedFor, setHydratedFor] = useState(null);
 
@@ -687,6 +697,8 @@ export default function App() {
       setInvoices([]);
       setInventory([]);
       setEmployees(DEFAULT_EMPLOYEES);
+      setQueue([]);
+      setBookingRequests([]);
       setPracticeProfile(DEFAULT_PROFILE);
       setHydratedFor(null);
       return;
@@ -704,6 +716,7 @@ export default function App() {
     setInvoices(load("invoices", []));
     setInventory(load("inventory", []));
     setEmployees(load("employees", DEFAULT_EMPLOYEES));
+    setQueue(pruneQueue(load("queue", [])));
     setPracticeProfile(load("profile", DEFAULT_PROFILE));
     setHydratedFor(CLINIC_ID);
   }, [CLINIC_ID]);
@@ -723,6 +736,7 @@ export default function App() {
   useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "appointments", items: appointments, setItems: setAppointments, sortFn: byIdDesc, onError: reportSyncError });
   useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "invoices", items: invoices, setItems: setInvoices, sortFn: byIdDesc, onError: reportSyncError });
   useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "inventory", items: inventory, setItems: setInventory, onError: reportSyncError });
+  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "queue", items: queue, setItems: setQueue, onError: reportSyncError });
   useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "employees", items: employees, setItems: setEmployees, onError: reportSyncError });
   useCloudDoc({ clinicId: CLINIC_ID, ready: cloudReady, name: "profile", value: practiceProfile, setValue: setPracticeProfile, onError: reportSyncError });
 
@@ -751,6 +765,22 @@ export default function App() {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
     localStorage.setItem(`merident_${CLINIC_ID}_employees`, JSON.stringify(employees));
   }, [employees, hydratedFor, CLINIC_ID]);
+
+  useEffect(() => {
+    if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
+    localStorage.setItem(`merident_${CLINIC_ID}_queue`, JSON.stringify(queue));
+  }, [queue, hydratedFor, CLINIC_ID]);
+
+  // Online booking: publish the public page and listen for requests (only while signed in to this clinic)
+  useEffect(() => {
+    if (!db || !CLINIC_ID || hydratedFor !== CLINIC_ID) return;
+    publishBookingPage(db, CLINIC_ID, buildBookingPage(practiceProfile, CLINIC_ID, { enabled: practiceProfile.onlineBooking })).catch(() => {});
+  }, [practiceProfile.name, practiceProfile.address, practiceProfile.phone, practiceProfile.drName, practiceProfile.onlineBooking, hydratedFor, CLINIC_ID]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!db || !CLINIC_ID || hydratedFor !== CLINIC_ID) return undefined;
+    return watchBookingRequests(db, CLINIC_ID, setBookingRequests, () => {});
+  }, [hydratedFor, CLINIC_ID]);
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
@@ -1151,6 +1181,53 @@ export default function App() {
     setNewApptForm((f) => ({ ...f, patientId: "", patientName: "", phone: "", age: "", procedure: "" }));
     setIsAddApptOpen(false);
     showToast(`Appointment booked for ${appt.patientName} on ${appt.date}`);
+  };
+
+  // Walk-in queue
+  const handleAddWalkIn = (form) => {
+    const r = addWalkIn(queue, form, newId("Q"));
+    if (!r.ok) return r;
+    setQueue((prev) => [r.entry, ...prev]);
+    showToast(`Token ${r.entry.token} issued to ${r.entry.name}`);
+    return r;
+  };
+  const handleQueueStatus = (entry, status) => setQueue((prev) => prev.map((e) => (e.id === entry.id ? setQueueStatus(e, status) : e)));
+  const handleQueueRemove = (entry) => setQueue((prev) => prev.filter((e) => e.id !== entry.id));
+
+  // Online booking requests
+  const confirmBooking = async (req) => {
+    const doctor = practiceProfile.drName || "Doctor";
+    const { appointment } = requestToAppointment(req, { newId, doctor, chair: newApptForm.chair, patients });
+    const clash = findClash(appointments, appointment);
+    if (clash) {
+      showToast(`${clash.appt.chair} is booked at ${formatTime12(clash.appt.time)}. Open the diary and book a free time, then confirm.`);
+      return;
+    }
+    try {
+      await markBookingRequest(db, req.id, "confirmed");
+    } catch {
+      showToast("Could not update the request. Check your connection and try again.");
+      return;
+    }
+    setAppointments((prev) => [appointment, ...prev]);
+    const wa = whatsappNumber(req.phone);
+    showToast(`Booked ${req.name} for ${appointment.date} at ${formatTime12(appointment.time)}`);
+    if (wa) {
+      const text = `Hello ${req.name}, your appointment at ${practiceProfile.name} is confirmed for ${appointment.date} at ${formatTime12(appointment.time)}. Please reply if you need to change it.`;
+      window.open(`https://wa.me/${wa}?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+    }
+  };
+  const declineBooking = async (req) => {
+    try {
+      await markBookingRequest(db, req.id, "declined");
+    } catch {
+      showToast("Could not update the request. Check your connection and try again.");
+    }
+  };
+  const contactBooking = (req) => {
+    const wa = whatsappNumber(req.phone);
+    if (!wa) return;
+    window.open(`https://wa.me/${wa}?text=${encodeURIComponent(`Hello ${req.name}, this is ${practiceProfile.name} about your appointment request for ${req.date}.`)}`, "_blank", "noopener,noreferrer");
   };
 
   // --- Reports ---
@@ -2058,6 +2135,9 @@ export default function App() {
                 </div>
               )}
 
+              <BookingRequests requests={bookingRequests} onConfirm={confirmBooking} onDecline={declineBooking} onContact={contactBooking} />
+              <QueuePanel queue={queue} today={dateKey()} onAdd={handleAddWalkIn} onStatus={handleQueueStatus} onRemove={handleQueueRemove} />
+
               {appointments.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
                   <Calendar className="w-10 h-10 text-blue-600 mx-auto" />
@@ -2841,6 +2921,24 @@ export default function App() {
                 <p className="text-xs text-slate-500">Clinic details used on prescriptions, invoices, and patient messages</p>
               </div>
 
+              <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-xs space-y-2" data-testid="booking-settings">
+                <label className="flex items-center gap-2 font-semibold text-slate-800">
+                  <input type="checkbox" checked={Boolean(practiceProfile.onlineBooking)} onChange={(e) => setPracticeProfile({ ...practiceProfile, onlineBooking: e.target.checked })} />
+                  Accept online appointment requests
+                </label>
+                {practiceProfile.onlineBooking ? (
+                  <>
+                    <p className="text-slate-600">Share this link on WhatsApp, Instagram or Google Business Profile. Patients send a request and you confirm it in the Appointments Diary.</p>
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <input readOnly aria-label="Booking link" value={bookingUrl(window.location.origin, CLINIC_ID)} onFocus={(e) => e.target.select()} className="flex-1 min-w-[220px] px-3 py-2 border border-slate-300 rounded-lg bg-white" />
+                      <button type="button" onClick={() => { navigator.clipboard?.writeText(bookingUrl(window.location.origin, CLINIC_ID)); showToast("Booking link copied"); }} className="px-3 py-2 rounded-lg bg-[#1d4ed8] text-white font-semibold">Copy link</button>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-slate-500">Off. Patients cannot book online.</p>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div>
                   <label className="block font-semibold text-slate-600 mb-1">Clinic Name</label>
@@ -3620,6 +3718,7 @@ export default function App() {
                 {[
                   "32-Tooth Odontogram",
                   "Visit Notes",
+                  "Assessments",
                   "Department Referrals",
                   "Diagnosis & Trauma",
                   "Systemic Review",
@@ -3663,9 +3762,34 @@ export default function App() {
                 />
               )}
 
+              {/* ASSESSMENTS */}
+              {activeModalTab === "Assessments" && (
+                <Assessments
+                  patient={activePatient}
+                  newId={newId}
+                  onSave={(a) => { setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? addAssessment(p, a) : p))); showToast("Assessment saved"); }}
+                  onRemove={(a) => { if (confirm("Delete this assessment?")) setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? removeAssessment(p, a.id) : p))); }}
+                />
+              )}
+
               {/* VISIT NOTES */}
               {activeModalTab === "Visit Notes" && (
                 <div className="space-y-5" data-testid="visit-notes">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs text-slate-500">Fill the note from this patient's chart, then edit it before saving.</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const d = draftVisitNote(activePatient, CLINICAL_PALETTE);
+                        if (!d.findings && !d.advice && !d.nextVisit) { showToast("Chart some findings first, then draft the note"); return; }
+                        setVisitForm((f) => ({ ...f, findings: d.findings || f.findings, advice: d.advice || f.advice, nextVisit: d.nextVisit || f.nextVisit }));
+                        showToast("Draft added. Review and edit before saving");
+                      }}
+                      className="px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-[#1d4ed8] text-xs font-semibold hover:bg-blue-100"
+                    >
+                      Draft from chart
+                    </button>
+                  </div>
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
