@@ -920,14 +920,11 @@ export default function App() {
   };
 
   // Update Diagnostic Fields in Realtime
-  const handleUpdateDiagnosis = (field, value) => {
-    if (!activePatient) return;
-    const updatedDiag = {
-      ...(activePatient.diagnosis || {}),
-      [field]: value,
-    };
+  const handleUpdateDiagnosis = (field, value, patientId) => {
+    const targetId = patientId || (activePatient && activePatient.id);
+    if (!targetId) return;
     setPatients((prev) =>
-      prev.map((p) => (p.id === activePatient.id ? { ...p, diagnosis: updatedDiag } : p))
+      prev.map((p) => (p.id === targetId ? { ...p, diagnosis: { ...(p.diagnosis || {}), [field]: value } } : p))
     );
   };
 
@@ -1803,7 +1800,7 @@ export default function App() {
                   {patients.length > 0 && (
                     <select
                       value={opgSelectedPatientId || (currentOpgPatient ? currentOpgPatient.id : "")}
-                      onChange={(e) => setOpgSelectedPatientId(e.target.value)}
+                      onChange={(e) => setOpgSelectedPatientId(e.target.value, currentOpgPatient?.id)}
                       className="text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-700 font-semibold focus:outline-none"
                     >
                       {patients.map((p) => (
@@ -1832,7 +1829,7 @@ export default function App() {
                   }
                   onAddToNotes={(line) =>
                     currentOpgPatient &&
-                    handleUpdateDiagnosis("diagnosisNotes", `${currentOpgPatient.diagnosis?.diagnosisNotes ? currentOpgPatient.diagnosis.diagnosisNotes + "\n" : ""}${line}`)
+                    handleUpdateDiagnosis("diagnosisNotes", `${currentOpgPatient.diagnosis?.diagnosisNotes ? currentOpgPatient.diagnosis.diagnosisNotes + "\n" : ""}${line}`, currentOpgPatient.id)
                   }
                   showToast={showToast}
                 />
@@ -1849,7 +1846,7 @@ export default function App() {
                       <input
                         type="text"
                         value={currentOpgPatient?.diagnosis?.trauma || ""}
-                        onChange={(e) => handleUpdateDiagnosis("trauma", e.target.value)}
+                        onChange={(e) => handleUpdateDiagnosis("trauma", e.target.value, currentOpgPatient?.id)}
                         placeholder="Crown fracture, luxation, alveolar ridge integrity..."
                         className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
                       />
@@ -1860,7 +1857,7 @@ export default function App() {
                       <input
                         type="text"
                         value={currentOpgPatient?.diagnosis?.impaction || ""}
-                        onChange={(e) => handleUpdateDiagnosis("impaction", e.target.value)}
+                        onChange={(e) => handleUpdateDiagnosis("impaction", e.target.value, currentOpgPatient?.id)}
                         placeholder="Angulation, depth, position relative to ramus..."
                         className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
                       />
@@ -1871,7 +1868,7 @@ export default function App() {
                       <input
                         type="text"
                         value={currentOpgPatient?.diagnosis?.boneDeformations || ""}
-                        onChange={(e) => handleUpdateDiagnosis("boneDeformations", e.target.value)}
+                        onChange={(e) => handleUpdateDiagnosis("boneDeformations", e.target.value, currentOpgPatient?.id)}
                         placeholder="Horizontal bone loss, angular crest defects, furcation..."
                         className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
                       />
@@ -1882,7 +1879,7 @@ export default function App() {
                       <textarea
                         rows={3}
                         value={currentOpgPatient?.diagnosis?.diagnosisNotes || ""}
-                        onChange={(e) => handleUpdateDiagnosis("diagnosisNotes", e.target.value)}
+                        onChange={(e) => handleUpdateDiagnosis("diagnosisNotes", e.target.value, currentOpgPatient?.id)}
                         placeholder="Type formal clinical diagnosis and operative procedures..."
                         className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
                       />
