@@ -5,6 +5,7 @@
  * File: src/App.jsx
  * ============================================================================== */
 
+import { AGING_BUCKETS, agingSummary, filterInvoices, invoiceAgeDays } from "./receivables.js";
 import Odontogram from "./components/Odontogram.jsx";
 import TreatmentPlans from "./components/TreatmentPlans.jsx";
 import { planToInvoiceItems, markPlanBilled, plannedTeeth } from "./plans.js";
@@ -1164,6 +1165,9 @@ export default function App() {
   const dueRecallList = dueRecalls(patients, appointments, invoices.map(normalizeInvoice));
   const duePayReminders = duePaymentReminders(invoices.map(normalizeInvoice), patients);
   const [showAllRecalls, setShowAllRecalls] = useState(false);
+  const [invoiceFilter, setInvoiceFilter] = useState("all");
+  const aging = agingSummary(invoices);
+  const visibleInvoices = filterInvoices(invoices, invoiceFilter);
 
   const sendApptReminder = ({ appt, kind }) => {
     const link = whatsappLink(
@@ -2150,6 +2154,58 @@ export default function App() {
                 </button>
               </div>
 
+              {aging.count > 0 && (
+                <div className="space-y-3" data-testid="receivables">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    {aging.buckets.map((b) => {
+                      const on = invoiceFilter === b.id;
+                      return (
+                        <button
+                          key={b.id}
+                          type="button"
+                          aria-pressed={on}
+                          disabled={b.count === 0}
+                          onClick={() => setInvoiceFilter(on ? "all" : b.id)}
+                          className={`text-left rounded-xl border p-4 transition-colors disabled:opacity-50 disabled:cursor-default ${
+                            on ? "border-blue-600 bg-blue-50 ring-1 ring-blue-600" : "border-slate-200 bg-white hover:border-blue-300"
+                          }`}
+                        >
+                          <div className="text-[11px] font-semibold text-slate-500">{b.label}</div>
+                          <div className={`text-lg font-bold mt-1 tabular ${b.id === "60+" && b.count ? "text-rose-600" : "text-slate-900"}`}>
+                            ₹{formatINR(b.totalP)}
+                          </div>
+                          <div className="text-[11px] text-slate-500">{b.count} unpaid {b.count === 1 ? "invoice" : "invoices"}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {invoices.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 text-xs" role="group" aria-label="Show invoices">
+                  {[
+                    ["all", "All invoices"],
+                    ["unpaid", `Unpaid (${aging.count})`],
+                  ].map(([id, label]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      aria-pressed={invoiceFilter === id}
+                      onClick={() => setInvoiceFilter(id)}
+                      className={`px-3 py-1.5 rounded-full border font-semibold ${
+                        invoiceFilter === id ? "bg-ink text-white border-ink" : "bg-white text-slate-700 border-slate-200 hover:bg-blue-50"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                  {AGING_BUCKETS.some((b) => b.id === invoiceFilter) && (
+                    <span className="text-slate-500">Showing {AGING_BUCKETS.find((b) => b.id === invoiceFilter).label}, oldest first</span>
+                  )}
+                </div>
+              )}
+
               {invoices.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
                   <DollarSign className="w-10 h-10 text-blue-600 mx-auto" />
@@ -2178,11 +2234,19 @@ export default function App() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {invoices.map(normalizeInvoice).map((inv) => (
+                      {visibleInvoices.length === 0 && (
+                        <tr>
+                          <td colSpan={7} className="p-8 text-center text-slate-500">Nothing to show here. Every invoice in this view is paid.</td>
+                        </tr>
+                      )}
+                      {visibleInvoices.map(normalizeInvoice).map((inv) => (
                         <tr key={inv.id} className="hover:bg-slate-50/60">
                           <td className="p-4">
                             <div className="font-bold text-blue-700">{inv.id}</div>
                             {inv.claimId ? <div className="text-[10px] text-slate-400">Claim: {inv.claimId}</div> : null}
+                            {balancePaise(inv) > 0 && invoiceAgeDays(inv) !== null ? (
+                              <div className="text-[10px] text-slate-400">{invoiceAgeDays(inv)} {invoiceAgeDays(inv) === 1 ? "day" : "days"} old</div>
+                            ) : null}
                           </td>
                           <td className="p-4 font-semibold">{inv.patient}</td>
                           <td className="p-4 text-slate-600">
@@ -2213,6 +2277,22 @@ export default function App() {
                             >
                               Print
                             </button>
+                            {balancePaise(inv) > 0 && (() => {
+                              const due = duePayReminders.find((d) => d.inv.id === inv.id);
+                              if (due) {
+                                return (
+                                  <button
+                                    onClick={() => sendPayReminder(due)}
+                                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold"
+                                  >
+                                    Remind
+                                  </button>
+                                );
+                              }
+                              return inv.lastReminderAt ? (
+                                <span className="text-[10px] text-slate-400">Reminded {new Date(inv.lastReminderAt).toLocaleDateString("en-IN")}</span>
+                              ) : null;
+                            })()}
                           </td>
                         </tr>
                       ))}
