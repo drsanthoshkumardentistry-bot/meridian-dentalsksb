@@ -1,11 +1,17 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-IN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1d4ed8" />
+    <meta name="color-scheme" content="light" />
 
-    <meta name="description" content="MeriDent - Dental Practice Management Platform" />
+    <title>MeriDent | Dental practice management for Indian clinics</title>
+    <meta
+      name="description"
+      content="MeriDent is a cloud practice manager for Indian dental clinics: 32-tooth odontogram, treatment plans patients approve from their phone, GST invoices with UPI QR, stock, staff and WhatsApp reminders. Free during early access."
+    />
+    <link rel="canonical" href="https://meridiandentalos.com/" />
 
     <!-- Browser Tab Favicon / Logo Icon -->
     <link rel="icon" type="image/png" href="/logo.png" />
@@ -15,20 +21,44 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-    <title>MeriDent</title>
-
-    <!-- Open Graph Social Share Tags -->
+    <!-- Open Graph / social share -->
+    <meta property="og:site_name" content="MeriDent" />
+    <meta property="og:locale" content="en_IN" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://meridiandentalos.com/" />
+    <meta property="og:title" content="MeriDent | Dental practice management for Indian clinics" />
+    <meta property="og:description" content="Chart the tooth. Bill the visit. Remind the patient. A cloud practice manager for dental clinics in India, free during early access." />
     <meta property="og:image" content="https://meridiandentalos.com/og-banner.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:title" content="MeriDent - Cloud Practice Management" />
-    <meta property="og:description" content="Cloud-native dental practice management platform built for modern clinics." />
-    <meta property="og:url" content="https://meridiandentalos.com" />
-    <meta property="og:type" content="website" />
+    <meta property="og:image:alt" content="MeriDent: dental practice management" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="MeriDent | Dental practice management for Indian clinics" />
+    <meta name="twitter:description" content="Chart the tooth. Bill the visit. Remind the patient." />
+    <meta name="twitter:image" content="https://meridiandentalos.com/og-banner.png" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "MeriDent",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Any (web browser)",
+        "description": "Cloud practice management for dental clinics in India: odontogram, treatment plans, GST invoicing, stock, staff and WhatsApp reminders.",
+        "url": "https://meridiandentalos.com/",
+        "inLanguage": "en-IN",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR", "description": "Free during early access" }
+      }
+    </script>
   </head>
 
   <body>
     <div id="root"></div>
+    <noscript>
+      <p style="font-family: system-ui, sans-serif; max-width: 32rem; margin: 4rem auto; padding: 0 1rem; color: #0b1b3a">
+        MeriDent needs JavaScript to run. Please turn it on in your browser, or message us on WhatsApp at +91 90432 05927.
+      </p>
+    </noscript>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

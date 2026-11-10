@@ -28,13 +28,25 @@ describe("landing page content", () => {
     expect(within(faq).getByText("Does MeriDent send WhatsApp messages by itself?")).toBeTruthy();
     expect(faq.textContent).toMatch(/you tap Send/);
     expect(faq.textContent).toMatch(/free during early access/i);
-    expect(faq.querySelectorAll("details").length).toBe(6);
+    expect(faq.querySelectorAll("details").length).toBe(8);
   });
 
   it("makes no unverifiable claims (testimonials, user counts, compliance badges)", () => {
     const { container } = render(<LandingPage firebaseConfigured onLoginClick={() => {}} />);
     const text = container.textContent;
     expect(text).not.toMatch(/trusted by|\d+\+ clinics|testimonial|DPDP compliant|HIPAA|best dental|#1/i);
+  });
+
+  it("shows the newer features and is clear that insurance claims are not supported", () => {
+    render(<LandingPage firebaseConfigured onLoginClick={() => {}} />);
+    ["MeriDent Connect", "Dues and overdue tracking", "Stock with reorder and expiry alerts", "Staff roster, leave and reviews", "Today at a glance"].forEach((t) =>
+      expect(screen.getByText(t)).toBeTruthy()
+    );
+    const faq = document.getElementById("faq");
+    expect(within(faq).getByText("Does MeriDent handle insurance claims?")).toBeTruthy();
+    expect(faq.textContent).toMatch(/does not manage insurance/i);
+    const features = document.getElementById("features").textContent;
+    expect(features).not.toMatch(/insurance|TPA/i);
   });
 
   it("keeps the sign-in entry points", () => {
