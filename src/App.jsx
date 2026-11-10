@@ -1566,7 +1566,7 @@ export default function App() {
 
       {/* Toast Notifier */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 bg-[#0b1329] text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2.5 text-xs border border-slate-700 animate-fade-in">
+        <div className="fixed bottom-5 right-5 z-50 bg-ink text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2.5 text-xs border border-slate-700 animate-fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           <span>{toastMessage}</span>
         </div>
@@ -1585,18 +1585,28 @@ export default function App() {
 
       {/* --- SIDEBAR --- */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#0b1329] text-white flex flex-col justify-between transition-transform duration-300 md:static md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-ink text-white flex flex-col justify-between transition-transform duration-300 md:static md:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div>
           <div className="p-5 flex items-center justify-between border-b border-slate-800/80">
-            <div>
-              <div className="text-base font-bold text-white tracking-wide flex items-center gap-2">
-                MeriDent
-              </div>
-              <div className="text-[11px] text-slate-400 font-normal">
-                Practice Management OS
+            <div className="flex items-center gap-2.5">
+              <img
+                src="/logo.png"
+                alt=""
+                className="w-9 h-9 rounded-lg object-cover bg-white/10"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+              <div>
+                <div className="font-display text-lg font-extrabold text-white tracking-tight leading-none">
+                  MeriDent
+                </div>
+                <div className="text-[11px] text-blue-200/70 font-normal mt-1">
+                  Practice management
+                </div>
               </div>
             </div>
             <button
@@ -1675,7 +1685,7 @@ export default function App() {
             >
               <Menu className="w-6 h-6" />
             </button>
-            <div className="text-lg font-bold text-slate-900">MeriDent</div>
+            <div className="font-display text-lg font-bold text-ink tracking-tight">{activeNav}</div>
           </div>
 
           <div className="flex items-center gap-4">
@@ -1689,8 +1699,11 @@ export default function App() {
                 className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
-            <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-semibold">
-              S
+            <div
+              title={authUser.email}
+              className="w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-bold"
+            >
+              {(authUser.displayName || authUser.email || "M").trim().charAt(0).toUpperCase()}
             </div>
           </div>
         </header>
@@ -1707,7 +1720,7 @@ export default function App() {
                 </div>
                 <button
                   onClick={() => setIsAddPatientOpen(true)}
-                  className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                  className="shrink-0 whitespace-nowrap px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
                 >
                   <Plus className="w-4 h-4" /> Add Patient
                 </button>
@@ -1734,10 +1747,10 @@ export default function App() {
                           setSelectedPatientId(p.id);
                           setIsChartModalOpen(true);
                         }}
-                        className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex items-center justify-between cursor-pointer hover:border-blue-300 transition-all"
+                        className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:border-blue-300 hover:shadow-md transition-all"
                       >
                         <div>
-                          <div className="text-base font-bold text-slate-900 flex items-center gap-2">
+                          <div className="text-base font-bold text-slate-900 flex flex-wrap items-center gap-x-2 gap-y-1">
                             {p.name}
                             <span className="text-xs font-semibold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-100">
                               Age: {p.age || "N/A"} Yrs
@@ -1757,9 +1770,9 @@ export default function App() {
                           </div>
                         </div>
 
-                        <div className="text-right flex items-center gap-4">
+                        <div className="sm:text-right flex items-center justify-between sm:justify-end gap-4">
                           <div>
-                            <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
+                            <span className="inline-block whitespace-nowrap text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
                               {chartedCount} Teeth Charted
                             </span>
                             <div className="text-[11px] text-slate-400 mt-1">Open Casesheet →</div>
@@ -1811,7 +1824,7 @@ export default function App() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                 {/* Left: OPG Card */}
-                <div className="bg-[#0b1329] rounded-2xl p-5 text-white flex flex-col justify-between">
+                <div className="bg-ink rounded-2xl p-5 text-white flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <div>
@@ -2139,7 +2152,15 @@ export default function App() {
               {invoices.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
                   <DollarSign className="w-10 h-10 text-blue-600 mx-auto" />
-                  <h3 className="text-sm font-bold text-slate-800">No Invoices Generated Yet</h3>
+                  <h3 className="text-sm font-bold text-slate-800">No invoices yet</h3>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto">Bill a visit with GST, take part payments and share a UPI QR for the balance.</p>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddInvoiceOpen(true)}
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold"
+                  >
+                    Create first invoice
+                  </button>
                 </div>
               ) : (
                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
@@ -2668,7 +2689,7 @@ export default function App() {
 
           {/* TAB 8: DASHBOARD OVERVIEW */}
           {activeNav !== "Practice Profile" && (!practiceProfile.drName || !practiceProfile.state || !practiceProfile.councilRegNumber) && (
-            <div className="mb-5 rounded-2xl border border-blue-200 bg-blue-50 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="mt-5 rounded-2xl border border-blue-200 bg-blue-50 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="text-sm text-blue-900">
                 <strong>Complete your clinic profile.</strong> Add the doctor name, state and Dental Council registration number so
                 prescriptions and invoices are correct.
