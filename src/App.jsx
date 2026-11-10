@@ -9,6 +9,7 @@ import { AGING_BUCKETS, agingSummary, filterInvoices, invoiceAgeDays } from "./r
 import Odontogram from "./components/Odontogram.jsx";
 import TreatmentPlans from "./components/TreatmentPlans.jsx";
 import { planToInvoiceItems, markPlanBilled, plannedTeeth } from "./plans.js";
+import { createShare, fetchShare, deleteShare } from "./planShare.js";
 import React, { useState, useEffect, useRef } from "react";
 import {
   Menu,
@@ -3447,6 +3448,13 @@ export default function App() {
                   patient={activePatient}
                   practiceProfile={practiceProfile}
                   showToast={showToast}
+                  clinicId={CLINIC_ID}
+                  shareApi={{
+                    enabled: Boolean(db && CLINIC_ID),
+                    create: (token, share) => createShare(db, token, share),
+                    fetch: (token) => fetchShare(db, token),
+                    remove: (token) => deleteShare(db, token),
+                  }}
                   onChange={(plans) => updateActivePatient({ plans })}
                   onBill={(plan) => {
                     setNewInvoiceForm({

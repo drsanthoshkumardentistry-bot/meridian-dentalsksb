@@ -157,3 +157,64 @@ ${plan.notes ? `<p>${esc(plan.notes)}</p>` : ""}
 <p style="margin-top:48px">Patient / guardian signature: ______________________ &nbsp; Date: ____________</p>
 <script>window.onload=function(){window.print()}</script></body></html>`;
 };
+
+/* ------------------------- Patient approval link ------------------------- */
+
+export const SHARE_DAYS = 30;
+
+/** 32 URL-safe characters from 24 random bytes (192 bits). Not guessable. */
+export const newShareToken = (cryptoLike = globalThis.crypto) => {
+  const bytes = new Uint8Array(24);
+  cryptoLike.getRandomValues(bytes);
+  let bin = "";
+  bytes.forEach((b) => (bin += String.fromCharCode(b)));
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+};
+
+export const shareUrl = (origin, token) => `${String(origin).replace(/\/$/, "")}/?plan=${encodeURIComponent(token)}`;
+
+/** Only what the patient needs to decide: first name, clinic name and the priced plan. No phone, no records. */
+export const buildShareDoc = ({ plan, patient, profile = {}, clinicId }, now = new Date()) => {
+  const t = planTotals(plan);
+  return {
+    clinicId,
+    patientId: String(patient?.id || ""),
+    planId: plan.id,
+    clinicName: String(profile.name || "Your dental clinic"),
+    patientFirstName: String(patient?.name || "").trim().split(/\s+/)[0] || "",
+    title: plan.title,
+    notes: plan.notes || "",
+    items: t.lines.map((l, i) => ({
+      description: l.description,
+      tooth: plan.items[i].tooth || "",
+      amountP: l.amountP,
+    })),
+    subtotalP: t.subtotalP,
+    discountP: t.discountP,
+    taxP: t.taxP,
+    totalP: t.totalP,
+    decision: "pending",
+    decidedAt: null,
+    decidedName: "",
+    createdAt: now.toISOString(),
+    expiresAt: new Date(now.getTime() + SHARE_DAYS * 24 * 60 * 60 * 1000),
+  };
+};
+
+const toDate = (v) => (v && typeof v.toDate === "function" ? v.toDate() : v instanceof Date ? v : new Date(v));
+
+export const isShareExpired = (share, now = new Date()) => !share || !(toDate(share.expiresAt) > now);
+
+/** Copy the patient's decision onto the clinic's plan. Only a Proposed plan can change this way. */
+export const applyShareDecision = (plan, share, now = new Date()) => {
+  if (!plan || !share || plan.status !== "Proposed") return plan;
+  const name = String(share.decidedName || "").trim();
+  if (share.decision === "approved") return approvePlan(plan, name ? `${name} (online)` : "Patient (online)", now);
+  if (share.decision === "declined") return declinePlan(plan, now);
+  return plan;
+};
+
+export const buildShareMessage = (plan, patient, profile, url) =>
+  `Hello ${patient?.name || ""}, ${profile?.name || "our clinic"} has prepared a treatment estimate for you: ${plan.title}.\n\n` +
+  `Please review it and let us know if you approve:\n${url}\n\n` +
+  `The link works for ${SHARE_DAYS} days. This is an estimate, not a bill.`;
