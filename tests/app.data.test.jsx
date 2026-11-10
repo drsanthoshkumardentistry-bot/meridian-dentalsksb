@@ -268,4 +268,40 @@ describe("demographics and required data", () => {
     fireEvent.submit(form);
     await waitFor(() => expect(stored("invoices").length).toBe(1));
   });
+
+  it("treatment plans: create, approve, then bill into one invoice", async () => {
+    localStorage.setItem(KEY("patients"), JSON.stringify([
+      { id: "P-1", name: "Plan Patient", phone: "9876543210", age: "30", gender: "Male", toothConditions: {}, registeredDate: "01/11/2026" },
+    ]));
+    await openApp();
+    nav("Patients & Odontogram");
+    fireEvent.click(await screen.findByText("Plan Patient"));
+    fireEvent.click(await screen.findByText("Treatment Plan"));
+    fireEvent.click(await screen.findByText(/New plan/i));
+    fireEvent.click(screen.getByText("Save plan"));
+    expect(await screen.findByText(/Give the plan a title/i)).toBeTruthy();
+    type(screen.getByLabelText("Plan title"), "Smile makeover");
+    type(screen.getByLabelText("Plan item 1 treatment"), "Root canal");
+    type(screen.getByLabelText("Plan item 1 tooth"), "46");
+    type(screen.getByLabelText("Plan item 1 amount"), "5000");
+    fireEvent.click(screen.getByText("Add treatment"));
+    type(screen.getByLabelText("Plan item 2 treatment"), "Whitening");
+    type(screen.getByLabelText("Plan item 2 amount"), "2000");
+    type(screen.getByLabelText("Plan item 2 tax category"), "cosmetic");
+    fireEvent.click(screen.getByText("Save plan"));
+    await waitFor(() => expect(stored("patients")[0].plans?.length).toBe(1));
+    expect(stored("patients")[0].plans[0].status).toBe("Proposed");
+    expect(screen.queryByText("Create invoice")).toBeNull();
+    fireEvent.click(screen.getByText(/Mark approved/i));
+    await waitFor(() => expect(stored("patients")[0].plans[0].status).toBe("Approved"));
+    fireEvent.click(await screen.findByText("Create invoice"));
+    const form = (await screen.findAllByText("Patient Name *"))[0].closest("form");
+    expect(form.querySelector('input[list="patient-options"]').value).toBe("Plan Patient");
+    expect(within(form).getByLabelText("Treatment 1 description").value).toBe("Root canal (tooth 46)");
+    fireEvent.submit(form);
+    await waitFor(() => expect(stored("invoices").length).toBe(1));
+    expect(stored("invoices")[0].totalP).toBe(736000);
+    await waitFor(() => expect(stored("patients")[0].plans[0].status).toBe("Billed"));
+    expect(stored("patients")[0].plans[0].invoiceId).toBe(stored("invoices")[0].id);
+  });
 });
