@@ -12,8 +12,12 @@ import { adjustStock, buildStockItem, stockState, stockSummary, stockView, build
 import { APPT_STATUSES, findClash, diarySummary, diaryView, withStatus, needsUpdate } from "./diary.js";
 import { LEAVE_TYPES, buildLeave, setLeaveStatus, removeLeave, leaveDays, onLeaveOn, buildReview, averageRating, staffAlerts } from "./staff.js";
 import GlobalSearch from "./components/GlobalSearch.jsx";
+import TeamCard from "./components/TeamCard.jsx";
+import { canRead, canWrite, navFor, NAV_BY_ROLE, firstScreen, branchScope, ROLE_LABEL } from "./roles.js";
+import { isActiveMember, isPendingInvite, buildInvite, inviteMessage } from "./team.js";
+import { watchMyMembership, watchTeam, createInvite, acceptInvite, updateMember, removeMember } from "./teamStore.js";
 import BranchesCard from "./components/BranchesCard.jsx";
-import { branchesOf, filterByBranch, writeBranchId, tagBranch } from "./branches.js";
+import { branchesOf, filterByBranch, writeBranchId, tagBranch, scopeToBranches } from "./branches.js";
 import QueuePanel from "./components/QueuePanel.jsx";
 import BookingRequests from "./components/BookingRequests.jsx";
 import Assessments from "./components/Assessments.jsx";
@@ -193,7 +197,7 @@ const cleanForCloud = (value) => JSON.parse(JSON.stringify(value));
 const SYNC_FAILED = "__sync_failed__";
 const SYNC_DELETING = "__sync_deleting__";
 
-function useCloudCollection({ clinicId, ready, name, items, setItems, sortFn, onError }) {
+function useCloudCollection({ clinicId, ready, name, items, setItems, sortFn, onError, readOnly = false }) {
   const synced = useRef(new Map());
   const itemsRef = useRef(items);
   const [loaded, setLoaded] = useState(false);
@@ -271,7 +275,7 @@ function useCloudCollection({ clinicId, ready, name, items, setItems, sortFn, on
 
   // Save changes (debounced) and propagate deletions
   useEffect(() => {
-    if (!db || !clinicId || !ready || !loaded) return undefined;
+    if (!db || !clinicId || !ready || !loaded || readOnly) return undefined;
 
     const timer = setTimeout(() => {
       const currentIds = new Set();
@@ -304,10 +308,10 @@ function useCloudCollection({ clinicId, ready, name, items, setItems, sortFn, on
     }, 700);
 
     return () => clearTimeout(timer);
-  }, [items, loaded, retryTick, clinicId, ready, name]);
+  }, [items, loaded, retryTick, clinicId, ready, name, readOnly]);
 }
 
-function useCloudDoc({ clinicId, ready, name, value, setValue, onError }) {
+function useCloudDoc({ clinicId, ready, name, value, setValue, onError, readOnly = false }) {
   const syncedJson = useRef(null);
   const valueRef = useRef(value);
   const onErrorRef = useRef(onError);
@@ -349,7 +353,7 @@ function useCloudDoc({ clinicId, ready, name, value, setValue, onError }) {
   }, [clinicId, ready, name]);
 
   useEffect(() => {
-    if (!db || !clinicId || !ready || !loaded) return undefined;
+    if (!db || !clinicId || !ready || !loaded || readOnly) return undefined;
     const clean = cleanForCloud(value);
     const json = stableStringify(clean);
     if (json === syncedJson.current) return undefined;
@@ -361,7 +365,7 @@ function useCloudDoc({ clinicId, ready, name, value, setValue, onError }) {
       });
     }, 700);
     return () => clearTimeout(timer);
-  }, [value, loaded, clinicId, ready, name]);
+  }, [value, loaded, clinicId, ready, name, readOnly]);
 }
 
 // ---------------------------------------------------------------------------
@@ -560,7 +564,30 @@ export default function App() {
   // Google accounts are verified by Google; email-and-password accounts must verify their address first
   const isVerified = Boolean(authUser && (authUser.emailVerified || emailVerifiedNow || !usesPasswordLogin(authUser)));
   // Every signed-in, verified account gets its own isolated clinic workspace
-  const CLINIC_ID = isVerified ? authUser.uid : null;
+  // A signed-in person is either the owner of their own clinic or an accepted team member of someone else's.
+  const [membership, setMembership] = useState(null);
+  const [membershipReady, setMembershipReady] = useState(false);
+  const activeMember = authUser && isActiveMember(membership) && membership.clinicId !== authUser.uid ? membership : null;
+  const pendingInvite = authUser && isPendingInvite(membership) && membership.clinicId !== authUser.uid ? membership : null;
+  const role = activeMember ? activeMember.role : "owner";
+  const CLINIC_ID = isVerified && membershipReady ? (activeMember ? activeMember.clinicId : authUser.uid) : null;
+  // Team members keep their own device cache so they never read or overwrite the owner's
+  const CACHE_ID = CLINIC_ID && activeMember ? `${CLINIC_ID}_s${authUser.uid}` : CLINIC_ID;
+
+  useEffect(() => {
+    if (!isVerified || !authUser?.email || !db) {
+      setMembership(null);
+      setMembershipReady(Boolean(isVerified) || !authUser);
+      return undefined;
+    }
+    setMembershipReady(false);
+    return watchMyMembership(
+      db,
+      authUser.email,
+      (m) => { setMembership(m); setMembershipReady(true); },
+      () => { setMembership(null); setMembershipReady(true); }
+    );
+  }, [isVerified, authUser?.email]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!firebaseConfigured || !auth) {
@@ -693,13 +720,15 @@ export default function App() {
 
   // Branches: every screen shows the branch picked in the header (or all). Raw lists keep every branch for sync and saving.
   const [activeBranch, setActiveBranch] = useState("all");
-  const branches = useMemo(() => branchesOf(practiceProfile), [practiceProfile]);
+  const allBranches = useMemo(() => branchesOf(practiceProfile), [practiceProfile]);
+  const allowedBranchIds = branchScope(activeMember);
+  const branches = useMemo(() => (allowedBranchIds ? allBranches.filter((b) => allowedBranchIds.includes(b.id)) : allBranches), [allBranches, activeMember]); // eslint-disable-line react-hooks/exhaustive-deps
   const shownBranch = activeBranch === "all" || branches.some((b) => b.id === activeBranch) ? activeBranch : "all";
   const writeBranch = writeBranchId(branches, shownBranch);
-  const patients = useMemo(() => filterByBranch(allPatients, shownBranch), [allPatients, shownBranch]);
-  const appointments = useMemo(() => filterByBranch(allAppointments, shownBranch), [allAppointments, shownBranch]);
-  const invoices = useMemo(() => filterByBranch(allInvoices, shownBranch), [allInvoices, shownBranch]);
-  const queue = useMemo(() => filterByBranch(allQueue, shownBranch), [allQueue, shownBranch]);
+  const patients = useMemo(() => filterByBranch(scopeToBranches(allPatients, allowedBranchIds), shownBranch), [allPatients, shownBranch, activeMember]); // eslint-disable-line react-hooks/exhaustive-deps
+  const appointments = useMemo(() => filterByBranch(scopeToBranches(allAppointments, allowedBranchIds), shownBranch), [allAppointments, shownBranch, activeMember]); // eslint-disable-line react-hooks/exhaustive-deps
+  const invoices = useMemo(() => filterByBranch(scopeToBranches(allInvoices, allowedBranchIds), shownBranch), [allInvoices, shownBranch, activeMember]); // eslint-disable-line react-hooks/exhaustive-deps
+  const queue = useMemo(() => filterByBranch(scopeToBranches(allQueue, allowedBranchIds), shownBranch), [allQueue, shownBranch, activeMember]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load this account's local cache when the signed-in user changes; reset on sign-out
   useEffect(() => {
@@ -718,7 +747,7 @@ export default function App() {
     }
     const load = (name, fallback) => {
       try {
-        const stored = localStorage.getItem(`merident_${CLINIC_ID}_${name}`);
+        const stored = localStorage.getItem(`merident_${CACHE_ID}_${name}`);
         return stored ? JSON.parse(stored) : fallback;
       } catch {
         return fallback;
@@ -733,7 +762,7 @@ export default function App() {
     setActiveBranch(load("branch", "all"));
     setPracticeProfile(load("profile", DEFAULT_PROFILE));
     setHydratedFor(CLINIC_ID);
-  }, [CLINIC_ID]);
+  }, [CLINIC_ID, CACHE_ID]);
 
   // Real-time, offline-capable cloud sync (only this account's clinic)
   const cloudReady = Boolean(db && CLINIC_ID && hydratedFor === CLINIC_ID);
@@ -746,64 +775,78 @@ export default function App() {
       showToast("Cloud sync issue. Your changes are kept and will retry automatically.");
     }
   };
-  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "patients", items: allPatients, setItems: setPatients, sortFn: byIdDesc, onError: reportSyncError });
-  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "appointments", items: allAppointments, setItems: setAppointments, sortFn: byIdDesc, onError: reportSyncError });
-  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "invoices", items: allInvoices, setItems: setInvoices, sortFn: byIdDesc, onError: reportSyncError });
-  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "inventory", items: inventory, setItems: setInventory, onError: reportSyncError });
-  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "queue", items: allQueue, setItems: setQueue, onError: reportSyncError });
-  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady, name: "employees", items: employees, setItems: setEmployees, onError: reportSyncError });
-  useCloudDoc({ clinicId: CLINIC_ID, ready: cloudReady, name: "profile", value: practiceProfile, setValue: setPracticeProfile, onError: reportSyncError });
+  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "patients"), readOnly: !canWrite(role, "patients"), name: "patients", items: allPatients, setItems: setPatients, sortFn: byIdDesc, onError: reportSyncError });
+  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "appointments"), readOnly: !canWrite(role, "appointments"), name: "appointments", items: allAppointments, setItems: setAppointments, sortFn: byIdDesc, onError: reportSyncError });
+  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "invoices"), readOnly: !canWrite(role, "invoices"), name: "invoices", items: allInvoices, setItems: setInvoices, sortFn: byIdDesc, onError: reportSyncError });
+  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "inventory"), readOnly: !canWrite(role, "inventory"), name: "inventory", items: inventory, setItems: setInventory, onError: reportSyncError });
+  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "queue"), readOnly: !canWrite(role, "queue"), name: "queue", items: allQueue, setItems: setQueue, onError: reportSyncError });
+  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "employees"), readOnly: !canWrite(role, "employees"), name: "employees", items: employees, setItems: setEmployees, onError: reportSyncError });
+  useCloudDoc({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "profile"), readOnly: !canWrite(role, "profile"), name: "profile", value: practiceProfile, setValue: setPracticeProfile, onError: reportSyncError });
 
   // Save changes to localStorage
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
-    localStorage.setItem(`merident_${CLINIC_ID}_patients`, JSON.stringify(allPatients));
+    localStorage.setItem(`merident_${CACHE_ID}_patients`, JSON.stringify(allPatients));
   }, [allPatients, hydratedFor, CLINIC_ID]);
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
-    localStorage.setItem(`merident_${CLINIC_ID}_appointments`, JSON.stringify(allAppointments));
+    localStorage.setItem(`merident_${CACHE_ID}_appointments`, JSON.stringify(allAppointments));
   }, [allAppointments, hydratedFor, CLINIC_ID]);
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
-    localStorage.setItem(`merident_${CLINIC_ID}_invoices`, JSON.stringify(allInvoices));
+    localStorage.setItem(`merident_${CACHE_ID}_invoices`, JSON.stringify(allInvoices));
   }, [allInvoices, hydratedFor, CLINIC_ID]);
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
-    localStorage.setItem(`merident_${CLINIC_ID}_inventory`, JSON.stringify(inventory));
+    localStorage.setItem(`merident_${CACHE_ID}_inventory`, JSON.stringify(inventory));
   }, [inventory, hydratedFor, CLINIC_ID]);
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
-    localStorage.setItem(`merident_${CLINIC_ID}_employees`, JSON.stringify(employees));
+    localStorage.setItem(`merident_${CACHE_ID}_employees`, JSON.stringify(employees));
   }, [employees, hydratedFor, CLINIC_ID]);
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
-    localStorage.setItem(`merident_${CLINIC_ID}_branch`, JSON.stringify(shownBranch));
+    localStorage.setItem(`merident_${CACHE_ID}_branch`, JSON.stringify(shownBranch));
   }, [shownBranch, hydratedFor, CLINIC_ID]);
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
-    localStorage.setItem(`merident_${CLINIC_ID}_queue`, JSON.stringify(allQueue));
+    localStorage.setItem(`merident_${CACHE_ID}_queue`, JSON.stringify(allQueue));
   }, [allQueue, hydratedFor, CLINIC_ID]);
+
+  // Owner: the list of team logins
+  const [team, setTeam] = useState([]);
+  useEffect(() => {
+    if (!db || !CLINIC_ID || hydratedFor !== CLINIC_ID || role !== "owner") { setTeam([]); return undefined; }
+    return watchTeam(db, CLINIC_ID, setTeam, () => {});
+  }, [hydratedFor, CLINIC_ID, role]);
+
+  // Keep a team member on a screen their role allows
+  useEffect(() => {
+    if (!CLINIC_ID) return;
+    const allowed = NAV_BY_ROLE[role];
+    if (allowed && !allowed.includes(activeNav)) setActiveNav(firstScreen(role));
+  }, [role, activeNav, CLINIC_ID]);
 
   // Online booking: publish the public page and listen for requests (only while signed in to this clinic)
   useEffect(() => {
-    if (!db || !CLINIC_ID || hydratedFor !== CLINIC_ID) return;
+    if (!db || !CLINIC_ID || hydratedFor !== CLINIC_ID || !(role === "owner" || role === "manager")) return;
     publishBookingPage(db, CLINIC_ID, buildBookingPage(practiceProfile, CLINIC_ID, { enabled: practiceProfile.onlineBooking })).catch(() => {});
   }, [practiceProfile.name, practiceProfile.address, practiceProfile.phone, practiceProfile.drName, practiceProfile.onlineBooking, hydratedFor, CLINIC_ID]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!db || !CLINIC_ID || hydratedFor !== CLINIC_ID) return undefined;
+    if (!db || !CLINIC_ID || hydratedFor !== CLINIC_ID || role === "dentist") return undefined;
     return watchBookingRequests(db, CLINIC_ID, setBookingRequests, () => {});
-  }, [hydratedFor, CLINIC_ID]);
+  }, [hydratedFor, CLINIC_ID, role]);
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
-    localStorage.setItem(`merident_${CLINIC_ID}_profile`, JSON.stringify(practiceProfile));
+    localStorage.setItem(`merident_${CACHE_ID}_profile`, JSON.stringify(practiceProfile));
   }, [practiceProfile, hydratedFor, CLINIC_ID]);
 
   const showToast = (msg) => {
@@ -1658,6 +1701,10 @@ export default function App() {
     );
   }
 
+  if (isVerified && !membershipReady) {
+    return <AppLoading />;
+  }
+
   if (!isVerified) {
     return (
       <VerifyEmailScreen
@@ -1677,6 +1724,17 @@ export default function App() {
       
       {idleSecondsLeft !== null && (
         <IdleWarning secondsLeft={idleSecondsLeft} onStay={staySignedIn} onLogout={() => handleLogout()} />
+      )}
+
+      {pendingInvite && (
+        <div role="dialog" aria-label="Team invitation" className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[min(92vw,520px)] bg-white border border-blue-200 rounded-2xl shadow-xl p-4 text-xs space-y-2">
+          <div className="font-bold text-slate-900 text-sm">{pendingInvite.clinicName || "A clinic"} invited you as {ROLE_LABEL[pendingInvite.role]}</div>
+          <p className="text-slate-600">Accepting moves you into that clinic's workspace. Your own clinic stays safe and comes back if you leave. Only accept if you know this clinic.</p>
+          <div className="flex gap-2">
+            <button type="button" onClick={() => acceptInvite(db, authUser.email).catch(() => showToast("Could not accept. Check your connection."))} className="px-4 py-2 rounded-lg bg-[#1d4ed8] text-white font-semibold">Accept</button>
+            <button type="button" onClick={() => removeMember(db, authUser.email).catch(() => showToast("Could not decline. Check your connection."))} className="px-4 py-2 rounded-lg border border-slate-200 text-slate-700 font-semibold">Decline</button>
+          </div>
+        </div>
       )}
 
       {/* Toast Notifier */}
@@ -1733,7 +1791,7 @@ export default function App() {
           </div>
 
           <nav className="p-3 space-y-1">
-            {[
+            {navFor(role, [
               { label: "Dashboard", icon: <Menu className="w-4 h-4" /> },
               { label: "Appointments Diary", icon: <Calendar className="w-4 h-4" /> },
               { label: "Patients & Odontogram", icon: <Users className="w-4 h-4" /> },
@@ -1744,7 +1802,7 @@ export default function App() {
               { label: "Stock Maintenance", icon: <Package className="w-4 h-4" /> },
               { label: "Employee Roles & Roster", icon: <Briefcase className="w-4 h-4" /> },
               { label: "Practice Profile", icon: <UserCheck className="w-4 h-4" /> },
-            ].map((item) => {
+            ]).map((item) => {
               const isActive = activeNav === item.label;
               return (
                 <button
@@ -1779,8 +1837,20 @@ export default function App() {
             <div className="min-w-0 flex-1">
               <div className="truncate text-xs font-semibold text-white">{authUser.displayName || "Dr. Clinician"}</div>
               <div className="truncate text-[11px] text-slate-400">{authUser.email}</div>
+              {activeMember && <div className="truncate text-[11px] text-cyan-300" data-testid="member-role">{ROLE_LABEL[role]} at {activeMember.clinicName || "this clinic"}</div>}
             </div>
           </div>
+          {activeMember && (
+            <button
+              type="button"
+              onClick={() => {
+                if (confirm(`Leave ${activeMember.clinicName || "this clinic"}? You will need a new invitation to return.`)) removeMember(db, authUser.email).catch(() => showToast("Could not leave. Check your connection."));
+              }}
+              className="mt-3 w-full rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800"
+            >
+              Leave this clinic
+            </button>
+          )}
           <button
             type="button"
             onClick={handleLogout}
@@ -2951,12 +3021,29 @@ export default function App() {
                 <p className="text-xs text-slate-500">Clinic details used on prescriptions, invoices, and patient messages</p>
               </div>
 
-              <BranchesCard
-                branches={branches}
+              {!allowedBranchIds && <BranchesCard
+                branches={allBranches}
                 data={{ patients: allPatients, appointments: allAppointments, invoices: allInvoices, queue: allQueue }}
                 newId={newId}
                 onChange={(list) => setPracticeProfile({ ...practiceProfile, branches: list })}
-              />
+              />}
+
+              {role === "owner" && (
+                <TeamCard
+                  members={team}
+                  branches={allBranches}
+                  ownerEmail={authUser.email}
+                  clinicName={practiceProfile.name}
+                  origin={window.location.origin}
+                  onInvite={async (v) => {
+                    await createInvite(db, buildInvite(v, { clinicId: CLINIC_ID, clinicName: practiceProfile.name, ownerEmail: authUser.email }));
+                    showToast(`Invitation saved for ${v.email}`);
+                  }}
+                  onUpdate={(email, changes) => updateMember(db, email, changes).catch(() => showToast("Could not save the change. Check your connection."))}
+                  onRemove={(email) => removeMember(db, email).catch(() => showToast("Could not remove this login. Check your connection."))}
+                  message={inviteMessage}
+                />
+              )}
 
               <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-xs space-y-2" data-testid="booking-settings">
                 <label className="flex items-center gap-2 font-semibold text-slate-800">
@@ -4078,13 +4165,14 @@ export default function App() {
                   showToast={showToast}
                   clinicId={CLINIC_ID}
                   shareApi={{
-                    enabled: Boolean(db && CLINIC_ID),
+                    enabled: Boolean(db && CLINIC_ID && role === "owner"),
+                    reason: role === "owner" ? undefined : "Approval links can be sent from the owner login",
                     create: (token, share) => createShare(db, token, share),
                     fetch: (token) => fetchShare(db, token),
                     remove: (token) => deleteShare(db, token),
                   }}
                   onChange={(plans) => updateActivePatient({ plans })}
-                  onBill={(plan) => {
+                  onBill={!canWrite(role, "invoices") ? undefined : (plan) => {
                     setNewInvoiceForm({
                       patientId: activePatient.id,
                       patientName: activePatient.name,
