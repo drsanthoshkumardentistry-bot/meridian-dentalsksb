@@ -5,7 +5,8 @@
  * upcoming features are clearly marked as "coming next".
  * ============================================================================== */
 
-import React from "react";
+import React, { useState } from "react";
+import { isValidEmailAddress } from "../authErrors";
 import {
   ArrowRight,
   BarChart3,
@@ -78,8 +79,59 @@ const COMING_NEXT = [
   "Owner reports"
 ];
 
-export default function LandingPage({ onLoginClick, loginBusy = false, authError = "", firebaseConfigured = true }) {
-  const signInLabel = loginBusy ? "Connecting to Google…" : "Start free with Google";
+export default function LandingPage({
+  onLoginClick,
+  onEmailSignIn,
+  onEmailSignUp,
+  onResetPassword,
+  loginBusy = false,
+  authError = "",
+  authNotice = "",
+  firebaseConfigured = true
+}) {
+  const signInLabel = loginBusy ? "Connecting…" : "Start free with Google";
+
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [mode, setMode] = useState("signin");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [localError, setLocalError] = useState("");
+
+  const submitEmail = (event) => {
+    event.preventDefault();
+    setLocalError("");
+    if (mode === "signup" && !name.trim()) {
+      setLocalError("Enter your name or clinic name.");
+      return;
+    }
+    if (!isValidEmailAddress(email)) {
+      setLocalError("Enter a valid email address.");
+      return;
+    }
+    if (password.length < 8) {
+      setLocalError("Password must be at least 8 characters.");
+      return;
+    }
+    if (mode === "signup") {
+      if (onEmailSignUp) onEmailSignUp(name.trim(), email.trim(), password);
+    } else if (onEmailSignIn) {
+      onEmailSignIn(email.trim(), password);
+    }
+  };
+
+  const resetPassword = () => {
+    setLocalError("");
+    if (!isValidEmailAddress(email)) {
+      setLocalError("Enter your email address above first.");
+      return;
+    }
+    if (onResetPassword) onResetPassword(email.trim());
+  };
+
+  const inputClass =
+    "w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm text-slate-800 bg-white focus:outline-none focus:border-blue-500";
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans antialiased selection:bg-blue-600 selection:text-white">
@@ -154,11 +206,98 @@ export default function LandingPage({ onLoginClick, loginBusy = false, authError
               Sign-in is not set up on this deployment yet. The site owner needs to add the VITE_FIREBASE_* environment variables.
             </p>
           )}
+          {authNotice && (
+            <p role="status" className="max-w-xl mx-auto rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-medium text-emerald-800">
+              {authNotice}
+            </p>
+          )}
           {authError && (
             <p role="alert" className="max-w-xl mx-auto rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-700">
               {authError}
             </p>
           )}
+
+          {/* Email and password sign-in */}
+          <div className="max-w-md mx-auto text-left">
+            {!emailOpen ? (
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setEmailOpen(true)}
+                  className="text-xs font-bold text-blue-700 hover:text-blue-900 underline underline-offset-4"
+                >
+                  Use email and password instead
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={submitEmail} noValidate className="bg-white border border-slate-200 rounded-2xl shadow-lg p-5 space-y-3">
+                <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 text-xs font-bold">
+                  <button
+                    type="button"
+                    onClick={() => { setMode("signin"); setLocalError(""); }}
+                    className={`rounded-lg py-2 ${mode === "signin" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500"}`}
+                  >
+                    Sign in
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setMode("signup"); setLocalError(""); }}
+                    className={`rounded-lg py-2 ${mode === "signup" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500"}`}
+                  >
+                    Create account
+                  </button>
+                </div>
+
+                {mode === "signup" && (
+                  <div>
+                    <label htmlFor="auth-name" className="block text-xs font-semibold text-slate-600 mb-1">Your name or clinic name</label>
+                    <input id="auth-name" type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
+                  </div>
+                )}
+                <div>
+                  <label htmlFor="auth-email" className="block text-xs font-semibold text-slate-600 mb-1">Email</label>
+                  <input id="auth-email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
+                </div>
+                <div>
+                  <label htmlFor="auth-password" className="block text-xs font-semibold text-slate-600 mb-1">Password</label>
+                  <input
+                    id="auth-password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className={inputClass}
+                  />
+                  <label className="mt-2 flex items-center gap-2 text-[11px] text-slate-500 cursor-pointer">
+                    <input type="checkbox" checked={showPassword} onChange={(e) => setShowPassword(e.target.checked)} className="rounded text-blue-600 focus:ring-0" />
+                    Show password
+                  </label>
+                </div>
+
+                {localError && <p role="alert" className="text-xs font-medium text-rose-700">{localError}</p>}
+
+                <button
+                  type="submit"
+                  disabled={loginBusy || !firebaseConfigured}
+                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-bold py-3 rounded-xl"
+                >
+                  {loginBusy ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}
+                </button>
+                {mode === "signin" && (
+                  <div className="text-center">
+                    <button type="button" onClick={resetPassword} className="text-xs font-semibold text-blue-700 hover:text-blue-900">
+                      Forgot password?
+                    </button>
+                  </div>
+                )}
+                {mode === "signup" && (
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    We will email you a link to verify your address before you can open your clinic workspace.
+                  </p>
+                )}
+              </form>
+            )}
+          </div>
 
           <a
             href={`tel:+${WHATSAPP_NUMBER}`}
