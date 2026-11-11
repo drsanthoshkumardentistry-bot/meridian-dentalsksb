@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import ConnectMessages from "./ConnectMessages.jsx";
+import { countUnread, lastSeen, markSeen } from "../connect/unread.js";
 import { MapPin, Phone, MessageCircle, ShieldCheck, Search } from "lucide-react";
 import {
   SPECIALTIES, specialtyLabel, DISTANCES_KM, URGENCIES, CONSENT_TEXT, MAX_SUMMARY,
@@ -371,6 +372,7 @@ export default function Connect({ api, defaults = {}, geocode, showToast, uid, i
   const [sent, setSent] = useState([]);
   const [editing, setEditing] = useState(false);
   const [chatWith, setChatWith] = useState(null);
+  const [unread, setUnread] = useState(0);
 
   const loadMe = useCallback(async () => {
     try {
@@ -391,6 +393,22 @@ export default function Connect({ api, defaults = {}, geocode, showToast, uid, i
   const verified = state.me?.status === "verified";
   useEffect(() => { if (verified) loadConsults(); }, [verified, loadConsults]);
 
+  // A small badge on the Messages tab: checked now and every minute while Connect is open.
+  useEffect(() => {
+    if (!verified || !api.listChats) return undefined;
+    let live = true;
+    const check = async () => {
+      try {
+        const chats = await api.listChats();
+        if (live) setUnread(tab === "messages" ? 0 : countUnread(chats, api.uid, lastSeen(api.uid)));
+      } catch { /* the badge is optional */ }
+    };
+    check();
+    const t = setInterval(check, 60000);
+    return () => { live = false; clearInterval(t); };
+  }, [verified, api, tab]);
+  useEffect(() => { if (tab === "messages") { markSeen(api.uid); setUnread(0); } }, [tab, api.uid]);
+
   const { status, me, admin } = state;
   const newCount = received.filter((c) => c.status === "sent").length;
 
@@ -399,7 +417,7 @@ export default function Connect({ api, defaults = {}, geocode, showToast, uid, i
   if (status === "error") return <p role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">Could not open MeriDent Connect. Check your connection and reload.</p>;
 
   const tabs = verified
-    ? [["network", "Network"], ["find", "Find specialists"], ["messages", "Messages"], ["inbox", `Requests received${newCount ? ` (${newCount})` : ""}`], ["sent", "Requests sent"], ["listing", "My listing"]]
+    ? [["network", "Network"], ["find", "Find specialists"], ["messages", `Messages${unread ? ` (${unread})` : ""}`], ["inbox", `Requests received${newCount ? ` (${newCount})` : ""}`], ["sent", "Requests sent"], ["listing", "My listing"]]
     : [];
   if (admin) tabs.push(["admin", "Verify dentists"], ["reports", "Reports"]);
 
