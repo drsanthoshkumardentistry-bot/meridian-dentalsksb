@@ -33,6 +33,7 @@ import DmyDateInput from "./components/DmyDateInput.jsx";
 import PatientSummary from "./components/PatientSummary.jsx";
 import PhysicianConsult from "./components/PhysicianConsult.jsx";
 import { rotaWarning } from "./rota.js";
+import { isAllowedHost, HOST_ERROR } from "./allowedHosts.js";
 import StaffRota from "./components/StaffRota.jsx";
 import TextTemplates from "./components/TextTemplates.jsx";
 import { rxAdviceLines } from "./templates.js";
@@ -654,6 +655,14 @@ export default function App() {
     const unsubscribe = onAuthStateChanged(
       auth,
       (user) => {
+        if (user && !isAllowedHost(window.location.hostname, import.meta.env?.VITE_EXTRA_AUTH_HOSTS)) {
+          // A session that somehow exists on an unofficial address is closed straight away.
+          logoutUser().catch(() => {});
+          setAuthError(HOST_ERROR);
+          setAuthUser(null);
+          setAuthLoading(false);
+          return;
+        }
         setAuthUser(user || null);
         setEmailVerifiedNow(false);
         setVerifyNotice("");
@@ -674,9 +683,12 @@ export default function App() {
     completeRedirectLogin().catch((error) => setAuthError(friendlyAuthError(error)));
   }, []);
 
+  const hostAllowed = () => isAllowedHost(window.location.hostname, import.meta.env?.VITE_EXTRA_AUTH_HOSTS);
+
   const runAuthAction = async (action) => {
     setAuthError("");
     setAuthNotice("");
+    if (!hostAllowed()) { setAuthError(HOST_ERROR); return; }
     setLoginBusy(true);
     try {
       await action();
