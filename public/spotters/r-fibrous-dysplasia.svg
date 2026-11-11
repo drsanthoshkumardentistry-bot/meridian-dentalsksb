@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" width="480" height="320">
+<defs>
+<filter id="grain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="4"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .18 0"/><feComposite in2="SourceGraphic" operator="in"/></filter>
+<filter id="soft"><feGaussianBlur stdDeviation="1.4"/></filter>
+<filter id="blur4"><feGaussianBlur stdDeviation="4"/></filter>
+<radialGradient id="bone" cx="50%" cy="45%" r="70%"><stop offset="0" stop-color="#9a9a9a"/><stop offset="1" stop-color="#5c5c5c"/></radialGradient>
+<linearGradient id="steel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f6f8"/><stop offset=".45" stop-color="#a9b3bd"/><stop offset="1" stop-color="#6b7682"/></linearGradient>
+<linearGradient id="steelH" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6b7682"/><stop offset=".5" stop-color="#eef1f4"/><stop offset="1" stop-color="#7d8894"/></linearGradient>
+
+</defs>
+<rect width="480" height="320" fill="#000"/>
+<path d="M 20 150 Q 60 120 210 128 L 330 128 Q 360 120 370 70 L 385 20 Q 420 10 440 30 L 430 120 Q 425 230 380 260 Q 250 300 40 272 Q 15 240 20 150 Z" fill="url(#bone)"/>
+<path d="M 30 255 Q 220 285 375 245" stroke="#bdbdbd" stroke-width="7" fill="none" opacity=".55"/>
+<defs><filter id="gg"><feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="2" seed="9"/><feColorMatrix values="0 0 0 0 .78  0 0 0 0 .78  0 0 0 0 .78  0 0 0 .55 0"/></filter>
+<radialGradient id="fade"><stop offset=".55" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient><mask id="m"><ellipse cx="230" cy="200" rx="150" ry="80" fill="url(#fade)"/></mask></defs>
+<g mask="url(#m)"><ellipse cx="230" cy="200" rx="150" ry="80" fill="#a8a8a8"/><rect x="60" y="110" width="340" height="180" filter="url(#gg)"/></g>
+<g transform="translate(150 140) rotate(0)"><path d="M -18.86 0 L -14.95 60 Q -11.04 66 -7.129999999999999 60 L -3.219999999999999 0 Z" fill="#c4c4c4"/><path d="M -11.04 2 L -11.04 54" stroke="#4a4a4a" stroke-width="3" stroke-linecap="round"/><path d="M 3.219999999999999 0 L 7.129999999999999 60 Q 11.04 66 14.95 60 L 18.86 0 Z" fill="#c4c4c4"/><path d="M 11.04 2 L 11.04 54" stroke="#4a4a4a" stroke-width="3" stroke-linecap="round"/><path d="M -23 0 Q -26 -20.4 -17 -34 Q 0 -42 17 -34 Q 26 -20.4 23 0 Z" fill="#ececec"/><path d="M -10.12 -4 Q 0 -18.700000000000003 10.12 -4 Z" fill="#555"/></g><g transform="translate(212 138) rotate(6)"><path d="M -19.68 0 L -15.6 60 Q -11.52 66 -7.4399999999999995 60 L -3.3599999999999994 0 Z" fill="#c4c4c4"/><path d="M -11.52 2 L -11.52 54" stroke="#4a4a4a" stroke-width="3" stroke-linecap="round"/><path d="M 3.3599999999999994 0 L 7.4399999999999995 60 Q 11.52 66 15.6 60 L 19.68 0 Z" fill="#c4c4c4"/><path d="M 11.52 2 L 11.52 54" stroke="#4a4a4a" stroke-width="3" stroke-linecap="round"/><path d="M -24 0 Q -27 -20.4 -18 -34 Q 0 -42 18 -34 Q 27 -20.4 24 0 Z" fill="#ececec"/><path d="M -10.56 -4 Q 0 -18.700000000000003 10.56 -4 Z" fill="#555"/></g><g transform="translate(274 142) rotate(10)"><path d="M -19.68 0 L -15.6 60 Q -11.52 66 -7.4399999999999995 60 L -3.3599999999999994 0 Z" fill="#c4c4c4"/><path d="M -11.52 2 L -11.52 54" stroke="#4a4a4a" stroke-width="3" stroke-linecap="round"/><path d="M 3.3599999999999994 0 L 7.4399999999999995 60 Q 11.52 66 15.6 60 L 19.68 0 Z" fill="#c4c4c4"/><path d="M 11.52 2 L 11.52 54" stroke="#4a4a4a" stroke-width="3" stroke-linecap="round"/><path d="M -24 0 Q -27 -20.4 -18 -34 Q 0 -42 18 -34 Q 27 -20.4 24 0 Z" fill="#ececec"/><path d="M -10.56 -4 Q 0 -18.700000000000003 10.56 -4 Z" fill="#555"/></g>
+<rect width="480" height="320" filter="url(#grain)"/>
+<text x="472" y="312" text-anchor="end" font-family="sans-serif" font-size="10" fill="#888" opacity=".8">Schematic</text>
+</svg>
