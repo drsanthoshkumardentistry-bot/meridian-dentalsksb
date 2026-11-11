@@ -8,6 +8,7 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithCredential,
   signInWithRedirect,
   getRedirectResult,
   signOut,
@@ -82,8 +83,28 @@ const requireAuth = () => {
   return authInstance;
 };
 
+// Inside the Android app Google blocks its web sign-in page, so the phone's own Google account picker is used
+const isNativeApp = () => {
+  try {
+    return Boolean(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  } catch (error) {
+    return false;
+  }
+};
+
+const loginWithGoogleNative = async (activeAuth) => {
+  const { FirebaseAuthentication } = await import("@capacitor-firebase/authentication");
+  const result = await FirebaseAuthentication.signInWithGoogle({ skipNativeAuth: true });
+  const idToken = result && result.credential && result.credential.idToken;
+  if (!idToken) throw new Error("Google sign-in did not return a token. Try again.");
+  const credential = GoogleAuthProvider.credential(idToken);
+  const signedIn = await signInWithCredential(activeAuth, credential);
+  return signedIn.user;
+};
+
 export const loginWithGoogle = async () => {
   const activeAuth = requireAuth();
+  if (isNativeApp()) return loginWithGoogleNative(activeAuth);
   try {
     const result = await signInWithPopup(activeAuth, googleProvider);
     return result.user;

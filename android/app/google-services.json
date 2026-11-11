@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "7538853494",
+    "project_id": "meridian-dental",
+    "storage_bucket": "meridian-dental.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:7538853494:android:b5a0d3fe9ece43f7fa4157",
+        "android_client_info": {
+          "package_name": "in.meridiandentalos.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "7538853494-b7lh2l20rkvblsg2rj9lbctdjcgfd9jq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAUkMgBarqSupjU63Gx2qabbwXyPJ4Hu_8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "7538853494-b7lh2l20rkvblsg2rj9lbctdjcgfd9jq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
