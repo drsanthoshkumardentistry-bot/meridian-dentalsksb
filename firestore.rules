@@ -2,8 +2,18 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Closed-access switch. Normally the app is open to any verified account. When MeriDent sets
+    // config/access { restrict: true }, only email addresses that have a document in allowedEmails get in.
+    function accessOpen() {
+      return !exists(/databases/$(database)/documents/config/access)
+          || get(/databases/$(database)/documents/config/access).data.get('restrict', false) != true;
+    }
+    function emailAllowed() {
+      return exists(/databases/$(database)/documents/allowedEmails/$(request.auth.token.email.lower()));
+    }
+    function accessOk() { return accessOpen() || emailAllowed(); }
     function signedIn() {
-      return request.auth != null && request.auth.token.email_verified == true;
+      return request.auth != null && request.auth.token.email_verified == true && accessOk();
     }
     function dentistDoc(uid) {
       return /databases/$(database)/documents/connectDentists/$(uid);
@@ -31,7 +41,7 @@ service cloud.firestore {
     function myEmailKey() { return request.auth.token.email.lower(); }
     function memberDoc() { return get(/databases/$(database)/documents/clinicStaff/$(myEmailKey())); }
     function isMemberOf(clinicId) {
-      return request.auth != null && request.auth.token.email_verified == true
+      return signedIn()
           && exists(/databases/$(database)/documents/clinicStaff/$(myEmailKey()))
           && memberDoc().data.clinicId == clinicId
           && memberDoc().data.status == 'active'
@@ -39,11 +49,23 @@ service cloud.firestore {
     }
     function memberHasRole(clinicId, roles) { return isMemberOf(clinicId) && memberDoc().data.role in roles; }
     function isClinicOwner(clinicId) {
-      return request.auth != null && request.auth.uid == clinicId && request.auth.token.email_verified == true;
+      return signedIn() && request.auth.uid == clinicId;
+    }
+
+    // Access switch and approved addresses. Created by hand in the Firebase console, never by the app.
+    // Any verified sign-in may read the switch, and its own entry on the list, so the app can explain a refusal.
+    match /config/{docId} {
+      allow get: if request.auth != null && request.auth.token.email_verified == true;
+      allow list, write: if false;
+    }
+    match /allowedEmails/{emailKey} {
+      allow get: if request.auth != null && request.auth.token.email_verified == true
+                 && request.auth.token.email.lower() == emailKey;
+      allow list, write: if false;
     }
 
     match /clinicStaff/{emailKey} {
-      allow get: if request.auth != null && request.auth.token.email_verified == true
+      allow get: if signedIn()
                  && (myEmailKey() == emailKey || isClinicOwner(resource.data.clinicId));
       allow list: if isClinicOwner(resource.data.clinicId);
       allow create: if isClinicOwner(request.resource.data.clinicId)
@@ -55,12 +77,12 @@ service cloud.firestore {
       allow update: if (isClinicOwner(resource.data.clinicId)
                         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'branchIds', 'active'])
                         && request.resource.data.role in ['manager', 'dentist', 'receptionist'])
-                    || (request.auth != null && request.auth.token.email_verified == true && myEmailKey() == emailKey
+                    || (signedIn() && myEmailKey() == emailKey
                         && resource.data.status == 'invited' && resource.data.active == true
                         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
                         && request.resource.data.status == 'active');
       allow delete: if isClinicOwner(resource.data.clinicId)
-                    || (request.auth != null && request.auth.token.email_verified == true && myEmailKey() == emailKey);
+                    || (signedIn() && myEmailKey() == emailKey);
     }
 
     // Activity log. Team members can add entries under their own identity; only the owner and managers can
@@ -94,9 +116,7 @@ service cloud.firestore {
     // Each signed-in account can only access its own clinic: clinics/{its own uid}/**
     // Accounts created with email and password must also have verified their email address.
     match /clinics/{clinicId}/{document=**} {
-      allow read, write: if request.auth != null
-                         && request.auth.uid == clinicId
-                         && request.auth.token.email_verified == true;
+      allow read, write: if signedIn() && request.auth.uid == clinicId;
     }
 
     // Treatment estimate links for patients. The random token is the key, so a document can be
@@ -105,20 +125,15 @@ service cloud.firestore {
       allow get: if true;
       allow list: if false;
 
-      allow create: if request.auth != null
+      allow create: if signedIn()
                     && request.auth.uid == request.resource.data.clinicId
-                    && request.auth.token.email_verified == true
                     && request.resource.data.decision == 'pending';
 
-      allow delete: if request.auth != null
-                    && request.auth.uid == resource.data.clinicId
-                    && request.auth.token.email_verified == true;
+      allow delete: if signedIn() && request.auth.uid == resource.data.clinicId;
 
       // The clinic can update its own link. A patient (no sign-in needed) can answer once,
       // before it expires, and can change nothing except the decision fields.
-      allow update: if (request.auth != null
-                        && request.auth.uid == resource.data.clinicId
-                        && request.auth.token.email_verified == true)
+      allow update: if (signedIn() && request.auth.uid == resource.data.clinicId)
                     || (resource.data.decision == 'pending'
                         && request.time < resource.data.expiresAt
                         && request.resource.data.diff(resource.data).affectedKeys()
