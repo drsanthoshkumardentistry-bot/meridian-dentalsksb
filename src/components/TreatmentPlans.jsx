@@ -3,6 +3,8 @@ import { Plus, Trash2, Send, Printer, Check, X, Link2, RefreshCw } from "lucide-
 import { TAX_CATEGORIES, formatINR } from "../billing.js";
 import { applyFee, sortedFees } from "../fees.js";
 import { whatsappLink, hasWhatsAppConsent } from "../reminders.js";
+import { askAi, LANGUAGE_WORD } from "../aiClient.js";
+import { languageOf } from "../messageLanguage.js";
 import {
   MAX_PLAN_ITEMS, validatePlan, createPlan, planTotals, approvePlan, declinePlan, canBill,
   buildPlanMessage, buildPlanHtml, suggestPlanItems,
@@ -25,6 +27,7 @@ export default function TreatmentPlans({ patient, practiceProfile, onChange, onB
   const plans = patient.plans || [];
   const [draft, setDraft] = useState(null);
   const [busyId, setBusyId] = useState("");
+  const [explain, setExplain] = useState(null);
   const plansRef = useRef(plans);
   plansRef.current = plans;
 
@@ -122,6 +125,24 @@ export default function TreatmentPlans({ patient, practiceProfile, onChange, onB
   const send = (plan) => {
     if (!hasWhatsAppConsent(patient)) return showToast("This patient has opted out of WhatsApp messages");
     const link = whatsappLink(patient.phone, buildPlanMessage(plan, patient, practiceProfile));
+    if (!link) return showToast("Add a valid mobile number to send on WhatsApp");
+    window.open(link, "_blank", "noopener,noreferrer");
+  };
+
+  const explainPlan = async (plan) => {
+    setExplain({ planId: plan.id, loading: true, text: "" });
+    try {
+      const { text } = await askAi({ task: "plan_explain", language: LANGUAGE_WORD[languageOf(patient)], items: plan.items });
+      setExplain({ planId: plan.id, loading: false, text });
+    } catch (error) {
+      setExplain(null);
+      showToast(error.message || "MeriDent AI is not available right now.");
+    }
+  };
+
+  const sendExplanation = () => {
+    if (!hasWhatsAppConsent(patient)) return showToast("This patient has opted out of WhatsApp messages");
+    const link = whatsappLink(patient.phone, explain.text);
     if (!link) return showToast("Add a valid mobile number to send on WhatsApp");
     window.open(link, "_blank", "noopener,noreferrer");
   };
@@ -311,6 +332,16 @@ export default function TreatmentPlans({ patient, practiceProfile, onChange, onB
                 <span>Estimated total</span><span>₹{formatINR(t.totalP)}</span>
               </li>
             </ul>
+            {explain && explain.planId === plan.id && !explain.loading && (
+              <div className="rounded-lg border border-blue-200 bg-blue-50/60 p-3 space-y-2" data-testid="plan-explanation">
+                <textarea aria-label="AI explanation for the patient" rows="6" value={explain.text} onChange={(e) => setExplain({ ...explain, text: e.target.value })} className="w-full p-2 border border-slate-300 rounded-lg bg-white text-xs" />
+                <p className="text-[11px] text-slate-500">MeriDent AI draft in the patient's language. Read and edit it before sending.</p>
+                <div className="flex gap-2">
+                  <button type="button" onClick={sendExplanation} className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 text-white">Send on WhatsApp</button>
+                  <button type="button" onClick={() => setExplain(null)} className="px-2.5 py-1 rounded-lg text-xs font-semibold border border-slate-300 text-slate-700">Close</button>
+                </div>
+              </div>
+            )}
             <div className="flex flex-wrap gap-2 pt-1">
               <button type="button" onClick={() => send(plan)} className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 text-white inline-flex items-center gap-1">
                 <Send className="w-3 h-3" /> WhatsApp estimate
@@ -318,6 +349,11 @@ export default function TreatmentPlans({ patient, practiceProfile, onChange, onB
               <button type="button" onClick={() => print(plan)} className="px-2.5 py-1 rounded-lg text-xs font-semibold border border-slate-300 text-slate-700 inline-flex items-center gap-1">
                 <Printer className="w-3 h-3" /> Print
               </button>
+              {practiceProfile?.aiEnabled && (
+                <button type="button" disabled={explain && explain.planId === plan.id && explain.loading} onClick={() => explainPlan(plan)} className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 border border-blue-200 text-blue-800 disabled:opacity-60">
+                  {explain && explain.planId === plan.id && explain.loading ? "Writing..." : "Explain for patient (MeriDent AI)"}
+                </button>
+              )}
               {plan.status === "Proposed" && (
                 <button
                   type="button"

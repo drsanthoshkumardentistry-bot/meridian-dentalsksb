@@ -20,7 +20,10 @@ export const PRIVACY = {
       "We may look at technical logs to fix faults. We do not read patient records unless a clinic asks us for support and agrees to it."] },
     { h: "Where it is kept and who can see it", p: [
       "Data is stored with Google Firebase (Cloud Firestore and Firebase Authentication). Each clinic's records sit under its own account and are not visible to other clinics. Only people the clinic invites, with a role the clinic chooses, can open them. Branch-limited staff see only their branch.",
-      "Our service providers are Google (data storage and sign-in) and Vercel (website hosting). They process data only to provide those services."] },
+      "Our service providers are Google (data storage and sign-in), Vercel (website hosting) and, only when a clinic switches on MeriDent AI writing help, Google (the Gemini AI service). They process data only to provide those services."] },
+    { h: "MeriDent AI writing help", p: [
+      "MeriDent AI writing help is off by default. A clinic's owner or manager can switch it on in Practice Profile. When a user asks for a draft, only the text typed for that request, or the treatment names, teeth and amounts of the chosen plan, is sent to Google's Gemini service. On its free plan Google may keep this text and use it to improve its products, so clinics should not type anything they would not want kept. The patient's name and phone number are not sent.",
+      "AI output is a draft. The dentist must read and edit it before saving or sending it, and it is not medical advice or a diagnosis."] },
     { h: "WhatsApp messages", p: [
       "MeriDent prepares a message and opens WhatsApp on the clinic's device. The clinic taps Send. The message goes through WhatsApp, which has its own privacy terms.",
       "A patient's consent to WhatsApp messages is recorded separately, and clinics should not message a patient who has not agreed or who has opted out."] },
