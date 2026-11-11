@@ -44,6 +44,15 @@ const navLabels = () => within(screen.getAllByRole("navigation")[0]).getAllByRol
 beforeEach(() => { cleanup(); localStorage.clear(); h.writes.length = 0; h.audit = []; h.silent = false; h.member = null; h.user = { ...h.user, uid: "u-staff", email: "staff@example.com" }; });
 
 describe("role-based logins in the app", () => {
+  it("tells a paused team login why it cannot see the clinic, and does not open the clinic's data", async () => {
+    h.member = member({ active: false });
+    render(<App />);
+    const note = await screen.findByTestId("paused-access");
+    expect(note.textContent).toMatch(/Smile Dental/);
+    expect(screen.queryByTestId("member-role")).toBeNull();
+    expect(h.writes.filter((w) => w[1].startsWith("clinics/clinicA/"))).toEqual([]);
+  });
+
   it("limits a dentist's menu, works inside the owner's clinic, and never writes billing or staff data", async () => {
     h.member = member({ role: "dentist" });
     render(<App />);

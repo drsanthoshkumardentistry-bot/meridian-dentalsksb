@@ -619,6 +619,8 @@ export default function App() {
   const [membership, setMembership] = useState(null);
   const [membershipReady, setMembershipReady] = useState(false);
   const activeMember = authUser && isActiveMember(membership) && membership.clinicId !== authUser.uid ? membership : null;
+  // The owner paused this login: say so, rather than letting it quietly use an empty personal workspace.
+  const pausedAccess = authUser && membership && membership.status === "active" && membership.active === false && membership.clinicId !== authUser.uid ? membership : null;
   const pendingInvite = authUser && isPendingInvite(membership) && membership.clinicId !== authUser.uid ? membership : null;
   const role = activeMember ? activeMember.role : "owner";
   const CLINIC_ID = isVerified && membershipReady ? (activeMember ? activeMember.clinicId : authUser.uid) : null;
@@ -1879,6 +1881,13 @@ export default function App() {
       
       {idleSecondsLeft !== null && (
         <IdleWarning secondsLeft={idleSecondsLeft} onStay={staySignedIn} onLogout={() => handleLogout()} />
+      )}
+
+      {pausedAccess && (
+        <div role="alert" data-testid="paused-access" className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[min(92vw,520px)] bg-white border border-amber-300 rounded-xl shadow-xl p-4 text-xs space-y-1">
+          <div className="font-bold text-slate-900 text-sm">Your login for {pausedAccess.clinicName || "this clinic"} is paused</div>
+          <p className="text-slate-600">The clinic owner has switched off your access. You can't see their patients or records. Ask the owner to turn it back on. Anything you enter here is in your own separate workspace, not theirs.</p>
+        </div>
       )}
 
       {pendingInvite && (

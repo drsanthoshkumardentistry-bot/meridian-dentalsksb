@@ -13,6 +13,12 @@ describe("privacy checks", () => {
     expect(findPrivacyIssues("see https://x.com").block).toEqual(["a link"]);
     expect(findPrivacyIssues("www.x.com").block).toEqual(["a link"]);
   });
+  it("blocks links without http and social handles", () => {
+    expect(findPrivacyIssues("follow instagram.com/dr_x").block).toEqual(["a link"]);
+    expect(findPrivacyIssues("book at smileclinic.in today").block).toEqual(["a link"]);
+    expect(findPrivacyIssues("DM me @dr_smile").block).toEqual(["a social media handle"]);
+    expect(findPrivacyIssues("Used 2.5 mm pins, e.g. in molars, i.e. twice").block).toEqual([]);
+  });
   it("lets clinical numbers through and warns on titles with names", () => {
     expect(findPrivacyIssues("Tooth 46, 3 mm pocket, 12 weeks, 45 yr old").block).toEqual([]);
     expect(findPrivacyIssues("Mr Ramesh came in").warn).toHaveLength(1);
