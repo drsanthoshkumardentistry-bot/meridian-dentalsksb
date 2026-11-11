@@ -27,6 +27,7 @@ import QueuePanel from "./components/QueuePanel.jsx";
 import BookingRequests from "./components/BookingRequests.jsx";
 import Assessments from "./components/Assessments.jsx";
 import { draftVisitNote } from "./clinicalNote.js";
+import { askAi } from "./aiClient.js";
 import { addAssessment, removeAssessment } from "./assessments.js";
 import { addWalkIn, setQueueStatus, pruneQueue } from "./queue.js";
 import { buildBookingPage, bookingUrl, requestToAppointment } from "./booking.js";
@@ -1420,6 +1421,8 @@ export default function App() {
   const [invoiceQuery, setInvoiceQuery] = useState("");
   const [diaryViewId, setDiaryViewId] = useState("upcoming");
   const [dayDate, setDayDate] = useState(dateKey());
+  const [aiNotes, setAiNotes] = useState("");
+  const [aiBusy, setAiBusy] = useState(false);
   const [visitForm, setVisitForm] = useState({ complaint: "", findings: "", treatment: "", advice: "", nextVisit: "", date: "" });
   const [diaryQuery, setDiaryQuery] = useState("");
   const visibleInvoices = invoiceView(invoices, { status: invoiceFilter, query: invoiceQuery });
@@ -3226,6 +3229,16 @@ export default function App() {
 
               {(role === "owner" || role === "manager") && <FeeList fees={practiceProfile.fees} newId={newId} onChange={(list) => setPracticeProfile({ ...practiceProfile, fees: list })} />}
 
+              {(role === "owner" || role === "manager") && (
+                <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-xs space-y-2" data-testid="ai-settings">
+                  <label className="flex items-center gap-2 font-semibold text-slate-800">
+                    <input type="checkbox" checked={Boolean(practiceProfile.aiEnabled)} onChange={(e) => setPracticeProfile({ ...practiceProfile, aiEnabled: e.target.checked })} />
+                    Use AI writing help (drafts only)
+                  </label>
+                  <p className="text-slate-600">When on, staff can ask AI to tidy visit notes and explain a treatment plan in the patient's language. Only the text typed for that request is sent to an AI service, never the patient's name or phone number. Every draft must be checked by the dentist.</p>
+                </div>
+              )}
+
               <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-xs space-y-2" data-testid="booking-settings">
                 <label className="flex items-center gap-2 font-semibold text-slate-800">
                   <input type="checkbox" checked={Boolean(practiceProfile.onlineBooking)} onChange={(e) => setPracticeProfile({ ...practiceProfile, onlineBooking: e.target.checked })} />
@@ -4129,6 +4142,34 @@ export default function App() {
                       Draft from chart
                     </button>
                   </div>
+                  {practiceProfile.aiEnabled && (
+                    <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-xs space-y-2" data-testid="ai-visit-note">
+                      <label htmlFor="ai-notes" className="block font-semibold text-slate-700">Type quick notes, then let AI tidy them into the fields below</label>
+                      <textarea id="ai-notes" rows="3" value={aiNotes} onChange={(e) => setAiNotes(e.target.value)} placeholder="e.g. pain lower left 3 days, deep caries 36 tender on percussion, started RCT access opening, soft diet, come back next week" className="w-full p-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none" />
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-slate-500">Do not type the patient's name or phone number. AI writes a draft. You check it before saving.</span>
+                        <button
+                          type="button"
+                          disabled={aiBusy}
+                          onClick={async () => {
+                            setAiBusy(true);
+                            try {
+                              const { note } = await askAi({ task: "visit_note", notes: aiNotes });
+                              setVisitForm((f) => ({ ...f, complaint: note.complaint || f.complaint, findings: note.findings || f.findings, treatment: note.treatment || f.treatment, advice: note.advice || f.advice, nextVisit: note.nextVisit || f.nextVisit }));
+                              showToast("AI draft added. Check and edit it before saving");
+                            } catch (error) {
+                              showToast(error.message || "AI help is not available right now.");
+                            } finally {
+                              setAiBusy(false);
+                            }
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-[#1d4ed8] hover:bg-blue-700 text-white font-semibold disabled:opacity-60"
+                        >
+                          {aiBusy ? "Writing..." : "Tidy with AI"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
