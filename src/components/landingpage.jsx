@@ -7,6 +7,7 @@
 
 import React, { useState } from "react";
 import { isValidEmailAddress } from "../authErrors";
+import Hero3D from "./Hero3D.jsx";
 import {
   ArrowRight,
   BarChart3,
@@ -525,19 +526,21 @@ export default function LandingPage({
           </div>
 
           {/* Product artwork */}
-          <div className="relative">
-            <div className="bg-white border border-rule rounded-xl shadow-lift p-5 sm:p-6 pb-10">
-              <div className="flex items-baseline justify-between mb-1">
-                <span className="font-display font-bold text-ink">Odontogram</span>
-                <span className="text-xs text-slate-500">Upper arch, adult</span>
-              </div>
-              <ToothArch />
-              <ChartLegend />
-            </div>
-            <div className="-mt-5 ml-auto mr-3 w-fit relative">
-              <SampleBill />
-            </div>
-            <p className="text-xs text-slate-500 mt-3">Illustration with sample data, not a real patient or clinic.</p>
+          <div className="relative pb-10">
+            <Hero3D
+              chart={
+                <div className="bg-white border border-rule rounded-xl shadow-lift p-5 sm:p-6 pb-8">
+                  <div className="flex items-baseline justify-between mb-1">
+                    <span className="font-display font-bold text-ink">Odontogram</span>
+                    <span className="text-xs text-slate-500">Upper arch, adult</span>
+                  </div>
+                  <ToothArch />
+                  <ChartLegend />
+                </div>
+              }
+              bill={<SampleBill />}
+            />
+            <p className="text-xs text-slate-500 mt-12 max-sm:mt-4">Illustration with sample data, not a real patient or clinic.</p>
           </div>
         </div>
       </section>
