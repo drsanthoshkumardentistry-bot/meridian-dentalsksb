@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { isoToDmy, maskDmy, dmyToIso } from "../dateInput.js";
 
 /** Date field that shows dd/mm/yyyy (the Indian order). value and onChange use yyyy-mm-dd. max is yyyy-mm-dd. */
-export default function DmyDateInput({ value, onChange, max, className = "", ariaLabel = "Date (dd/mm/yyyy)" }) {
+export default function DmyDateInput({ value, onChange, max, className = "", ariaLabel = "Date (dd/mm/yyyy)", id }) {
   const [text, setText] = useState(isoToDmy(value));
   const [problem, setProblem] = useState("");
 
@@ -27,6 +27,7 @@ export default function DmyDateInput({ value, onChange, max, className = "", ari
   return (
     <>
       <input
+        id={id}
         type="text"
         inputMode="numeric"
         autoComplete="off"

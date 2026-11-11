@@ -3809,12 +3809,7 @@ export default function App() {
               </div>
               <div>
                 <label className="block font-semibold text-slate-600 mb-1">License Expiry</label>
-                <input
-                  type="date"
-                  value={newStaffForm.licenseExpiry}
-                  onChange={(e) => setNewStaffForm({...newStaffForm, licenseExpiry: e.target.value})}
-                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none"
-                />
+                <DmyDateInput ariaLabel="Licence expiry (dd/mm/yyyy)" value={newStaffForm.licenseExpiry} onChange={(v) => setNewStaffForm({...newStaffForm, licenseExpiry: v})} className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none" />
               </div>
             </div>
 
@@ -3888,21 +3883,11 @@ export default function App() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block font-semibold text-slate-600 mb-1">Start Date</label>
-                <input
-                  type="date"
-                  value={leaveForm.startDate}
-                  onChange={(e) => setLeaveForm({...leaveForm, startDate: e.target.value})}
-                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none"
-                />
+                <DmyDateInput ariaLabel="Start date (dd/mm/yyyy)" value={leaveForm.startDate} onChange={(v) => setLeaveForm({...leaveForm, startDate: v})} className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none" />
               </div>
               <div>
                 <label className="block font-semibold text-slate-600 mb-1">End Date</label>
-                <input
-                  type="date"
-                  value={leaveForm.endDate}
-                  onChange={(e) => setLeaveForm({...leaveForm, endDate: e.target.value})}
-                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none"
-                />
+                <DmyDateInput ariaLabel="End date (dd/mm/yyyy)" value={leaveForm.endDate} onChange={(v) => setLeaveForm({...leaveForm, endDate: v})} className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none" />
               </div>
             </div>
 
@@ -5244,12 +5229,7 @@ export default function App() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block font-semibold text-slate-600 mb-1">Date</label>
-                <input
-                  type="date"
-                  value={newApptForm.date}
-                  onChange={(e) => setNewApptForm({ ...newApptForm, date: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-                />
+                <DmyDateInput ariaLabel="Appointment date (dd/mm/yyyy)" value={newApptForm.date} onChange={(v) => setNewApptForm({ ...newApptForm, date: v })} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none" />
               </div>
 
               <div>
@@ -5499,13 +5479,7 @@ export default function App() {
             <div>
               <label htmlFor="inv-due" className="block font-semibold text-slate-600 mb-1">Payment due by (optional)</label>
               <div className="flex flex-wrap items-center gap-2">
-                <input
-                  id="inv-due"
-                  type="date"
-                  value={newInvoiceForm.dueDate || ""}
-                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, dueDate: e.target.value })}
-                  className="px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-                />
+                <DmyDateInput id="inv-due" ariaLabel="Payment due by (dd/mm/yyyy)" value={newInvoiceForm.dueDate || ""} onChange={(v) => setNewInvoiceForm({ ...newInvoiceForm, dueDate: v })} className="px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none" />
                 {[["On visit", 0], ["7 days", 7], ["15 days", 15], ["30 days", 30]].map(([label, d]) => (
                   <button key={label} type="button" onClick={() => setNewInvoiceForm({ ...newInvoiceForm, dueDate: dueDateIn(d) })} className="px-2.5 py-1.5 rounded-full border border-rule bg-white hover:bg-blue-50 font-semibold text-slate-700">
                     {label}
@@ -5631,13 +5605,7 @@ export default function App() {
 
             <div>
               <label htmlFor="stock-expiry" className="block font-semibold text-slate-600 mb-1">Expiry date (optional)</label>
-              <input
-                id="stock-expiry"
-                type="date"
-                value={newStockForm.expiry}
-                onChange={(e) => setNewStockForm({ ...newStockForm, expiry: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
-              />
+              <DmyDateInput ariaLabel="Expiry date (dd/mm/yyyy)" value={newStockForm.expiry} onChange={(v) => setNewStockForm({ ...newStockForm, expiry: v })} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none" />
             </div>
 
             <div className="pt-2 flex justify-end gap-2">
