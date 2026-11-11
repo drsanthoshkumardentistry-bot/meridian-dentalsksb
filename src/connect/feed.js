@@ -33,7 +33,8 @@ export const findPrivacyIssues = (text = "") => {
   const block = [];
   if (/(?:\d[\s-]?){10,}/.test(t)) block.push("a phone, Aadhaar or ID number");
   if (/[^\s@]+@[^\s@]+\.[^\s@]+/.test(t)) block.push("an email address");
-  if (/https?:\/\/|www\./i.test(t)) block.push("a link");
+  if (/https?:\/\/|www\./i.test(t) || /\b[a-z0-9][a-z0-9-]*\.(?:com|in|org|net|io|me|ly|app|info|co\.in)\b/i.test(t.replace(/[^\s@]+@[^\s@]+\.[^\s@]+/g, " "))) block.push("a link");
+  if (/(?:^|\s)@[a-z0-9_.]{3,}/i.test(t)) block.push("a social media handle");
   const warn = [];
   if (/\b(?:Mr|Mrs|Ms|Miss|Master|Shri|Smt|Thiru)\.?\s+[A-Z][a-z]+/.test(t)) warn.push("a title followed by a name");
   if (AD_WORDS.test(t)) warn.push("wording that sounds like advertising");
