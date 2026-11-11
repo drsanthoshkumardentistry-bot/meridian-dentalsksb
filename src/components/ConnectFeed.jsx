@@ -25,7 +25,7 @@ function emptyText(f, hasMore) {
 }
 
 /** The professional network for verified dentists: case discussions, questions, tips and events. */
-export default function ConnectFeed({ api, me, admin, showToast }) {
+export default function ConnectFeed({ api, me, admin, showToast, onMessage }) {
   const f = useConnectFeed({ api, showToast });
   const { view } = f;
 
@@ -33,7 +33,7 @@ export default function ConnectFeed({ api, me, admin, showToast }) {
     <PostCard key={p.id} post={p} api={api} me={me} admin={admin}
       vote={f.votes[p.id]} onVote={f.vote} liked={f.liked.has(p.id)} saved={f.saved.has(p.id)} followed={f.following.has(p.authorId)}
       onLike={f.like} onSave={f.save} onFollow={f.follow} onDelete={(post) => { if (window.confirm("Delete this post and its comments?")) f.remove(post); }}
-      onEdit={f.edit} onAccept={f.accept} onCount={(id, d) => f.bump(id, "commentCount", d)} onAuthor={f.openAuthor} showToast={showToast} />
+      onEdit={f.edit} onAccept={f.accept} onCount={(id, d) => f.bump(id, "commentCount", d)} onAuthor={f.openAuthor} onMessage={onMessage} showToast={showToast} />
   );
 
   return (

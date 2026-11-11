@@ -34,6 +34,16 @@ describe("feed basics", () => {
     expect(api.setLike).toHaveBeenCalledWith("p1", true);
   });
 
+  it("lets you message another dentist from their post, but not yourself", async () => {
+    const onMessage = vi.fn();
+    const api = makeApi({ listPosts: vi.fn(async () => ({ posts: [post(), post({ id: "p2", authorId: "me", authorName: "Dr Me", title: "My own post" })], cursor: null })) });
+    render(<ConnectFeed api={api} me={me} admin={false} showToast={vi.fn()} onMessage={onMessage} />);
+    const card = within(await article("Abscess after RCT"));
+    fireEvent.click(card.getByLabelText("Message Dr Root"));
+    expect(onMessage).toHaveBeenCalledWith({ id: "other", name: "Dr Root" });
+    expect(within(await article("My own post")).queryByLabelText(/^Message /)).toBeNull();
+  });
+
   it("puts a like back and says so when saving fails", async () => {
     const toast = vi.fn();
     const api = makeApi({ setLike: vi.fn(async () => { throw new Error("offline"); }) });

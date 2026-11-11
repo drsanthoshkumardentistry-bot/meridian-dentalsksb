@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
   MessageSquare, ThumbsUp, UserPlus, UserCheck, Flag, Trash2, CalendarDays, CalendarPlus, MapPin, BadgeCheck,
-  Bookmark, BookmarkCheck, Pencil, CheckCircle2,
+  Bookmark, BookmarkCheck, Pencil, CheckCircle2, MessageCircle,
 } from "lucide-react";
 import { specialtyLabel } from "../connect/rules.js";
 import {
@@ -173,7 +173,7 @@ function Poll({ post, vote, canSee, onVote }) {
 }
 
 /** One post in the feed. All changes go through the callbacks, so every list stays in step. */
-export default function PostCard({ post, api, me, admin, liked, saved, followed, vote, onVote, onLike, onSave, onFollow, onDelete, onEdit, onAccept, onCount, onAuthor, showToast }) {
+export default function PostCard({ post, api, me, admin, liked, saved, followed, vote, onVote, onLike, onSave, onFollow, onDelete, onEdit, onAccept, onCount, onAuthor, onMessage, showToast }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const mine = post.authorId === api.uid;
@@ -201,6 +201,12 @@ export default function PostCard({ post, api, me, admin, liked, saved, followed,
           </div>
           <div className="text-xs text-slate-500">{specialtyLabel(post.authorSpecialty)} · {timeAgo(toMillis(post.createdAt))}{post.editedAt ? " · edited" : ""}</div>
         </div>
+        {!mine && onMessage && (
+          <button type="button" onClick={() => onMessage({ id: post.authorId, name: post.authorName })} aria-label={`Message ${post.authorName}`}
+            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border bg-white text-slate-700 border-rule hover:bg-sky-50">
+            <MessageCircle className="w-3.5 h-3.5" /> Message
+          </button>
+        )}
         {!mine && (
           <button type="button" onClick={() => onFollow(post.authorId, !followed)} aria-pressed={followed}
             className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border ${followed ? "bg-aqua-50 text-aqua-700 border-aqua-100" : "bg-white text-brand-700 border-brand-100 hover:bg-brand-50"}`}>
