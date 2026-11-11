@@ -185,3 +185,49 @@ body {
 
 /* Placeholder and hint text stay readable on older, low-contrast monitors */
 input::placeholder, textarea::placeholder { color: #64748b; opacity: 1; }
+
+/* ---- Landing hero: gentle 3D scene (pure CSS, no library) ---- */
+.scene3d { perspective: 1400px; padding: 1.5rem 0 5.5rem; }
+.scene3d-glow {
+  position: absolute; inset: -8% -6% 0 -6%; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(40% 40% at 70% 30%, rgba(44, 196, 214, 0.28), transparent 70%),
+    radial-gradient(45% 45% at 25% 70%, rgba(37, 99, 235, 0.22), transparent 70%);
+  filter: blur(18px);
+}
+.scene3d-tilt {
+  --rx: 0deg; --ry: 0deg;
+  position: relative; z-index: 1; transform-style: preserve-3d;
+  transform: rotateX(var(--rx)) rotateY(var(--ry));
+  transition: transform 0.25s ease-out;
+}
+.scene3d-stage { position: relative; transform-style: preserve-3d; animation: scene-sway 14s ease-in-out infinite alternate; }
+@keyframes scene-sway {
+  from { transform: rotateY(-8deg) rotateX(3deg); }
+  to   { transform: rotateY(8deg) rotateX(6deg); }
+}
+.scene3d-layer { transform-style: preserve-3d; }
+.scene3d-back {
+  position: absolute; inset: 6% -4% -6% 4%; border-radius: 1.25rem; transform: translateZ(-70px);
+  background: linear-gradient(140deg, #dbe9ff, #bcd5fb); box-shadow: 0 30px 60px rgba(29, 78, 216, 0.18);
+}
+.scene3d-mid { position: relative; transform: translateZ(0); }
+.scene3d-tooth { position: absolute; top: -34px; right: 8px; width: 92px; transform: translateZ(120px); }
+.scene3d-bill { position: absolute; right: -14px; bottom: -92px; transform: translateZ(80px) scale(0.86); transform-origin: bottom right; }
+.scene3d-wa { position: absolute; left: -34px; bottom: -78px; transform: translateZ(100px) scale(0.9); transform-origin: bottom left; }
+.scene3d-appt { position: absolute; left: 18px; top: -26px; transform: translateZ(70px); }
+.float-a { animation: float-y 6s ease-in-out infinite; }
+.float-b { animation: float-y 7.5s ease-in-out -2s infinite; }
+.float-c { animation: float-y 8s ease-in-out -4s infinite; }
+@keyframes float-y { 0%, 100% { margin-top: 0; } 50% { margin-top: -9px; } }
+@media (max-width: 640px) {
+  .scene3d { padding-bottom: 1rem; }
+  .scene3d-bill { position: relative; right: auto; bottom: auto; width: fit-content; margin: -16px 0 0 auto; transform: translateZ(40px); }
+  .scene3d-tooth { width: 68px; top: -26px; transform: translateZ(50px); }
+  .scene3d-back { transform: translateZ(-30px); }
+  .scene3d-stage { animation-duration: 18s; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scene3d-stage, .float-a, .float-b, .float-c { animation: none !important; }
+  .scene3d-tilt { transition: none; }
+}
