@@ -20,6 +20,8 @@ import { canRead, canWrite, navFor, NAV_BY_ROLE, firstScreen, branchScope, ROLE_
 import { isActiveMember, isPendingInvite, buildInvite, inviteMessage } from "./team.js";
 import { watchMyMembership, watchTeam, createInvite, acceptInvite, updateMember, removeMember } from "./teamStore.js";
 import BranchesCard from "./components/BranchesCard.jsx";
+import DataPortability from "./components/DataPortability.jsx";
+import { buildPatientBackup, backupFileName } from "./portability.js";
 import { branchesOf, filterByBranch, writeBranchId, tagBranch, scopeToBranches } from "./branches.js";
 import QueuePanel from "./components/QueuePanel.jsx";
 import BookingRequests from "./components/BookingRequests.jsx";
@@ -46,6 +48,9 @@ import DayClose from "./components/DayClose.jsx";
 import BirthdayPanel from "./components/BirthdayPanel.jsx";
 import { dayClose } from "./dayClose.js";
 import { dueBirthdays, buildBirthdayMessage, markGreeted } from "./greetings.js";
+import DentistEarnings from "./components/DentistEarnings.jsx";
+import BookingShare from "./components/BookingShare.jsx";
+import { dentistEarnings, dentistEarningsCsv, cleanPct } from "./dentistReport.js";
 import { branchComparison, branchComparisonCsv } from "./branchReport.js";
 import LabOrders from "./components/LabOrders.jsx";
 import LabBoard from "./components/LabBoard.jsx";
@@ -981,6 +986,7 @@ export default function App() {
     discount: "",
     advance: "",
     dueDate: "",
+    doctor: "",
   });
   const [payForm, setPayForm] = useState({ amount: "", mode: "Cash" });
   const [upiQrDataUrl, setUpiQrDataUrl] = useState("");
@@ -1351,8 +1357,25 @@ export default function App() {
     [branches, allPatients, allAppointments, allInvoices, reportMonth, activeMember] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
+  const dentistCmp = useMemo(
+    () => dentistEarnings(scopeToBranches(allInvoices, allowedBranchIds), scopeToBranches(allAppointments, allowedBranchIds), reportMonth, practiceProfile.commissions),
+    [allInvoices, allAppointments, reportMonth, practiceProfile.commissions, activeMember] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
   const downloadCsv = (csv, name) => {
     const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const downloadFile = (text, name, type, bom) => {
+    const blob = new Blob([bom ? "\ufeff" + text : text], { type: `${type};charset=utf-8` });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -1546,7 +1569,7 @@ export default function App() {
     if (newInvoiceForm.planId) {
       setNewInvoiceForm({
         patientId: "", patientName: "", paymentMode: "Cash",
-        items: [blankInvoiceItem()], discount: "", advance: "", dueDate: "",
+        items: [blankInvoiceItem()], discount: "", advance: "", dueDate: "", doctor: "",
       });
     }
     setIsAddInvoiceOpen(false);
@@ -1583,6 +1606,7 @@ export default function App() {
       patientId: newInvoiceForm.patientId || "",
       patient: newInvoiceForm.patientName.trim(),
       paymentMode: newInvoiceForm.paymentMode,
+      ...(String(newInvoiceForm.doctor || "").trim() ? { doctor: String(newInvoiceForm.doctor).trim() } : {}),
       treatment: totals.lines.map((l) => l.description).join(", "),
       taxCategory: new Set(totals.lines.map((l) => l.taxCategory)).size === 1 ? totals.lines[0].taxCategory : "mixed",
       ...totals,
@@ -1611,6 +1635,7 @@ export default function App() {
       discount: "",
       advance: "",
       dueDate: "",
+      doctor: "",
     });
     setIsAddInvoiceOpen(false);
     showToast(`Invoice ${inv.id} generated for ₹${formatINR(inv.totalP)}`);
@@ -2771,6 +2796,15 @@ export default function App() {
                 ))}
               </div>
 
+              <DentistEarnings
+                report={dentistCmp}
+                ym={reportMonth}
+                commissions={practiceProfile.commissions || {}}
+                canEditRates={role === "owner"}
+                onRate={(name, v) => setPracticeProfile({ ...practiceProfile, commissions: { ...(practiceProfile.commissions || {}), [name]: v === "" ? "" : cleanPct(v) } })}
+                onDownload={() => downloadCsv(dentistEarningsCsv(dentistCmp, reportMonth), `dentists-${reportMonth}.csv`)}
+              />
+
               <BranchCompare cmp={branchCmp} ym={reportMonth} onDownload={() => downloadCsv(branchComparisonCsv(branchCmp, reportMonth), `branches-${reportMonth}.csv`)} />
 
               <div className="flex flex-wrap gap-2">
@@ -3150,6 +3184,22 @@ export default function App() {
                 }}
               />}
 
+              {!allowedBranchIds && (role === "owner" || role === "manager") && <DataPortability
+                data={{ patients: allPatients, appointments: allAppointments, invoices: allInvoices, inventory, employees, profile: practiceProfile }}
+                newId={newId}
+                onDownloadFile={downloadFile}
+                onAudit={logAudit}
+                onImported={(r) => {
+                  if (r.patients) setPatients(r.patients);
+                  if (r.appointments) setAppointments(r.appointments);
+                  if (r.invoices) setInvoices(r.invoices);
+                  if (r.inventory) setInventory(r.inventory);
+                  if (r.employees) setEmployees(r.employees);
+                  if (r.addBranches && r.addBranches.length) setPracticeProfile({ ...practiceProfile, branches: [...allBranches, ...r.addBranches] });
+                  showToast("Import complete");
+                }}
+              />}
+
               {role === "owner" && (
                 <TeamCard
                   members={team}
@@ -3178,6 +3228,7 @@ export default function App() {
                 {practiceProfile.onlineBooking ? (
                   <>
                     <p className="text-slate-600">Share this link on WhatsApp, Instagram or Google Business Profile. Patients send a request and you confirm it in the Appointments Diary.</p>
+                    <BookingShare url={bookingUrl(window.location.origin, CLINIC_ID)} clinicName={practiceProfile.name} onCopy={() => { navigator.clipboard?.writeText(bookingUrl(window.location.origin, CLINIC_ID)); showToast("Booking link copied"); }} />
                     <div className="flex flex-wrap gap-2 items-center">
                       <input readOnly aria-label="Booking link" value={bookingUrl(window.location.origin, CLINIC_ID)} onFocus={(e) => e.target.select()} className="flex-1 min-w-[220px] px-3 py-2 border border-slate-300 rounded-lg bg-white" />
                       <button type="button" onClick={() => { navigator.clipboard?.writeText(bookingUrl(window.location.origin, CLINIC_ID)); showToast("Booking link copied"); }} className="px-3 py-2 rounded-lg bg-[#1d4ed8] text-white font-semibold">Copy link</button>
@@ -4624,6 +4675,22 @@ export default function App() {
                 <Trash2 className="w-3.5 h-3.5" /> Delete Chart
               </button>
 
+              {!allowedBranchIds && (role === "owner" || role === "manager") && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const b = buildPatientBackup(activePatient.id, { patients: allPatients, appointments: allAppointments, invoices: allInvoices }, practiceProfile);
+                    if (!b) return;
+                    downloadFile(JSON.stringify(b), backupFileName(b), "application/json");
+                    logAudit("data.export", activePatient.name, "One patient's record");
+                    showToast("Record downloaded. It holds private health details, keep it safe.");
+                  }}
+                  className="text-brand-700 hover:text-brand-900 font-medium flex items-center gap-1.5"
+                >
+                  <Download className="w-3.5 h-3.5" /> Download record
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => setIsChartModalOpen(false)}
@@ -5160,6 +5227,19 @@ export default function App() {
                   <option key={m}>{m}</option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <label htmlFor="invoice-doctor" className="block font-semibold text-slate-600 mb-1">Treated by</label>
+              <input
+                id="invoice-doctor"
+                type="text"
+                list="doctor-options"
+                value={newInvoiceForm.doctor || ""}
+                onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, doctor: e.target.value })}
+                placeholder="Dentist who did the work"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+              />
             </div>
 
             <div className="space-y-2">
