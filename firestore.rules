@@ -378,6 +378,62 @@ service cloud.firestore {
       allow update: if false;
     }
 
+    // Direct messages between two verified dentists. chatId is the two uids, sorted, joined with "_".
+    // Only the two members can read; the sender's name must match their verified profile; a message
+    // cannot be edited; and nobody can message a dentist who has blocked them.
+    function chatPath(chatId) { return /databases/$(database)/documents/connectChats/$(chatId); }
+    function blockPath(blocker, blocked) { return /databases/$(database)/documents/connectBlocks/$(blocker + '_' + blocked); }
+    match /connectChats/{chatId} {
+      allow get: if isVerified() && request.auth.uid in resource.data.members;
+      allow list: if isVerified() && request.auth.uid in resource.data.members;
+      allow create: if isVerified()
+                    && request.resource.data.keys().hasOnly(['members', 'names', 'lastText', 'lastSenderId', 'updatedAt'])
+                    && request.resource.data.members is list && request.resource.data.members.size() == 2
+                    && request.auth.uid in request.resource.data.members
+                    && request.resource.data.members[0] < request.resource.data.members[1]
+                    && chatId == request.resource.data.members[0] + '_' + request.resource.data.members[1]
+                    && get(dentistDoc(request.resource.data.members[0] == request.auth.uid ? request.resource.data.members[1] : request.resource.data.members[0])).data.status == 'verified'
+                    && !exists(blockPath(request.resource.data.members[0] == request.auth.uid ? request.resource.data.members[1] : request.resource.data.members[0], request.auth.uid))
+                    && request.resource.data.names[request.auth.uid] == get(dentistDoc(request.auth.uid)).data.fullName
+                    && request.resource.data.lastSenderId == request.auth.uid
+                    && request.resource.data.lastText is string && request.resource.data.lastText.size() <= 80
+                    && request.resource.data.updatedAt == request.time;
+      allow update: if isVerified() && request.auth.uid in resource.data.members
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['names', 'lastText', 'lastSenderId', 'updatedAt'])
+                    && request.resource.data.names.diff(resource.data.names).affectedKeys().hasOnly([request.auth.uid])
+                    && request.resource.data.names[request.auth.uid] == get(dentistDoc(request.auth.uid)).data.fullName
+                    && request.resource.data.lastSenderId == request.auth.uid
+                    && request.resource.data.lastText is string && request.resource.data.lastText.size() <= 80
+                    && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if isVerified() && request.auth.uid in get(chatPath(chatId)).data.members;
+        allow create: if isVerified()
+                      && request.auth.uid in getAfter(chatPath(chatId)).data.members
+                      && request.resource.data.keys().hasOnly(['senderId', 'text', 'createdAt'])
+                      && request.resource.data.senderId == request.auth.uid
+                      && request.resource.data.text is string && request.resource.data.text.size() >= 1 && request.resource.data.text.size() <= 800
+                      && request.resource.data.createdAt == request.time
+                      && !exists(blockPath(
+                           getAfter(chatPath(chatId)).data.members[0] == request.auth.uid ? getAfter(chatPath(chatId)).data.members[1] : getAfter(chatPath(chatId)).data.members[0],
+                           request.auth.uid));
+        allow update: if false;
+        allow delete: if isVerified() && resource.data.senderId == request.auth.uid;
+      }
+    }
+
+    // A dentist's block list. Private to the blocker.
+    match /connectBlocks/{blockId} {
+      allow read: if isVerified() && resource.data.blockerId == request.auth.uid;
+      allow create: if isVerified()
+                    && request.resource.data.keys().hasOnly(['blockerId', 'blockedId', 'createdAt'])
+                    && request.resource.data.blockerId == request.auth.uid
+                    && blockId == request.auth.uid + '_' + request.resource.data.blockedId;
+      allow delete: if isVerified() && resource.data.blockerId == request.auth.uid;
+      allow update: if false;
+    }
+
     // Append-only audit log. Staff can read it; nobody can change or delete an entry.
     match /connectAudit/{entryId} {
       allow create: if isVerified() && request.resource.data.actorId == request.auth.uid;

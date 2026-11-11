@@ -468,3 +468,50 @@ describe("case images", () => {
     await assertFails(updateDoc(doc(as(env, "alice"), "connectPosts", "c2"), { imageCount: 2, editedAt: serverTimestamp() }));
   });
 });
+
+describe("direct messages", () => {
+  const send = (uid, other, text = "Hello doctor", names) => {
+    const db = as(env, uid);
+    const members = [uid, other].sort();
+    const chat = doc(db, "connectChats", members.join("_"));
+    const b = writeBatch(db);
+    b.set(chat, { members, names: names || { [uid]: uid === "alice" ? "Dr Alice" : "Dr Bob" }, lastText: text, lastSenderId: uid, updatedAt: serverTimestamp() }, { merge: true });
+    b.set(doc(collection(db, "connectChats", members.join("_"), "messages")), { senderId: uid, text, createdAt: serverTimestamp() });
+    return b.commit();
+  };
+
+  it("two verified dentists can message; a pending dentist cannot start or join", async () => {
+    await assertSucceeds(send("alice", "bob"));
+    await assertSucceeds(send("bob", "alice", "Reply"));
+    await assertFails(send("pat", "alice"));
+    await assertFails(send("alice", "pat"));
+  });
+  it("only the two members can read a conversation", async () => {
+    await assertSucceeds(send("alice", "bob"));
+    await assertFails(getDoc(doc(as(env, "admin"), "connectChats", "alice_bob")));
+    await assertFails(getDocs(collection(as(env, "admin"), "connectChats", "alice_bob", "messages")));
+    await assertSucceeds(getDocs(collection(as(env, "bob"), "connectChats", "alice_bob", "messages")));
+    await assertFails(getDocs(query(collection(as(env, "admin"), "connectChats"), where("members", "array-contains", "alice"))));
+    await assertSucceeds(getDocs(query(collection(as(env, "alice"), "connectChats"), where("members", "array-contains", "alice"))));
+  });
+  it("you cannot write under another dentist's name", async () => {
+    await assertFails(send("alice", "bob", "Hi", { alice: "Dr Someone Else" }));
+  });
+  it("a block stops messages in that direction", async () => {
+    await assertSucceeds(setDoc(doc(as(env, "bob"), "connectBlocks", "bob_alice"), { blockerId: "bob", blockedId: "alice", createdAt: serverTimestamp() }));
+    await assertFails(send("alice", "bob"));
+    await assertSucceeds(send("bob", "alice"));
+    await assertFails(getDoc(doc(as(env, "alice"), "connectBlocks", "bob_alice")));
+    await assertSucceeds(deleteDoc(doc(as(env, "bob"), "connectBlocks", "bob_alice")));
+    await assertSucceeds(send("alice", "bob"));
+  });
+  it("messages cannot be edited, are limited in length, and only the sender can delete", async () => {
+    await assertSucceeds(send("alice", "bob"));
+    const msgs = await getDocs(collection(as(env, "alice"), "connectChats", "alice_bob", "messages"));
+    const id = msgs.docs[0].id;
+    await assertFails(updateDoc(doc(as(env, "alice"), "connectChats", "alice_bob", "messages", id), { text: "edited" }));
+    await assertFails(deleteDoc(doc(as(env, "bob"), "connectChats", "alice_bob", "messages", id)));
+    await assertSucceeds(deleteDoc(doc(as(env, "alice"), "connectChats", "alice_bob", "messages", id)));
+    await assertFails(send("alice", "bob", "x".repeat(801)));
+  });
+});
