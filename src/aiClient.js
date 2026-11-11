@@ -3,7 +3,7 @@ import { auth } from "./firebase.js";
 // Calls the site's own /api/ai function. The AI key never reaches the browser.
 export const askAi = async (payload) => {
   const user = auth && auth.currentUser;
-  if (!user) throw new Error("Sign in again to use MeriDent AI.");
+  if (!user) throw new Error("Sign in again to use Meridee.");
   const token = await user.getIdToken();
   const res = await fetch("/api/ai", {
     method: "POST",
@@ -12,7 +12,7 @@ export const askAi = async (payload) => {
   });
   let data = {};
   try { data = await res.json(); } catch (e) { /* keep empty */ }
-  if (!res.ok) throw new Error(data.error || "MeriDent AI is not available right now.");
+  if (!res.ok) throw new Error(data.error || "Meridee is not available right now.");
   return data;
 };
 

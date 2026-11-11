@@ -28,7 +28,7 @@ export default function HelpChat() {
       const { text: reply } = await askAi({ task: "help", messages: next });
       setMessages([...next, { role: "assistant", content: reply }]);
     } catch (error) {
-      setMessages([...next, { role: "assistant", content: error.message || "MeriDent AI is not available right now.", error: true }]);
+      setMessages([...next, { role: "assistant", content: error.message || "Meridee is not available right now.", error: true }]);
     } finally {
       setBusy(false);
     }
@@ -37,13 +37,13 @@ export default function HelpChat() {
   return (
     <div className="fixed bottom-5 right-5 z-40 print:hidden" data-testid="help-chat">
       {open && (
-        <div role="dialog" aria-label="MeriDent AI help" className="mb-3 w-[min(22rem,calc(100vw-2.5rem))] h-[28rem] max-h-[70vh] rounded-2xl bg-white border border-slate-200 shadow-2xl flex flex-col overflow-hidden">
+        <div role="dialog" aria-label="Meridee help" className="mb-3 w-[min(22rem,calc(100vw-2.5rem))] h-[28rem] max-h-[70vh] rounded-2xl bg-white border border-slate-200 shadow-2xl flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 bg-[#1d4ed8] text-white">
             <div className="flex items-center gap-2">
               <span className="w-9 h-9 rounded-full bg-white/95 flex items-center justify-center overflow-hidden shrink-0"><FairySvg still className="w-8 h-8" /></span>
               <div>
-                <div className="font-bold text-sm">MeriDent AI help</div>
-                <div className="text-[11px] text-blue-100">Meri the tooth fairy. Ask how to use MeriDent</div>
+                <div className="font-bold text-sm">Meridee help</div>
+                <div className="text-[11px] text-blue-100">Meridee the tooth fairy. Ask how to use MeriDent</div>
               </div>
             </div>
             <button type="button" aria-label="Close help" onClick={() => setOpen(false)} className="p-1 rounded-lg hover:bg-blue-700"><X className="w-4 h-4" /></button>
@@ -62,7 +62,7 @@ export default function HelpChat() {
                 <div className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-xs leading-relaxed ${m.role === "user" ? "bg-[#1d4ed8] text-white" : m.error ? "bg-red-50 text-red-700 border border-red-200" : "bg-white text-slate-800 border border-slate-200"}`}>{m.content}</div>
               </div>
             ))}
-            {busy && <div className="text-xs text-slate-500 px-1">MeriDent AI is writing...</div>}
+            {busy && <div className="text-xs text-slate-500 px-1">Meridee is writing...</div>}
             <div ref={endRef} />
           </div>
           <form onSubmit={(e) => { e.preventDefault(); ask(text); }} className="flex gap-2 p-3 border-t border-slate-200 bg-white">
@@ -72,7 +72,7 @@ export default function HelpChat() {
           <p className="px-3 pb-2 text-[10px] text-slate-400 bg-white">AI can make mistakes. For medical decisions, the dentist decides.</p>
         </div>
       )}
-      <button type="button" onClick={() => setOpen((v) => !v)} aria-label={open ? "Close MeriDent AI help" : "Open MeriDent AI help"} className="ml-auto flex items-center gap-2 px-4 py-3 rounded-full bg-[#1d4ed8] hover:bg-blue-700 text-white shadow-xl font-semibold text-sm">
+      <button type="button" onClick={() => setOpen((v) => !v)} aria-label={open ? "Close Meridee help" : "Open Meridee help"} className="ml-auto flex items-center gap-2 px-4 py-3 rounded-full bg-[#1d4ed8] hover:bg-blue-700 text-white shadow-xl font-semibold text-sm">
         <MessageCircle className="w-5 h-5" /> {!open && <span>Help</span>}
       </button>
     </div>

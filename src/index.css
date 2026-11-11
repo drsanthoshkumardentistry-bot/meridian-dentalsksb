@@ -232,7 +232,7 @@ input::placeholder, textarea::placeholder { color: #64748b; opacity: 1; }
   .scene3d-tilt { transition: none; }
 }
 
-/* ---- Meri, the tooth fairy ---- */
+/* ---- Meridee, the tooth fairy ---- */
 .fairy { overflow: visible; filter: drop-shadow(0 14px 16px rgba(29, 78, 216, 0.22)); }
 .fairy-float { animation: fairy-bob 3.6s ease-in-out infinite; transform-origin: 85px 100px; }
 @keyframes fairy-bob { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-7px) rotate(1.5deg); } }
@@ -253,7 +253,7 @@ input::placeholder, textarea::placeholder { color: #64748b; opacity: 1; }
 .fairy-still *, .fairy-still { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .fairy *, .fairy-bubble { animation: none !important; } .fairy-sparkle { opacity: 0.8; } }
 
-/* Meri: flies in once, follows the mouse with her eyes, hops when tapped */
+/* Meridee: flies in once, follows the mouse with her eyes, hops when tapped */
 .fairy-wrap { animation: fairy-arrive 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 @keyframes fairy-arrive { from { opacity: 0; transform: translate(40px, -30px) scale(0.6); } to { opacity: 1; transform: none; } }
 .fairy-look { transform: translate(var(--lx, 0px), var(--ly, 0px)); transition: transform 0.15s ease-out; }

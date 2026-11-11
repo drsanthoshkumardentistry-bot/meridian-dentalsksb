@@ -1,4 +1,4 @@
-// Vercel function: POST /api/ai ("MeriDent AI"). Needs GEMINI_API_KEY (free Google AI Studio key) or ANTHROPIC_API_KEY, server only,
+// Vercel function: POST /api/ai ("Meridee"). Needs GEMINI_API_KEY (free Google AI Studio key) or ANTHROPIC_API_KEY, server only,
 // plus the Firebase web API key.
 import { MODEL, GEMINI_MODELS, buildRequest, parseVisitNote, makeLimiter } from "./_lib/aiCore.js";
 
@@ -34,15 +34,15 @@ const readBody = async (req) => {
 export default async function handler(req, res) {
   if (req.method !== "POST") return send(res, 405, { error: "Use POST." });
   const geminiKey = process.env.GEMINI_API_KEY;
-  if (!geminiKey && !process.env.ANTHROPIC_API_KEY) return send(res, 503, { error: "MeriDent AI is not switched on for this site yet." });
+  if (!geminiKey && !process.env.ANTHROPIC_API_KEY) return send(res, 503, { error: "Meridee is not switched on for this site yet." });
 
   let body;
   try { body = await readBody(req); } catch (e) { return send(res, 413, { error: "Request too large." }); }
 
   const header = String(req.headers.authorization || "");
   const uid = await verifyUser(header.startsWith("Bearer ") ? header.slice(7) : "").catch(() => null);
-  if (!uid) return send(res, 401, { error: "Sign in again to use MeriDent AI." });
-  if (!allow(uid)) return send(res, 429, { error: "Too many MeriDent AI requests this hour. Try again later." });
+  if (!uid) return send(res, 401, { error: "Sign in again to use Meridee." });
+  if (!allow(uid)) return send(res, 429, { error: "Too many Meridee requests this hour. Try again later." });
 
   const built = buildRequest(body);
   if (!built.ok) return send(res, 400, { error: built.error });
@@ -65,8 +65,8 @@ export default async function handler(req, res) {
         });
         if (r.status !== 404) break; // model retired or renamed: try the next one
       }
-      if (r.status === 429) return send(res, 429, { error: "MeriDent AI is busy. Try again in a minute." });
-      if (!r.ok) return send(res, 502, { error: "MeriDent AI could not answer. Try again." });
+      if (r.status === 429) return send(res, 429, { error: "Meridee is busy. Try again in a minute." });
+      if (!r.ok) return send(res, 502, { error: "Meridee could not answer. Try again." });
       const data = await r.json();
       const parts = (((data.candidates || [])[0] || {}).content || {}).parts || [];
       text = parts.map((x) => x.text || "").join("");
@@ -76,17 +76,17 @@ export default async function handler(req, res) {
         headers: { "Content-Type": "application/json", "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
         body: JSON.stringify({ model: MODEL, max_tokens: 700, system: built.system, messages: built.messages || [{ role: "user", content: built.user }] }),
       });
-      if (r.status === 429) return send(res, 429, { error: "MeriDent AI is busy. Try again in a minute." });
-      if (!r.ok) return send(res, 502, { error: "MeriDent AI could not answer. Try again." });
+      if (r.status === 429) return send(res, 429, { error: "Meridee is busy. Try again in a minute." });
+      if (!r.ok) return send(res, 502, { error: "Meridee could not answer. Try again." });
       const data = await r.json();
       text = ((data.content || []).find((b) => b.type === "text") || {}).text || "";
     }
     if (built.kind === "json") {
       const note = parseVisitNote(text);
-      return note ? send(res, 200, { note }) : send(res, 502, { error: "MeriDent AI gave an unusable reply. Try again." });
+      return note ? send(res, 200, { note }) : send(res, 502, { error: "Meridee gave an unusable reply. Try again." });
     }
-    return text.trim() ? send(res, 200, { text: text.trim() }) : send(res, 502, { error: "MeriDent AI gave an empty reply. Try again." });
+    return text.trim() ? send(res, 200, { text: text.trim() }) : send(res, 502, { error: "Meridee gave an empty reply. Try again." });
   } catch (e) {
-    return send(res, 502, { error: "Could not reach MeriDent AI." });
+    return send(res, 502, { error: "Could not reach Meridee." });
   }
 }
