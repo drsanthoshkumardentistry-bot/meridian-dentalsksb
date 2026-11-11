@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
 const LINES = [
-  "Hi, I'm Meri, the MeriDent tooth fairy!",
+  "Hi, I'm Meridee, the MeriDent tooth fairy!",
   "Chart the tooth, and I'll keep the visit tidy.",
   "Reminder ready? One tap opens WhatsApp.",
   "Free during early access. Come and try me!",
@@ -16,7 +16,7 @@ const Sparkle = ({ x, y, s = 1, delay = 0 }) => (
   />
 );
 
-/** Meri, the MeriDent tooth fairy. Pure SVG and CSS, original character. `still` freezes the motion for small uses. */
+/** Meridee, the MeriDent tooth fairy. Pure SVG and CSS, original character. `still` freezes the motion for small uses. */
 export function FairySvg({ className = "", still = false, burst = 0, happy = false }) {
   return (
     <svg viewBox="0 0 170 176" aria-hidden="true" className={`fairy ${still ? "fairy-still" : ""} ${className}`}>
@@ -89,7 +89,7 @@ export function FairySvg({ className = "", still = false, burst = 0, happy = fal
   );
 }
 
-/** Clickable Meri with a speech bubble that cycles through a few friendly lines. */
+/** Clickable Meridee with a speech bubble that cycles through a few friendly lines. */
 export default function ToothFairy({ className = "" }) {
   const [step, setStep] = useState(-1);
   const [burst, setBurst] = useState(0);
@@ -125,7 +125,7 @@ export default function ToothFairy({ className = "" }) {
           {LINES[step]}
         </div>
       )}
-      <button type="button" onClick={next} aria-label="Say hi to Meri, the MeriDent tooth fairy" className="block w-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-full">
+      <button type="button" onClick={next} aria-label="Say hi to Meridee, the MeriDent tooth fairy" className="block w-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-full">
         <FairySvg burst={burst} happy={happy} />
       </button>
     </div>
