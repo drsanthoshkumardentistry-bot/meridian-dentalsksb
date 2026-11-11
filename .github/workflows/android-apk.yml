@@ -7,6 +7,8 @@ on:
   push:
     branches: [android-app]
 
+permissions:
+  contents: write
 jobs:
   apk:
     runs-on: ubuntu-latest
@@ -26,9 +28,16 @@ jobs:
       - run: npx cap sync android
       - name: Build the APK
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleRelease --no-daemon
       - uses: actions/upload-artifact@v4
         with:
           name: MeriDent-android-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
+      - name: Publish download link (GitHub Release)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk MeriDent.apk
+          gh release delete android-latest --yes --cleanup-tag || true
+          gh release create android-latest MeriDent.apk --target "$GITHUB_SHA" --title "MeriDent Android app" --notes "Latest MeriDent Android APK. Download MeriDent.apk and install it."

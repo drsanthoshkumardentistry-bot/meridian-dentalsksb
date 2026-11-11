@@ -16,8 +16,17 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        sideload {
+            storeFile file('merident-sideload.keystore')
+            storePassword 'merident-sideload'
+            keyAlias 'merident'
+            keyPassword 'merident-sideload'
+        }
+    }
     buildTypes {
         release {
+            signingConfig signingConfigs.sideload
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
