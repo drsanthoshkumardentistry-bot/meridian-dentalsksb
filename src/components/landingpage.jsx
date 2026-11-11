@@ -42,9 +42,9 @@ const DEMO_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
 /* Features grouped by where in the day they happen. Only things the app does today. */
 const TONES = {
   blue: { head: "text-ink border-brand-600", chip: "bg-brand-50 text-brand-600" },
-  aqua: { head: "text-ink border-brand-600", chip: "bg-brand-50 text-brand-600" },
-  navy: { head: "text-ink border-brand-600", chip: "bg-brand-50 text-brand-600" },
-  sky: { head: "text-ink border-brand-600", chip: "bg-brand-50 text-brand-600" }
+  aqua: { head: "text-ink border-aqua-600", chip: "bg-aqua-50 text-aqua-700" },
+  navy: { head: "text-ink border-gold-500", chip: "bg-gold-50 text-gold-700" },
+  sky: { head: "text-ink border-indigo-500", chip: "bg-indigo-50 text-indigo-700" }
 };
 
 const FEATURE_GROUPS = [
@@ -382,7 +382,7 @@ export default function LandingPage({
       </header>
 
       {/* HERO */}
-      <section id="top" className="relative overflow-hidden bg-white border-b border-rule">
+      <section id="top" className="relative overflow-hidden bg-gradient-to-b from-sky-100/70 via-sky-50 to-white border-b border-rule">
         <div className="relative max-w-6xl mx-auto px-5 pt-14 pb-20 lg:pt-28 lg:pb-32 grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-14 lg:gap-16 items-center">
           <div className="space-y-6">
             <p className="inline-flex items-center gap-2 text-sm font-medium text-aqua-700 bg-aqua-50 px-3 py-1 rounded-full">

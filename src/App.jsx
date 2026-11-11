@@ -47,6 +47,8 @@ import BranchCompare from "./components/BranchCompare.jsx";
 import { languageOf } from "./messageLanguage.js";
 import SetupChecklist from "./components/SetupChecklist.jsx";
 import { setupProgress } from "./setup.js";
+import FeeList from "./components/FeeList.jsx";
+import { applyFee, sortedFees } from "./fees.js";
 import DentistEarnings from "./components/DentistEarnings.jsx";
 import BookingShare from "./components/BookingShare.jsx";
 import { dentistEarnings, dentistEarningsCsv, cleanPct } from "./dentistReport.js";
@@ -3209,6 +3211,8 @@ export default function App() {
 
               {(role === "owner" || role === "manager") && <ActivityLog entries={auditEntries} />}
 
+              {(role === "owner" || role === "manager") && <FeeList fees={practiceProfile.fees} newId={newId} onChange={(list) => setPracticeProfile({ ...practiceProfile, fees: list })} />}
+
               <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-xs space-y-2" data-testid="booking-settings">
                 <label className="flex items-center gap-2 font-semibold text-slate-800">
                   <input type="checkbox" checked={Boolean(practiceProfile.onlineBooking)} onChange={(e) => setPracticeProfile({ ...practiceProfile, onlineBooking: e.target.checked })} />
@@ -3483,18 +3487,18 @@ export default function App() {
                 </div>
                 <div className="grid grid-cols-3 gap-2 sm:gap-3">
                   {[
-                    { label: "Appointment reminders", count: dueApptReminders.length, to: "Appointments Diary" },
-                    { label: "Patients due for recall", count: dueRecallList.length, to: "Appointments Diary" },
-                    { label: "Payments to chase", count: duePayReminders.length, to: "Billing & Invoices" },
+                    { label: "Appointment reminders", count: dueApptReminders.length, to: "Appointments Diary", on: "border-blue-200 bg-blue-50 hover:bg-blue-100", num: "text-blue-700" },
+                    { label: "Patients due for recall", count: dueRecallList.length, to: "Appointments Diary", on: "border-aqua-100 bg-aqua-50 hover:bg-aqua-100", num: "text-aqua-700" },
+                    { label: "Payments to chase", count: duePayReminders.length, to: "Billing & Invoices", on: "border-amber-200 bg-gold-50 hover:bg-amber-100", num: "text-gold-700" },
                   ].map((a) => (
                     <button
                       key={a.label}
                       onClick={() => setActiveNav(a.to)}
                       className={`text-left rounded-xl border p-3 sm:p-4 transition-colors ${
-                        a.count > 0 ? "border-blue-200 bg-blue-50 hover:bg-blue-100" : "border-rule bg-enamel hover:bg-slate-100"
+                        a.count > 0 ? a.on : "border-rule bg-enamel hover:bg-slate-100"
                       }`}
                     >
-                      <div className={`text-2xl font-bold ${a.count > 0 ? "text-blue-700" : "text-slate-500"}`}>{a.count}</div>
+                      <div className={`text-2xl font-bold ${a.count > 0 ? a.num : "text-slate-500"}`}>{a.count}</div>
                       <div className="text-xs font-semibold text-slate-700 mt-0.5">{a.label}</div>
                       <div className="text-[11px] text-slate-500 mt-1 leading-snug">{a.count > 0 ? "Tap to send ›" : "Nothing to send"}</div>
                     </button>
@@ -5249,7 +5253,8 @@ export default function App() {
                       type="text"
                       aria-label={`Treatment ${idx + 1} description`}
                       value={it.description}
-                      onChange={(e) => setItem({ description: e.target.value })}
+                      list="invoice-fee-options"
+                      onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, items: newInvoiceForm.items.map((x) => (x.id === it.id ? applyFee(x, practiceProfile.fees, e.target.value) : x)) })}
                       placeholder="e.g. Root Canal Therapy"
                       className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none bg-white"
                     />
@@ -5293,6 +5298,7 @@ export default function App() {
                   </div>
                 );
               })}
+              <datalist id="invoice-fee-options">{sortedFees(practiceProfile.fees).map((f) => <option key={f.id} value={f.name} />)}</datalist>
               {newInvoiceForm.items.length < MAX_LINE_ITEMS && (
                 <button
                   type="button"
