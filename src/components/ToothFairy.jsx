@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 const LINES = [
   "Hi, I'm Meri, the MeriDent tooth fairy!",
@@ -17,7 +17,7 @@ const Sparkle = ({ x, y, s = 1, delay = 0 }) => (
 );
 
 /** Meri, the MeriDent tooth fairy. Pure SVG and CSS, original character. `still` freezes the motion for small uses. */
-export function FairySvg({ className = "", still = false, burst = 0 }) {
+export function FairySvg({ className = "", still = false, burst = 0, happy = false }) {
   return (
     <svg viewBox="0 0 170 176" aria-hidden="true" className={`fairy ${still ? "fairy-still" : ""} ${className}`}>
       <defs>
@@ -46,12 +46,21 @@ export function FairySvg({ className = "", still = false, burst = 0 }) {
           fill="url(#fy-body)" stroke="#8fb0ea" strokeWidth="2" />
         <path d="M58 56c4-11 13-16 23-15" fill="none" stroke="#fff" strokeWidth="6" strokeLinecap="round" opacity="0.85" />
         {/* face */}
-        <g className="fairy-eyes">
-          <ellipse cx="72" cy="82" rx="4.6" ry="6" fill="#0b1b3a" />
-          <ellipse cx="98" cy="82" rx="4.6" ry="6" fill="#0b1b3a" />
-          <circle cx="73.6" cy="79.6" r="1.5" fill="#fff" />
-          <circle cx="99.6" cy="79.6" r="1.5" fill="#fff" />
-        </g>
+        {happy ? (
+          <g fill="none" stroke="#0b1b3a" strokeWidth="3" strokeLinecap="round">
+            <path d="M66 85q6-9 12 0" />
+            <path d="M92 85q6-9 12 0" />
+          </g>
+        ) : (
+          <g className="fairy-look">
+            <g className="fairy-eyes">
+              <ellipse cx="72" cy="82" rx="4.6" ry="6" fill="#0b1b3a" />
+              <ellipse cx="98" cy="82" rx="4.6" ry="6" fill="#0b1b3a" />
+              <circle cx="73.6" cy="79.6" r="1.5" fill="#fff" />
+              <circle cx="99.6" cy="79.6" r="1.5" fill="#fff" />
+            </g>
+          </g>
+        )}
         <circle cx="62" cy="95" r="5.5" fill="#ff9fb1" opacity="0.55" />
         <circle cx="108" cy="95" r="5.5" fill="#ff9fb1" opacity="0.55" />
         <path d="M76 96c5 7 13 7 18 0" fill="none" stroke="#0b1b3a" strokeWidth="2.4" strokeLinecap="round" />
@@ -84,16 +93,40 @@ export function FairySvg({ className = "", still = false, burst = 0 }) {
 export default function ToothFairy({ className = "" }) {
   const [step, setStep] = useState(-1);
   const [burst, setBurst] = useState(0);
-  const next = () => { setStep((s) => (s + 1) % LINES.length); setBurst((b) => b + 1); };
+  const [happy, setHappy] = useState(false);
+  const box = useRef(null);
+  const timer = useRef(null);
+
+  // Her eyes follow the mouse a little (laptops only). Touch screens skip this.
+  useEffect(() => {
+    const move = (e) => {
+      if (e.pointerType !== "mouse" || !box.current) return;
+      const r = box.current.getBoundingClientRect();
+      const dx = (e.clientX - (r.left + r.width / 2)) / window.innerWidth;
+      const dy = (e.clientY - (r.top + r.height / 2)) / window.innerHeight;
+      box.current.style.setProperty("--lx", `${Math.max(-3, Math.min(3, dx * 9)).toFixed(2)}px`);
+      box.current.style.setProperty("--ly", `${Math.max(-2, Math.min(2.5, dy * 7)).toFixed(2)}px`);
+    };
+    window.addEventListener("pointermove", move);
+    return () => { window.removeEventListener("pointermove", move); clearTimeout(timer.current); };
+  }, []);
+
+  const next = () => {
+    setStep((s) => (s + 1) % LINES.length);
+    setBurst((b) => b + 1);
+    setHappy(true);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => setHappy(false), 1400);
+  };
   return (
-    <div className={`relative ${className}`}>
+    <div ref={box} data-mood={happy ? "happy" : "idle"} className={`fairy-wrap ${happy ? "fairy-jump" : ""} relative ${className}`}>
       {step >= 0 && (
         <div role="status" className="fairy-bubble absolute right-full top-2 mr-2 w-44 rounded-xl bg-white border border-rule shadow-lift px-3 py-2 text-[12px] leading-snug text-ink">
           {LINES[step]}
         </div>
       )}
       <button type="button" onClick={next} aria-label="Say hi to Meri, the MeriDent tooth fairy" className="block w-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-full">
-        <FairySvg burst={burst} />
+        <FairySvg burst={burst} happy={happy} />
       </button>
     </div>
   );

@@ -475,7 +475,7 @@ const EMPTY_PATIENT_FORM = {
   emergencyName: "", emergencyPhone: "", abhaNumber: "",
   pregnancy: "Not applicable", chiefComplaint: "",
   conditions: "", allergies: "", medicalAlert: "",
-  consentTreatment: false, consentWhatsapp: true,
+  consentTreatment: false, consentWhatsapp: false,
 };
 
 // Returns the first problem found, or an empty string when the form is valid
@@ -5073,7 +5073,7 @@ export default function App() {
                 onChange={(e) => setNewPatientForm({ ...newPatientForm, consentWhatsapp: e.target.checked })}
                 className="mt-0.5 rounded text-blue-600 focus:ring-0"
               />
-              <span className="text-slate-700">OK to send appointment reminders and prescriptions on WhatsApp.</span>
+              <span className="text-slate-700">The patient agrees to receive appointment reminders and prescriptions on WhatsApp. Tick only after asking.</span>
             </label>
             <p className="text-[10px] text-slate-500">Only collect what you need. Never enter Aadhaar numbers.</p>
 
