@@ -1,6 +1,6 @@
 // Vercel function: POST /api/ai ("MeriDent AI"). Needs GEMINI_API_KEY (free Google AI Studio key) or ANTHROPIC_API_KEY, server only,
 // plus the Firebase web API key.
-import { MODEL, GEMINI_MODEL, buildRequest, parseVisitNote, makeLimiter } from "./_lib/aiCore.js";
+import { MODEL, GEMINI_MODELS, buildRequest, parseVisitNote, makeLimiter } from "./_lib/aiCore.js";
 
 const allow = makeLimiter(40, 60 * 60 * 1000);
 
@@ -50,16 +50,21 @@ export default async function handler(req, res) {
   try {
     let text = "";
     if (geminiKey) {
-      const model = process.env.GEMINI_MODEL || GEMINI_MODEL;
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: built.system }] },
-          contents: (built.messages || [{ role: "user", content: built.user }]).map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
-          generationConfig: { maxOutputTokens: 1000, temperature: 0.3 },
-        }),
+      const models = [process.env.GEMINI_MODEL, ...GEMINI_MODELS].filter(Boolean);
+      const body = JSON.stringify({
+        systemInstruction: { parts: [{ text: built.system }] },
+        contents: (built.messages || [{ role: "user", content: built.user }]).map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
+        generationConfig: { maxOutputTokens: 1000, temperature: 0.3 },
       });
+      let r;
+      for (const model of models) {
+        r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
+          body,
+        });
+        if (r.status !== 404) break; // model retired or renamed: try the next one
+      }
       if (r.status === 429) return send(res, 429, { error: "MeriDent AI is busy. Try again in a minute." });
       if (!r.ok) return send(res, 502, { error: "MeriDent AI could not answer. Try again." });
       const data = await r.json();

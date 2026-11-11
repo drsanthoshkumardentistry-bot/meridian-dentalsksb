@@ -53,6 +53,19 @@ describe("/api/ai", () => {
     expect(g[1].headers["x-goog-api-key"]).toBe("gem-test");
     expect(g[1].body).not.toContain("good");
   });
+  it("falls back to the next Gemini model when one is retired", async () => {
+    process.env.GEMINI_API_KEY = "gem-test";
+    global.fetch = vi.fn(async (url) => {
+      if (String(url).includes("identitytoolkit")) return { ok: true, json: async () => ({ users: [{ localId: "u4" }] }) };
+      if (String(url).includes("gemini-3.8-flash:")) return { ok: false, status: 404, json: async () => ({}) };
+      return { ok: true, status: 200, json: async () => ({ candidates: [{ content: { parts: [{ text: "Open Billing." }] } }] }) };
+    });
+    const res = await call({ task: "help", messages: [{ role: "user", content: "how to bill" }] });
+    expect(res.statusCode).toBe(200);
+    const urls = global.fetch.mock.calls.map((c) => String(c[0])).filter((u) => u.includes("generativelanguage"));
+    expect(urls[0]).toContain("gemini-3.8-flash");
+    expect(urls[1]).toContain("gemini-flash-latest");
+  });
   it("says busy when Gemini's free limit is reached", async () => {
     process.env.GEMINI_API_KEY = "gem-test";
     global.fetch = vi.fn(async (url) => String(url).includes("identitytoolkit")

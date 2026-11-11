@@ -4,7 +4,8 @@ import { HELP_KNOWLEDGE } from "./helpKnowledge.js";
 // The helper only rewrites what the dentist typed or what is already in the plan. It never diagnoses.
 
 export const MODEL = "claude-haiku-5-5";
-export const GEMINI_MODEL = "gemini-2.5-flash";
+// Tried in order. If Google retires one (a 404), the next is used, so the AI keeps working. Override first with GEMINI_MODEL.
+export const GEMINI_MODELS = ["gemini-3.8-flash", "gemini-flash-latest"];
 export const MAX_TEXT = 4000;
 export const MAX_ITEMS = 30;
 export const MAX_TURNS = 8;
