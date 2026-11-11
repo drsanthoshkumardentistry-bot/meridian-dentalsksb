@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import QRCode from "qrcode";
 import { Download, Copy, MessageCircle } from "lucide-react";
 
 const btn = "px-3 py-2 bg-white border border-rule hover:bg-enamel rounded-lg text-xs font-semibold text-slate-800 inline-flex items-center gap-1.5";
@@ -9,7 +8,7 @@ export default function BookingShare({ url, clinicName, onCopy }) {
   const [png, setPng] = useState("");
   useEffect(() => {
     let live = true;
-    QRCode.toDataURL(url, { margin: 2, width: 600, errorCorrectionLevel: "M" }).then((d) => live && setPng(d)).catch(() => live && setPng(""));
+    import("qrcode").then((m) => (m.default || m).toDataURL(url, { margin: 2, width: 600, errorCorrectionLevel: "M" })).then((d) => live && setPng(d)).catch(() => live && setPng(""));
     return () => { live = false; };
   }, [url]);
   const text = `Book an appointment at ${clinicName || "our clinic"}: ${url}`;

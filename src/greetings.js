@@ -4,6 +4,7 @@
  * Only patients who agreed to WhatsApp, with a valid mobile, and not already greeted this year.
  * ============================================================================== */
 
+import { localized } from "./messageLanguage.js";
 import { whatsappNumber, hasWhatsAppConsent, dateKey } from "./reminders.js";
 
 const parseDob = (dob) => {
@@ -37,7 +38,8 @@ export const dueBirthdays = (patients = [], now = new Date()) => {
   return list.sort((a, b) => a.patient.name.localeCompare(b.patient.name));
 };
 
-export const buildBirthdayMessage = ({ clinicName, patient }) =>
+export const buildBirthdayMessage = ({ clinicName, patient, language }) =>
+  localized("birthday", language, { clinicName, firstName: String(patient.name || "").split(/\s+/)[0] || "" }) ||
   `Happy birthday, ${String(patient.name || "").split(/\s+/)[0] || "there"}! 🎂\n\n` +
   `Wishing you a healthy and happy year ahead, from all of us at ${clinicName || "your dental clinic"}.\n\n` +
   `Keep smiling!`;

@@ -29,5 +29,7 @@ describe("birthdays", () => {
     expect(m).toContain("Smile Care");
     expect(markGreeted(p(), on(2026, 11, 11)).lastGreetedAt).toMatch(/^2026-11-1/);
     expect(buildBirthdayMessage({ patient: { name: "" } })).toContain("Happy birthday, there!");
+    expect(buildBirthdayMessage({ clinicName: "Smile Care", patient: p(), language: "hi" })).toContain("जन्मदिन मुबारक, Asha");
+    expect(buildBirthdayMessage({ clinicName: "Smile Care", patient: p(), language: "ta" })).toContain("பிறந்தநாள் வாழ்த்துகள், Asha");
   });
 });
