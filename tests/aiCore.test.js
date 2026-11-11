@@ -29,6 +29,24 @@ describe("AI request building", () => {
   });
 });
 
+describe("help chat requests", () => {
+  it("keeps the last turns and needs a final user question", () => {
+    const msgs = Array.from({ length: 12 }, (_, i) => ({ role: i % 2 ? "assistant" : "user", content: "m" + i }));
+    msgs.push({ role: "user", content: "last question" });
+    const r = buildRequest({ task: "help", messages: msgs });
+    expect(r.ok).toBe(true);
+    expect(r.messages.length).toBeLessThanOrEqual(8);
+    expect(r.messages[0].role).toBe("user");
+    expect(r.messages[r.messages.length - 1].content).toBe("last question");
+    expect(r.system).toMatch(/Patients & Odontogram/);
+    expect(r.system).toMatch(/Never give medical/);
+  });
+  it("rejects empty or assistant-last chats", () => {
+    expect(buildRequest({ task: "help", messages: [] }).ok).toBe(false);
+    expect(buildRequest({ task: "help", messages: [{ role: "user", content: "hi" }, { role: "assistant", content: "yo" }] }).ok).toBe(false);
+  });
+});
+
 describe("parsing the model reply", () => {
   it("reads JSON even with extra words around it", () => {
     const n = parseVisitNote('Here: {"complaint":"Pain","findings":"Caries 36","treatment":"","advice":"Soft diet","nextVisit":"1 week"} done');

@@ -22,6 +22,7 @@ export const PRIVACY = {
       "Data is stored with Google Firebase (Cloud Firestore and Firebase Authentication). Each clinic's records sit under its own account and are not visible to other clinics. Only people the clinic invites, with a role the clinic chooses, can open them. Branch-limited staff see only their branch.",
       "Our service providers are Google (data storage and sign-in), Vercel (website hosting) and, only when a clinic switches on MeriDent AI writing help, Google (the Gemini AI service). They process data only to provide those services."] },
     { h: "MeriDent AI writing help", p: [
+      "MeriDent AI also has a Help chat in the bottom right corner. It sends only the question a user types, and the recent chat, to the AI service so it can answer how to use MeriDent. Users are told not to type patient details.",
       "MeriDent AI writing help is off by default. A clinic's owner or manager can switch it on in Practice Profile. When a user asks for a draft, only the text typed for that request, or the treatment names, teeth and amounts of the chosen plan, is sent to Google's Gemini service. On its free plan Google may keep this text and use it to improve its products, so clinics should not type anything they would not want kept. The patient's name and phone number are not sent.",
       "AI output is a draft. The dentist must read and edit it before saving or sending it, and it is not medical advice or a diagnosis."] },
     { h: "WhatsApp messages", p: [
