@@ -34,6 +34,8 @@ import PatientSummary from "./components/PatientSummary.jsx";
 import PhysicianConsult from "./components/PhysicianConsult.jsx";
 import { rotaWarning } from "./rota.js";
 import { isAllowedHost, HOST_ERROR } from "./allowedHosts.js";
+import { checkAccess } from "./accessGate.js";
+import AccessLimited from "./components/AccessLimited.jsx";
 import StaffRota from "./components/StaffRota.jsx";
 import TextTemplates from "./components/TextTemplates.jsx";
 import { rxAdviceLines } from "./templates.js";
@@ -627,6 +629,16 @@ export default function App() {
   const CLINIC_ID = isVerified && membershipReady ? (activeMember ? activeMember.clinicId : authUser.uid) : null;
   // Team members keep their own device cache so they never read or overwrite the owner's
   const CACHE_ID = CLINIC_ID && activeMember ? `${CLINIC_ID}_s${authUser.uid}` : CLINIC_ID;
+
+  // "checking" until the access list answers; "blocked" when the clinic network is closed to this address
+  const [accessState, setAccessState] = useState("checking");
+  useEffect(() => {
+    if (!isVerified || !authUser?.email || !db) { setAccessState("checking"); return undefined; }
+    let live = true;
+    setAccessState("checking");
+    checkAccess(db, authUser.email).then((s) => { if (live) setAccessState(s); });
+    return () => { live = false; };
+  }, [isVerified, authUser?.email]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!isVerified || !authUser?.email || !db) {
@@ -1870,7 +1882,11 @@ export default function App() {
     );
   }
 
-  if (isVerified && !membershipReady) {
+  if (isVerified && accessState === "blocked") {
+    return <AccessLimited email={authUser.email} onLogout={() => handleLogout()} />;
+  }
+
+  if (isVerified && (!membershipReady || (db && accessState === "checking"))) {
     return <AppLoading />;
   }
 

@@ -184,3 +184,42 @@ describe("online booking", () => {
     await assertFails(updateDoc(doc(as(env, OWNER), "bookingRequests", "r1"), { name: "Changed" }));
   });
 });
+
+describe("closed access list", () => {
+  const GMAIL = "owner@gmail.com";
+  const asGmail = (uid, email) => env.authenticatedContext(uid, { email, email_verified: true }).firestore();
+  const clinicDoc = (db, uid) => doc(db, "clinics", uid, "patients", "p1");
+
+  it("stays open until the switch is turned on", async () => {
+    await assertSucceeds(setDoc(clinicDoc(asGmail("u1", "anyone@gmail.com"), "u1"), { name: "A" }));
+  });
+  it("with the switch on, only approved addresses reach their clinic", async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, "config", "access"), { restrict: true });
+      await setDoc(doc(db, "allowedEmails", GMAIL), { ok: true });
+    });
+    await assertSucceeds(setDoc(clinicDoc(asGmail("u1", "Owner@Gmail.com"), "u1"), { name: "A" }));
+    await assertFails(setDoc(clinicDoc(asGmail("u2", "stranger@gmail.com"), "u2"), { name: "B" }));
+    await assertFails(getDoc(clinicDoc(asGmail("u2", "stranger@gmail.com"), "u2")));
+  });
+  it("a refused address can still read the switch and its own entry, but not change or list them", async () => {
+    await seed(env, async (db) => { await setDoc(doc(db, "config", "access"), { restrict: true }); });
+    const stranger = asGmail("u2", "stranger@gmail.com");
+    await assertSucceeds(getDoc(doc(stranger, "config", "access")));
+    await assertSucceeds(getDoc(doc(stranger, "allowedEmails", "stranger@gmail.com")));
+    await assertFails(getDoc(doc(stranger, "allowedEmails", "someone-else@gmail.com")));
+    await assertFails(setDoc(doc(stranger, "allowedEmails", "stranger@gmail.com"), { ok: true }));
+    await assertFails(setDoc(doc(stranger, "config", "access"), { restrict: false }));
+    await assertFails(getDocs(collection(stranger, "allowedEmails")));
+  });
+  it("an approved team member still needs the address on the list", async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, "clinicStaff", "doc@gmail.com"), { email: "doc@gmail.com", clinicId: "clinicA", clinicName: "A", role: "dentist", branchIds: [], status: "active", active: true });
+      await setDoc(doc(db, "config", "access"), { restrict: true });
+    });
+    const d = asGmail("d1", "doc@gmail.com");
+    await assertFails(getDoc(doc(d, "clinics", "clinicA", "patients", "p1")));
+    await seed(env, (db) => setDoc(doc(db, "allowedEmails", "doc@gmail.com"), { ok: true }));
+    await assertSucceeds(getDoc(doc(d, "clinics", "clinicA", "patients", "p1")));
+  });
+});
