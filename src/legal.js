@@ -68,7 +68,23 @@ export const TERMS = {
   ],
 };
 
-export const PAGES = { privacy: PRIVACY, terms: TERMS };
+export const PRICING = {
+  title: "Pricing",
+  intro: "MeriDent is free while we are in early access. There is no card to enter and no trial that runs out.",
+  sections: [
+    { h: "What you get today", p: [
+      "Everything in the app, for your whole clinic: patient records with the tooth chart, appointments, treatment plans, GST invoices with UPI QR, stock, staff and roles, reports, branches, consent forms and MeriDent Connect."] },
+    { h: "What happens later", p: [
+      "We will introduce paid plans after early access. Clinics already using MeriDent will get at least 60 days' written notice, in the app and on WhatsApp, before any charge begins. You choose then whether to continue.",
+      "Anything that costs us money per use, such as automatic WhatsApp reminders sent through Meta, would be an optional add-on. It would never be switched on without your say."] },
+    { h: "Your data stays yours", p: [
+      "Whatever happens with pricing, you can download a full copy of your records from Practice Profile at any time and take it elsewhere. We will not hold your data back."] },
+    { h: "Questions about pricing", p: [
+      "If you are a larger group or want to plan ahead, message us and we will tell you what we know."] },
+  ],
+};
+
+export const PAGES = { privacy: PRIVACY, terms: TERMS, pricing: PRICING };
 export const legalPageFromSearch = (search = "") => {
   const key = new URLSearchParams(search).get("page");
   return Object.prototype.hasOwnProperty.call(PAGES, key) ? key : null;
