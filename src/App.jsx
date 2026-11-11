@@ -32,6 +32,8 @@ import HelpChat from "./components/HelpChat.jsx";
 import DmyDateInput from "./components/DmyDateInput.jsx";
 import PatientSummary from "./components/PatientSummary.jsx";
 import PhysicianConsult from "./components/PhysicianConsult.jsx";
+import OptionLists from "./components/OptionLists.jsx";
+import { listOf, withCurrent } from "./optionLists.js";
 import PracticeChairs, { ProfileNote, ProfileNotesContext } from "./components/PracticeChairs.jsx";
 import { chairNames, setProfileNote } from "./chairs.js";
 import PatientLabels, { LabelChips } from "./components/PatientLabels.jsx";
@@ -434,7 +436,6 @@ const ALCOHOL_OPTIONS = ["Not recorded", "None", "Occasional", "Regular"];
 const BRUSHING_OPTIONS = ["Not recorded", "Not daily", "Once daily", "Twice daily", "More than twice"];
 const DIET_OPTIONS = ["Not recorded", "Vegetarian", "Mixed", "Eggetarian", "Vegan"];
 const PAYMENT_MODES = ["Cash", "UPI", "Card", "Net banking"];
-const VISIT_TYPES = ["New patient", "Follow-up", "Review", "Emergency"];
 const COUNCIL_NAMES = ["Dental Council of India", "Tamil Nadu Dental Council", "Karnataka State Dental Council", "Kerala State Dental Council", "Andhra Pradesh State Dental Council", "Telangana State Dental Council", "Maharashtra State Dental Council", "Other State Dental Council"];
 
 const digitsOnly = (value) => String(value || "").replace(/\D/g, "");
@@ -1905,6 +1906,7 @@ export default function App() {
           <option key={pt.id} value={pt.name} />
         ))}
       </datalist>
+      <datalist id="procedure-options">{listOf(practiceProfile, "procedures").map((p) => <option key={p} value={p} />)}</datalist>
       <datalist id="doctor-options">
         {doctorOptions.map((name) => (
           <option key={name} value={name} />
@@ -3270,6 +3272,10 @@ export default function App() {
                 </div>
               )}
 
+              {(role === "owner" || role === "manager") && (
+                <OptionLists profile={practiceProfile} onProfile={setPracticeProfile} showToast={showToast} />
+              )}
+
               {(role === "owner" || role === "manager") && <FeeList fees={practiceProfile.fees} newId={newId} onChange={(list) => setPracticeProfile({ ...practiceProfile, fees: list })} />}
 
               {(role === "owner" || role === "manager") && (
@@ -3735,13 +3741,7 @@ export default function App() {
                 onChange={(e) => setNewStaffForm({...newStaffForm, role: e.target.value})}
                 className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl bg-white focus:outline-none"
               >
-                <option>Orthodontist</option>
-                <option>Endodontist</option>
-                <option>Oral & Maxillofacial Surgeon</option>
-                <option>Periodontist</option>
-                <option>General Dentistry</option>
-                <option>Hygienist</option>
-                <option>Dental Assistant</option>
+                {withCurrent(listOf(practiceProfile, "staffRoles"), newStaffForm.role).map((o) => <option key={o}>{o}</option>)}
               </select>
             </div>
 
@@ -3776,9 +3776,7 @@ export default function App() {
                 onChange={(e) => setNewStaffForm({...newStaffForm, shift: e.target.value})}
                 className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl bg-white focus:outline-none"
               >
-                <option>Morning</option>
-                <option>Evening</option>
-                <option>Full day</option>
+                {withCurrent(listOf(practiceProfile, "shifts"), newStaffForm.shift).map((o) => <option key={o}>{o}</option>)}
               </select>
             </div>
 
@@ -5280,7 +5278,7 @@ export default function App() {
                   onChange={(e) => setNewApptForm({ ...newApptForm, visitType: e.target.value })}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none bg-white"
                 >
-                  {VISIT_TYPES.map((v) => (
+                  {withCurrent(listOf(practiceProfile, "visitTypes"), newApptForm.visitType).map((v) => (
                     <option key={v}>{v}</option>
                   ))}
                 </select>
@@ -5291,6 +5289,7 @@ export default function App() {
               <label className="block font-semibold text-slate-600 mb-1">Planned Procedure</label>
               <input
                 type="text"
+                list="procedure-options"
                 value={newApptForm.procedure}
                 onChange={(e) => setNewApptForm({ ...newApptForm, procedure: e.target.value })}
                 placeholder="e.g. Composite Restoration #16"
@@ -5571,10 +5570,7 @@ export default function App() {
                   onChange={(e) => setNewStockForm({ ...newStockForm, category: e.target.value })}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                 >
-                  <option>Restorative</option>
-                  <option>Surgical</option>
-                  <option>Materials</option>
-                  <option>Medications</option>
+                  {withCurrent(listOf(practiceProfile, "stockCategories"), newStockForm.category).map((o) => <option key={o}>{o}</option>)}
                 </select>
               </div>
 
