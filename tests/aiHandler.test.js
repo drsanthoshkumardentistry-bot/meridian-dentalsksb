@@ -62,6 +62,18 @@ describe("/api/ai", () => {
     expect(res.statusCode).toBe(429);
     expect(res.body.error).toMatch(/busy/i);
   });
+  it("sends chat history to Gemini with model and user roles", async () => {
+    process.env.GEMINI_API_KEY = "gem-test";
+    global.fetch = vi.fn(async (url) => String(url).includes("identitytoolkit")
+      ? { ok: true, json: async () => ({ users: [{ localId: "u3" }] }) }
+      : { ok: true, status: 200, json: async () => ({ candidates: [{ content: { parts: [{ text: "Open Billing." }] } }] }) });
+    const res = await call({ task: "help", messages: [{ role: "user", content: "how to bill" }, { role: "assistant", content: "ok" }, { role: "user", content: "and print?" }] });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.text).toBe("Open Billing.");
+    const g = global.fetch.mock.calls.find((c) => String(c[0]).includes("generativelanguage"));
+    const sent = JSON.parse(g[1].body);
+    expect(sent.contents.map((c) => c.role)).toEqual(["user", "model", "user"]);
+  });
   it("answers 400 for bad input", async () => {
     expect((await call({ task: "plan_explain", items: [] })).statusCode).toBe(400);
   });

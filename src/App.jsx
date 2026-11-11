@@ -28,6 +28,7 @@ import BookingRequests from "./components/BookingRequests.jsx";
 import Assessments from "./components/Assessments.jsx";
 import { draftVisitNote } from "./clinicalNote.js";
 import { askAi } from "./aiClient.js";
+import HelpChat from "./components/HelpChat.jsx";
 import { addAssessment, removeAssessment } from "./assessments.js";
 import { addWalkIn, setQueueStatus, pruneQueue } from "./queue.js";
 import { buildBookingPage, bookingUrl, requestToAppointment } from "./booking.js";
@@ -1876,11 +1877,13 @@ export default function App() {
 
       {/* Toast Notifier */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 bg-ink text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2.5 text-xs border border-slate-700 animate-fade-in">
+        <div className="fixed bottom-20 right-5 z-50 bg-ink text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2.5 text-xs border border-slate-700 animate-fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           <span>{toastMessage}</span>
         </div>
       )}
+
+      <HelpChat />
 
       <datalist id="patient-options">
         {patients.map((pt) => (

@@ -56,8 +56,8 @@ export default async function handler(req, res) {
         headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: built.system }] },
-          contents: [{ role: "user", parts: [{ text: built.user }] }],
-          generationConfig: { maxOutputTokens: 900, temperature: 0.3 },
+          contents: (built.messages || [{ role: "user", content: built.user }]).map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
+          generationConfig: { maxOutputTokens: 1000, temperature: 0.3 },
         }),
       });
       if (r.status === 429) return send(res, 429, { error: "MeriDent AI is busy. Try again in a minute." });
@@ -69,7 +69,7 @@ export default async function handler(req, res) {
       const r = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
-        body: JSON.stringify({ model: MODEL, max_tokens: 700, system: built.system, messages: [{ role: "user", content: built.user }] }),
+        body: JSON.stringify({ model: MODEL, max_tokens: 700, system: built.system, messages: built.messages || [{ role: "user", content: built.user }] }),
       });
       if (r.status === 429) return send(res, 429, { error: "MeriDent AI is busy. Try again in a minute." });
       if (!r.ok) return send(res, 502, { error: "MeriDent AI could not answer. Try again." });
