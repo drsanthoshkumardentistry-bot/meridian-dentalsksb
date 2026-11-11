@@ -3233,9 +3233,9 @@ export default function App() {
                 <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-xs space-y-2" data-testid="ai-settings">
                   <label className="flex items-center gap-2 font-semibold text-slate-800">
                     <input type="checkbox" checked={Boolean(practiceProfile.aiEnabled)} onChange={(e) => setPracticeProfile({ ...practiceProfile, aiEnabled: e.target.checked })} />
-                    Use AI writing help (drafts only)
+                    Use MeriDent AI writing help (drafts only)
                   </label>
-                  <p className="text-slate-600">When on, staff can ask AI to tidy visit notes and explain a treatment plan in the patient's language. Only the text typed for that request is sent to an AI service, never the patient's name or phone number. Every draft must be checked by the dentist.</p>
+                  <p className="text-slate-600">When on, staff can ask MeriDent AI to tidy visit notes and explain a treatment plan in the patient's language. Only the text typed for that request is sent to an outside AI service (Google Gemini on its free plan, which may keep the text and use it to improve Google products), never the patient's name or phone number. Every draft must be checked by the dentist.</p>
                 </div>
               )}
 
@@ -4144,10 +4144,10 @@ export default function App() {
                   </div>
                   {practiceProfile.aiEnabled && (
                     <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-xs space-y-2" data-testid="ai-visit-note">
-                      <label htmlFor="ai-notes" className="block font-semibold text-slate-700">Type quick notes, then let AI tidy them into the fields below</label>
+                      <label htmlFor="ai-notes" className="block font-semibold text-slate-700">Type quick notes, then let MeriDent AI tidy them into the fields below</label>
                       <textarea id="ai-notes" rows="3" value={aiNotes} onChange={(e) => setAiNotes(e.target.value)} placeholder="e.g. pain lower left 3 days, deep caries 36 tender on percussion, started RCT access opening, soft diet, come back next week" className="w-full p-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none" />
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-slate-500">Do not type the patient's name or phone number. AI writes a draft. You check it before saving.</span>
+                        <span className="text-slate-500">Do not type the patient's name or phone number. MeriDent AI writes a draft. You check it before saving.</span>
                         <button
                           type="button"
                           disabled={aiBusy}
@@ -4156,16 +4156,16 @@ export default function App() {
                             try {
                               const { note } = await askAi({ task: "visit_note", notes: aiNotes });
                               setVisitForm((f) => ({ ...f, complaint: note.complaint || f.complaint, findings: note.findings || f.findings, treatment: note.treatment || f.treatment, advice: note.advice || f.advice, nextVisit: note.nextVisit || f.nextVisit }));
-                              showToast("AI draft added. Check and edit it before saving");
+                              showToast("MeriDent AI draft added. Check and edit it before saving");
                             } catch (error) {
-                              showToast(error.message || "AI help is not available right now.");
+                              showToast(error.message || "MeriDent AI is not available right now.");
                             } finally {
                               setAiBusy(false);
                             }
                           }}
                           className="px-3 py-1.5 rounded-lg bg-[#1d4ed8] hover:bg-blue-700 text-white font-semibold disabled:opacity-60"
                         >
-                          {aiBusy ? "Writing..." : "Tidy with AI"}
+                          {aiBusy ? "Writing..." : "Tidy with MeriDent AI"}
                         </button>
                       </div>
                     </div>

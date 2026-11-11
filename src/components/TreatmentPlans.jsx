@@ -136,7 +136,7 @@ export default function TreatmentPlans({ patient, practiceProfile, onChange, onB
       setExplain({ planId: plan.id, loading: false, text });
     } catch (error) {
       setExplain(null);
-      showToast(error.message || "AI help is not available right now.");
+      showToast(error.message || "MeriDent AI is not available right now.");
     }
   };
 
@@ -335,7 +335,7 @@ export default function TreatmentPlans({ patient, practiceProfile, onChange, onB
             {explain && explain.planId === plan.id && !explain.loading && (
               <div className="rounded-lg border border-blue-200 bg-blue-50/60 p-3 space-y-2" data-testid="plan-explanation">
                 <textarea aria-label="AI explanation for the patient" rows="6" value={explain.text} onChange={(e) => setExplain({ ...explain, text: e.target.value })} className="w-full p-2 border border-slate-300 rounded-lg bg-white text-xs" />
-                <p className="text-[11px] text-slate-500">AI draft in the patient's language. Read and edit it before sending.</p>
+                <p className="text-[11px] text-slate-500">MeriDent AI draft in the patient's language. Read and edit it before sending.</p>
                 <div className="flex gap-2">
                   <button type="button" onClick={sendExplanation} className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 text-white">Send on WhatsApp</button>
                   <button type="button" onClick={() => setExplain(null)} className="px-2.5 py-1 rounded-lg text-xs font-semibold border border-slate-300 text-slate-700">Close</button>
@@ -351,7 +351,7 @@ export default function TreatmentPlans({ patient, practiceProfile, onChange, onB
               </button>
               {practiceProfile?.aiEnabled && (
                 <button type="button" disabled={explain && explain.planId === plan.id && explain.loading} onClick={() => explainPlan(plan)} className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 border border-blue-200 text-blue-800 disabled:opacity-60">
-                  {explain && explain.planId === plan.id && explain.loading ? "Writing..." : "Explain for patient (AI)"}
+                  {explain && explain.planId === plan.id && explain.loading ? "Writing..." : "Explain for patient (MeriDent AI)"}
                 </button>
               )}
               {plan.status === "Proposed" && (

@@ -2,12 +2,13 @@
 // The helper only rewrites what the dentist typed or what is already in the plan. It never diagnoses.
 
 export const MODEL = "claude-haiku-5-5";
+export const GEMINI_MODEL = "gemini-2.5-flash";
 export const MAX_TEXT = 4000;
 export const MAX_ITEMS = 30;
 export const LANGUAGE_NAMES = { English: "English", Tamil: "Tamil", Hindi: "Hindi", Telugu: "Telugu", Malayalam: "Malayalam", Kannada: "Kannada", Marathi: "Marathi", Bengali: "Bengali", Gujarati: "Gujarati", Punjabi: "Punjabi" };
 
 const RULES = [
-  "You are a writing assistant inside a dental practice app in India.",
+  "You are MeriDent AI, a writing assistant inside a dental practice app in India.",
   "You only reorganise or rephrase information you are given. You never add findings, diagnoses, treatments, doses, medicines, prices or promises that are not in the input.",
   "If something is missing, leave it blank instead of guessing.",
   "Never include a patient's name, phone number or address.",
