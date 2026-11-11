@@ -44,6 +44,9 @@ import { planToInvoiceItems, markPlanBilled, plannedTeeth, planTotals } from "./
 import ConsentForms from "./components/ConsentForms.jsx";
 import { consentHtml } from "./consent.js";
 import BranchCompare from "./components/BranchCompare.jsx";
+import { languageOf } from "./messageLanguage.js";
+import SetupChecklist from "./components/SetupChecklist.jsx";
+import { setupProgress } from "./setup.js";
 import DentistEarnings from "./components/DentistEarnings.jsx";
 import BookingShare from "./components/BookingShare.jsx";
 import { dentistEarnings, dentistEarningsCsv, cleanPct } from "./dentistReport.js";
@@ -120,7 +123,6 @@ import { collection, doc, setDoc, onSnapshot, deleteDoc } from "firebase/firesto
 import LandingPage from "./components/landingpage";
 import { AppLoading, VerifyEmailScreen, IdleWarning } from "./components/AuthScreens";
 import { friendlyAuthError, usesPasswordLogin } from "./authErrors";
-import QRCode from "qrcode";
 import {
   dateKey, dueAppointmentReminders, buildAppointmentReminder, duePaymentReminders, buildPaymentReminder,
   whatsappLink, markAppointmentReminded, markInvoiceReminded, formatTime12,
@@ -1435,7 +1437,7 @@ export default function App() {
   const sendApptReminder = ({ appt, kind }) => {
     const link = whatsappLink(
       appt.phone,
-      buildAppointmentReminder({ clinicName: practiceProfile.name, appt, kind })
+      buildAppointmentReminder({ clinicName: practiceProfile.name, appt, kind, language: languageOf(patients.find((p) => String(p.id) === String(appt.patientId))) })
     );
     if (!link) {
       showToast("This patient has no valid mobile number");
@@ -1448,7 +1450,7 @@ export default function App() {
   const sendPayReminder = ({ inv, phone }) => {
     const link = whatsappLink(
       phone,
-      buildPaymentReminder({ clinicName: practiceProfile.name, inv, upiId: isValidUpiId(practiceProfile.upiId) ? practiceProfile.upiId : "" })
+      buildPaymentReminder({ clinicName: practiceProfile.name, inv, upiId: isValidUpiId(practiceProfile.upiId) ? practiceProfile.upiId : "", language: languageOf(patients.find((p) => String(p.id) === String(inv.patientId))) })
     );
     if (!link) {
       showToast("This patient has no valid mobile number");
@@ -1461,7 +1463,7 @@ export default function App() {
   const sendRecall = ({ patient, months }) => {
     const link = whatsappLink(
       patient.phone,
-      buildRecallMessage({ clinicName: practiceProfile.name, clinicPhone: practiceProfile.phone, patient, months })
+      buildRecallMessage({ clinicName: practiceProfile.name, clinicPhone: practiceProfile.phone, patient, months, language: languageOf(patient) })
     );
     if (!link) {
       showToast("This patient has no valid mobile number");
@@ -1544,7 +1546,7 @@ export default function App() {
       setUpiQrDataUrl("");
       return undefined;
     }
-    QRCode.toDataURL(upiUri, { margin: 1, width: 240 })
+    import("qrcode").then((m) => (m.default || m).toDataURL(upiUri, { margin: 1, width: 240 }))
       .then((url) => !cancelled && setUpiQrDataUrl(url))
       .catch(() => !cancelled && setUpiQrDataUrl(""));
     return () => {
@@ -3436,6 +3438,7 @@ export default function App() {
 
           {activeNav === "Dashboard" && (
             <div className="space-y-6">
+
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 sm:gap-3">
                 <div>
                   <h1 className="text-2xl font-bold tracking-tight text-slate-900">Clinical Overview</h1>
@@ -3445,6 +3448,13 @@ export default function App() {
                   View today's diary ›
                 </button>
               </div>
+
+              {role === "owner" && <SetupChecklist
+                progress={setupProgress({ profile: practiceProfile, patients: allPatients, appointments: allAppointments, invoices: allInvoices })}
+                dismissed={Boolean(practiceProfile.setupHidden)}
+                onGo={(to) => setActiveNav(to)}
+                onDismiss={() => setPracticeProfile({ ...practiceProfile, setupHidden: true })}
+              />}
 
               <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
                 {[
@@ -4519,7 +4529,7 @@ export default function App() {
                     {patientSelect("gender", "Gender", ["Female", "Male", "Other"], { required: true, blank: true })}
                     {patientSelect("bloodGroup", "Blood group", BLOOD_GROUPS)}
                     {patientField("occupation", "Occupation")}
-                    {patientSelect("language", "Preferred language", LANGUAGES)}
+                    {patientSelect("language", "Preferred language", LANGUAGES, { hint: "WhatsApp reminders are written in English, Tamil or Hindi to match." })}
                   </div>
 
                   <SectionTitle>Address and contact</SectionTitle>
