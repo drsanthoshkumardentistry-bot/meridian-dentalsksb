@@ -15,6 +15,8 @@ const POSTS = "connectPosts";
 const FOLLOWS = "connectFollows";
 const REPORTS = "connectReports";
 const SAVES = "connectSaves";
+const CHATS = "connectChats";
+const BLOCKS = "connectBlocks";
 export const FEED_PAGE = 20;
 
 export const toMillis = (v) => (v && typeof v.toMillis === "function" ? v.toMillis() : v ? new Date(v).getTime() : 0);
@@ -296,6 +298,46 @@ export const myVotes = async (db, uid, postIds) => {
   return Object.fromEntries(found.filter(Boolean));
 };
 
+// ---------------- Direct messages ----------------
+
+export const chatIdFor = (a, b) => [a, b].sort().join("_");
+
+/** My conversations, most recent first. */
+export const listChats = async (db, uid) => {
+  const snap = await getDocs(query(collection(db, CHATS), where("members", "array-contains", uid), limit(50)));
+  return snap.docs.map(withId).sort((a, b) => toMillis(b.updatedAt) - toMillis(a.updatedAt));
+};
+
+export const listMessages = async (db, chatId) => {
+  const snap = await getDocs(query(collection(db, CHATS, chatId, "messages"), orderBy("createdAt", "asc"), limit(200)));
+  return snap.docs.map(withId);
+};
+
+/** Sends one message. The conversation record is created or refreshed in the same write. */
+export const sendMessage = async (db, uid, me, otherId, text) => {
+  const members = [uid, otherId].sort();
+  const chatId = members.join("_");
+  const batch = writeBatch(db);
+  batch.set(doc(db, CHATS, chatId), {
+    members, names: { [uid]: me.fullName }, lastText: text.slice(0, 80), lastSenderId: uid, updatedAt: serverTimestamp(),
+  }, { merge: true });
+  batch.set(doc(collection(db, CHATS, chatId, "messages")), { senderId: uid, text, createdAt: serverTimestamp() });
+  await batch.commit();
+  return chatId;
+};
+
+export const deleteMessage = (db, chatId, messageId) => deleteDoc(doc(db, CHATS, chatId, "messages", messageId));
+
+export const blockedSet = async (db, uid) => {
+  const snap = await getDocs(query(collection(db, BLOCKS), where("blockerId", "==", uid)));
+  return new Set(snap.docs.map((d) => d.data().blockedId));
+};
+export const setBlocked = async (db, uid, otherId, on) => {
+  const ref = doc(db, BLOCKS, `${uid}_${otherId}`);
+  if (on) await setDoc(ref, { blockerId: uid, blockedId: otherId, createdAt: serverTimestamp() });
+  else await deleteDoc(ref);
+};
+
 /** Bind everything to one db and uid for the UI. */
 export const bindApi = (db, uid) => ({
   enabled: Boolean(db && uid),
@@ -337,4 +379,10 @@ export const bindApi = (db, uid) => ({
   countFollowers: () => countFollowers(db, uid),
   vote: (postId, option) => castVote(db, uid, postId, option),
   myVotes: (postIds) => myVotes(db, uid, postIds),
+  listChats: () => listChats(db, uid),
+  listMessages: (chatId) => listMessages(db, chatId),
+  sendMessage: (me, otherId, text) => sendMessage(db, uid, me, otherId, text),
+  deleteMessage: (chatId, messageId) => deleteMessage(db, chatId, messageId),
+  blockedSet: () => blockedSet(db, uid),
+  setBlocked: (otherId, on) => setBlocked(db, uid, otherId, on),
 });

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
+import ConnectMessages from "./ConnectMessages.jsx";
 import { MapPin, Phone, MessageCircle, ShieldCheck, Search } from "lucide-react";
 import {
   SPECIALTIES, specialtyLabel, DISTANCES_KM, URGENCIES, CONSENT_TEXT, MAX_SUMMARY,
@@ -143,7 +144,7 @@ function ConsultForm({ target, onCancel, onSend }) {
   );
 }
 
-function Finder({ api, me, showToast, refreshSent }) {
+function Finder({ api, me, showToast, refreshSent, onMessage }) {
   const [specialty, setSpecialty] = useState("all");
   const [radius, setRadius] = useState(10);
   const [state, setState] = useState({ status: "loading", docs: [] });
@@ -221,6 +222,7 @@ function Finder({ api, me, showToast, refreshSent }) {
                   <MessageCircle className="w-3 h-3" /> WhatsApp
                 </a>
               )}
+              <button type="button" onClick={() => onMessage?.({ id: d.id, name: d.fullName })} className={`${btn} border border-rule text-slate-800`}>Message</button>
               <button type="button" onClick={() => setOpenId(openId === d.id ? null : d.id)} className={`${btn} bg-brand-600 text-white`}>Ask for a consult</button>
             </div>
             {openId === d.id && (
@@ -368,6 +370,7 @@ export default function Connect({ api, defaults = {}, geocode, showToast, uid, i
   const [received, setReceived] = useState([]);
   const [sent, setSent] = useState([]);
   const [editing, setEditing] = useState(false);
+  const [chatWith, setChatWith] = useState(null);
 
   const loadMe = useCallback(async () => {
     try {
@@ -396,7 +399,7 @@ export default function Connect({ api, defaults = {}, geocode, showToast, uid, i
   if (status === "error") return <p role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">Could not open MeriDent Connect. Check your connection and reload.</p>;
 
   const tabs = verified
-    ? [["network", "Network"], ["find", "Find specialists"], ["inbox", `Requests received${newCount ? ` (${newCount})` : ""}`], ["sent", "Requests sent"], ["listing", "My listing"]]
+    ? [["network", "Network"], ["find", "Find specialists"], ["messages", "Messages"], ["inbox", `Requests received${newCount ? ` (${newCount})` : ""}`], ["sent", "Requests sent"], ["listing", "My listing"]]
     : [];
   if (admin) tabs.push(["admin", "Verify dentists"], ["reports", "Reports"]);
 
@@ -414,7 +417,8 @@ export default function Connect({ api, defaults = {}, geocode, showToast, uid, i
       </div>
     );
   } else if (tab === "network") body = <ConnectFeed api={api} me={me} admin={admin} showToast={showToast} />;
-  else if (tab === "find") body = <Finder api={api} me={me} showToast={showToast} refreshSent={loadConsults} />;
+  else if (tab === "find") body = <Finder api={api} me={me} showToast={showToast} refreshSent={loadConsults} onMessage={(d) => { setChatWith(d); setTab("messages"); }} />;
+  else if (tab === "messages") body = <ConnectMessages api={api} me={me} start={chatWith} showToast={showToast} />;
   else if (tab === "inbox") body = <ConsultList api={api} side="received" items={received} reload={loadConsults} showToast={showToast} />;
   else if (tab === "sent") body = <ConsultList api={api} side="sent" items={sent} reload={loadConsults} showToast={showToast} />;
   else if (tab === "listing") body = <Listing api={api} me={me} reloadMe={loadMe} showToast={showToast} />;
