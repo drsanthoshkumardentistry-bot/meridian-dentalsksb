@@ -32,6 +32,9 @@ import HelpChat from "./components/HelpChat.jsx";
 import DmyDateInput from "./components/DmyDateInput.jsx";
 import PatientSummary from "./components/PatientSummary.jsx";
 import PhysicianConsult from "./components/PhysicianConsult.jsx";
+import PatientLabels, { LabelChips } from "./components/PatientLabels.jsx";
+import AftercareSender from "./components/AftercareSender.jsx";
+import { LABELS, toggleLabel, filterByLabel, labelsOf } from "./labels.js";
 import { addAssessment, removeAssessment } from "./assessments.js";
 import { addWalkIn, setQueueStatus, pruneQueue } from "./queue.js";
 import { buildBookingPage, bookingUrl, requestToAppointment } from "./booking.js";
@@ -1425,6 +1428,7 @@ export default function App() {
   const [invoiceQuery, setInvoiceQuery] = useState("");
   const [diaryViewId, setDiaryViewId] = useState("upcoming");
   const [dayDate, setDayDate] = useState(dateKey());
+  const [labelFilter, setLabelFilter] = useState("");
   const [aiNotes, setAiNotes] = useState("");
   const [aiBusy, setAiBusy] = useState(false);
   const [visitForm, setVisitForm] = useState({ complaint: "", findings: "", treatment: "", advice: "", nextVisit: "", date: "" });
@@ -1730,9 +1734,10 @@ export default function App() {
     showToast(`Staff member ${staffMember.name} added successfully`);
   };
 
-  const filteredPatients = patients.filter((p) =>
+  const filteredPatients = filterByLabel(patients, labelFilter).filter((p) =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.phone.includes(searchQuery)
+    p.phone.includes(searchQuery) ||
+    labelsOf(p).some((l) => l.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const currentOpgPatient = patients.find((p) => p.id === (opgSelectedPatientId || (patients[0] && patients[0].id))) || null;
@@ -2083,9 +2088,20 @@ export default function App() {
                   aria-label="Filter patients"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Filter by name or phone"
+                  placeholder="Filter by name, phone or label"
                   className="mb-4 w-full sm:w-80 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none"
                 />
+              )}
+              {patients.length > 0 && (
+                <select
+                  aria-label="Filter by label"
+                  value={labelFilter}
+                  onChange={(e) => setLabelFilter(e.target.value)}
+                  className="mb-4 sm:ml-2 w-full sm:w-44 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none"
+                >
+                  <option value="">All labels</option>
+                  {LABELS.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+                </select>
               )}
               {filteredPatients.length === 0 ? (
                 <div className="bg-white rounded-xl border border-rule p-12 text-center space-y-3">
@@ -2122,6 +2138,7 @@ export default function App() {
                                 ALERT: {p.medicalAlert}
                               </span>
                             )}
+                            <LabelChips patient={p} />
                           </div>
                           <div className="text-xs text-slate-500 mt-1">
                             {p.phone}{patientLocation(p) ? ` • ${patientLocation(p)}` : ""} • Registered: {p.registeredDate}
@@ -4103,6 +4120,14 @@ export default function App() {
               </div>
 
               <PatientSummary patient={activePatient} appointments={appointments} invoices={invoices} />
+              <PatientLabels
+                patient={activePatient}
+                onToggle={(id) => {
+                  const r = toggleLabel(activePatient, id);
+                  if (r.error) return showToast(r.error);
+                  setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? r.patient : p)));
+                }}
+              />
 
               {/* TAB 1: 32-TOOTH ODONTOGRAM */}
               {activeModalTab === "32-Tooth Odontogram" && (
@@ -4222,6 +4247,13 @@ export default function App() {
                       <button type="submit" className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg font-semibold">Save visit note</button>
                     </div>
                   </form>
+
+                  <AftercareSender
+                    patient={activePatient}
+                    clinicName={practiceProfile.name}
+                    latestVisitText={((activePatient.visits || [])[0] ? [(activePatient.visits || [])[0].treatment, (activePatient.visits || [])[0].complaint].join(" ") : "")}
+                    showToast={showToast}
+                  />
 
                   {(activePatient.visits || []).length === 0 ? (
                     <p className="text-sm text-slate-500">No visit notes yet. Record what you found and did at each visit so the next one starts with the history.</p>
