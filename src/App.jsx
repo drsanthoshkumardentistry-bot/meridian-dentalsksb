@@ -27,6 +27,9 @@ import QueuePanel from "./components/QueuePanel.jsx";
 import BookingRequests from "./components/BookingRequests.jsx";
 import Assessments from "./components/Assessments.jsx";
 import { draftVisitNote } from "./clinicalNote.js";
+import { askAi } from "./aiClient.js";
+import HelpChat from "./components/HelpChat.jsx";
+import DmyDateInput from "./components/DmyDateInput.jsx";
 import { addAssessment, removeAssessment } from "./assessments.js";
 import { addWalkIn, setQueueStatus, pruneQueue } from "./queue.js";
 import { buildBookingPage, bookingUrl, requestToAppointment } from "./booking.js";
@@ -469,7 +472,7 @@ const EMPTY_PATIENT_FORM = {
   bloodGroup: "Unknown", occupation: "", language: "English", referredBy: "Walk-in",
   emergencyName: "", emergencyPhone: "", abhaNumber: "",
   pregnancy: "Not applicable", chiefComplaint: "",
-  conditions: "None reported", allergies: "NKDA", medicalAlert: "",
+  conditions: "", allergies: "", medicalAlert: "",
   consentTreatment: false, consentWhatsapp: true,
 };
 
@@ -500,7 +503,7 @@ function Field({ label, required, hint, className = "", children }) {
         {required ? " *" : ""}
       </label>
       {children}
-      {hint ? <p className="text-[10px] text-slate-500 mt-1">{hint}</p> : null}
+      {hint ? <p className="text-[11px] text-slate-600 mt-1">{hint}</p> : null}
     </div>
   );
 }
@@ -1420,6 +1423,8 @@ export default function App() {
   const [invoiceQuery, setInvoiceQuery] = useState("");
   const [diaryViewId, setDiaryViewId] = useState("upcoming");
   const [dayDate, setDayDate] = useState(dateKey());
+  const [aiNotes, setAiNotes] = useState("");
+  const [aiBusy, setAiBusy] = useState(false);
   const [visitForm, setVisitForm] = useState({ complaint: "", findings: "", treatment: "", advice: "", nextVisit: "", date: "" });
   const [diaryQuery, setDiaryQuery] = useState("");
   const visibleInvoices = invoiceView(invoices, { status: invoiceFilter, query: invoiceQuery });
@@ -1873,11 +1878,13 @@ export default function App() {
 
       {/* Toast Notifier */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 bg-ink text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2.5 text-xs border border-slate-700 animate-fade-in">
+        <div className="fixed bottom-20 right-5 z-50 bg-ink text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2.5 text-xs border border-slate-700 animate-fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           <span>{toastMessage}</span>
         </div>
       )}
+
+      <HelpChat />
 
       <datalist id="patient-options">
         {patients.map((pt) => (
@@ -2118,7 +2125,7 @@ export default function App() {
                             {p.phone}{patientLocation(p) ? ` • ${patientLocation(p)}` : ""} • Registered: {p.registeredDate}
                           </div>
                           <div className="text-xs text-slate-500 mt-0.5">
-                            Conditions: <span className="font-medium text-slate-700">{p.conditions || "None reported"}</span>
+                            Conditions: <span className="font-medium text-slate-700">{p.conditions || "Not recorded"}</span>
                           </div>
                         </div>
 
@@ -3226,6 +3233,16 @@ export default function App() {
 
               {(role === "owner" || role === "manager") && <FeeList fees={practiceProfile.fees} newId={newId} onChange={(list) => setPracticeProfile({ ...practiceProfile, fees: list })} />}
 
+              {(role === "owner" || role === "manager") && (
+                <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-xs space-y-2" data-testid="ai-settings">
+                  <label className="flex items-center gap-2 font-semibold text-slate-800">
+                    <input type="checkbox" checked={Boolean(practiceProfile.aiEnabled)} onChange={(e) => setPracticeProfile({ ...practiceProfile, aiEnabled: e.target.checked })} />
+                    Use MeriDent AI writing help (drafts only)
+                  </label>
+                  <p className="text-slate-600">When on, staff can ask MeriDent AI to tidy visit notes and explain a treatment plan in the patient's language. Only the text typed for that request is sent to an outside AI service (Google Gemini on its free plan, which may keep the text and use it to improve Google products), never the patient's name or phone number. Every draft must be checked by the dentist.</p>
+                </div>
+              )}
+
               <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-xs space-y-2" data-testid="booking-settings">
                 <label className="flex items-center gap-2 font-semibold text-slate-800">
                   <input type="checkbox" checked={Boolean(practiceProfile.onlineBooking)} onChange={(e) => setPracticeProfile({ ...practiceProfile, onlineBooking: e.target.checked })} />
@@ -4129,6 +4146,34 @@ export default function App() {
                       Draft from chart
                     </button>
                   </div>
+                  {practiceProfile.aiEnabled && (
+                    <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-xs space-y-2" data-testid="ai-visit-note">
+                      <label htmlFor="ai-notes" className="block font-semibold text-slate-700">Type quick notes, then let MeriDent AI tidy them into the fields below</label>
+                      <textarea id="ai-notes" rows="3" value={aiNotes} onChange={(e) => setAiNotes(e.target.value)} placeholder="e.g. pain lower left 3 days, deep caries 36 tender on percussion, started RCT access opening, soft diet, come back next week" className="w-full p-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none" />
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-slate-500">Do not type the patient's name or phone number. MeriDent AI writes a draft. You check it before saving.</span>
+                        <button
+                          type="button"
+                          disabled={aiBusy}
+                          onClick={async () => {
+                            setAiBusy(true);
+                            try {
+                              const { note } = await askAi({ task: "visit_note", notes: aiNotes });
+                              setVisitForm((f) => ({ ...f, complaint: note.complaint || f.complaint, findings: note.findings || f.findings, treatment: note.treatment || f.treatment, advice: note.advice || f.advice, nextVisit: note.nextVisit || f.nextVisit }));
+                              showToast("MeriDent AI draft added. Check and edit it before saving");
+                            } catch (error) {
+                              showToast(error.message || "MeriDent AI is not available right now.");
+                            } finally {
+                              setAiBusy(false);
+                            }
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-[#1d4ed8] hover:bg-blue-700 text-white font-semibold disabled:opacity-60"
+                        >
+                          {aiBusy ? "Writing..." : "Tidy with MeriDent AI"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
@@ -4535,12 +4580,12 @@ export default function App() {
                         <p className="text-[10px] text-rose-600 mt-1">Check the number: it should be a 10-digit Indian mobile.</p>
                       ) : null}
                     </Field>
-                    <Field label="Date of birth" hint="Optional. Updates age automatically.">
-                      <input
-                        type="date"
+                    <Field label="Date of birth" hint="Optional. Type as dd/mm/yyyy. Updates age automatically.">
+                      <DmyDateInput
+                        ariaLabel="Date of birth (dd/mm/yyyy)"
+                        max={dateKey()}
                         value={activePatient.dob || ""}
-                        onChange={(e) => {
-                          const dob = e.target.value;
+                        onChange={(dob) => {
                           updateActivePatient({ dob, ...(dob && ageFromDob(dob) !== "" ? { age: ageFromDob(dob) } : {}) });
                         }}
                         className={fieldInputClass}
@@ -4642,6 +4687,7 @@ export default function App() {
                       <input
                         type="text"
                         value={activePatient.conditions || ""}
+                        placeholder="Not recorded. Type None if none"
                         onChange={(e) => {
                           const val = e.target.value;
                           setPatients((prev) =>
@@ -4657,7 +4703,8 @@ export default function App() {
                       </div>
                       <input
                         type="text"
-                        value={activePatient.allergies || "NKDA"}
+                        value={activePatient.allergies || ""}
+                        placeholder="Not asked yet. Type NKDA if the patient has none"
                         onChange={(e) => {
                           const val = e.target.value;
                           setPatients((prev) =>
@@ -4745,13 +4792,12 @@ export default function App() {
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Date of Birth" hint="Optional. Fills the age automatically.">
-                <input
-                  type="date"
+              <Field label="Date of Birth" hint="Optional. Type as dd/mm/yyyy. Fills the age automatically.">
+                <DmyDateInput
+                  ariaLabel="Date of birth (dd/mm/yyyy)"
                   max={dateKey()}
                   value={newPatientForm.dob}
-                  onChange={(e) => {
-                    const dob = e.target.value;
+                  onChange={(dob) => {
                     const calculated = ageFromDob(dob);
                     setNewPatientForm({ ...newPatientForm, dob, age: dob && calculated !== "" ? calculated : newPatientForm.age });
                   }}
@@ -4888,6 +4934,7 @@ export default function App() {
                 <input
                   type="text"
                   value={newPatientForm.conditions}
+                  placeholder="Ask the patient. Type None if none"
                   onChange={(e) => setNewPatientForm({ ...newPatientForm, conditions: e.target.value })}
                   className={fieldInputClass}
                 />
@@ -4896,6 +4943,7 @@ export default function App() {
                 <input
                   type="text"
                   value={newPatientForm.allergies}
+                  placeholder="Ask the patient. Type NKDA if none"
                   onChange={(e) => setNewPatientForm({ ...newPatientForm, allergies: e.target.value })}
                   className={fieldInputClass}
                 />
