@@ -1,0 +1,11 @@
+{
+  "appId": "in.meridiandentalos.app",
+  "appName": "MeriDent",
+  "webDir": "dist",
+  "server": {
+    "url": "https://www.meridiandentalos.com",
+    "androidScheme": "https",
+    "allowNavigation": ["www.meridiandentalos.com", "meridiandentalos.com", "*.firebaseapp.com", "accounts.google.com", "wa.me", "api.whatsapp.com"]
+  },
+  "android": { "allowMixedContent": false }
+}

@@ -20,6 +20,9 @@
     "recharts": "^2.12.7"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/cli": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
     "@firebase/rules-unit-testing": "^3.0.4",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",
