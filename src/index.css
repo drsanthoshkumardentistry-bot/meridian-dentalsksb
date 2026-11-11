@@ -212,7 +212,7 @@ input::placeholder, textarea::placeholder { color: #64748b; opacity: 1; }
   background: linear-gradient(140deg, #dbe9ff, #bcd5fb); box-shadow: 0 30px 60px rgba(29, 78, 216, 0.18);
 }
 .scene3d-mid { position: relative; transform: translateZ(0); }
-.scene3d-tooth { position: absolute; top: -34px; right: 8px; width: 92px; transform: translateZ(120px); }
+.scene3d-tooth { position: absolute; top: -64px; right: -6px; width: 128px; transform: translateZ(120px); z-index: 3; }
 .scene3d-bill { position: absolute; right: -14px; bottom: -92px; transform: translateZ(80px) scale(0.86); transform-origin: bottom right; }
 .scene3d-wa { position: absolute; left: -34px; bottom: -78px; transform: translateZ(100px) scale(0.9); transform-origin: bottom left; }
 .scene3d-appt { position: absolute; left: 18px; top: -26px; transform: translateZ(70px); }
@@ -223,7 +223,7 @@ input::placeholder, textarea::placeholder { color: #64748b; opacity: 1; }
 @media (max-width: 640px) {
   .scene3d { padding-bottom: 1rem; }
   .scene3d-bill { position: relative; right: auto; bottom: auto; width: fit-content; margin: -16px 0 0 auto; transform: translateZ(40px); }
-  .scene3d-tooth { width: 68px; top: -26px; transform: translateZ(50px); }
+  .scene3d-tooth { width: 96px; top: -58px; right: -2px; transform: translateZ(50px); }
   .scene3d-back { transform: translateZ(-30px); }
   .scene3d-stage { animation-duration: 18s; }
 }
@@ -231,3 +231,24 @@ input::placeholder, textarea::placeholder { color: #64748b; opacity: 1; }
   .scene3d-stage, .float-a, .float-b, .float-c { animation: none !important; }
   .scene3d-tilt { transition: none; }
 }
+
+/* ---- Meri, the tooth fairy ---- */
+.fairy { overflow: visible; filter: drop-shadow(0 14px 16px rgba(29, 78, 216, 0.22)); }
+.fairy-float { animation: fairy-bob 3.6s ease-in-out infinite; transform-origin: 85px 100px; }
+@keyframes fairy-bob { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-7px) rotate(1.5deg); } }
+.fairy-wing-l { animation: wing-l 0.9s ease-in-out infinite alternate; }
+.fairy-wing-r { animation: wing-r 0.9s ease-in-out infinite alternate; }
+@keyframes wing-l { from { transform: rotate(8deg); } to { transform: rotate(-12deg); } }
+@keyframes wing-r { from { transform: rotate(-8deg); } to { transform: rotate(12deg); } }
+.fairy-eyes { animation: blink 4.5s infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+.fairy-wand { animation: wand 2.4s ease-in-out infinite; }
+@keyframes wand { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(8deg); } }
+.fairy-sparkle { animation: twinkle 1.8s ease-in-out infinite; transform-box: fill-box; }
+@keyframes twinkle { 0%, 100% { opacity: 0.15; transform: scale(0.5) rotate(0deg); } 50% { opacity: 1; transform: scale(1.15) rotate(25deg); } }
+.fairy-burst circle { animation: burst 0.8s ease-out forwards; transform-box: fill-box; transform-origin: center; }
+@keyframes burst { from { opacity: 1; transform: rotate(var(--a)) translateX(0); } to { opacity: 0; transform: rotate(var(--a)) translateX(34px); } }
+.fairy-bubble { animation: bubble-in 0.25s ease-out; }
+@keyframes bubble-in { from { opacity: 0; transform: translateY(6px) scale(0.96); } to { opacity: 1; transform: none; } }
+.fairy-still *, .fairy-still { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { .fairy *, .fairy-bubble { animation: none !important; } .fairy-sparkle { opacity: 0.8; } }

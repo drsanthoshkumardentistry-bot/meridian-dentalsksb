@@ -1,27 +1,6 @@
 import React, { useRef } from "react";
 import { MessageCircle, CalendarDays } from "lucide-react";
-
-/** A glossy molar drawn in SVG. It floats in front of the odontogram card. */
-function Tooth3D() {
-  return (
-    <svg viewBox="0 0 100 116" aria-hidden="true" className="w-full h-auto drop-shadow-[0_18px_22px_rgba(29,78,216,0.28)]">
-      <defs>
-        <radialGradient id="th-body" cx="34%" cy="26%" r="85%">
-          <stop offset="0" stopColor="#ffffff" />
-          <stop offset="0.55" stopColor="#eaf2ff" />
-          <stop offset="1" stopColor="#b9d0f7" />
-        </radialGradient>
-        <linearGradient id="th-edge" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#9db9ee" />
-          <stop offset="1" stopColor="#5b86dc" />
-        </linearGradient>
-      </defs>
-      <path d="M50 9C31 3 12 15 14 41c2 22 8 30 10 52 1 12 8 14 12 2 4-12 8-18 14-18s10 6 14 18c4 12 11 10 12-2 2-22 8-30 10-52C88 15 69 3 50 9Z" fill="url(#th-body)" stroke="url(#th-edge)" strokeWidth="1.6" />
-      <path d="M26 26c3-9 11-13 19-12" fill="none" stroke="#fff" strokeWidth="5" strokeLinecap="round" opacity="0.85" />
-      <ellipse cx="66" cy="60" rx="8" ry="16" fill="#8fb0ee" opacity="0.18" />
-    </svg>
-  );
-}
+import ToothFairy from "./ToothFairy.jsx";
 
 /**
  * Product artwork in a gently moving 3D scene. Pure CSS 3D, no library, so it stays light on older clinic PCs.
@@ -53,8 +32,8 @@ export default function Hero3D({ chart, bill }) {
           <div className="scene3d-layer scene3d-back" aria-hidden="true" />
           <div className="scene3d-layer scene3d-mid">{chart}</div>
 
-          <div className="scene3d-layer scene3d-tooth float-a" aria-hidden="true">
-            <Tooth3D />
+          <div className="scene3d-layer scene3d-tooth float-a">
+            <ToothFairy />
           </div>
 
           <div className="scene3d-layer scene3d-bill float-b">{bill}</div>

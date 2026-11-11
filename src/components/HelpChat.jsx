@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { MessageCircle, X, Send } from "lucide-react";
 import { askAi } from "../aiClient.js";
+import { FairySvg } from "./ToothFairy.jsx";
 
 const STARTERS = ["How do I add a patient?", "How do I send a WhatsApp reminder?", "How do I turn on online booking?"];
 
@@ -38,9 +39,12 @@ export default function HelpChat() {
       {open && (
         <div role="dialog" aria-label="MeriDent AI help" className="mb-3 w-[min(22rem,calc(100vw-2.5rem))] h-[28rem] max-h-[70vh] rounded-2xl bg-white border border-slate-200 shadow-2xl flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 bg-[#1d4ed8] text-white">
-            <div>
-              <div className="font-bold text-sm">MeriDent AI help</div>
-              <div className="text-[11px] text-blue-100">Ask how to use MeriDent</div>
+            <div className="flex items-center gap-2">
+              <span className="w-9 h-9 rounded-full bg-white/95 flex items-center justify-center overflow-hidden shrink-0"><FairySvg still className="w-8 h-8" /></span>
+              <div>
+                <div className="font-bold text-sm">MeriDent AI help</div>
+                <div className="text-[11px] text-blue-100">Meri the tooth fairy. Ask how to use MeriDent</div>
+              </div>
             </div>
             <button type="button" aria-label="Close help" onClick={() => setOpen(false)} className="p-1 rounded-lg hover:bg-blue-700"><X className="w-4 h-4" /></button>
           </div>
