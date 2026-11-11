@@ -4,6 +4,8 @@ export const LIST_DEFS = {
   procedures: { label: "Common procedures", defaults: ["Consultation", "Scaling and polishing", "Composite filling", "Root canal treatment", "Extraction", "Crown", "Dental X-ray", "Orthodontic review"] },
   staffRoles: { label: "Staff roles", defaults: ["Orthodontist", "Endodontist", "Oral & Maxillofacial Surgeon", "Periodontist", "General Dentistry", "Hygienist", "Dental Assistant"] },
   shifts: { label: "Staff shifts", defaults: ["Morning", "Evening", "Full day"] },
+  referralSources: { label: "How patients find you", defaults: ["Walk-in", "Doctor referral", "Friend / family", "Google / website", "Social media", "Camp / school", "Other"] },
+  guardianRelations: { label: "Guardian relations", defaults: ["Mother", "Father", "Guardian", "Other"] },
   stockCategories: { label: "Stock categories", defaults: ["Restorative", "Surgical", "Materials", "Medications"] },
 };
 export const MAX_OPTIONS = 30;

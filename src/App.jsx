@@ -32,6 +32,8 @@ import HelpChat from "./components/HelpChat.jsx";
 import DmyDateInput from "./components/DmyDateInput.jsx";
 import PatientSummary from "./components/PatientSummary.jsx";
 import PhysicianConsult from "./components/PhysicianConsult.jsx";
+import TextTemplates from "./components/TextTemplates.jsx";
+import { rxAdviceLines } from "./templates.js";
 import OptionLists from "./components/OptionLists.jsx";
 import { listOf, withCurrent } from "./optionLists.js";
 import PracticeChairs, { ProfileNote, ProfileNotesContext } from "./components/PracticeChairs.jsx";
@@ -429,8 +431,6 @@ const INDIAN_STATES = [
 ];
 const BLOOD_GROUPS = ["Unknown", "A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 const LANGUAGES = ["English", "Tamil", "Hindi", "Telugu", "Malayalam", "Kannada"];
-const REFERRAL_SOURCES = ["Walk-in", "Doctor referral", "Friend / family", "Google / website", "Social media", "Camp / school", "Other"];
-const GUARDIAN_RELATIONS = ["Mother", "Father", "Guardian", "Other"];
 const TOBACCO_OPTIONS = ["Not recorded", "None", "Smoking", "Smokeless tobacco", "Betel quid / areca nut", "More than one"];
 const ALCOHOL_OPTIONS = ["Not recorded", "None", "Occasional", "Regular"];
 const BRUSHING_OPTIONS = ["Not recorded", "Not daily", "Once daily", "Twice daily", "More than twice"];
@@ -1207,8 +1207,7 @@ export default function App() {
       (rxList ? `💊 *Medications Prescribed:*\n${rxList}\n\n` : "") +
       `----------------------------------------\n` +
       `⚠️ *Patient Care Advice:*\n` +
-      `• Please take prescribed medications strictly on time.\n` +
-      `• In case of persistent swelling or drug allergy, contact clinic immediately.\n\n` +
+      rxAdviceLines(practiceProfile).map((l) => `• ${l}\n`).join("") + `\n` +
       `_Sent via MeriDent_`
     );
 
@@ -3273,6 +3272,10 @@ export default function App() {
               )}
 
               {(role === "owner" || role === "manager") && (
+                <TextTemplates profile={practiceProfile} onProfile={setPracticeProfile} />
+              )}
+
+              {(role === "owner" || role === "manager") && (
                 <OptionLists profile={practiceProfile} onProfile={setPracticeProfile} showToast={showToast} />
               )}
 
@@ -4683,7 +4686,7 @@ export default function App() {
                       <SectionTitle>Parent / guardian (patient under 18)</SectionTitle>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         {patientField("guardianName", "Guardian name", { required: true })}
-                        {patientSelect("guardianRelation", "Relation", GUARDIAN_RELATIONS)}
+                        {patientSelect("guardianRelation", "Relation", listOf(practiceProfile, "guardianRelations"))}
                         {patientField("guardianPhone", "Guardian mobile", { type: "tel" })}
                       </div>
                     </div>
@@ -4695,7 +4698,7 @@ export default function App() {
                       ? patientSelect("pregnancy", "Pregnancy / breastfeeding", ["Not applicable", "Not pregnant", "Pregnant", "Breastfeeding"])
                       : null}
                     {patientField("chiefComplaint", "Chief complaint", { className: "sm:col-span-2" })}
-                    {patientSelect("referredBy", "How did they find the clinic", REFERRAL_SOURCES)}
+                    {patientSelect("referredBy", "How did they find the clinic", listOf(practiceProfile, "referralSources"))}
                     {patientField("abhaNumber", "ABHA number", { hint: "Optional. 14 digits." })}
                   </div>
 
@@ -4937,7 +4940,7 @@ export default function App() {
                       onChange={(e) => setNewPatientForm({ ...newPatientForm, guardianRelation: e.target.value })}
                       className={fieldInputClass}
                     >
-                      {GUARDIAN_RELATIONS.map((r) => (
+                      {withCurrent(listOf(practiceProfile, "guardianRelations"), newPatientForm.guardianRelation).map((r) => (
                         <option key={r}>{r}</option>
                       ))}
                     </select>
@@ -5064,7 +5067,7 @@ export default function App() {
                       onChange={(e) => setNewPatientForm({ ...newPatientForm, referredBy: e.target.value })}
                       className={fieldInputClass}
                     >
-                      {REFERRAL_SOURCES.map((r) => (
+                      {withCurrent(listOf(practiceProfile, "referralSources"), newPatientForm.referredBy).map((r) => (
                         <option key={r}>{r}</option>
                       ))}
                     </select>
