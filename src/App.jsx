@@ -32,6 +32,7 @@ import HelpChat from "./components/HelpChat.jsx";
 import DmyDateInput from "./components/DmyDateInput.jsx";
 import PatientSummary from "./components/PatientSummary.jsx";
 import PhysicianConsult from "./components/PhysicianConsult.jsx";
+import { rotaWarning } from "./rota.js";
 import StaffRota from "./components/StaffRota.jsx";
 import TextTemplates from "./components/TextTemplates.jsx";
 import { rxAdviceLines } from "./templates.js";
@@ -5263,6 +5264,11 @@ export default function App() {
                 {chairList.map((n) => <option key={n}>{n}</option>)}
               </select>
             </div>
+
+            {(() => {
+              const w = rotaWarning({ employees, doctor: newApptForm.doctor, chair: newApptForm.chair, date: newApptForm.date });
+              return w ? <p role="status" data-testid="rota-warning" className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">{w} You can still book it.</p> : null;
+            })()}
 
             <div className="grid grid-cols-2 gap-3">
               <div>

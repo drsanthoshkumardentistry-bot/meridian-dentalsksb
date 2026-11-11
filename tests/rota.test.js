@@ -41,3 +41,23 @@ describe("staff rota", () => {
     expect(c.uncovered).toEqual([]);
   });
 });
+
+import { rotaWarning } from "../src/rota.js";
+describe("booking rota warning", () => {
+  const emps = [
+    { id: 1, name: "Dr A", rota: { wed: "Chair 1 (Main)", thu: "" } },
+    { id: 2, name: "Dr B", rota: { wed: "Chair 2" }, leaves: [{ status: "Approved", startDate: "2026-11-12", endDate: "2026-11-12" }] },
+  ];
+  const base = { employees: emps, date: "2026-11-11" };
+  it("stays quiet without a rota or when everything matches", () => {
+    expect(rotaWarning({ employees: [{ id: 1, name: "X" }], doctor: "X", chair: "C", date: "2026-11-11" })).toBe("");
+    expect(rotaWarning({ ...base, doctor: "Dr A", chair: "Chair 1 (Main)" })).toBe("");
+    expect(rotaWarning({ ...base, doctor: "Dr Owner", chair: "Chair 1 (Main)" })).toBe("");
+  });
+  it("warns about off days, wrong chairs, leave and empty chairs", () => {
+    expect(rotaWarning({ ...base, date: "2026-11-12", doctor: "Dr A", chair: "Chair 1 (Main)" })).toMatch(/off on Thu/);
+    expect(rotaWarning({ ...base, doctor: "Dr A", chair: "Chair 2" })).toMatch(/planned for Chair 1 on Wed, not Chair 2/);
+    expect(rotaWarning({ ...base, date: "2026-11-12", doctor: "Dr B", chair: "Chair 2" })).toMatch(/approved leave/);
+    expect(rotaWarning({ ...base, doctor: "Dr Owner", chair: "Chair 3" })).toMatch(/No one is rostered on Chair 3 on Wed/);
+  });
+});

@@ -37,3 +37,26 @@ export const todaysCover = (employees = [], chairs = [], now = new Date()) => {
   const awayNames = employees.filter((e) => away.has(e.id) && rotaFor(e, day) !== OFF).map((e) => e.name);
   return { day, byChair, anyChair, awayNames, uncovered: byChair.filter((c) => !c.staff.length && !anyChair.length).map((c) => c.chair) };
 };
+
+const parseYmd = (ymd) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(ymd || ""));
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12) : null;
+};
+
+/** A gentle warning for the booking form. Empty when all is fine or the clinic has not set up a rota. Never blocks. */
+export const rotaWarning = ({ employees = [], doctor = "", chair = "", date = "" }) => {
+  const when = parseYmd(date);
+  if (!when || !employees.some((e) => e.rota && Object.values(e.rota).some(Boolean))) return "";
+  const day = dayIdOf(when);
+  const label = ROTA_DAYS.find((d) => d.id === day).label;
+  const doc = employees.find((e) => e.active !== false && e.name && e.name === String(doctor).trim());
+  if (doc) {
+    if (onLeaveOn([doc], when).length) return `${doc.name} is on approved leave on ${label}.`;
+    const plan = rotaFor(doc, day);
+    if (plan === OFF) return `${doc.name} is marked off on ${label} in the rota.`;
+    if (plan !== ANY && chair && plan !== chair) return `${doc.name} is planned for ${plan.split(" (")[0]} on ${label}, not ${chair.split(" (")[0]}.`;
+    return "";
+  }
+  const present = employees.filter((e) => e.active !== false && !onLeaveOn([e], when).length && [chair, ANY].includes(rotaFor(e, day)));
+  return present.length || !chair ? "" : `No one is rostered on ${chair.split(" (")[0]} on ${label}.`;
+};
