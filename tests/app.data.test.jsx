@@ -141,7 +141,7 @@ describe("demographics and required data", () => {
     fireEvent.submit(form);
     expect(await screen.findByText(/valid 10-digit staff mobile/i)).toBeTruthy();
     type(form.querySelector('input[type="tel"]'), "9876501234");
-    type(form.querySelector('input[type="date"]'), "2020-01-01");
+    type(form.querySelector('input[aria-label^="Licence expiry"]'), "01/01/2020");
     fireEvent.submit(form);
     await waitFor(() => expect(stored("employees").length).toBe(1));
     expect(await screen.findByText(/Expired \d+ days ago/)).toBeTruthy();
@@ -442,7 +442,7 @@ describe("demographics and required data", () => {
     nav("Billing & Invoices");
     fireEvent.click(await screen.findByRole("button", { name: /^New Invoice$/ }));
     fireEvent.click(await screen.findByRole("button", { name: "7 days" }));
-    expect(screen.getByLabelText(/Payment due by/).value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(screen.getByLabelText(/Payment due by/).value).toMatch(/^\d{2}\/\d{2}\/\d{4}$/);
     fireEvent.click(screen.getByRole("button", { name: "Clear" }));
     expect(screen.getByLabelText(/Payment due by/).value).toBe("");
   });
@@ -510,12 +510,12 @@ describe("demographics and required data", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Leave" }));
     const form = (await screen.findByText("Request leave")).closest("form");
-    const dates = form.querySelectorAll('input[type="date"]');
-    type(dates[0], "2026-12-01");
-    type(dates[1], "2026-11-28");
+    const dates = [form.querySelector('input[aria-label^="Start date"]'), form.querySelector('input[aria-label^="End date"]')];
+    type(dates[0], "01/12/2026");
+    type(dates[1], "28/11/2026");
     fireEvent.submit(form);
     expect(await screen.findByText(/cannot be before/i)).toBeTruthy();
-    type(dates[1], "2026-12-03");
+    type(dates[1], "03/12/2026");
     fireEvent.submit(form);
     await waitFor(() => expect(stored("employees")[0].leaves.length).toBe(1));
     expect(stored("employees")[0].leaves[0]).toMatchObject({ status: "Pending", startDate: "2026-12-01", endDate: "2026-12-03" });
