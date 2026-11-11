@@ -11,6 +11,7 @@ describe("Meri the tooth fairy", () => {
     expect(screen.queryByRole("status")).toBeNull();
     fireEvent.click(btn);
     expect(screen.getByRole("status").textContent).toMatch(/I'm Meri/);
+    expect(btn.closest("[data-mood]").getAttribute("data-mood")).toBe("happy"); // she smiles with happy eyes after a tap
     fireEvent.click(btn);
     expect(screen.getByRole("status").textContent).toMatch(/Chart the tooth/);
     for (let i = 0; i < 3; i++) fireEvent.click(btn);

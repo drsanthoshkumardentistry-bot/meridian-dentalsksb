@@ -72,6 +72,9 @@ describe("demographics and required data", () => {
     const form = (await screen.findByText("Add New Patient")).closest("form");
     await fillPatient(form);
     type(input(form, "City"), "Coimbatore");
+    const wa = within(form).getByLabelText(/agrees to receive appointment reminders/i);
+    expect(wa.checked).toBe(false); // WhatsApp consent must be ticked on purpose
+    fireEvent.click(wa);
     fireEvent.submit(form);
     await waitFor(() => expect(stored("patients").length).toBe(1));
     const p = stored("patients")[0];
