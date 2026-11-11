@@ -182,3 +182,6 @@ html,
 body {
   overflow-x: hidden;
 }
+
+/* Placeholder and hint text stay readable on older, low-contrast monitors */
+input::placeholder, textarea::placeholder { color: #64748b; opacity: 1; }
