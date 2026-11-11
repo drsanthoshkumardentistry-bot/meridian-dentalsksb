@@ -20,6 +20,8 @@ import { canRead, canWrite, navFor, NAV_BY_ROLE, firstScreen, branchScope, ROLE_
 import { isActiveMember, isPendingInvite, buildInvite, inviteMessage } from "./team.js";
 import { watchMyMembership, watchTeam, createInvite, acceptInvite, updateMember, removeMember } from "./teamStore.js";
 import BranchesCard from "./components/BranchesCard.jsx";
+import DataPortability from "./components/DataPortability.jsx";
+import { buildPatientBackup, backupFileName } from "./portability.js";
 import { branchesOf, filterByBranch, writeBranchId, tagBranch, scopeToBranches } from "./branches.js";
 import QueuePanel from "./components/QueuePanel.jsx";
 import BookingRequests from "./components/BookingRequests.jsx";
@@ -42,6 +44,18 @@ import { planToInvoiceItems, markPlanBilled, plannedTeeth, planTotals } from "./
 import ConsentForms from "./components/ConsentForms.jsx";
 import { consentHtml } from "./consent.js";
 import BranchCompare from "./components/BranchCompare.jsx";
+import { languageOf } from "./messageLanguage.js";
+import SetupChecklist from "./components/SetupChecklist.jsx";
+import { setupProgress } from "./setup.js";
+import DayClose from "./components/DayClose.jsx";
+import BirthdayPanel from "./components/BirthdayPanel.jsx";
+import { dayClose } from "./dayClose.js";
+import { dueBirthdays, buildBirthdayMessage, markGreeted } from "./greetings.js";
+import FeeList from "./components/FeeList.jsx";
+import { applyFee, sortedFees } from "./fees.js";
+import DentistEarnings from "./components/DentistEarnings.jsx";
+import BookingShare from "./components/BookingShare.jsx";
+import { dentistEarnings, dentistEarningsCsv, cleanPct } from "./dentistReport.js";
 import { branchComparison, branchComparisonCsv } from "./branchReport.js";
 import LabOrders from "./components/LabOrders.jsx";
 import LabBoard from "./components/LabBoard.jsx";
@@ -115,7 +129,6 @@ import { collection, doc, setDoc, onSnapshot, deleteDoc } from "firebase/firesto
 import LandingPage from "./components/landingpage";
 import { AppLoading, VerifyEmailScreen, IdleWarning } from "./components/AuthScreens";
 import { friendlyAuthError, usesPasswordLogin } from "./authErrors";
-import QRCode from "qrcode";
 import {
   dateKey, dueAppointmentReminders, buildAppointmentReminder, duePaymentReminders, buildPaymentReminder,
   whatsappLink, markAppointmentReminded, markInvoiceReminded, formatTime12,
@@ -977,6 +990,7 @@ export default function App() {
     discount: "",
     advance: "",
     dueDate: "",
+    doctor: "",
   });
   const [payForm, setPayForm] = useState({ amount: "", mode: "Cash" });
   const [upiQrDataUrl, setUpiQrDataUrl] = useState("");
@@ -1347,8 +1361,25 @@ export default function App() {
     [branches, allPatients, allAppointments, allInvoices, reportMonth, activeMember] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
+  const dentistCmp = useMemo(
+    () => dentistEarnings(scopeToBranches(allInvoices, allowedBranchIds), scopeToBranches(allAppointments, allowedBranchIds), reportMonth, practiceProfile.commissions),
+    [allInvoices, allAppointments, reportMonth, practiceProfile.commissions, activeMember] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
   const downloadCsv = (csv, name) => {
     const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const downloadFile = (text, name, type, bom) => {
+    const blob = new Blob([bom ? "\ufeff" + text : text], { type: `${type};charset=utf-8` });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -1370,6 +1401,8 @@ export default function App() {
   };
 
   // --- WhatsApp reminders (opens WhatsApp with the message ready; the clinic taps Send) ---
+  const birthdaysToday = dueBirthdays(patients);
+  const closeSummary = dayClose({ invoices, appointments, patients });
   const dueApptReminders = dueAppointmentReminders(appointments, new Date(), patients);
   const dueRecallList = dueRecalls(patients, appointments, invoices.map(normalizeInvoice));
   const duePayReminders = duePaymentReminders(invoices.map(normalizeInvoice), patients);
@@ -1412,7 +1445,7 @@ export default function App() {
   const sendApptReminder = ({ appt, kind }) => {
     const link = whatsappLink(
       appt.phone,
-      buildAppointmentReminder({ clinicName: practiceProfile.name, appt, kind })
+      buildAppointmentReminder({ clinicName: practiceProfile.name, appt, kind, language: languageOf(patients.find((p) => String(p.id) === String(appt.patientId))) })
     );
     if (!link) {
       showToast("This patient has no valid mobile number");
@@ -1425,7 +1458,7 @@ export default function App() {
   const sendPayReminder = ({ inv, phone }) => {
     const link = whatsappLink(
       phone,
-      buildPaymentReminder({ clinicName: practiceProfile.name, inv, upiId: isValidUpiId(practiceProfile.upiId) ? practiceProfile.upiId : "" })
+      buildPaymentReminder({ clinicName: practiceProfile.name, inv, upiId: isValidUpiId(practiceProfile.upiId) ? practiceProfile.upiId : "", language: languageOf(patients.find((p) => String(p.id) === String(inv.patientId))) })
     );
     if (!link) {
       showToast("This patient has no valid mobile number");
@@ -1438,7 +1471,7 @@ export default function App() {
   const sendRecall = ({ patient, months }) => {
     const link = whatsappLink(
       patient.phone,
-      buildRecallMessage({ clinicName: practiceProfile.name, clinicPhone: practiceProfile.phone, patient, months })
+      buildRecallMessage({ clinicName: practiceProfile.name, clinicPhone: practiceProfile.phone, patient, months, language: languageOf(patient) })
     );
     if (!link) {
       showToast("This patient has no valid mobile number");
@@ -1446,6 +1479,13 @@ export default function App() {
     }
     window.open(link, "_blank", "noopener,noreferrer");
     setPatients((prev) => prev.map((p) => (p.id === patient.id ? markPatientRecalled(p) : p)));
+  };
+
+  const greetBirthday = (patient) => {
+    const link = whatsappLink(patient.phone, buildBirthdayMessage({ clinicName: practiceProfile.name, patient, language: languageOf(patient) }));
+    if (!link) { showToast("This patient has no valid mobile number"); return; }
+    window.open(link, "_blank", "noopener,noreferrer");
+    setPatients((prev) => prev.map((p) => (p.id === patient.id ? markGreeted(p) : p)));
   };
 
   const patchAppt = (id, fn) => setAppointments((prev) => prev.map((a) => (a.id === id ? fn(a) : a)));
@@ -1521,7 +1561,7 @@ export default function App() {
       setUpiQrDataUrl("");
       return undefined;
     }
-    QRCode.toDataURL(upiUri, { margin: 1, width: 240 })
+    import("qrcode").then((m) => (m.default || m).toDataURL(upiUri, { margin: 1, width: 240 }))
       .then((url) => !cancelled && setUpiQrDataUrl(url))
       .catch(() => !cancelled && setUpiQrDataUrl(""));
     return () => {
@@ -1533,7 +1573,7 @@ export default function App() {
     if (newInvoiceForm.planId) {
       setNewInvoiceForm({
         patientId: "", patientName: "", paymentMode: "Cash",
-        items: [blankInvoiceItem()], discount: "", advance: "", dueDate: "",
+        items: [blankInvoiceItem()], discount: "", advance: "", dueDate: "", doctor: "",
       });
     }
     setIsAddInvoiceOpen(false);
@@ -1570,6 +1610,7 @@ export default function App() {
       patientId: newInvoiceForm.patientId || "",
       patient: newInvoiceForm.patientName.trim(),
       paymentMode: newInvoiceForm.paymentMode,
+      ...(String(newInvoiceForm.doctor || "").trim() ? { doctor: String(newInvoiceForm.doctor).trim() } : {}),
       treatment: totals.lines.map((l) => l.description).join(", "),
       taxCategory: new Set(totals.lines.map((l) => l.taxCategory)).size === 1 ? totals.lines[0].taxCategory : "mixed",
       ...totals,
@@ -1598,6 +1639,7 @@ export default function App() {
       discount: "",
       advance: "",
       dueDate: "",
+      doctor: "",
     });
     setIsAddInvoiceOpen(false);
     showToast(`Invoice ${inv.id} generated for ₹${formatINR(inv.totalP)}`);
@@ -2758,6 +2800,15 @@ export default function App() {
                 ))}
               </div>
 
+              <DentistEarnings
+                report={dentistCmp}
+                ym={reportMonth}
+                commissions={practiceProfile.commissions || {}}
+                canEditRates={role === "owner"}
+                onRate={(name, v) => setPracticeProfile({ ...practiceProfile, commissions: { ...(practiceProfile.commissions || {}), [name]: v === "" ? "" : cleanPct(v) } })}
+                onDownload={() => downloadCsv(dentistEarningsCsv(dentistCmp, reportMonth), `dentists-${reportMonth}.csv`)}
+              />
+
               <BranchCompare cmp={branchCmp} ym={reportMonth} onDownload={() => downloadCsv(branchComparisonCsv(branchCmp, reportMonth), `branches-${reportMonth}.csv`)} />
 
               <div className="flex flex-wrap gap-2">
@@ -3137,6 +3188,22 @@ export default function App() {
                 }}
               />}
 
+              {!allowedBranchIds && (role === "owner" || role === "manager") && <DataPortability
+                data={{ patients: allPatients, appointments: allAppointments, invoices: allInvoices, inventory, employees, profile: practiceProfile }}
+                newId={newId}
+                onDownloadFile={downloadFile}
+                onAudit={logAudit}
+                onImported={(r) => {
+                  if (r.patients) setPatients(r.patients);
+                  if (r.appointments) setAppointments(r.appointments);
+                  if (r.invoices) setInvoices(r.invoices);
+                  if (r.inventory) setInventory(r.inventory);
+                  if (r.employees) setEmployees(r.employees);
+                  if (r.addBranches && r.addBranches.length) setPracticeProfile({ ...practiceProfile, branches: [...allBranches, ...r.addBranches] });
+                  showToast("Import complete");
+                }}
+              />}
+
               {role === "owner" && (
                 <TeamCard
                   members={team}
@@ -3157,6 +3224,8 @@ export default function App() {
 
               {(role === "owner" || role === "manager") && <ActivityLog entries={auditEntries} />}
 
+              {(role === "owner" || role === "manager") && <FeeList fees={practiceProfile.fees} newId={newId} onChange={(list) => setPracticeProfile({ ...practiceProfile, fees: list })} />}
+
               <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-xs space-y-2" data-testid="booking-settings">
                 <label className="flex items-center gap-2 font-semibold text-slate-800">
                   <input type="checkbox" checked={Boolean(practiceProfile.onlineBooking)} onChange={(e) => setPracticeProfile({ ...practiceProfile, onlineBooking: e.target.checked })} />
@@ -3165,6 +3234,7 @@ export default function App() {
                 {practiceProfile.onlineBooking ? (
                   <>
                     <p className="text-slate-600">Share this link on WhatsApp, Instagram or Google Business Profile. Patients send a request and you confirm it in the Appointments Diary.</p>
+                    <BookingShare url={bookingUrl(window.location.origin, CLINIC_ID)} clinicName={practiceProfile.name} onCopy={() => { navigator.clipboard?.writeText(bookingUrl(window.location.origin, CLINIC_ID)); showToast("Booking link copied"); }} />
                     <div className="flex flex-wrap gap-2 items-center">
                       <input readOnly aria-label="Booking link" value={bookingUrl(window.location.origin, CLINIC_ID)} onFocus={(e) => e.target.select()} className="flex-1 min-w-[220px] px-3 py-2 border border-slate-300 rounded-lg bg-white" />
                       <button type="button" onClick={() => { navigator.clipboard?.writeText(bookingUrl(window.location.origin, CLINIC_ID)); showToast("Booking link copied"); }} className="px-3 py-2 rounded-lg bg-[#1d4ed8] text-white font-semibold">Copy link</button>
@@ -3385,6 +3455,7 @@ export default function App() {
 
           {activeNav === "Dashboard" && (
             <div className="space-y-6">
+
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 sm:gap-3">
                 <div>
                   <h1 className="text-2xl font-bold tracking-tight text-slate-900">Clinical Overview</h1>
@@ -3394,6 +3465,13 @@ export default function App() {
                   View today's diary ›
                 </button>
               </div>
+
+              {role === "owner" && <SetupChecklist
+                progress={setupProgress({ profile: practiceProfile, patients: allPatients, appointments: allAppointments, invoices: allInvoices })}
+                dismissed={Boolean(practiceProfile.setupHidden)}
+                onGo={(to) => setActiveNav(to)}
+                onDismiss={() => setPracticeProfile({ ...practiceProfile, setupHidden: true })}
+              />}
 
               <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
                 {[
@@ -3422,24 +3500,28 @@ export default function App() {
                 </div>
                 <div className="grid grid-cols-3 gap-2 sm:gap-3">
                   {[
-                    { label: "Appointment reminders", count: dueApptReminders.length, to: "Appointments Diary" },
-                    { label: "Patients due for recall", count: dueRecallList.length, to: "Appointments Diary" },
-                    { label: "Payments to chase", count: duePayReminders.length, to: "Billing & Invoices" },
+                    { label: "Appointment reminders", count: dueApptReminders.length, to: "Appointments Diary", on: "border-blue-200 bg-blue-50 hover:bg-blue-100", num: "text-blue-700" },
+                    { label: "Patients due for recall", count: dueRecallList.length, to: "Appointments Diary", on: "border-aqua-100 bg-aqua-50 hover:bg-aqua-100", num: "text-aqua-700" },
+                    { label: "Payments to chase", count: duePayReminders.length, to: "Billing & Invoices", on: "border-amber-200 bg-gold-50 hover:bg-amber-100", num: "text-gold-700" },
                   ].map((a) => (
                     <button
                       key={a.label}
                       onClick={() => setActiveNav(a.to)}
                       className={`text-left rounded-xl border p-3 sm:p-4 transition-colors ${
-                        a.count > 0 ? "border-blue-200 bg-blue-50 hover:bg-blue-100" : "border-rule bg-enamel hover:bg-slate-100"
+                        a.count > 0 ? a.on : "border-rule bg-enamel hover:bg-slate-100"
                       }`}
                     >
-                      <div className={`text-2xl font-bold ${a.count > 0 ? "text-blue-700" : "text-slate-500"}`}>{a.count}</div>
+                      <div className={`text-2xl font-bold ${a.count > 0 ? a.num : "text-slate-500"}`}>{a.count}</div>
                       <div className="text-xs font-semibold text-slate-700 mt-0.5">{a.label}</div>
                       <div className="text-[11px] text-slate-500 mt-1 leading-snug">{a.count > 0 ? "Tap to send ›" : "Nothing to send"}</div>
                     </button>
                   ))}
                 </div>
               </section>
+
+              <BirthdayPanel due={birthdaysToday} onGreet={greetBirthday} canWrite={canWrite(role, "patients")} />
+
+              {canRead(role, "invoices") && <DayClose summary={closeSummary} clinicName={practiceProfile.name} onCopy={(t) => { navigator.clipboard?.writeText(t); showToast("Summary copied"); }} />}
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <section className="bg-white rounded-xl border border-rule p-5 shadow-card" data-testid="today-schedule">
@@ -4468,7 +4550,7 @@ export default function App() {
                     {patientSelect("gender", "Gender", ["Female", "Male", "Other"], { required: true, blank: true })}
                     {patientSelect("bloodGroup", "Blood group", BLOOD_GROUPS)}
                     {patientField("occupation", "Occupation")}
-                    {patientSelect("language", "Preferred language", LANGUAGES)}
+                    {patientSelect("language", "Preferred language", LANGUAGES, { hint: "WhatsApp reminders are written in English, Tamil or Hindi to match." })}
                   </div>
 
                   <SectionTitle>Address and contact</SectionTitle>
@@ -4606,6 +4688,22 @@ export default function App() {
               >
                 <Trash2 className="w-3.5 h-3.5" /> Delete Chart
               </button>
+
+              {!allowedBranchIds && (role === "owner" || role === "manager") && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const b = buildPatientBackup(activePatient.id, { patients: allPatients, appointments: allAppointments, invoices: allInvoices }, practiceProfile);
+                    if (!b) return;
+                    downloadFile(JSON.stringify(b), backupFileName(b), "application/json");
+                    logAudit("data.export", activePatient.name, "One patient's record");
+                    showToast("Record downloaded. It holds private health details, keep it safe.");
+                  }}
+                  className="text-brand-700 hover:text-brand-900 font-medium flex items-center gap-1.5"
+                >
+                  <Download className="w-3.5 h-3.5" /> Download record
+                </button>
+              )}
 
               <button
                 type="button"
@@ -5145,6 +5243,19 @@ export default function App() {
               </select>
             </div>
 
+            <div>
+              <label htmlFor="invoice-doctor" className="block font-semibold text-slate-600 mb-1">Treated by</label>
+              <input
+                id="invoice-doctor"
+                type="text"
+                list="doctor-options"
+                value={newInvoiceForm.doctor || ""}
+                onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, doctor: e.target.value })}
+                placeholder="Dentist who did the work"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
+              />
+            </div>
+
             <div className="space-y-2">
               <label className="block font-semibold text-slate-600">Treatments billed</label>
               {newInvoiceForm.items.map((it, idx) => {
@@ -5159,7 +5270,8 @@ export default function App() {
                       type="text"
                       aria-label={`Treatment ${idx + 1} description`}
                       value={it.description}
-                      onChange={(e) => setItem({ description: e.target.value })}
+                      list="invoice-fee-options"
+                      onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, items: newInvoiceForm.items.map((x) => (x.id === it.id ? applyFee(x, practiceProfile.fees, e.target.value) : x)) })}
                       placeholder="e.g. Root Canal Therapy"
                       className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none bg-white"
                     />
@@ -5203,6 +5315,7 @@ export default function App() {
                   </div>
                 );
               })}
+              <datalist id="invoice-fee-options">{sortedFees(practiceProfile.fees).map((f) => <option key={f.id} value={f.name} />)}</datalist>
               {newInvoiceForm.items.length < MAX_LINE_ITEMS && (
                 <button
                   type="button"

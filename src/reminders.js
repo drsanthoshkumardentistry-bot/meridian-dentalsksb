@@ -5,6 +5,7 @@
  * ============================================================================== */
 
 import { balancePaise, formatINR } from "./billing";
+import { localized } from "./messageLanguage.js";
 
 const pad = (n) => String(n).padStart(2, "0");
 
@@ -81,7 +82,9 @@ export const dueAppointmentReminders = (appointments = [], now = new Date(), pat
   return due.sort((a, b) => `${a.appt.date} ${a.appt.time}`.localeCompare(`${b.appt.date} ${b.appt.time}`));
 };
 
-export const buildAppointmentReminder = ({ clinicName, appt, kind }) => {
+export const buildAppointmentReminder = ({ clinicName, appt, kind, language }) => {
+  const other = localized("appointment", language, { clinicName, name: appt.patientName, sameDay: kind === "sameDay", dateTime: `${formatDateLong(appt.date)} ${formatTime12(appt.time)}`, doctor: appt.doctor });
+  if (other) return other;
   const when = `${kind === "sameDay" ? "today" : "tomorrow"}, ${formatDateLong(appt.date)} at ${formatTime12(appt.time)}`;
   return (
     `Hello ${appt.patientName},\n\n` +
@@ -109,7 +112,8 @@ export const duePaymentReminders = (invoices = [], patients = [], now = new Date
   return due;
 };
 
-export const buildPaymentReminder = ({ clinicName, inv, upiId }) =>
+export const buildPaymentReminder = ({ clinicName, inv, upiId, language }) =>
+  localized("payment", language, { clinicName, name: inv.patient, invoiceId: inv.id, amount: formatINR(balancePaise(inv)), upiId }) ||
   `Hello ${inv.patient},\n\n` +
   `A gentle reminder from ${clinicName || "your dental clinic"}: ₹${formatINR(balancePaise(inv))} is pending on invoice ${inv.id}.\n\n` +
   (upiId ? `You can pay by UPI to ${upiId}.\n\n` : "") +
@@ -198,7 +202,8 @@ export const dueRecalls = (patients = [], appointments = [], invoices = [], now 
   return due.sort((a, b) => a.lastVisit - b.lastVisit);
 };
 
-export const buildRecallMessage = ({ clinicName, clinicPhone, patient, months }) =>
+export const buildRecallMessage = ({ clinicName, clinicPhone, patient, months, language }) =>
+  localized("recall", language, { clinicName, phone: clinicPhone, name: patient.name, months }) ||
   `Hello ${patient.name},\n\n` +
   `It has been ${months} months since your last visit to ${clinicName || "our dental clinic"}. ` +
   `A routine check-up and cleaning helps catch problems early.\n\n` +
