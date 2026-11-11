@@ -32,6 +32,8 @@ import HelpChat from "./components/HelpChat.jsx";
 import DmyDateInput from "./components/DmyDateInput.jsx";
 import PatientSummary from "./components/PatientSummary.jsx";
 import PhysicianConsult from "./components/PhysicianConsult.jsx";
+import PracticeChairs, { ProfileNote, ProfileNotesContext } from "./components/PracticeChairs.jsx";
+import { chairNames, setProfileNote } from "./chairs.js";
 import PatientLabels, { LabelChips } from "./components/PatientLabels.jsx";
 import AftercareSender from "./components/AftercareSender.jsx";
 import { LABELS, toggleLabel, filterByLabel, labelsOf } from "./labels.js";
@@ -986,6 +988,11 @@ export default function App() {
     visitType: "New patient",
     status: "Confirmed",
   });
+
+  const chairList = useMemo(() => chairNames(practiceProfile), [practiceProfile.chairs]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!chairList.includes(newApptForm.chair)) setNewApptForm((f) => ({ ...f, chair: chairList[0] }));
+  }, [chairList]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // New Invoice Modal State
   const [isAddInvoiceOpen, setIsAddInvoiceOpen] = useState(false);
@@ -2455,7 +2462,7 @@ export default function App() {
                   </div>
 
                   {diaryViewId === "day" ? (() => {
-                    const grid = dayGrid(appointments, dayDate, ["Chair 1 (Main Operatory)", "Chair 2 (Pediatric / Perio)", "Chair 3 (Prosthodontics)"]);
+                    const grid = dayGrid(appointments, dayDate, chairList);
                     const marks = hourMarks();
                     return (
                       <div className="bg-white rounded-xl border border-rule shadow-xs p-4 space-y-3" data-testid="day-view">
@@ -3195,6 +3202,7 @@ export default function App() {
 
           {/* TAB 7: PRACTICE PROFILE */}
           {activeNav === "Practice Profile" && (
+            <ProfileNotesContext.Provider value={{ notes: practiceProfile.notes || {}, setNote: (k, t) => setPracticeProfile(setProfileNote(practiceProfile, k, t)) }}>
             <div className="max-w-3xl bg-white rounded-xl border border-rule p-6 md:p-8 space-y-6">
               <div>
                 <h1 className="text-xl font-bold text-slate-900">Practice Profile & Legal Registration</h1>
@@ -3250,6 +3258,18 @@ export default function App() {
 
               {(role === "owner" || role === "manager") && <ActivityLog entries={auditEntries} />}
 
+              {(role === "owner" || role === "manager") && (
+                <div className="space-y-2">
+                  <PracticeChairs
+                    profile={practiceProfile}
+                    newId={() => newId("CH")}
+                    showToast={showToast}
+                    onChange={(chairs) => setPracticeProfile({ ...practiceProfile, chairs })}
+                    onRenamed={(from, to) => setAppointments((prev) => prev.map((x) => (x.chair === from ? { ...x, chair: to } : x)))}
+                  />
+                </div>
+              )}
+
               {(role === "owner" || role === "manager") && <FeeList fees={practiceProfile.fees} newId={newId} onChange={(list) => setPracticeProfile({ ...practiceProfile, fees: list })} />}
 
               {(role === "owner" || role === "manager") && (
@@ -3290,6 +3310,7 @@ export default function App() {
                     onChange={(e) => setPracticeProfile({ ...practiceProfile, name: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                   />
+                  <ProfileNote k="name" />
                 </div>
 
                 <div>
@@ -3300,6 +3321,7 @@ export default function App() {
                     onChange={(e) => setPracticeProfile({ ...practiceProfile, regNumber: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 font-mono font-bold text-indigo-700 focus:outline-none"
                   />
+                  <ProfileNote k="regNumber" />
                 </div>
 
                 <div>
@@ -3310,6 +3332,7 @@ export default function App() {
                     onChange={(e) => setPracticeProfile({ ...practiceProfile, drName: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                   />
+                  <ProfileNote k="drName" />
                 </div>
 
                 <div>
@@ -3320,6 +3343,7 @@ export default function App() {
                     onChange={(e) => setPracticeProfile({ ...practiceProfile, qualification: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                   />
+                  <ProfileNote k="qualification" />
                 </div>
 
                 <div>
@@ -3330,6 +3354,7 @@ export default function App() {
                     onChange={(e) => setPracticeProfile({ ...practiceProfile, phone: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                   />
+                  <ProfileNote k="phone" />
                 </div>
 
                 <div>
@@ -3340,6 +3365,7 @@ export default function App() {
                     onChange={(e) => setPracticeProfile({ ...practiceProfile, upiId: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 font-mono focus:outline-none"
                   />
+                  <ProfileNote k="upiId" />
                   {practiceProfile.upiId && !isValidUpiId(practiceProfile.upiId) ? (
                     <p className="text-[10px] text-rose-600 mt-1">A UPI ID looks like name@bank. QR codes and WhatsApp payment messages use it only when it is valid.</p>
                   ) : (
@@ -3357,6 +3383,7 @@ export default function App() {
                     placeholder="https://g.page/r/..."
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                   />
+                  <ProfileNote k="reviewLink" />
                   {practiceProfile.reviewLink && !isValidReviewLink(practiceProfile.reviewLink) ? (
                     <p className="text-[10px] text-rose-600 mt-1">Paste the full link starting with https://</p>
                   ) : (
@@ -3372,6 +3399,7 @@ export default function App() {
                     onChange={(e) => setPracticeProfile({ ...practiceProfile, address: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                   />
+                  <ProfileNote k="address" />
                 </div>
 
                 <Field label="City">
@@ -3381,6 +3409,7 @@ export default function App() {
                     onChange={(e) => setPracticeProfile({ ...practiceProfile, city: e.target.value })}
                     className={fieldInputClass}
                   />
+                <ProfileNote k="city" />
                 </Field>
 
                 <Field label="Pincode">
@@ -3395,6 +3424,7 @@ export default function App() {
                   {practiceProfile.pincode && !isValidPincode(practiceProfile.pincode) ? (
                     <p className="text-[10px] text-rose-600 mt-1">Pincode must be 6 digits.</p>
                   ) : null}
+                <ProfileNote k="pincode" />
                 </Field>
 
                 <Field label="State" hint="Used for GST place of supply.">
@@ -3408,6 +3438,7 @@ export default function App() {
                       <option key={st} value={st}>{st}</option>
                     ))}
                   </select>
+                <ProfileNote k="state" />
                 </Field>
 
                 <Field label="Clinic Email">
@@ -3420,6 +3451,7 @@ export default function App() {
                   {practiceProfile.email && !isValidEmail(practiceProfile.email) ? (
                     <p className="text-[10px] text-rose-600 mt-1">Check the email address.</p>
                   ) : null}
+                <ProfileNote k="email" />
                 </Field>
 
                 <Field label="Dental Council" hint="Shown on prescriptions with your registration number.">
@@ -3433,6 +3465,7 @@ export default function App() {
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
+                <ProfileNote k="dentalCouncil" />
                 </Field>
 
                 <Field label="Dental Council Registration No.">
@@ -3442,6 +3475,7 @@ export default function App() {
                     onChange={(e) => setPracticeProfile({ ...practiceProfile, councilRegNumber: e.target.value })}
                     className={`${fieldInputClass} font-mono`}
                   />
+                <ProfileNote k="councilRegNumber" />
                 </Field>
 
                 <Field label="GSTIN (optional)" hint="Only if your clinic is GST registered.">
@@ -3455,6 +3489,7 @@ export default function App() {
                   {practiceProfile.gstin && !isValidGstin(practiceProfile.gstin) ? (
                     <p className="text-[10px] text-rose-600 mt-1">GSTIN must be 15 characters in the standard format.</p>
                   ) : null}
+                <ProfileNote k="gstin" />
                 </Field>
               </div>
 
@@ -3470,6 +3505,7 @@ export default function App() {
                 </button>
               </div>
             </div>
+            </ProfileNotesContext.Provider>
           )}
 
           {/* TAB 8: DASHBOARD OVERVIEW */}
@@ -5220,9 +5256,7 @@ export default function App() {
                 onChange={(e) => setNewApptForm({ ...newApptForm, chair: e.target.value })}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
               >
-                <option>Chair 1 (Main Operatory)</option>
-                <option>Chair 2 (Pediatric / Perio)</option>
-                <option>Chair 3 (Prosthodontics)</option>
+                {chairList.map((n) => <option key={n}>{n}</option>)}
               </select>
             </div>
 
