@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Plus, Trash2, Send, Printer, Check, X, Link2, RefreshCw } from "lucide-react";
 import { TAX_CATEGORIES, formatINR } from "../billing.js";
+import { applyFee, sortedFees } from "../fees.js";
 import { whatsappLink, hasWhatsAppConsent } from "../reminders.js";
 import {
   MAX_PLAN_ITEMS, validatePlan, createPlan, planTotals, approvePlan, declinePlan, canBill,
@@ -159,12 +160,14 @@ export default function TreatmentPlans({ patient, practiceProfile, onChange, onB
             placeholder="Plan title, e.g. Full mouth rehabilitation"
             className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white"
           />
+          <datalist id="plan-fee-options">{sortedFees(practiceProfile?.fees).map((f) => <option key={f.id} value={f.name} />)}</datalist>
           {draft.items.map((it, i) => (
             <div key={it.id} className="grid grid-cols-2 sm:grid-cols-[2fr_0.7fr_1fr_1.3fr_auto] gap-2 items-center">
               <input
                 aria-label={`Plan item ${i + 1} treatment`}
                 value={it.description}
-                onChange={(e) => setItem(it.id, { description: e.target.value })}
+                list="plan-fee-options"
+                onChange={(e) => setDraft({ ...draft, items: draft.items.map((x) => (x.id === it.id ? applyFee(x, practiceProfile?.fees, e.target.value) : x)) })}
                 placeholder="Treatment"
                 className="col-span-2 sm:col-span-1 px-3 py-2 border border-slate-300 rounded-lg bg-white"
               />
