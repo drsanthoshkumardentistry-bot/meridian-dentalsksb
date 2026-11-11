@@ -30,6 +30,8 @@ import { draftVisitNote } from "./clinicalNote.js";
 import { askAi } from "./aiClient.js";
 import HelpChat from "./components/HelpChat.jsx";
 import DmyDateInput from "./components/DmyDateInput.jsx";
+import PatientSummary from "./components/PatientSummary.jsx";
+import PhysicianConsult from "./components/PhysicianConsult.jsx";
 import { addAssessment, removeAssessment } from "./assessments.js";
 import { addWalkIn, setQueueStatus, pruneQueue } from "./queue.js";
 import { buildBookingPage, bookingUrl, requestToAppointment } from "./booking.js";
@@ -4100,6 +4102,8 @@ export default function App() {
                 })}
               </div>
 
+              <PatientSummary patient={activePatient} appointments={appointments} invoices={invoices} />
+
               {/* TAB 1: 32-TOOTH ODONTOGRAM */}
               {activeModalTab === "32-Tooth Odontogram" && (
                 <Odontogram
@@ -4676,6 +4680,10 @@ export default function App() {
 
               {activeModalTab === "Medical History" && (
                 <div className="space-y-4">
+                  <PhysicianConsult
+                    patient={activePatient}
+                    onChange={(physician) => setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? { ...p, physician } : p)))}
+                  />
                   <div className="text-xs font-bold uppercase text-slate-800 tracking-wider">
                     Systemic Screening & Allergies
                   </div>
