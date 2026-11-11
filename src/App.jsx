@@ -29,6 +29,7 @@ import Assessments from "./components/Assessments.jsx";
 import { draftVisitNote } from "./clinicalNote.js";
 import { askAi } from "./aiClient.js";
 import HelpChat from "./components/HelpChat.jsx";
+import DmyDateInput from "./components/DmyDateInput.jsx";
 import { addAssessment, removeAssessment } from "./assessments.js";
 import { addWalkIn, setQueueStatus, pruneQueue } from "./queue.js";
 import { buildBookingPage, bookingUrl, requestToAppointment } from "./booking.js";
@@ -471,7 +472,7 @@ const EMPTY_PATIENT_FORM = {
   bloodGroup: "Unknown", occupation: "", language: "English", referredBy: "Walk-in",
   emergencyName: "", emergencyPhone: "", abhaNumber: "",
   pregnancy: "Not applicable", chiefComplaint: "",
-  conditions: "None reported", allergies: "NKDA", medicalAlert: "",
+  conditions: "", allergies: "", medicalAlert: "",
   consentTreatment: false, consentWhatsapp: true,
 };
 
@@ -502,7 +503,7 @@ function Field({ label, required, hint, className = "", children }) {
         {required ? " *" : ""}
       </label>
       {children}
-      {hint ? <p className="text-[10px] text-slate-500 mt-1">{hint}</p> : null}
+      {hint ? <p className="text-[11px] text-slate-600 mt-1">{hint}</p> : null}
     </div>
   );
 }
@@ -2124,7 +2125,7 @@ export default function App() {
                             {p.phone}{patientLocation(p) ? ` • ${patientLocation(p)}` : ""} • Registered: {p.registeredDate}
                           </div>
                           <div className="text-xs text-slate-500 mt-0.5">
-                            Conditions: <span className="font-medium text-slate-700">{p.conditions || "None reported"}</span>
+                            Conditions: <span className="font-medium text-slate-700">{p.conditions || "Not recorded"}</span>
                           </div>
                         </div>
 
@@ -4579,12 +4580,12 @@ export default function App() {
                         <p className="text-[10px] text-rose-600 mt-1">Check the number: it should be a 10-digit Indian mobile.</p>
                       ) : null}
                     </Field>
-                    <Field label="Date of birth" hint="Optional. Updates age automatically.">
-                      <input
-                        type="date"
+                    <Field label="Date of birth" hint="Optional. Type as dd/mm/yyyy. Updates age automatically.">
+                      <DmyDateInput
+                        ariaLabel="Date of birth (dd/mm/yyyy)"
+                        max={dateKey()}
                         value={activePatient.dob || ""}
-                        onChange={(e) => {
-                          const dob = e.target.value;
+                        onChange={(dob) => {
                           updateActivePatient({ dob, ...(dob && ageFromDob(dob) !== "" ? { age: ageFromDob(dob) } : {}) });
                         }}
                         className={fieldInputClass}
@@ -4686,6 +4687,7 @@ export default function App() {
                       <input
                         type="text"
                         value={activePatient.conditions || ""}
+                        placeholder="Not recorded. Type None if none"
                         onChange={(e) => {
                           const val = e.target.value;
                           setPatients((prev) =>
@@ -4701,7 +4703,8 @@ export default function App() {
                       </div>
                       <input
                         type="text"
-                        value={activePatient.allergies || "NKDA"}
+                        value={activePatient.allergies || ""}
+                        placeholder="Not asked yet. Type NKDA if the patient has none"
                         onChange={(e) => {
                           const val = e.target.value;
                           setPatients((prev) =>
@@ -4789,13 +4792,12 @@ export default function App() {
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Date of Birth" hint="Optional. Fills the age automatically.">
-                <input
-                  type="date"
+              <Field label="Date of Birth" hint="Optional. Type as dd/mm/yyyy. Fills the age automatically.">
+                <DmyDateInput
+                  ariaLabel="Date of birth (dd/mm/yyyy)"
                   max={dateKey()}
                   value={newPatientForm.dob}
-                  onChange={(e) => {
-                    const dob = e.target.value;
+                  onChange={(dob) => {
                     const calculated = ageFromDob(dob);
                     setNewPatientForm({ ...newPatientForm, dob, age: dob && calculated !== "" ? calculated : newPatientForm.age });
                   }}
@@ -4932,6 +4934,7 @@ export default function App() {
                 <input
                   type="text"
                   value={newPatientForm.conditions}
+                  placeholder="Ask the patient. Type None if none"
                   onChange={(e) => setNewPatientForm({ ...newPatientForm, conditions: e.target.value })}
                   className={fieldInputClass}
                 />
@@ -4940,6 +4943,7 @@ export default function App() {
                 <input
                   type="text"
                   value={newPatientForm.allergies}
+                  placeholder="Ask the patient. Type NKDA if none"
                   onChange={(e) => setNewPatientForm({ ...newPatientForm, allergies: e.target.value })}
                   className={fieldInputClass}
                 />
