@@ -5,7 +5,24 @@
   "server": {
     "url": "https://www.meridiandentalos.com",
     "androidScheme": "https",
-    "allowNavigation": ["www.meridiandentalos.com", "meridiandentalos.com", "*.firebaseapp.com", "accounts.google.com", "wa.me", "api.whatsapp.com"]
+    "allowNavigation": [
+      "www.meridiandentalos.com",
+      "meridiandentalos.com",
+      "*.firebaseapp.com",
+      "accounts.google.com",
+      "wa.me",
+      "api.whatsapp.com"
+    ]
   },
-  "android": { "allowMixedContent": false }
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "FirebaseAuthentication": {
+      "skipNativeAuth": true,
+      "providers": [
+        "google.com"
+      ]
+    }
+  }
 }
