@@ -32,6 +32,7 @@ import HelpChat from "./components/HelpChat.jsx";
 import DmyDateInput from "./components/DmyDateInput.jsx";
 import PatientSummary from "./components/PatientSummary.jsx";
 import PhysicianConsult from "./components/PhysicianConsult.jsx";
+import StaffRota from "./components/StaffRota.jsx";
 import TextTemplates from "./components/TextTemplates.jsx";
 import { rxAdviceLines } from "./templates.js";
 import OptionLists from "./components/OptionLists.jsx";
@@ -3102,6 +3103,8 @@ export default function App() {
                   </div>
                 );
               })()}
+
+              <StaffRota employees={employees} chairs={chairList} canEdit={canWrite(role, "employees")} onChange={setEmployees} now={new Date()} />
 
               {employees.length === 0 ? (
                 <div className="bg-white rounded-xl border border-rule p-12 text-center space-y-3 shadow-xs">
