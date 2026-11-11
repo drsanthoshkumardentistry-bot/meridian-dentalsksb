@@ -4,6 +4,8 @@ name: Android APK
 # Start it from GitHub: Actions, Android APK, Run workflow.
 on:
   workflow_dispatch:
+  push:
+    branches: [android-app]
 
 jobs:
   apk:
