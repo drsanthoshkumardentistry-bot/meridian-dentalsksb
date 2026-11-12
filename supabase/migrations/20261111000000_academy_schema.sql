@@ -1,5 +1,5 @@
 -- =====================================================================
--- MeriDent Academy (DentViva) — core schema
+-- MeriDent Prep — core schema
 -- Supabase / PostgreSQL 15+
 --
 -- Content tables (subjects, topics, flashcards, spotters, mcq_questions)

@@ -1,4 +1,4 @@
-# MeriDent Academy (DentViva)
+# MeriDent Prep
 
 Mobile-first study app for BDS students: university syllabus, high-yield topics, an AI viva voce examiner, a spotter image bank, Leitner flashcards and NEET MDS MCQ mock tests.
 

@@ -1,4 +1,4 @@
-// Seed content for MeriDent Academy.
+// Seed content for MeriDent Prep.
 // Single source of truth: used directly in offline/guest mode and turned into
 // supabase/seed.sql by `npm run seed:sql`.
 //

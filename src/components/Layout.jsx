@@ -72,7 +72,7 @@ function Brand({ compact }) {
     <a href="#/home" className="flex items-center gap-2.5">
       <img src="favicon.svg" alt="" className={compact ? 'h-8 w-8' : 'h-9 w-9'} />
       <div className="leading-tight">
-        <div className="font-extrabold tracking-tight">MeriDent <span className="text-clinic-600 dark:text-clinic-400">Academy</span></div>
+        <div className="font-extrabold tracking-tight">MeriDent <span className="text-clinic-600 dark:text-clinic-400">Prep</span></div>
         {!compact && <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">BDS · Viva · NEET MDS</div>}
       </div>
     </a>

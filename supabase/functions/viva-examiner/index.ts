@@ -1,4 +1,4 @@
-// Supabase Edge Function: AI external examiner for MeriDent Academy.
+// Supabase Edge Function: AI external examiner for MeriDent Prep.
 // Uses Google Gemini (free tier) when GEMINI_API_KEY is set, or Anthropic when ANTHROPIC_API_KEY is set.
 // Without a key it returns 503 and the app falls back to its built-in examiner.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";

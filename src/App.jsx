@@ -35,7 +35,7 @@ function Splash() {
     <div className="grid min-h-screen place-items-center">
       <div className="flex flex-col items-center gap-3 text-slate-400">
         <img src="favicon.svg" alt="" className="h-12 w-12 animate-pulse" />
-        <span className="text-sm font-semibold">Loading MeriDent Academy…</span>
+        <span className="text-sm font-semibold">Loading MeriDent Prep…</span>
       </div>
     </div>
   )
