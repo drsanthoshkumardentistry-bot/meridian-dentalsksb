@@ -8,9 +8,11 @@ export const buildVisit = (form, id, now = new Date()) => {
   const visit = { id, date: form.date || dateKey(now) };
   VISIT_FIELDS.forEach((f) => (visit[f] = clean(form[f])));
   visit.nextVisit = String(form.nextVisit || "").trim().slice(0, 200);
+  visit.nextVisitOn = /^\d{4}-\d{2}-\d{2}$/.test(String(form.nextVisitOn || "")) ? form.nextVisitOn : "";
   if (!VISIT_FIELDS.some((f) => visit[f])) return { ok: false, error: "Write at least a complaint, finding, treatment or advice" };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(visit.date)) return { ok: false, error: "Choose the visit date" };
   if (visit.date > dateKey(now)) return { ok: false, error: "The visit date cannot be in the future" };
+  if (visit.nextVisitOn && visit.nextVisitOn < visit.date) return { ok: false, error: "The next visit date cannot be before this visit" };
   return { ok: true, visit };
 };
 

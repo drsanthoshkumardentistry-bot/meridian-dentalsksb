@@ -119,3 +119,31 @@ export function ReviewInvites({ appointments, reviewLink, onReview }) {
     </section>
   );
 }
+
+/** Treatment in stages: patients whose next visit is near or missed, with no visit booked. */
+export function NextVisitPanel({ items, onRemind, onSnooze, canWrite = true }) {
+  if (!items.length) return null;
+  return (
+    <section className="bg-white border border-rule rounded-xl p-4 space-y-2" data-testid="next-visit-panel" aria-label="Next visits due">
+      <h3 className="text-xs font-bold text-slate-900">Next visit due ({items.length})</h3>
+      {items.slice(0, 8).map(({ patient, visit, daysLate }) => (
+        <div key={`${patient.id}-${visit.id}`} className={row}>
+          <div>
+            <div className="font-semibold text-slate-900">{patient.name}</div>
+            <div className="text-[11px] text-slate-500">
+              {daysLate > 0 ? `${daysLate} ${daysLate === 1 ? "day" : "days"} overdue` : daysLate === 0 ? "Due today" : "Due soon"}
+              {visit.nextVisit ? ` · ${visit.nextVisit}` : ""}
+            </div>
+          </div>
+          {canWrite && (
+            <div className="flex items-center gap-1">
+              <button type="button" onClick={() => onSnooze({ patient, visit })} className={quiet}>Not now</button>
+              <button type="button" onClick={() => onRemind({ patient, visit })} className={wa}><Send className="w-3 h-3" /> Remind</button>
+            </div>
+          )}
+        </div>
+      ))}
+      <p className="text-[10px] text-slate-500">From the "Next visit on" date in the latest visit note. Opted-out patients and patients with a visit booked are never listed.</p>
+    </section>
+  );
+}

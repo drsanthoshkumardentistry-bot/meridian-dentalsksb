@@ -79,7 +79,8 @@ import { branchComparison, branchComparisonCsv } from "./branchReport.js";
 import LabOrders from "./components/LabOrders.jsx";
 import LabBoard from "./components/LabBoard.jsx";
 import { openLabOrders, overdueCount as labOverdueCount, knownLabs, moveLabOrder, buildLabChase, buildPatientReady, markPatientNotified } from "./lab.js";
-import FollowUpPanels, { ReviewInvites } from "./components/FollowUpPanels.jsx";
+import FollowUpPanels, { ReviewInvites, NextVisitPanel } from "./components/FollowUpPanels.jsx";
+import { dueNextVisits, buildNextVisitMessage, markNextVisitReminded, nextVisitFrom, NEXT_VISIT_PRESETS } from "./nextVisit.js";
 import {
   dueFeedbackRequests, awaitingRatings, lowRatings, feedbackSummary, buildFeedbackMessage, markFeedbackAsked, recordRating, resolveFeedback,
   buildReviewMessage, markReviewAsked, isValidReviewLink, duePlanFollowUps, buildPlanFollowUp, markPlanFollowedUp
@@ -152,7 +153,7 @@ import { friendlyAuthError, usesPasswordLogin } from "./authErrors";
 import {
   dateKey, dueAppointmentReminders, buildAppointmentReminder, duePaymentReminders, buildPaymentReminder,
   whatsappLink, markAppointmentReminded, markInvoiceReminded, formatTime12,
-  dueRecalls, buildRecallMessage, markPatientRecalled, RECALL_OPTIONS, DEFAULT_RECALL_MONTHS, whatsappNumber } from "./reminders";
+  dueRecalls, buildRecallMessage, markPatientRecalled, RECALL_OPTIONS, DEFAULT_RECALL_MONTHS, whatsappNumber, formatDateLong } from "./reminders";
 import {
   MODE_KEYS, currentMonthKey, collectionsForMonth, gstSummaryForMonth, outstandingTotalP,
   collectionsCsv, gstRegisterCsv, buildReportHtml, monthLabel,
@@ -1477,6 +1478,7 @@ export default function App() {
   const lowList = lowRatings(appointments);
   const feedbackStats = feedbackSummary(appointments);
   const planFollowUps = duePlanFollowUps(patients, appointments);
+  const nextVisitsDue = dueNextVisits(patients, appointments);
   const labRows = openLabOrders(patients);
   const labLate = labOverdueCount(patients);
   const [showAllRecalls, setShowAllRecalls] = useState(false);
@@ -1488,7 +1490,7 @@ export default function App() {
   const [labelFilter, setLabelFilter] = useState("");
   const [aiNotes, setAiNotes] = useState("");
   const [aiBusy, setAiBusy] = useState(false);
-  const [visitForm, setVisitForm] = useState({ complaint: "", findings: "", treatment: "", advice: "", nextVisit: "", date: "" });
+  const [visitForm, setVisitForm] = useState({ complaint: "", findings: "", treatment: "", advice: "", nextVisit: "", nextVisitOn: "", date: "" });
   const [diaryQuery, setDiaryQuery] = useState("");
   const visibleInvoices = invoiceView(invoices, { status: invoiceFilter, query: invoiceQuery });
   const billing = billingSummary(invoices);
@@ -1588,6 +1590,12 @@ export default function App() {
   const tellPatientLab = ({ patient, order }) => {
     if (openWhatsApp(patient.phone, buildPatientReady({ clinicName: practiceProfile.name, clinicPhone: practiceProfile.phone, patient, order }))) patchLab(patient.id, order.id, (o) => markPatientNotified(o));
   };
+  const remindNextVisit = ({ patient, visit }) => {
+    if (openWhatsApp(patient.phone, buildNextVisitMessage({ clinicName: practiceProfile.name, clinicPhone: practiceProfile.phone, patient, visit, formatDate: formatDateLong }))) {
+      setPatients((prev) => prev.map((p) => (p.id === patient.id ? markNextVisitReminded(p, visit.id) : p)));
+    }
+  };
+  const snoozeNextVisit = ({ patient, visit }) => setPatients((prev) => prev.map((p) => (p.id === patient.id ? markNextVisitReminded(p, visit.id) : p)));
   const snoozePlan = ({ patient, plan }) => setPatients((prev) => prev.map((p) => (p.id === patient.id ? markPlanFollowedUp(p, plan.id) : p)));
 
   // "Not now": hides this patient from the recall list for 30 days
@@ -2473,6 +2481,7 @@ export default function App() {
                 reviewLink={practiceProfile.reviewLink} canWrite={canWrite(role, "appointments")}
                 onAsk={askFeedback} onRate={rateFeedback} onResolve={handleFeedback} onPlan={followUpPlan} onSnoozePlan={snoozePlan}
               />
+              <NextVisitPanel items={nextVisitsDue} canWrite={canWrite(role, "appointments")} onRemind={remindNextVisit} onSnooze={snoozeNextVisit} />
               <LabBoard rows={labRows} canWrite={canWrite(role, "patients")} onReceive={receiveLab} onFit={fitLab} onChase={chaseLab} onTellPatient={tellPatientLab} />
               <ReviewInvites appointments={appointments} reviewLink={practiceProfile.reviewLink} onReview={inviteReview} />
 
@@ -4301,7 +4310,7 @@ export default function App() {
                         return;
                       }
                       setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? addVisit(p, built.visit) : p)));
-                      setVisitForm({ complaint: "", findings: "", treatment: "", advice: "", nextVisit: "", date: "" });
+                      setVisitForm({ complaint: "", findings: "", treatment: "", advice: "", nextVisit: "", nextVisitOn: "", date: "" });
                       showToast("Visit note saved");
                     }}
                     className="rounded-xl border border-rule bg-enamel/60 p-4 grid sm:grid-cols-2 gap-3 text-xs"
@@ -4331,6 +4340,16 @@ export default function App() {
                     <div>
                       <label htmlFor="visit-next" className="block font-semibold text-slate-600 mb-1">Next visit plan</label>
                       <input id="visit-next" type="text" value={visitForm.nextVisit} onChange={(e) => setVisitForm({ ...visitForm, nextVisit: e.target.value })} placeholder="e.g. Obturation and crown prep in 1 week" className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none" />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label htmlFor="visit-next-on" className="block font-semibold text-slate-600 mb-1">Next visit on (we remind the patient on WhatsApp)</label>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <DmyDateInput id="visit-next-on" ariaLabel="Next visit on (dd/mm/yyyy)" value={visitForm.nextVisitOn} onChange={(v) => setVisitForm({ ...visitForm, nextVisitOn: v })} className="w-44 px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none" />
+                        {NEXT_VISIT_PRESETS.map((o) => (
+                          <button key={o.days} type="button" onClick={() => setVisitForm({ ...visitForm, nextVisitOn: nextVisitFrom(visitForm.date || dateKey(), o.days) })} className="px-2.5 py-1.5 rounded-full border border-rule text-[11px] font-semibold text-slate-600 hover:bg-brand-50">In {o.label}</button>
+                        ))}
+                        {visitForm.nextVisitOn && <button type="button" onClick={() => setVisitForm({ ...visitForm, nextVisitOn: "" })} className="text-[11px] text-slate-500 hover:text-ink">Clear</button>}
+                      </div>
                     </div>
                     <div className="sm:col-span-2 flex justify-end">
                       <button type="submit" className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg font-semibold">Save visit note</button>
