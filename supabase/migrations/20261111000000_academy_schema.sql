@@ -398,3 +398,10 @@ select
   (select round(avg(case when a.correct then 100 else 0 end)) from public.spotter_attempts a where a.user_id = (select auth.uid())) as spotter_accuracy,
   (select round(avg(v.overall), 1) from public.viva_sessions v where v.user_id = (select auth.uid()) and v.status = 'completed') as viva_average,
   (select round(avg(case when a.correct then 100 else 0 end)) from public.answers a where a.user_id = (select auth.uid())) as mcq_accuracy;
+
+-- ---------------------------------------------------------------------
+-- 10. Lock down SECURITY DEFINER helpers (Supabase advisor 0028/0029)
+-- ---------------------------------------------------------------------
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
+revoke execute on function public.is_admin() from public, anon;
+grant execute on function public.is_admin() to authenticated;
