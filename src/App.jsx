@@ -32,6 +32,7 @@ import HelpChat from "./components/HelpChat.jsx";
 import DmyDateInput from "./components/DmyDateInput.jsx";
 import BulkMessage from "./components/BulkMessage.jsx";
 import ReferralPanel from "./components/ReferralPanel.jsx";
+import { alertText, regularMedicines, SYSTEMIC_CONDITIONS } from "./medicalAlert.js";
 import { addReferral, setReferralStatus, removeReferral, referralSlipHtml, openReferrals, urgencyOf } from "./referrals.js";
 import { patientsInRange, presetRange, rangeText, DATE_MODES } from "./patientDates.js";
 import PatientSummary from "./components/PatientSummary.jsx";
@@ -828,7 +829,11 @@ export default function App() {
     const load = (name, fallback) => {
       try {
         const stored = localStorage.getItem(`merident_${CACHE_ID}_${name}`);
-        return stored ? JSON.parse(stored) : fallback;
+        if (!stored) return fallback;
+        const parsed = JSON.parse(stored);
+        // A saved list must be a list of records. A damaged cache falls back instead of crashing a screen.
+        if (Array.isArray(fallback)) return Array.isArray(parsed) ? parsed.filter((x) => x && typeof x === "object") : fallback;
+        return parsed !== null && typeof parsed === typeof fallback && !Array.isArray(parsed) ? parsed : fallback;
       } catch {
         return fallback;
       }
@@ -1226,7 +1231,7 @@ export default function App() {
       `📍 ${practiceProfile.address} | 📞 ${practiceProfile.phone}\n` +
       `----------------------------------------\n` +
       `👤 *Patient:* ${activePatient.name} (Age: ${activePatient.age || "N/A"} Yrs / ${activePatient.gender})\n` +
-      (activePatient.medicalAlert ? `⚠️ *Medical Alert:* ${activePatient.medicalAlert}\n` : "") +
+      (alertText(activePatient) ? `⚠️ *Medical Alert:* ${alertText(activePatient)}\n` : "") +
       `📅 *Date:* ${activePatient.registeredDate}\n` +
       `🩺 *Doctor:* ${practiceProfile.drName}${practiceProfile.qualification ? `, ${practiceProfile.qualification}` : ""}\n` +
       (practiceProfile.councilRegNumber ? `🪪 *Reg. No:* ${practiceProfile.councilRegNumber}\n` : "") +
@@ -2237,9 +2242,9 @@ export default function App() {
                               Age: {p.age || "N/A"} Yrs
                             </span>
                             <span className="text-[10px] text-slate-500 font-normal">({p.gender})</span>
-                            {p.medicalAlert && (
+                            {alertText(p) && (
                               <span className="text-[10px] font-bold bg-rose-50 text-rose-700 px-2 py-0.5 rounded border border-rose-200">
-                                ALERT: {p.medicalAlert}
+                                ALERT: {alertText(p)}
                               </span>
                             )}
                             <LabelChips patient={p} />
@@ -4200,15 +4205,16 @@ export default function App() {
               </div>
 
               {/* PERSISTENT SYSTEMIC MEDICAL ALERT BANNER */}
-              {activePatient.medicalAlert && (
-                <div className="mb-4 p-3 px-4 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-pulse" />
-                    <span className="text-xs font-bold text-rose-800">
-                      MEDICAL ALERT: {activePatient.medicalAlert}
-                    </span>
+              {(alertText(activePatient) || regularMedicines(activePatient)) && (
+                <div className="mb-4 p-3 px-4 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-between gap-3">
+                  <div className="flex items-start gap-2.5">
+                    <span className="w-2.5 h-2.5 mt-1 rounded-full bg-rose-600 animate-pulse shrink-0" />
+                    <div className="text-xs font-bold text-rose-800">
+                      {alertText(activePatient) && <div>MEDICAL ALERT: {alertText(activePatient)}</div>}
+                      {regularMedicines(activePatient) && <div className="font-semibold">Takes regularly: {regularMedicines(activePatient)}</div>}
+                    </div>
                   </div>
-                  <span className="text-[10px] font-mono font-bold text-rose-600 uppercase">
+                  <span className="text-[10px] font-mono font-bold text-rose-600 uppercase shrink-0">
                     Verify Vitals Prior to Infiltration
                   </span>
                 </div>
@@ -4525,17 +4531,7 @@ export default function App() {
                     SYSTEMIC CONDITIONS & MEDICAL SCREENING
                   </span>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {[
-                      { id: "hypertension", label: "Hypertension (BP)" },
-                      { id: "hypotension", label: "Hypotension (low BP)" },
-                      { id: "diabetes", label: "Diabetes Mellitus" },
-                      { id: "thyroid", label: "Thyroid (Thyroxine)" },
-                      { id: "cardiac", label: "Heart Disease" },
-                      { id: "allergy", label: "Drug Allergies" },
-                      { id: "bleeding", label: "Bleeding Diathesis" },
-                      { id: "respiratory", label: "Asthma / Respiratory" },
-                      { id: "epilepsy", label: "Epileptic Seizures" }
-                    ].map((item) => (
+                    {SYSTEMIC_CONDITIONS.map((item) => (
                       <label key={item.id} className="p-3 rounded-xl border border-rule bg-enamel/50 flex items-center gap-2 cursor-pointer hover:bg-enamel">
                         <input
                           type="checkbox"
@@ -4868,6 +4864,19 @@ export default function App() {
                           );
                         }}
                         className="w-full text-sm font-medium text-slate-800 border-b border-rule focus:outline-none"
+                      />
+                    </div>
+                    <div className="md:col-span-2 border border-rose-100 rounded-xl p-4 bg-rose-50/40">
+                      <label htmlFor="medical-alert" className="block text-[10px] font-bold uppercase tracking-wider text-rose-500 mb-1">
+                        Medical alert (shown at the top of the chart)
+                      </label>
+                      <input
+                        id="medical-alert"
+                        type="text"
+                        value={activePatient.medicalAlert || ""}
+                        placeholder="For example: Hypotension, on Midodrine. Ticked conditions and allergies are added automatically"
+                        onChange={(e) => updateActivePatient({ medicalAlert: e.target.value })}
+                        className="w-full text-sm font-bold text-rose-700 border-b border-rose-200 bg-transparent focus:outline-none"
                       />
                     </div>
                     <div className="md:col-span-2 border border-rule rounded-xl p-4 bg-white">

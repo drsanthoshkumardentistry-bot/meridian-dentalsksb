@@ -16,6 +16,8 @@ export const DEPARTMENTS = [
   { id: "phd", code: "PHD", name: "Public Health Dentistry", room: "Room 8" },
 ];
 
+import { alertText, regularMedicines } from "./medicalAlert.js";
+
 export const URGENCY = ["Routine", "Urgent", "Emergency"];
 export const STATUSES = ["Pending", "Seen", "Completed", "Declined"];
 export const MAX_REFERRALS = 60;
@@ -61,7 +63,8 @@ export const openReferrals = (patients = []) => {
   const rank = { Emergency: 0, Urgent: 1, Routine: 2 };
   const out = [];
   for (const p of patients) {
-    for (const r of p.referrals || []) {
+    for (const r of (p && p.referrals) || []) {
+      if (!r || typeof r !== "object") continue;
       const s = statusOf(r);
       if (s === "Pending" || s === "Seen") out.push({ patient: p, referral: r, status: s });
     }
@@ -90,8 +93,8 @@ table{width:100%;border-collapse:collapse;margin-top:14px}td{padding:7px 0;borde
 <tr><td>Tooth / region</td><td>${esc(r.toothRegion)}</td></tr>
 ${r.note ? `<tr><td>Reason and notes</td><td style="white-space:pre-line">${esc(r.note)}</td></tr>` : ""}
 ${patient.allergies ? `<tr><td>Allergies</td><td>${esc(patient.allergies)}</td></tr>` : ""}
-${patient.conditions ? `<tr><td>Medical conditions</td><td>${esc(patient.conditions)}</td></tr>` : ""}
-${patient.currentMedicines ? `<tr><td>Regular medicines</td><td>${esc(patient.currentMedicines)}</td></tr>` : ""}
+${alertText({ ...patient, allergies: "" }) ? `<tr><td>Medical conditions</td><td>${esc(alertText({ ...patient, allergies: "" }))}</td></tr>` : ""}
+${regularMedicines(patient) ? `<tr><td>Regular medicines</td><td>${esc(regularMedicines(patient))}</td></tr>` : ""}
 <tr><td>Date</td><td>${esc(r.date)}</td></tr>
 </table>
 <div class="sign">Referring dentist's signature</div>
