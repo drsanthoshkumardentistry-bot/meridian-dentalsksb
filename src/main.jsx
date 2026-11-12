@@ -11,6 +11,7 @@ const PlanApprovalRoute = lazy(() => import('./components/PlanApprovalRoute.jsx'
 const BookingPageRoute = lazy(() => import('./components/BookingPageRoute.jsx'));
 const PatientPortalRoute = lazy(() => import('./components/PatientPortalRoute.jsx'));
 const LegalPage = lazy(() => import('./components/LegalPage.jsx'));
+const PayPage = lazy(() => import('./components/PayPage.jsx'));
 
 // A patient opening a treatment estimate link (?plan=<token>) sees only that page, never the clinic app.
 const params = new URLSearchParams(window.location.search);
@@ -18,6 +19,7 @@ const planToken = params.get('plan');
 const bookId = params.get('book');
 const portalToken = params.get('portal');
 const legalPage = legalPageFromSearch(window.location.search);
+const payPage = params.get('pay') === '1';
 
 const Loading = () => (
   <div role="status" aria-live="polite" style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', fontFamily: 'system-ui, sans-serif', color: '#475569' }}>
@@ -29,7 +31,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary>
       <Suspense fallback={<Loading />}>
-        {legalPage ? <LegalPage page={legalPage} /> : planToken ? <PlanApprovalRoute token={planToken} /> : portalToken ? <PatientPortalRoute token={portalToken} /> : bookId ? <BookingPageRoute clinicId={bookId} /> : <App />}
+        {legalPage ? <LegalPage page={legalPage} /> : payPage ? <PayPage /> : planToken ? <PlanApprovalRoute token={planToken} /> : portalToken ? <PatientPortalRoute token={portalToken} /> : bookId ? <BookingPageRoute clinicId={bookId} /> : <App />}
       </Suspense>
     </ErrorBoundary>
   </React.StrictMode>
