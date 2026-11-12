@@ -79,6 +79,7 @@ import { AreaLine } from "./components/Sparkline.jsx";
 import { StatCard, ActionTile } from "./components/DashCards.jsx";
 import PerioChart from "./components/PerioChart.jsx";
 import ExtraOralExam from "./components/ExtraOralExam.jsx";
+import UserAvatar from "./components/UserAvatar.jsx";
 import CertificatePanel from "./components/CertificatePanel.jsx";
 import InstalmentPlan from "./components/InstalmentPlan.jsx";
 import { withInstalments, syncDueDate } from "./instalments.js";
@@ -2220,13 +2221,7 @@ export default function App() {
 
         <div className="p-4 border-t border-white/10">
           <div className="flex items-center gap-3 min-w-0">
-            {authUser.photoURL ? (
-              <img src={authUser.photoURL} alt="Avatar" className="h-9 w-9 rounded-full border border-rule object-cover" />
-            ) : (
-              <div className="h-9 w-9 shrink-0 rounded-full bg-white/15 text-white flex items-center justify-center">
-                <User className="h-4 w-4" />
-              </div>
-            )}
+            <UserAvatar user={authUser} className="h-9 w-9" textClass="text-sm" />
             <div className="min-w-0 flex-1">
               <div className="truncate text-xs font-semibold text-white">{authUser.displayName || "Dr. Clinician"}</div>
               <div className="truncate text-[11px] text-blue-200/70">{authUser.email}</div>
@@ -2312,16 +2307,13 @@ export default function App() {
                 onClick={() => setActiveNav("Practice Profile")}
                 title={`${authUser.email}. Open Practice Profile`}
                 aria-label="Open Practice Profile"
-                className="w-8 h-8 rounded-full bg-brand-600 hover:bg-brand-700 text-white flex items-center justify-center text-xs font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+                className="rounded-full hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
               >
-                {(authUser.displayName || authUser.email || "M").trim().charAt(0).toUpperCase()}
+                <UserAvatar user={authUser} className="w-8 h-8" />
               </button>
             ) : (
-              <div
-                title={authUser.email}
-                className="w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-bold"
-              >
-                {(authUser.displayName || authUser.email || "M").trim().charAt(0).toUpperCase()}
+              <div title={authUser.email}>
+                <UserAvatar user={authUser} className="w-8 h-8" />
               </div>
             )}
           </div>
