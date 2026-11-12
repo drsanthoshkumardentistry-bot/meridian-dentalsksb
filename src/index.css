@@ -341,3 +341,6 @@ main section.bg-white {
   margin-top: auto;
   margin-bottom: auto;
 }
+
+/* The app shell must never scroll itself. Focus or scrollIntoView on a field was shifting it up and leaving an empty band at the bottom. */
+.app-shell { overflow: clip; height: 100vh; height: 100dvh; }
