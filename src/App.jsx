@@ -30,6 +30,7 @@ import { draftVisitNote } from "./clinicalNote.js";
 import { askAi } from "./aiClient.js";
 import HelpChat from "./components/HelpChat.jsx";
 import DmyDateInput from "./components/DmyDateInput.jsx";
+import { patientsInRange, presetRange, rangeText, DATE_MODES } from "./patientDates.js";
 import PatientSummary from "./components/PatientSummary.jsx";
 import PhysicianConsult from "./components/PhysicianConsult.jsx";
 import { rotaWarning } from "./rota.js";
@@ -1484,6 +1485,9 @@ export default function App() {
   const [diaryViewId, setDiaryViewId] = useState("upcoming");
   const [dayDate, setDayDate] = useState(dateKey());
   const [labelFilter, setLabelFilter] = useState("");
+  const [dateMode, setDateMode] = useState("seen");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [aiNotes, setAiNotes] = useState("");
   const [aiBusy, setAiBusy] = useState(false);
   const [visitForm, setVisitForm] = useState({ complaint: "", findings: "", treatment: "", advice: "", nextVisit: "", nextVisitOn: "", date: "" });
@@ -1807,7 +1811,7 @@ export default function App() {
     showToast(`Staff member ${staffMember.name} added successfully`);
   };
 
-  const filteredPatients = filterByLabel(patients, labelFilter).filter((p) =>
+  const filteredPatients = patientsInRange(filterByLabel(patients, labelFilter), { appointments, invoices }, { mode: dateMode, from: dateFrom, to: dateTo }).filter((p) =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.phone.includes(searchQuery) ||
     labelsOf(p).some((l) => l.name.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -2190,6 +2194,26 @@ export default function App() {
                   <option value="">All labels</option>
                   {LABELS.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
                 </select>
+              )}
+              {patients.length > 0 && (
+                <div className="mb-4 flex flex-wrap items-center gap-2 text-xs" role="group" aria-label="Find patients by date">
+                  <select aria-label="Date type" value={dateMode} onChange={(e) => setDateMode(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none">
+                    {DATE_MODES.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
+                  </select>
+                  <span className="text-slate-500">from</span>
+                  <DmyDateInput ariaLabel="From date (dd/mm/yyyy)" value={dateFrom} onChange={setDateFrom} className="w-36 px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none" />
+                  <span className="text-slate-500">to</span>
+                  <DmyDateInput ariaLabel="To date (dd/mm/yyyy)" value={dateTo} onChange={setDateTo} className="w-36 px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none" />
+                  {[["today", "Today"], ["yesterday", "Yesterday"], ["week", "Last 7 days"], ["month", "This month"], ["tomorrow", "Tomorrow"]].map(([id, label]) => (
+                    <button key={id} type="button" onClick={() => { const r = presetRange(id); setDateFrom(r.from); setDateTo(r.to); if (id === "tomorrow") setDateMode("booked"); }} className="px-2.5 py-1.5 rounded-full border border-slate-300 bg-white text-slate-600 hover:bg-blue-50">{label}</button>
+                  ))}
+                  {(dateFrom || dateTo) && (
+                    <>
+                      <button type="button" onClick={() => { setDateFrom(""); setDateTo(""); }} className="px-2.5 py-1.5 rounded-full bg-slate-100 text-slate-700 font-semibold">Clear dates</button>
+                      <span className="text-slate-600" role="status">{filteredPatients.length} {filteredPatients.length === 1 ? "patient" : "patients"} {DATE_MODES.find((m) => m.id === dateMode)?.label.toLowerCase()} {rangeText(dateFrom, dateTo)}</span>
+                    </>
+                  )}
+                </div>
               )}
               {filteredPatients.length === 0 ? (
                 <div className="bg-white rounded-xl border border-rule p-12 text-center space-y-3">
