@@ -146,6 +146,7 @@ import * as FirebaseModule from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, doc, setDoc, onSnapshot, deleteDoc } from "firebase/firestore";
 import LandingPage from "./components/landingpage";
+import { claimPendingConnectOnly, connectOnlyChoice, setConnectOnly } from "./connectOnly.js";
 import { AppLoading, VerifyEmailScreen, IdleWarning } from "./components/AuthScreens";
 import { friendlyAuthError, usesPasswordLogin } from "./authErrors";
 import {
@@ -919,6 +920,28 @@ export default function App() {
     return watchTeam(db, CLINIC_ID, setTeam, () => {});
   }, [hydratedFor, CLINIC_ID, role]);
 
+  const connectApi = useMemo(() => bindApi(db, CLINIC_ID), [CLINIC_ID]);
+  // Specialist mode: someone who joined only for MeriDent Connect sees just that screen.
+  const [connectOnly, setConnectOnlyState] = useState(false);
+  useEffect(() => {
+    if (!authUser || !CLINIC_ID || activeMember) { setConnectOnlyState(false); return undefined; }
+    let live = true;
+    claimPendingConnectOnly(authUser.uid);
+    const local = connectOnlyChoice(authUser.uid);
+    setConnectOnlyState(local === 1);
+    if (local === null) {
+      connectApi.getProfile().then((p) => {
+        if (!live) return;
+        const on = Boolean(p && p.connectOnly);
+        setConnectOnly(authUser.uid, on);
+        setConnectOnlyState(on);
+      }).catch(() => {});
+    }
+    return () => { live = false; };
+  }, [authUser, CLINIC_ID, activeMember, connectApi]);
+  useEffect(() => { if (connectOnly && activeNav !== "MeriDent Connect") setActiveNav("MeriDent Connect"); }, [connectOnly, activeNav]);
+  const leaveConnectOnly = () => { setConnectOnly(authUser.uid, false); setConnectOnlyState(false); setActiveNav("Dashboard"); };
+
   // Keep a team member on a screen their role allows
   useEffect(() => {
     if (!CLINIC_ID) return;
@@ -1458,7 +1481,6 @@ export default function App() {
   const labLate = labOverdueCount(patients);
   const [showAllRecalls, setShowAllRecalls] = useState(false);
   const [invoiceFilter, setInvoiceFilter] = useState("all");
-  const connectApi = useMemo(() => bindApi(db, CLINIC_ID), [CLINIC_ID]);
   const aging = agingSummary(invoices);
   const [invoiceQuery, setInvoiceQuery] = useState("");
   const [diaryViewId, setDiaryViewId] = useState("upcoming");
@@ -1997,7 +2019,7 @@ export default function App() {
               { label: "Stock Maintenance", icon: <Package className="w-4 h-4" /> },
               { label: "Employee Roles & Roster", icon: <UserCog className="w-4 h-4" /> },
               { label: "Practice Profile", icon: <Hospital className="w-4 h-4" /> },
-            ]).map((item) => {
+            ]).filter((item) => !connectOnly || item.label === "MeriDent Connect").map((item) => {
               const isActive = activeNav === item.label;
               return (
                 <button
@@ -2017,6 +2039,9 @@ export default function App() {
                 </button>
               );
             })}
+            {connectOnly && (
+              <button type="button" onClick={leaveConnectOnly} className="w-full text-left px-3.5 py-2 text-xs text-slate-500 hover:text-ink">I also run a clinic: show the clinic software</button>
+            )}
           </nav>
         </div>
 
@@ -2838,7 +2863,7 @@ export default function App() {
               email={authUser?.email || ""}
               showToast={showToast}
               geocode={geocodeAddress}
-              defaults={{ clinicName: practiceProfile.name, clinicAddress: practiceProfile.address, phone: practiceProfile.phone }}
+              defaults={{ clinicName: practiceProfile.name, clinicAddress: practiceProfile.address, phone: practiceProfile.phone, connectOnly }}
             />
           )}
 

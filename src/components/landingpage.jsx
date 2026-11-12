@@ -7,6 +7,7 @@
 
 import React, { useState } from "react";
 import { isValidEmailAddress } from "../authErrors";
+import { setPendingConnectOnly, hasPendingConnectOnly } from "../connectOnly";
 import Hero3D from "./Hero3D.jsx";
 import {
   ArrowRight,
@@ -315,6 +316,8 @@ export default function LandingPage({
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState("");
+  const [specialist, setSpecialist] = useState(() => hasPendingConnectOnly());
+  const pickSpecialist = (on) => { setSpecialist(on); setPendingConnectOnly(on); };
 
   const submitEmail = (event) => {
     event.preventDefault();
@@ -419,6 +422,11 @@ export default function LandingPage({
                 <span>Ask for a demo on WhatsApp</span>
               </a>
             </div>
+
+            <label className="flex items-start gap-2 max-w-lg text-sm text-slate-600 cursor-pointer">
+              <input type="checkbox" checked={specialist} onChange={(e) => pickSpecialist(e.target.checked)} className="mt-1" />
+              <span><strong className="text-ink">I am a specialist and only want MeriDent Connect.</strong> You get the dentist network and are told when a dentist sends you a request. No clinic software.</span>
+            </label>
 
             {!firebaseConfigured && (
               <p role="alert" className="max-w-xl rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm font-medium text-amber-800">
