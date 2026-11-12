@@ -197,8 +197,8 @@ export const buildInvoiceHtml = (inv, profile = {}, { receipt = false } = {}) =>
   const payRows = (inv.payments || [])
     .map((p) => `<tr><td>${esc(p.date)} · ${esc(p.mode)}</td><td class="r">₹${formatINR(p.amountP)}</td></tr>`)
     .join("");
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${receipt ? "Receipt" : "Invoice"} ${esc(inv.id)}</title>
-<style>
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="color-scheme" content="light only"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${receipt ? "Receipt" : "Invoice"} ${esc(inv.id)}</title>
+<style>html,body{background:#fff !important;color:#0f172a;color-scheme:light only;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 body{font-family:Arial,Helvetica,sans-serif;color:#0f172a;margin:32px;font-size:13px}
 h1{font-size:20px;margin:0;color:#1d4ed8}h2{font-size:15px;margin:20px 0 6px}
 .muted{color:#64748b}.head{display:flex;justify-content:space-between;border-bottom:2px solid #1d4ed8;padding-bottom:12px}

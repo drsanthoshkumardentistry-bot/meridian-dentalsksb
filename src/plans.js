@@ -144,8 +144,8 @@ export const buildPlanHtml = (plan, patient, profile = {}) => {
       return `<tr><td>${esc(l.description)}</td><td>${esc(it.tooth)}</td><td class="r">₹${formatINR(l.amountP)}</td></tr>`;
     })
     .join("");
-  return `<!doctype html><html><head><meta charset="utf-8"><title>Treatment estimate</title>
-<style>body{font-family:Arial,sans-serif;color:#0f172a;max-width:720px;margin:24px auto;padding:0 16px}
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="color-scheme" content="light only"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Treatment estimate</title>
+<style>html,body{background:#fff !important;color:#0f172a;color-scheme:light only;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{font-family:Arial,sans-serif;color:#0f172a;max-width:720px;margin:24px auto;padding:0 16px}
 h1{color:#1d4ed8;font-size:20px;margin:0}table{width:100%;border-collapse:collapse;margin:12px 0}
 th,td{border-bottom:1px solid #e2e8f0;padding:8px;text-align:left;font-size:14px}.r{text-align:right}
 .muted{color:#64748b;font-size:12px}</style></head><body>
