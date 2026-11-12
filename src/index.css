@@ -352,3 +352,13 @@ main section.bg-white {
 .border-blue-200, .border-blue-100 { border-color: #fde68a !important; }
 .ring-blue-500, .focus\:ring-blue-500:focus { --tw-ring-color: #d97706 !important; }
 .focus\:border-blue-500:focus { border-color: #d97706 !important; }
+
+/* Slim icon rail on desktop: labels appear when the pointer or keyboard focus is on the sidebar */
+@media (min-width: 768px) {
+  .rail .rail-label { opacity: 0; white-space: nowrap; transition: opacity 0.2s ease; pointer-events: none; }
+  .rail:hover .rail-label, .rail:focus-within .rail-label { opacity: 1; pointer-events: auto; }
+  .rail .nav-icon svg { width: 1.25rem; height: 1.25rem; }
+  .rail .nav-item { padding-left: 0.95rem; }
+  .rail:not(:hover):not(:focus-within) .nav-item { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { .rail { transition: none; } }
