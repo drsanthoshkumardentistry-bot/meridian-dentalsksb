@@ -5307,10 +5307,10 @@ export default function App() {
 
       {/* --- ADD PATIENT MODAL --- */}
       {isAddPatientOpen && (
-        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-slate-900/40 backdrop-blur-xs overflow-y-auto">
           <form
             onSubmit={handleCreatePatient}
-            className="bg-white rounded-xl border border-rule w-full max-w-lg p-6 space-y-4 shadow-xl text-xs my-4"
+            className="bg-white rounded-xl border border-rule w-full max-w-lg p-6 space-y-4 shadow-xl text-xs my-auto"
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-sm font-bold text-slate-900">Add New Patient</h3>
