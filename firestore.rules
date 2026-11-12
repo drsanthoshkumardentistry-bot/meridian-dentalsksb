@@ -115,6 +115,15 @@ service cloud.firestore {
       allow read: if memberHasRole(clinicId, ['manager', 'dentist', 'receptionist']);
       allow write: if memberHasRole(clinicId, ['manager']);
     }
+    // Patient photos and X-rays: clinical material, so receptionists cannot open them.
+    match /clinics/{clinicId}/patientImages/{d} {
+      allow read: if memberHasRole(clinicId, ['manager', 'dentist']);
+      allow create, update: if memberHasRole(clinicId, ['manager', 'dentist'])
+                            && request.resource.data.keys().hasOnly(['id', 'patientId', 'kind', 'caption', 'tooth', 'takenOn', 'data', 'createdAt', 'by'])
+                            && request.resource.data.data is string && request.resource.data.data.size() <= 200000
+                            && request.resource.data.data.matches('^data:image/jpeg;base64,.+');
+      allow delete: if memberHasRole(clinicId, ['manager', 'dentist']);
+    }
     match /clinics/{clinicId}/employees/{d}    { allow read, write: if memberHasRole(clinicId, ['manager']); }
     match /clinics/{clinicId}/store/{d} {
       allow read: if memberHasRole(clinicId, ['manager', 'dentist', 'receptionist']);

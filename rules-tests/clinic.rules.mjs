@@ -257,3 +257,26 @@ describe("patient portal pages", () => {
     await assertSucceeds(deleteDoc(doc(asEmail("mgr"), "portalPages", "tok1")));
   });
 });
+
+describe("patient photos and X-rays", () => {
+  const img = (over = {}) => ({ id: "i1", patientId: "P1", kind: "Before", caption: "", tooth: "", takenOn: "2026-11-12", data: "data:image/jpeg;base64,AAAA", createdAt: "x", by: "Dr", ...over });
+  const at = (who) => doc(who, "clinics", OWNER, "patientImages", "i1");
+  it("the owner, managers and dentists can add and read; receptionists and strangers cannot", async () => {
+    await assertSucceeds(setDoc(at(as(env, OWNER)), img()));
+    await assertSucceeds(getDoc(at(as(env, OWNER))));
+    await assertSucceeds(setDoc(at(asEmail("mgr")), img()));
+    await assertSucceeds(getDoc(at(asEmail("doc"))));
+    await assertFails(getDoc(at(asEmail("rec"))));
+    await assertFails(setDoc(at(asEmail("rec")), img()));
+    await assertFails(getDoc(at(as(env, "intruder"))));
+  });
+  it("team members cannot store anything but a small JPEG", async () => {
+    await assertFails(setDoc(at(asEmail("doc")), img({ data: "data:image/png;base64,AAAA" })));
+    await assertFails(setDoc(at(asEmail("doc")), img({ data: "data:image/jpeg;base64," + "A".repeat(200001) })));
+    await assertFails(setDoc(at(asEmail("doc")), img({ extra: "x" })));
+  });
+  it("a dentist can delete a picture", async () => {
+    await seed(env, (db) => setDoc(doc(db, "clinics", OWNER, "patientImages", "i1"), img()));
+    await assertSucceeds(deleteDoc(at(asEmail("doc"))));
+  });
+});
