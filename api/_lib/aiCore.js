@@ -5,7 +5,7 @@ import { HELP_KNOWLEDGE } from "./helpKnowledge.js";
 
 export const MODEL = "claude-haiku-5-5";
 // Tried in order. If Google retires one (a 404), the next is used, so the AI keeps working. Override first with GEMINI_MODEL.
-export const GEMINI_MODELS = ["gemini-3.8-flash", "gemini-flash-latest"];
+export const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.0-flash", "gemini-flash-lite-latest"];
 export const MAX_TEXT = 4000;
 export const MAX_ITEMS = 30;
 export const MAX_TURNS = 8;

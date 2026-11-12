@@ -54,17 +54,27 @@ export default async function handler(req, res) {
       const body = JSON.stringify({
         systemInstruction: { parts: [{ text: built.system }] },
         contents: (built.messages || [{ role: "user", content: built.user }]).map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
-        generationConfig: { maxOutputTokens: 1000, temperature: 0.3 },
+        generationConfig: { maxOutputTokens: 700, temperature: 0.3, thinkingConfig: { thinkingBudget: 0 } },
       });
       let r;
+      let lastBody = "";
       for (const model of models) {
-        r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
-          body,
-        });
-        if (r.status !== 404) break; // model retired or renamed: try the next one
+        try {
+          r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
+            body,
+            signal: AbortSignal.timeout(8000),
+          });
+        } catch (e) { console.error("meridee gemini", model, String(e && e.name)); r = null; continue; }
+        if (r.ok) break;
+        lastBody = typeof r.text === "function" ? (await r.text().catch(() => "")).slice(0, 300) : "";
+        console.error("meridee gemini", model, r.status, lastBody);
+        // Model retired (404), busy (429, 5xx) or not accepting this setting (400): try the next one. A bad key (401/403) will not improve.
+        if (![400, 404, 429, 500, 503].includes(r.status)) break;
       }
+      if (!r) return send(res, 504, { error: "Meridee took too long. Try again." });
+      if (r.status === 401 || r.status === 403) return send(res, 503, { error: "Meridee's access key was refused. The site owner needs to update it." });
       if (r.status === 429) return send(res, 429, { error: "Meridee is busy. Try again in a minute." });
       if (!r.ok) return send(res, 502, { error: "Meridee could not answer. Try again." });
       const data = await r.json();
