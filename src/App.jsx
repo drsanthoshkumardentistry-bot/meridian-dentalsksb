@@ -90,6 +90,8 @@ import { dueBirthdays, buildBirthdayMessage, markGreeted } from "./greetings.js"
 import FeeList from "./components/FeeList.jsx";
 import { applyFee, sortedFees } from "./fees.js";
 import DentistEarnings from "./components/DentistEarnings.jsx";
+import RecallConversion from "./components/RecallConversion.jsx";
+import { recallConversion } from "./recallReport.js";
 import BookingShare from "./components/BookingShare.jsx";
 import { dentistEarnings, dentistEarningsCsv, cleanPct } from "./dentistReport.js";
 import { branchComparison, branchComparisonCsv } from "./branchReport.js";
@@ -3023,6 +3025,8 @@ export default function App() {
                 onRate={(name, v) => setPracticeProfile({ ...practiceProfile, commissions: { ...(practiceProfile.commissions || {}), [name]: v === "" ? "" : cleanPct(v) } })}
                 onDownload={() => downloadCsv(dentistEarningsCsv(dentistCmp, reportMonth), `dentists-${reportMonth}.csv`)}
               />
+
+              <RecallConversion stats={recallConversion(allPatients, scopeToBranches(allAppointments, allowedBranchIds), reportMonth)} ym={reportMonth} />
 
               <BranchCompare cmp={branchCmp} ym={reportMonth} onDownload={() => downloadCsv(branchComparisonCsv(branchCmp, reportMonth), `branches-${reportMonth}.csv`)} />
 

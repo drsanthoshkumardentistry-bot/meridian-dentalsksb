@@ -24,7 +24,7 @@ export const dentistEarnings = (invoices = [], appointments = [], ym = currentMo
   const rows = new Map();
   const row = (name) => {
     const k = key(name);
-    if (!rows.has(k)) rows.set(k, { name: nameOf(name), collectedP: 0, billedP: 0, invoices: 0, completedVisits: 0 });
+    if (!rows.has(k)) rows.set(k, { name: nameOf(name), collectedP: 0, billedP: 0, invoices: 0, completedVisits: 0, noShows: 0, booked: 0 });
     return rows.get(k);
   };
   const pct = new Map(Object.entries(commissions || {}).map(([n, v]) => [n.trim().toLowerCase(), cleanPct(v)]));
@@ -36,25 +36,39 @@ export const dentistEarnings = (invoices = [], appointments = [], ym = currentMo
     if (ymOf(parseAnyDate(inv.date)) === ym) { r.billedP += inv.totalP || 0; r.invoices += 1; }
   }
   for (const a of appointments) {
-    if (String(a.status || "").trim().toLowerCase() === "completed" && ymOf(parseAnyDate(a.date)) === ym) row(a.doctor).completedVisits += 1;
+    if (!a || ymOf(parseAnyDate(a.date)) !== ym) continue;
+    const status = String(a.status || "").trim().toLowerCase();
+    const r = row(a.doctor);
+    if (status === "completed") r.completedVisits += 1;
+    if (status === "no show") r.noShows += 1;
+    if (!status.startsWith("cancel")) r.booked += 1; // cancelled visits are not counted as booked
   }
 
   const list = [...rows.values()]
-    .filter((r) => r.collectedP || r.billedP || r.completedVisits)
+    .filter((r) => r.collectedP || r.billedP || r.completedVisits || r.noShows)
     .map((r) => {
       const p = pct.get(r.name.toLowerCase()) || 0;
-      return { ...r, commissionPct: p, commissionP: Math.round((r.collectedP * p) / 100) };
+      return {
+        ...r,
+        noShowRate: r.booked ? Math.round((r.noShows / r.booked) * 100) : 0,
+        perVisitP: r.completedVisits ? Math.round(r.collectedP / r.completedVisits) : 0,
+        commissionPct: p,
+        commissionP: Math.round((r.collectedP * p) / 100),
+      };
     })
     .sort((a, b) => b.collectedP - a.collectedP || a.name.localeCompare(b.name));
   const sum = (k2) => list.reduce((s, r) => s + r[k2], 0);
-  return { rows: list, total: { collectedP: sum("collectedP"), billedP: sum("billedP"), invoices: sum("invoices"), completedVisits: sum("completedVisits"), commissionP: sum("commissionP") } };
+  const noShowTotal = sum("noShows");
+  const bookedTotal = sum("booked");
+  return { rows: list, total: {
+      noShowRate: bookedTotal ? Math.round((noShowTotal / bookedTotal) * 100) : 0, collectedP: sum("collectedP"), billedP: sum("billedP"), invoices: sum("invoices"), completedVisits: sum("completedVisits"), noShows: sum("noShows"), booked: sum("booked"), commissionP: sum("commissionP") } };
 };
 
 const rupees = (p) => (p / 100).toFixed(2);
 
 export const dentistEarningsCsv = (report, ym) =>
   toCsv([
-    ["Month", "Dentist", "Received (INR)", "Billed (INR)", "Invoices", "Completed visits", "Commission %", "Commission (INR)"],
-    ...report.rows.map((r) => [ym, r.name, rupees(r.collectedP), rupees(r.billedP), r.invoices, r.completedVisits, r.commissionPct, rupees(r.commissionP)]),
-    [ym, "Total", rupees(report.total.collectedP), rupees(report.total.billedP), report.total.invoices, report.total.completedVisits, "", rupees(report.total.commissionP)],
+    ["Month", "Dentist", "Received (INR)", "Billed (INR)", "Invoices", "Completed visits", "No shows", "No show %", "Received per visit (INR)", "Commission %", "Commission (INR)"],
+    ...report.rows.map((r) => [ym, r.name, rupees(r.collectedP), rupees(r.billedP), r.invoices, r.completedVisits, r.noShows, r.noShowRate, rupees(r.perVisitP), r.commissionPct, rupees(r.commissionP)]),
+    [ym, "Total", rupees(report.total.collectedP), rupees(report.total.billedP), report.total.invoices, report.total.completedVisits, report.total.noShows, report.total.noShowRate, "", "", rupees(report.total.commissionP)],
   ]);

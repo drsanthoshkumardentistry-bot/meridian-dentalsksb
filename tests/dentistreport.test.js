@@ -33,7 +33,7 @@ describe("dentistEarnings", () => {
   });
   it("exports a spreadsheet in rupees with a total row", () => {
     const lines = dentistEarningsCsv(r, "2026-11").trim().split("\r\n");
-    expect(lines[1]).toBe("2026-11,Dr Asha,5000.00,7000.00,2,2,30,1500.00");
-    expect(lines.at(-1)).toBe("2026-11,Total,6300.00,7800.00,3,2,,1550.00");
+    expect(lines[1]).toBe("2026-11,Dr Asha,5000.00,7000.00,2,2,0,0,2500.00,30,1500.00");
+    expect(lines.at(-1)).toBe("2026-11,Total,6300.00,7800.00,3,2,0,0,,,1550.00");
   });
 });

@@ -27,6 +27,8 @@ export default function DentistEarnings({ report, ym, commissions = {}, canEditR
               <th className={th}>Received (₹)</th>
               <th className={th}>Billed (₹)</th>
               <th className={th}>Visits done</th>
+              <th className={th}>No shows</th>
+              <th className={th}>Received per visit (₹)</th>
               <th className={th}>Commission %</th>
               <th className={th}>Commission (₹)</th>
             </tr>
@@ -38,6 +40,8 @@ export default function DentistEarnings({ report, ym, commissions = {}, canEditR
                 <td className="p-3 text-right">{formatINR(r.collectedP)}</td>
                 <td className="p-3 text-right">{formatINR(r.billedP)}</td>
                 <td className="p-3 text-right">{r.completedVisits}</td>
+                <td className="p-3 text-right">{r.noShows}{r.noShows ? ` (${r.noShowRate}%)` : ""}</td>
+                <td className="p-3 text-right">{r.perVisitP ? formatINR(r.perVisitP) : "-"}</td>
                 <td className="p-3 text-right">
                   {canEditRates && r.name !== UNASSIGNED ? (
                     <input type="number" min="0" max="100" step="0.5" aria-label={`Commission percent for ${r.name}`} value={commissions[r.name] ?? ""} onChange={(e) => onRate(r.name, e.target.value)} className="w-16 px-2 py-1 border border-rule rounded text-right" />
@@ -53,6 +57,8 @@ export default function DentistEarnings({ report, ym, commissions = {}, canEditR
               <td className="p-3 text-right">{formatINR(report.total.collectedP)}</td>
               <td className="p-3 text-right">{formatINR(report.total.billedP)}</td>
               <td className="p-3 text-right">{report.total.completedVisits}</td>
+              <td className="p-3 text-right">{report.total.noShows}{report.total.noShows ? ` (${report.total.noShowRate}%)` : ""}</td>
+              <td className="p-3" />
               <td className="p-3" />
               <td className="p-3 text-right">{report.total.commissionP ? formatINR(report.total.commissionP) : "-"}</td>
             </tr>
