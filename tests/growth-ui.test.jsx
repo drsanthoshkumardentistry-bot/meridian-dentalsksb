@@ -22,7 +22,7 @@ describe("Growth", () => {
     fireEvent.change(screen.getByLabelText("Patient"), { target: { value: "P1" } });
     fireEvent.change(screen.getByLabelText("Plan"), { target: { value: "MP1" } });
     fireEvent.click(screen.getByRole("button", { name: "Record membership" }));
-    expect(p.onSell).toHaveBeenCalledWith(expect.objectContaining({ patientId: "P1", planName: "Gold", paidP: 150000 }));
+    expect(p.onSell).toHaveBeenCalledWith(expect.objectContaining({ patientId: "P1", planName: "Gold", paidP: 150000 }), { invoice: true });
   });
   it("adds a lead and changes its status", () => {
     const p = base();
@@ -36,6 +36,15 @@ describe("Growth", () => {
     rerender(<Growth {...p} patients={[]} leads={[lead]} />);
     fireEvent.change(screen.getByLabelText("Status for Ravi"), { target: { value: "Booked" } });
     expect(p.onLeads.mock.calls[1][0][0].status).toBe("Booked");
+  });
+  it("offers to make a lead a patient", () => {
+    const p = base();
+    const onConvertLead = vi.fn();
+    const lead = { id: "L1", name: "Ravi", phone: "9876543210", source: "Walk-in", status: "New", createdAt: "2026-11-12" };
+    render(<Growth {...p} patients={[]} leads={[lead]} onConvertLead={onConvertLead} />);
+    fireEvent.click(screen.getByRole("tab", { name: "Leads" }));
+    fireEvent.click(screen.getByRole("button", { name: "Make Ravi a patient" }));
+    expect(onConvertLead).toHaveBeenCalledWith(lead);
   });
   it("hides add forms for read-only users", () => {
     render(<Growth {...base()} plans={[]} canEdit={false} canEditPlans={false} patients={[]} />);
