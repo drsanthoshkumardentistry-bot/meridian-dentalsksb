@@ -3527,7 +3527,7 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-600 mb-1">Lead Dental Surgeons</label>
+                  <label className="block font-semibold text-slate-600 mb-1">Doctor name (Lead Dental Surgeon)</label>
                   <input
                     type="text"
                     value={practiceProfile.drName}
