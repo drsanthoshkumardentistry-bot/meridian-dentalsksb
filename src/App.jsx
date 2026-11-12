@@ -51,7 +51,8 @@ import MedicineForm from "./components/MedicineForm.jsx";
 import MedicineLibrary from "./components/MedicineLibrary.jsx";
 import PatientGallery from "./components/PatientGallery.jsx";
 import { todayActionTiles, totalActions, liveFlow } from "./todayActions.js";
-import { listImages, addImage, removeImage } from "./galleryStore.js";
+import { listImages, addImage, removeImage, countImages } from "./galleryStore.js";
+import { opgUsage, galleryUpperBytes, formatBytes, usageLevel, CLINIC_WARN_BYTES } from "./storageUsage.js";
 import { compressImage } from "./imageCompress.js";
 import OptionLists from "./components/OptionLists.jsx";
 import { listOf, withCurrent } from "./optionLists.js";
@@ -1756,6 +1757,14 @@ export default function App() {
     win.document.write(buildInvoiceHtml(normalizeInvoice(inv), practiceProfile, { receipt }));
     win.document.close();
   };
+
+  const [galleryCount, setGalleryCount] = useState(null);
+  useEffect(() => {
+    if (activeNav !== "Practice Profile" || !db || !CLINIC_ID) return undefined;
+    let off = false;
+    countImages(db, CLINIC_ID).then((n) => { if (!off) setGalleryCount(n); }).catch(() => { if (!off) setGalleryCount(null); });
+    return () => { off = true; };
+  }, [activeNav]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDownloadPdf = async (inv, receipt = false) => {
     try {
@@ -3652,6 +3661,24 @@ export default function App() {
                 </Field>
               </div>
 
+              {(() => {
+                const opg = opgUsage(allPatients);
+                const used = opg.bytes + galleryUpperBytes(galleryCount || 0);
+                const level = usageLevel(used);
+                const pct = Math.min(100, Math.round((used / CLINIC_WARN_BYTES) * 100));
+                return (
+                  <div className="pt-4 border-t border-slate-100" data-testid="storage-meter">
+                    <div className="text-xs font-semibold text-slate-700">Pictures stored: about {formatBytes(used)} of {formatBytes(CLINIC_WARN_BYTES)}</div>
+                    <div className="mt-1.5 h-2 rounded-full bg-slate-100 overflow-hidden" role="progressbar" aria-label="Picture storage used" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+                      <div className={`h-full ${level === "ok" ? "bg-brand-600" : level === "watch" ? "bg-amber-500" : "bg-rose-600"}`} style={{ width: `${pct}%` }} />
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-1.5">
+                      {opg.count} OPG{opg.count === 1 ? "" : "s"}{galleryCount === null ? "" : `, ${galleryCount} photo${galleryCount === 1 ? "" : "s"} and X-rays`}. {level === "ok" ? "Plenty of room on the free plan." : level === "watch" ? "Getting full. Plan to move pictures to bigger storage soon." : "Almost full. Tell MeriDent support so we can move your pictures to bigger storage."}
+                    </p>
+                  </div>
+                );
+              })()}
+
               <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
                 <span className="text-xs text-emerald-700 font-semibold flex items-center gap-1.5">
                   <ShieldCheck className="w-4 h-4" /> Cloud Persistence Active
@@ -4957,9 +4984,10 @@ export default function App() {
               {!allowedBranchIds && (role === "owner" || role === "manager") && (
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     const b = buildPatientBackup(activePatient.id, { patients: allPatients, appointments: allAppointments, invoices: allInvoices }, practiceProfile);
                     if (!b) return;
+                    try { if (db && CLINIC_ID) b.data.images = await listImages(db, CLINIC_ID, activePatient.id); } catch (e) { /* pictures are skipped if they cannot be read */ }
                     downloadFile(JSON.stringify(b), backupFileName(b), "application/json");
                     logAudit("data.export", activePatient.name, "One patient's record");
                     showToast("Record downloaded. It holds private health details, keep it safe.");
