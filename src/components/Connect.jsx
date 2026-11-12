@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import ConnectMessages from "./ConnectMessages.jsx";
 import ConnectAccess from "./ConnectAccess.jsx";
 import { countUnread, lastSeen, markSeen } from "../connect/unread.js";
+import { tabTitle } from "../connectOnly.js";
 import { MapPin, Phone, MessageCircle, ShieldCheck, Search } from "lucide-react";
 import {
   SPECIALTIES, specialtyLabel, DISTANCES_KM, URGENCIES, CONSENT_TEXT, MAX_SUMMARY,
@@ -26,7 +27,7 @@ function Registration({ api, defaults, geocode, showToast, onDone, existing }) {
   const [f, setF] = useState({
     fullName: "", qualification: "", specialty: "general", councilState: "", registrationNo: "",
     clinicName: defaults.clinicName || "", clinicAddress: defaults.clinicAddress || "",
-    timings: "", phone: defaults.phone || "", whatsapp: "", ...(existing || {}),
+    timings: "", phone: defaults.phone || "", whatsapp: "", connectOnly: Boolean(defaults.connectOnly), ...(existing || {}),
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -69,6 +70,10 @@ function Registration({ api, defaults, geocode, showToast, onDone, existing }) {
           A closed network of verified dentists. We check your council registration before you can find or be found. Only your professional details are shown, never ratings or reviews.
         </p>
       </div>
+      <label className="flex items-start gap-2 text-sm text-slate-600">
+        <input type="checkbox" checked={Boolean(f.connectOnly)} onChange={(e) => setF({ ...f, connectOnly: e.target.checked })} className="mt-1" />
+        <span><strong className="text-ink">I only want MeriDent Connect.</strong> I do not run my clinic on MeriDent.</span>
+      </label>
       <div className="grid sm:grid-cols-2 gap-3">
         {text("fullName", "Full name", { autoComplete: "name" })}
         {text("qualification", "Qualification, for example BDS or MDS (Endodontics)")}
@@ -374,6 +379,7 @@ export default function Connect({ api, defaults = {}, geocode, showToast, uid, e
   const [editing, setEditing] = useState(false);
   const [chatWith, setChatWith] = useState(null);
   const [unread, setUnread] = useState(0);
+  const [, setAlertTick] = useState(0);
 
   const loadMe = useCallback(async () => {
     try {
@@ -412,6 +418,31 @@ export default function Connect({ api, defaults = {}, geocode, showToast, uid, e
 
   const { status, me, admin } = state;
   const newCount = received.filter((c) => c.status === "sent").length;
+
+  // Tell the specialist about new requests: tab title now, and a desktop alert when they allow it.
+  const seenNew = useRef(null);
+  useEffect(() => {
+    if (!verified) return undefined;
+    const base = document.title.replace(/^\(\d+\) /, "");
+    document.title = tabTitle(newCount + unread, base);
+    return () => { document.title = base; };
+  }, [verified, newCount, unread]);
+  useEffect(() => {
+    if (!verified) return;
+    if (seenNew.current !== null && newCount > seenNew.current) {
+      try {
+        if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+          new Notification("MeriDent Connect", { body: "A dentist sent you a new request." });
+        }
+      } catch { /* alerts are optional */ }
+    }
+    seenNew.current = newCount;
+  }, [verified, newCount]);
+  useEffect(() => {
+    if (!verified) return undefined;
+    const t = setInterval(loadConsults, 60000);
+    return () => clearInterval(t);
+  }, [verified, loadConsults]);
 
   if (!api.enabled) return <p role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">MeriDent Connect needs you to be signed in and online.</p>;
   if (status === "loading") return <p role="status" className="text-sm text-slate-600">Loading MeriDent Connect…</p>;
@@ -460,6 +491,10 @@ export default function Connect({ api, defaults = {}, geocode, showToast, uid, e
             </button>
           ))}
         </div>
+      )}
+      {verified && typeof Notification !== "undefined" && Notification.permission === "default" && (
+        <button type="button" onClick={() => { try { Notification.requestPermission().then(() => setAlertTick((n) => n + 1)); } catch { /* ignore */ } }}
+          className={`${btn} border border-rule text-slate-700`}>Turn on alerts for new requests</button>
       )}
       {body}
       {!verified && (

@@ -49,6 +49,7 @@ export const saveNewProfile = async (db, uid, p) => {
     geo: p.geo, geohash: p.geohash,
     timings: (p.timings || "").trim(), phone: p.phone.trim(), whatsapp: (p.whatsapp || "").trim(),
     status: "pending", listed: false, acceptingReferrals: true, emergencyAvailable: false,
+    connectOnly: Boolean(p.connectOnly),
     createdAt: serverTimestamp(),
   });
 };
