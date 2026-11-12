@@ -274,21 +274,17 @@ input::placeholder, textarea::placeholder { color: #64748b; opacity: 1; }
 
 /* ---- Premium theme: soft blue backdrop with a faint grid, floating navy sidebar and white workspace ---- */
 .app-backdrop {
-  background-color: #dbe7fc;
-  background-image:
-    linear-gradient(rgba(37, 99, 235, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(37, 99, 235, 0.06) 1px, transparent 1px),
-    linear-gradient(160deg, #eaf1ff 0%, #d5e3ff 55%, #bfd3fb 100%);
-  background-size: 36px 36px, 36px 36px, 100% 100%;
+  background-color: #e5e7eb;
+  background-image: linear-gradient(160deg, #ece9e2 0%, #e2e8f0 100%);
 }
 .side-navy {
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 260 520' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='white' stroke-opacity='0.09' stroke-width='1.4'%3E%3Cpath d='M-20 380 C 60 330 120 470 280 400'/%3E%3Cpath d='M-20 410 C 70 360 130 500 280 430'/%3E%3Cpath d='M-20 440 C 80 390 140 530 280 460'/%3E%3Cpath d='M-20 120 C 80 70 160 170 280 90'/%3E%3Cpath d='M-20 150 C 90 100 170 200 280 120'/%3E%3C/g%3E%3C/svg%3E"),
-    radial-gradient(120% 50% at 100% 0%, rgba(96, 165, 250, 0.45) 0%, transparent 60%),
-    radial-gradient(90% 45% at 0% 100%, rgba(79, 70, 229, 0.5) 0%, transparent 70%),
-    linear-gradient(180deg, #1d4ed8 0%, #1a3fc0 35%, #17339b 68%, #112571 100%);
+    radial-gradient(120% 50% at 100% 0%, rgba(251, 191, 36, 0.28) 0%, transparent 60%),
+    radial-gradient(90% 45% at 0% 100%, rgba(100, 116, 139, 0.45) 0%, transparent 70%),
+    linear-gradient(180deg, #1f2937 0%, #18212f 40%, #111827 72%, #0b1019 100%);
   background-size: 100% 100%;
-  box-shadow: 6px 0 30px -12px rgba(30, 58, 138, 0.45);
+  box-shadow: 6px 0 30px -12px rgba(11, 16, 25, 0.5);
 }
 .nav-item {
   position: relative;
@@ -299,8 +295,8 @@ input::placeholder, textarea::placeholder { color: #64748b; opacity: 1; }
 .nav-item:hover .nav-icon { transform: scale(1.18) rotate(-4deg); }
 .nav-item-active,
 .nav-item-active:hover {
-  background-image: linear-gradient(135deg, #60a5fa 0%, #3b82f6 55%, #2563eb 100%);
-  box-shadow: 0 8px 18px -6px rgba(15, 23, 80, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  background-image: linear-gradient(135deg, #f59e0b 0%, #d97706 60%, #b45309 100%);
+  box-shadow: 0 8px 18px -6px rgba(11, 16, 25, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.28);
   transform: none;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -311,18 +307,18 @@ input::placeholder, textarea::placeholder { color: #64748b; opacity: 1; }
 .side-scroll::-webkit-scrollbar-track { background: transparent; }
 main .rounded-xl { border-radius: 1rem; }
 main section.bg-white.rounded-xl,
-main .bg-white.rounded-xl.border { box-shadow: 0 1px 2px rgba(30, 58, 138, 0.05), 0 8px 20px -12px rgba(30, 58, 138, 0.18); }
+main .bg-white.rounded-xl.border { box-shadow: 0 1px 2px rgba(17, 24, 39, 0.05), 0 8px 20px -12px rgba(17, 24, 39, 0.2); }
 @media (prefers-reduced-motion: no-preference) {
   .stat-card { transition: transform 0.18s ease, box-shadow 0.18s ease; }
   .stat-card:hover { transform: translateY(-2px); }
 }
 .work-panel {
-  background-color: #c9dcfb;
+  background-color: #e5e7eb;
   background-image:
-    radial-gradient(55% 45% at 92% 0%, rgba(139, 112, 246, 0.38) 0%, transparent 70%),
-    radial-gradient(50% 45% at 6% 30%, rgba(56, 189, 248, 0.38) 0%, transparent 70%),
-    radial-gradient(55% 45% at 85% 95%, rgba(45, 212, 191, 0.28) 0%, transparent 70%),
-    linear-gradient(160deg, #c3d7fa 0%, #cdd8fb 45%, #bfe0f8 100%);
+    radial-gradient(55% 45% at 92% 0%, rgba(251, 191, 36, 0.28) 0%, transparent 70%),
+    radial-gradient(50% 45% at 6% 30%, rgba(148, 163, 184, 0.3) 0%, transparent 70%),
+    radial-gradient(55% 45% at 85% 95%, rgba(253, 224, 71, 0.2) 0%, transparent 70%),
+    linear-gradient(160deg, #e5e7eb 0%, #ece9e2 45%, #e2e8f0 100%);
   background-attachment: fixed;
 }
 main section.bg-white {
@@ -344,3 +340,15 @@ main section.bg-white {
 
 /* The app shell must never scroll itself. Focus or scrollIntoView on a field was shifting it up and leaving an empty band at the bottom. */
 .app-shell { overflow: clip; height: 100vh; height: 100dvh; }
+
+/* Graphite & Gold accent: buttons, links and highlights that were hard-coded blue */
+.bg-brand-600, .bg-\[\#1d4ed8\], .bg-blue-600 { background-color: #b45309 !important; }
+.hover\:bg-blue-700:hover, .hover\:bg-brand-700:hover, .hover\:bg-\[\#1e40af\]:hover { background-color: #92400e !important; }
+.bg-blue-700, .bg-brand-700 { background-color: #92400e !important; }
+.text-brand-600, .text-brand-700, .text-blue-600, .text-blue-700, .text-\[\#1d4ed8\] { color: #b45309 !important; }
+.text-blue-800, .text-brand-900 { color: #78350f !important; }
+.bg-blue-50, .bg-brand-50 { background-color: #fffbeb !important; }
+.bg-blue-100, .bg-brand-100 { background-color: #fef3c7 !important; }
+.border-blue-200, .border-blue-100 { border-color: #fde68a !important; }
+.ring-blue-500, .focus\:ring-blue-500:focus { --tw-ring-color: #d97706 !important; }
+.focus\:border-blue-500:focus { border-color: #d97706 !important; }
