@@ -75,6 +75,7 @@ import { patientSummary } from "./patientSummary.js";
 import { buildVisit, addVisit, removeVisit } from "./visits.js";
 import { shiftDay, dayGrid, hourMarks } from "./dayView.js";
 import OpgViewer from "./components/OpgViewer.jsx";
+import { MiniBars, AreaLine } from "./components/Sparkline.jsx";
 import TodayDesk from "./components/TodayDesk.jsx";
 import Growth from "./components/Growth.jsx";
 import PrePostOp from "./components/PrePostOp.jsx";
@@ -1980,6 +1981,27 @@ export default function App() {
 
   const todayKey = dashboardDateKey(new Date().toLocaleDateString("en-IN"));
 
+  // Last 30 days of visits booked and money collected, for the dashboard trend chart
+  const trend30 = (() => {
+    const days = Array.from({ length: 30 }, (_, i) => {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - (29 - i));
+      return d;
+    });
+    const keyOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const keys = days.map(keyOf);
+    const visits = keys.map((k) => appointments.filter((a) => a.date === k && !["cancelled", "canceled"].includes(String(a.status || "").toLowerCase())).length);
+    const collected = keys.map((k) =>
+      invoices.reduce((sum, inv) => sum + (normalizeInvoice(inv).payments || []).filter((p) => dashboardDateKey(p.date) === k).reduce((t, p) => t + (p.amountP || 0), 0), 0) / 100
+    );
+    return { labels: days.map((d) => d.toLocaleDateString("en-IN", { day: "numeric", month: "short" })), visits, collected, totalVisits: visits.reduce((a, b) => a + b, 0), totalCollected: collected.reduce((a, b) => a + b, 0) };
+  })();
+  const dashboardVisitSeries = dashboardDays.map((date) => {
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    return appointments.filter((a) => a.date === key).length;
+  });
+
   const doctorOptions = Array.from(
     new Set([practiceProfile.drName, ...employees.filter((e) => e.active !== false).map((e) => e.name)].filter(Boolean))
   );
@@ -2069,7 +2091,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen bg-enamel text-slate-800 font-sans overflow-hidden">
+    <div className="flex h-screen app-backdrop text-slate-800 font-sans overflow-hidden md:p-4 md:gap-4">
       
       {idleSecondsLeft !== null && (
         <IdleWarning secondsLeft={idleSecondsLeft} onStay={staySignedIn} onLogout={() => handleLogout()} />
@@ -2117,33 +2139,33 @@ export default function App() {
 
       {/* --- SIDEBAR --- */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white text-ink border-r border-rule flex flex-col justify-between transition-transform duration-300 md:static md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 side-navy text-white flex flex-col justify-between overflow-y-auto side-scroll shadow-2xl transition-transform duration-300 md:static md:translate-x-0 md:rounded-3xl md:shrink-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div>
-          <div className="p-5 flex items-center justify-between border-b border-slate-100">
+          <div className="p-5 flex items-center justify-between border-b border-white/10">
             <div className="flex items-center gap-2.5">
               <img
                 src="/logo.png"
                 alt=""
-                className="w-9 h-9 rounded-lg object-cover bg-brand-50"
+                className="w-9 h-9 rounded-xl object-cover bg-white/90"
                 onError={(e) => {
                   e.currentTarget.style.display = "none";
                 }}
               />
               <div>
-                <div className="font-display text-lg font-extrabold text-ink tracking-tight leading-none">
+                <div className="font-display text-lg font-extrabold text-white tracking-tight leading-none">
                   MeriDent
                 </div>
-                <div className="text-[11px] text-slate-500 font-normal mt-1">
+                <div className="text-[11px] text-blue-200/70 font-normal mt-1">
                   Practice management
                 </div>
               </div>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="md:hidden text-slate-500 hover:text-ink"
+              className="md:hidden text-blue-200 hover:text-white"
             >
               <X className="w-5 h-5" />
             </button>
@@ -2173,10 +2195,10 @@ export default function App() {
                     setActiveNav(item.label);
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-[13px] font-medium transition-colors ${
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13px] font-medium transition-colors ${
                     isActive
-                      ? "bg-brand-50 text-brand-700 font-semibold"
-                      : "text-slate-600 hover:bg-enamel hover:text-ink"
+                      ? "bg-white/15 text-white font-semibold shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]"
+                      : "text-blue-100/70 hover:bg-white/10 hover:text-white"
                   }`}
                 >
                   {item.icon}
@@ -2185,24 +2207,24 @@ export default function App() {
               );
             })}
             {connectOnly && (
-              <button type="button" onClick={leaveConnectOnly} className="w-full text-left px-3.5 py-2 text-xs text-slate-500 hover:text-ink">I also run a clinic: show the clinic software</button>
+              <button type="button" onClick={leaveConnectOnly} className="w-full text-left px-3.5 py-2 text-xs text-blue-200/80 hover:text-white">I also run a clinic: show the clinic software</button>
             )}
           </nav>
         </div>
 
-        <div className="p-4 border-t border-slate-100">
+        <div className="p-4 border-t border-white/10">
           <div className="flex items-center gap-3 min-w-0">
             {authUser.photoURL ? (
               <img src={authUser.photoURL} alt="Avatar" className="h-9 w-9 rounded-full border border-rule object-cover" />
             ) : (
-              <div className="h-9 w-9 shrink-0 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center">
+              <div className="h-9 w-9 shrink-0 rounded-full bg-white/15 text-white flex items-center justify-center">
                 <User className="h-4 w-4" />
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <div className="truncate text-xs font-semibold text-ink">{authUser.displayName || "Dr. Clinician"}</div>
-              <div className="truncate text-[11px] text-slate-500">{authUser.email}</div>
-              {activeMember && <div className="truncate text-[11px] text-brand-600" data-testid="member-role">{ROLE_LABEL[role]} at {activeMember.clinicName || "this clinic"}</div>}
+              <div className="truncate text-xs font-semibold text-white">{authUser.displayName || "Dr. Clinician"}</div>
+              <div className="truncate text-[11px] text-blue-200/70">{authUser.email}</div>
+              {activeMember && <div className="truncate text-[11px] text-sky-300" data-testid="member-role">{ROLE_LABEL[role]} at {activeMember.clinicName || "this clinic"}</div>}
             </div>
           </div>
           {activeMember && (
@@ -2211,20 +2233,20 @@ export default function App() {
               onClick={() => {
                 if (confirm(`Leave ${activeMember.clinicName || "this clinic"}? You will need a new invitation to return.`)) removeMember(db, authUser.email).catch(() => showToast("Could not leave. Check your connection."));
               }}
-              className="mt-3 w-full rounded-lg border border-rule px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-enamel"
+              className="mt-3 w-full rounded-xl border border-white/20 px-3 py-2 text-xs font-semibold text-blue-100 hover:bg-white/10"
             >
               Leave this clinic
             </button>
           )}
           {navFor(role, [{ label: "Practice Profile" }]).length > 0 ? (
-            <div className="mt-3 rounded-lg border border-rule bg-white p-3">
+            <div className="mt-3 rounded-2xl bg-white p-3 shadow-lg">
               <StorageMeter patients={allPatients} galleryCount={galleryCount} />
             </div>
           ) : (
             <button
               type="button"
               onClick={handleLogout}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-rule px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-white/20 px-3 py-2 text-xs font-semibold text-blue-100 transition hover:bg-white/10"
             >
               <LogOut className="h-4 w-4" /> Sign out
             </button>
@@ -2233,7 +2255,7 @@ export default function App() {
       </aside>
 
       {/* --- WORKSPACE --- */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto bg-white md:rounded-3xl md:shadow-[0_20px_60px_-20px_rgba(30,58,138,0.35)]">
         <header className="h-16 bg-white/90 backdrop-blur border-b border-rule px-3 sm:px-6 flex items-center justify-between gap-2 sticky top-0 z-30">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0 shrink">
             <button
@@ -3948,23 +3970,50 @@ export default function App() {
                 onDismiss={() => setPracticeProfile({ ...practiceProfile, setupHidden: true })}
               />}
 
-              <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4" data-testid="stat-cards">
                 {[
-                  { title: "Patients", value: patients.length, note: "Registered patient records", icon: <UsersRound className="w-5 h-5" />, tone: "bg-blue-50 text-blue-600" },
-                  { title: "Visits Today", value: diarySum.today, note: diarySum.tomorrow ? `${diarySum.tomorrow} tomorrow` : "Active bookings today", icon: <CalendarDays className="w-5 h-5" />, tone: "bg-aqua-50 text-aqua-700" },
-                  { title: "Collected this month", value: `₹${formatINR(billing.collectedP)}`, note: `₹${formatINR(billing.billedP)} billed this month`, icon: <IndianRupee className="w-5 h-5" />, tone: "bg-emerald-50 text-emerald-600" },
-                  { title: "Outstanding", value: `₹${formatINR(billing.outstandingP)}`, note: billing.overdueCount ? `${billing.overdueCount} overdue, ₹${formatINR(billing.overdueP)}` : "Unpaid balance across invoices", icon: <Wallet className="w-5 h-5" />, tone: billing.overdueCount ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600" },
+                  { title: "Patients", value: patients.length, note: "Registered patient records", icon: <UsersRound className="w-4 h-4" />, tone: "bg-blue-50 text-blue-600", bars: dashboardPatientSeries.map((d) => d.value), color: "#2563eb" },
+                  { title: "Visits Today", value: diarySum.today, note: diarySum.tomorrow ? `${diarySum.tomorrow} tomorrow` : "Active bookings today", icon: <CalendarDays className="w-4 h-4" />, tone: "bg-sky-50 text-sky-600", bars: dashboardVisitSeries, color: "#0ea5e9" },
+                  { title: "Collected this month", value: `₹${formatINR(billing.collectedP)}`, note: `₹${formatINR(billing.billedP)} billed this month`, icon: <IndianRupee className="w-4 h-4" />, dark: true, bars: dashboardRevenueSeries.map((d) => d.value), color: "#7dd3fc" },
+                  { title: "Outstanding", value: `₹${formatINR(billing.outstandingP)}`, note: billing.overdueCount ? `${billing.overdueCount} overdue, ₹${formatINR(billing.overdueP)}` : "Unpaid balance across invoices", icon: <Wallet className="w-4 h-4" />, tone: billing.overdueCount ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600" },
                 ].map((card) => (
-                  <div key={card.title} className="bg-white rounded-xl border border-rule p-4 sm:p-5 shadow-card flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                    <div className={`w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-xl flex items-center justify-center ${card.tone}`}>{card.icon}</div>
-                    <div className="min-w-0">
-                      <div className="text-[13px] sm:text-sm font-medium text-slate-500">{card.title}</div>
-                      <div className="text-xl sm:text-2xl font-bold text-slate-900 mt-0.5 break-words tabular">{card.value}</div>
-                      <div className="text-[11px] sm:text-xs text-slate-500 mt-1 leading-snug">{card.note}</div>
+                  <div
+                    key={card.title}
+                    className={`stat-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between gap-3 min-h-[8.5rem] ${card.dark ? "bg-gradient-to-br from-navy-800 to-navy-950 text-white shadow-lift" : "bg-white border border-rule shadow-card"}`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className={`w-8 h-8 shrink-0 rounded-lg flex items-center justify-center ${card.dark ? "bg-white/15 text-sky-200" : card.tone}`}>{card.icon}</div>
+                      <div className={`text-[13px] font-medium ${card.dark ? "text-blue-100/80" : "text-slate-500"}`}>{card.title}</div>
                     </div>
+                    <div>
+                      <div className={`text-xl sm:text-2xl font-bold break-words tabular ${card.dark ? "text-white" : "text-slate-900"}`}>{card.value}</div>
+                      <div className={`text-[11px] sm:text-xs mt-1 leading-snug ${card.dark ? "text-blue-100/70" : "text-slate-500"}`}>{card.note}</div>
+                    </div>
+                    {card.bars && <MiniBars data={card.bars} color={card.color} />}
                   </div>
                 ))}
               </div>
+
+              <section className="bg-white rounded-2xl border border-rule p-4 sm:p-5 shadow-card" data-testid="trend-chart" aria-label="Last 30 days">
+                <div className="flex flex-wrap items-end justify-between gap-3 mb-2">
+                  <div>
+                    <h2 className="text-base font-bold text-slate-900">Last 30 days</h2>
+                    <p className="text-xs text-slate-500">Visits booked and money collected, day by day</p>
+                  </div>
+                  <div className="flex gap-6 text-xs">
+                    <div><div className="flex items-center gap-1.5 text-slate-500"><span className="w-2.5 h-2.5 rounded-full bg-[#2563eb]" />Collected</div><div className="text-lg font-bold tabular text-slate-900">₹{formatINR(Math.round(trend30.totalCollected * 100))}</div></div>
+                    <div><div className="flex items-center gap-1.5 text-slate-500"><span className="w-2.5 h-2.5 rounded-full bg-[#7dd3fc]" />Visits</div><div className="text-lg font-bold tabular text-slate-900">{trend30.totalVisits}</div></div>
+                  </div>
+                </div>
+                {trend30.totalVisits === 0 && trend30.totalCollected === 0 ? (
+                  <p className="text-sm text-slate-500 py-8 text-center">Nothing recorded in the last 30 days yet. Book visits and take payments and the trend will appear here.</p>
+                ) : (
+                  <div className="grid grid-cols-1 gap-2">
+                    <AreaLine labels={trend30.labels} series={[{ name: "Collected", color: "#2563eb", data: trend30.collected }]} height={150} />
+                    <AreaLine labels={trend30.labels} series={[{ name: "Visits", color: "#0ea5e9", data: trend30.visits }]} height={110} />
+                  </div>
+                )}
+              </section>
 
               {flowNow && (
                 <section className="bg-white rounded-xl border border-rule p-4 shadow-card flex flex-wrap items-center gap-x-6 gap-y-2" data-testid="flow-now" aria-label="Waiting room now">
