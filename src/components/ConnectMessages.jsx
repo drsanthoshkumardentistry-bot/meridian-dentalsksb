@@ -1,3 +1,4 @@
+import { findCallLink } from "../connect/call.js";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { validateComment, timeAgo, LIMITS } from "../connect/feed.js";
 import { toMillis, chatIdFor } from "../connect/api.js";
@@ -96,6 +97,9 @@ export default function ConnectMessages({ api, me, start, showToast }) {
                 return (
                   <div key={m.id} className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${mine ? "ml-auto bg-brand-600 text-white" : "bg-slate-100 text-slate-800"}`}>
                     <div className="whitespace-pre-wrap break-words">{m.text}</div>
+                    {findCallLink(m.text) && (
+                      <a href={findCallLink(m.text)} target="_blank" rel="noopener noreferrer" className={`mt-1.5 inline-block ${btn} ${mine ? "bg-white text-brand-700" : "bg-brand-600 text-white"}`}>Join video call</a>
+                    )}
                     <div className={`text-[10px] mt-0.5 ${mine ? "text-blue-100" : "text-slate-400"}`}>{timeAgo(toMillis(m.createdAt))}</div>
                   </div>
                 );

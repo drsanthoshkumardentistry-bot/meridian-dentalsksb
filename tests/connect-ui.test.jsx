@@ -77,6 +77,22 @@ describe("MeriDent Connect screens", () => {
     expect(search).toHaveBeenCalledWith(me.geo, 10);
   });
 
+  it("invites a listed specialist to a video call through Messages", async () => {
+    const sendMessage = vi.fn(async () => {});
+    const open = vi.spyOn(window, "open").mockImplementation(() => null);
+    const api = makeApi({ search: vi.fn(async () => [spec({ id: "near", fullName: "Dr Near", distanceKm: 1 })]), sendMessage });
+    mount(api);
+    fireEvent.click(await screen.findByText("Invite to video call"));
+    fireEvent.change(screen.getByPlaceholderText(/today 6 pm/), { target: { value: "now" } });
+    fireEvent.click(screen.getByText("Send invite and open call"));
+    await waitFor(() => expect(sendMessage).toHaveBeenCalled());
+    const [, to, text] = sendMessage.mock.calls[0];
+    expect(to).toBe("near");
+    expect(text).toMatch(/https:\/\/meet\.jit\.si\/MeriDentConnect-[A-Za-z0-9]{20}/);
+    expect(open).toHaveBeenCalledWith(expect.stringContaining("meet.jit.si/MeriDentConnect-"), "_blank", "noopener,noreferrer");
+    open.mockRestore();
+  });
+
   it("offers a wider search when nobody is nearby", async () => {
     const search = vi.fn(async () => []);
     mount(makeApi({ search }));
