@@ -17,9 +17,9 @@ const ACCESS = {
 
 export const NAV_BY_ROLE = {
   owner: null, // everything
-  manager: ["Dashboard", "Today", "Appointments Diary", "Patients & Odontogram", "OPG & Diagnosis Studio", "Billing & Invoices", "Memberships & Leads", "Reports", "Stock Maintenance", "Employee Roles & Roster", "Practice Profile", "Settings"],
+  manager: ["Dashboard", "Appointments Diary", "Patients & Odontogram", "OPG & Diagnosis Studio", "Billing & Invoices", "Memberships & Leads", "Reports", "Stock Maintenance", "Employee Roles & Roster", "Practice Profile", "Settings"],
   dentist: ["Dashboard", "Appointments Diary", "Patients & Odontogram", "OPG & Diagnosis Studio"],
-  receptionist: ["Dashboard", "Today", "Appointments Diary", "Patients & Odontogram", "Billing & Invoices", "Memberships & Leads"],
+  receptionist: ["Dashboard", "Appointments Diary", "Patients & Odontogram", "Billing & Invoices", "Memberships & Leads"],
 };
 
 export const accessOf = (role, collection) => (ACCESS[role] || {})[collection] || "";
