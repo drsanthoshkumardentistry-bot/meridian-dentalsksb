@@ -77,7 +77,7 @@ import { buildVisit, addVisit, removeVisit } from "./visits.js";
 import { shiftDay, dayGrid, hourMarks } from "./dayView.js";
 import OpgViewer from "./components/OpgViewer.jsx";
 import ExtraRadiographs from "./components/ExtraRadiographs.jsx";
-import NowPanel from "./components/NowPanel.jsx";
+import NowPanel, { NowStrip } from "./components/NowPanel.jsx";
 import NotificationBell from "./components/NotificationBell.jsx";
 import AccountMenu from "./components/AccountMenu.jsx";
 import { buildNotifications } from "./notifications.js";
@@ -2113,6 +2113,13 @@ export default function App() {
     );
   }
 
+  const nowNext = diaryView(appointments, { view: "upcoming" }).find((a) => a.date === dateKey()) || null;
+  const nowAlerts = [
+            navFor(role, [{ label: "Billing & Invoices" }]).length > 0 && billing.overdueCount > 0 && { tone: "red", text: `${billing.overdueCount} overdue ${billing.overdueCount === 1 ? "bill" : "bills"}`, to: "Billing & Invoices" },
+            navFor(role, [{ label: "Stock Maintenance" }]).length > 0 && stockSum.out + stockSum.low > 0 && { tone: "red", text: `${stockSum.out + stockSum.low} ${stockSum.out + stockSum.low === 1 ? "item" : "items"} to reorder`, to: "Stock Maintenance" },
+            diarySum.needsUpdate > 0 && { text: `${diarySum.needsUpdate} past ${diarySum.needsUpdate === 1 ? "visit has" : "visits have"} no outcome`, to: "Appointments Diary" },
+          ].filter(Boolean);
+  const openNewAppointment = () => { setActiveNav("Appointments Diary"); setIsAddApptOpen(true); };
   return (
     <div className="flex h-screen app-backdrop text-slate-800 font-sans overflow-hidden app-shell">
       
@@ -3982,6 +3989,7 @@ export default function App() {
 
           {activeNav === "Dashboard" && (
             <div className="space-y-6">
+              {!connectOnly && <NowStrip next={nowNext} alerts={nowAlerts} onGo={(to) => setActiveNav(to)} canBook={canWrite(role, "appointments")} onNewAppointment={openNewAppointment} />}
 
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 sm:gap-3">
                 <div>
@@ -4172,15 +4180,11 @@ export default function App() {
 
       {!connectOnly && (
         <NowPanel
-          next={diaryView(appointments, { view: "upcoming" }).find((a) => a.date === dateKey()) || null}
-          alerts={[
-            navFor(role, [{ label: "Billing & Invoices" }]).length > 0 && billing.overdueCount > 0 && { tone: "red", text: `${billing.overdueCount} overdue ${billing.overdueCount === 1 ? "bill" : "bills"}`, to: "Billing & Invoices" },
-            navFor(role, [{ label: "Stock Maintenance" }]).length > 0 && stockSum.out + stockSum.low > 0 && { tone: "red", text: `${stockSum.out + stockSum.low} ${stockSum.out + stockSum.low === 1 ? "item" : "items"} to reorder`, to: "Stock Maintenance" },
-            diarySum.needsUpdate > 0 && { text: `${diarySum.needsUpdate} past ${diarySum.needsUpdate === 1 ? "visit has" : "visits have"} no outcome`, to: "Appointments Diary" },
-          ].filter(Boolean)}
+          next={nowNext}
+          alerts={nowAlerts}
           onGo={(to) => setActiveNav(to)}
           canBook={canWrite(role, "appointments")}
-          onNewAppointment={() => { setActiveNav("Appointments Diary"); setIsAddApptOpen(true); }}
+          onNewAppointment={openNewAppointment}
         />
       )}
 
