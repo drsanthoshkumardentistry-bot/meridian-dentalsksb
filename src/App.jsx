@@ -9,6 +9,7 @@ import Flashcards from './pages/Flashcards.jsx'
 import Mcq from './pages/Mcq.jsx'
 import { Auth, Profile } from './pages/Account.jsx'
 import { CourseView, DocView, StudyHome } from './pages/Study.jsx'
+import Portions from './pages/Portions.jsx'
 
 export default function App() {
   const { ready } = useApp()
@@ -18,12 +19,13 @@ export default function App() {
   let page
   switch (route.path) {
     case 'topics': page = <TopicHub />; break
+    case 'portions': page = <Portions />; break
     case 'topic': page = <TopicDetail slug={a} />; break
     case 'viva': page = <VivaHome />; break
     case 'viva-session': page = <VivaSession key={`${a}-${b}`} kind={a} id={b} />; break
     case 'spotters': page = <Spotters />; break
     case 'flashcards': page = <Flashcards />; break
-    case 'mcq': page = <Mcq />; break
+    case 'mcq': page = <Mcq key={route.query.get('subject') || 'mcq'} subject={route.query.get('subject')} />; break
     case 'study': page = <StudyHome />; break
     case 'course': page = <CourseView key={a} id={a} />; break
     case 'doc': page = <DocView key={a} id={a} />; break

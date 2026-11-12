@@ -5,7 +5,7 @@ import { supabase } from './supabase.js'
 import { buildLocalContent } from './content.js'
 
 const LS_KEY = 'ma-progress-v1'
-export const emptyProgress = () => ({ cards: {}, spotterAttempts: [], vivas: [], answers: {}, bookmarks: [], mocks: [] })
+export const emptyProgress = () => ({ cards: {}, spotterAttempts: [], vivas: [], answers: {}, bookmarks: [], mocks: [], portions: {} })
 
 function readLocal() {
   try { return { ...emptyProgress(), ...JSON.parse(localStorage.getItem(LS_KEY) || '{}') } } catch { return emptyProgress() }
@@ -40,15 +40,17 @@ export async function loadContent() {
 export async function loadProgress(user) {
   if (!user || !supabase) return readLocal()
   const uid = user.id
-  const [cards, spot, vivas, ans, bm, mocks] = await Promise.all([
+  const [cards, spot, vivas, ans, bm, mocks, por] = await Promise.all([
     supabase.from('flashcard_progress').select('*').eq('user_id', uid),
     supabase.from('spotter_attempts').select('spotter_id,correct,time_ms,created_at').eq('user_id', uid).order('created_at', { ascending: false }).limit(500),
     supabase.from('viva_sessions').select('id,mode,topic_id,spotter_id,engine,overall,scores,feedback,started_at,ended_at,status').eq('user_id', uid).order('started_at', { ascending: false }).limit(100),
     supabase.from('answers').select('question_id,correct').eq('user_id', uid),
     supabase.from('bookmarks').select('question_id').eq('user_id', uid),
     supabase.from('mock_results').select('*').eq('user_id', uid).order('created_at', { ascending: false }).limit(50),
+    supabase.from('portion_progress').select('chapter_id,status').eq('user_id', uid),
   ])
   const firstErr = [cards, spot, vivas, ans, bm, mocks].find((r) => r.error)
+  // portion_progress is optional: older databases without the table still load
   if (firstErr) throw firstErr.error
   return {
     cards: Object.fromEntries(cards.data.map((r) => [r.flashcard_id, r])),
@@ -57,6 +59,7 @@ export async function loadProgress(user) {
     answers: Object.fromEntries(ans.data.map((r) => [r.question_id, r.correct])),
     bookmarks: bm.data.map((r) => r.question_id),
     mocks: mocks.data.map((r) => ({ ...r, ...(r.details || {}) })),
+    portions: por.error ? {} : Object.fromEntries(por.data.map((r) => [r.chapter_id, r.status])),
   }
 }
 
@@ -96,6 +99,9 @@ export async function persist(user, action, next) {
       }
       break
     }
+    case 'portion':
+      res = await supabase.from('portion_progress').upsert({ user_id: uid, chapter_id: action.id, status: action.status, updated_at: new Date().toISOString() })
+      break
     case 'reset':
       return
     default:

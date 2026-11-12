@@ -5,14 +5,14 @@ import { cx } from './ui.jsx'
 
 const navFor = (track) => [
   { to: 'home', label: 'Dashboard', short: 'Home', icon: LayoutDashboard },
-  { to: 'topics', label: track?.key === 'ADC' ? 'Australian Practice' : 'Topic Hub', short: 'Topics', icon: BookOpenCheck },
+  { to: 'portions', label: 'Portions & Topics', short: 'Portions', icon: BookOpenCheck },
   { to: 'viva', label: 'Meridee Viva', short: 'Meridee', icon: Sparkles },
   { to: 'study', label: 'StudySync', short: 'Study', icon: FileUp },
   { to: 'spotters', label: 'Spotter Bank', short: 'Spotters', icon: ScanEye },
   { to: 'flashcards', label: 'Flashcards', short: 'Cards', icon: Layers3 },
   { to: 'mcq', label: track?.mcqLabel || 'MCQs', short: track?.key === 'ADC' ? 'ADC' : 'MCQs', icon: ClipboardList },
 ]
-const ACTIVE = { topic: 'topics', 'viva-session': 'viva', course: 'study', doc: 'study' }
+const ACTIVE = { topic: 'portions', topics: 'portions', 'viva-session': 'viva', course: 'study', doc: 'study' }
 
 export default function Layout({ route, children }) {
   const { theme, setTheme, user, profile, notice: toast, track } = useApp()

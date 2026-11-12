@@ -5,6 +5,7 @@ import { dueCards } from '../lib/leitner.js'
 import { TRACKS } from '../lib/tracks.js'
 import { Badge, Card, Icon, Modal, PriorityBadge } from '../components/ui.jsx'
 import TrackPicker from '../components/TrackPicker.jsx'
+import { PORTIONS, completion } from '../data/portions.js'
 import MerideeAvatar from '../components/MerideeAvatar.jsx'
 import { cloudEnabled } from '../lib/supabase.js'
 
@@ -29,8 +30,6 @@ export default function Dashboard() {
   const { topics, subjects, flashcards, spotters, mcqs } = content
   const bank = mcqs.filter((q) => q.exam === track.mcqExam)
   const due = dueCards(flashcards, progress.cards).length
-  const spot = progress.spotterAttempts
-  const spotAcc = spot.length ? Math.round((spot.filter((a) => a.correct).length / spot.length) * 100) : null
   const vivaAvg = progress.vivas.length ? (progress.vivas.reduce((s, v) => s + Number(v.overall || 0), 0) / progress.vivas.length).toFixed(1) : null
   const answered = bank.filter((q) => q.id in progress.answers)
   const mcqAcc = answered.length ? Math.round((answered.filter((q) => progress.answers[q.id]).length / answered.length) * 100) : null
@@ -42,9 +41,11 @@ export default function Dashboard() {
   const vivaed = new Set(progress.vivas.map((v) => v.topic_id))
   const nextUp = trackTopics.filter((t) => t.priority === 'must_know' && !vivaed.has(t.id)).slice(0, 3)
   const subjectOf = Object.fromEntries(subjects.map((s) => [s.id, s]))
+  const portionChapters = PORTIONS[track.key].flatMap((s) => s.chapters)
+  const portionPct = completion(portionChapters, progress.portions || {})
 
   const MODULES = {
-    topics: { href: '#/topics', icon: BookOpenCheck, tone: 'from-clinic-500 to-clinic-700', title: track.key === 'ADC' ? 'Australian Practice Hub' : 'Syllabus & High-Yield Hub', text: `${trackTopics.length} topics with structured, exam-style answers` },
+    topics: { href: '#/portions', icon: BookOpenCheck, tone: 'from-clinic-500 to-clinic-700', title: 'Portions & high-yield topics', text: `${portionPct}% of ${portionChapters.length} chapters done · ${trackTopics.length} structured answers` },
     viva: { href: '#/viva', avatar: true, title: track.key === 'ADC' ? 'Meridee – clinical case examiner' : 'Meridee – AI viva examiner', text: track.key === 'ADC' ? 'Case scenarios judged on safety, consent and Australian guidelines' : 'Strict examiner, probing follow-ups, live scoring' },
     spotters: { href: '#/spotters', icon: ScanEye, tone: 'from-rose-500 to-pink-600', title: 'Spotter & Image Bank', text: `${spotters.length} radiographs, slides, instruments & specimens – timed` },
     study: { href: '#/study', icon: FileUp, tone: 'from-indigo-500 to-clinic-600', title: 'StudySync – your lecture PDFs', text: 'Upload slides → cited summary, flashcards and search' },
@@ -56,7 +57,7 @@ export default function Dashboard() {
     { label: 'Cards due today', value: due, icon: Layers3, href: '#/flashcards' },
     { label: 'Meridee viva average', value: vivaAvg ? `${vivaAvg}/10` : '–', icon: Sparkles, href: '#/viva' },
     { label: track.key === 'ADC' ? 'ADC MCQ accuracy' : 'MCQ accuracy', value: mcqAcc != null ? `${mcqAcc}%` : '–', icon: ClipboardList, href: '#/mcq' },
-    { label: 'Spotter accuracy', value: spotAcc != null ? `${spotAcc}%` : '–', icon: ScanEye, href: '#/spotters' },
+    { label: 'Portions complete', value: `${portionPct}%`, icon: BookOpenCheck, href: '#/portions' },
   ]
 
   return (

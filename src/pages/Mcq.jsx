@@ -3,12 +3,16 @@ import { Bookmark, BookmarkCheck, CheckCircle2, ChevronLeft, ChevronRight, Scrol
 import { useApp } from '../state/AppContext.jsx'
 import { Badge, Button, Card, Empty, Modal, PageHeader, Ring, Segmented, cx, fmtTime, shuffle } from '../components/ui.jsx'
 
-export default function Mcq() {
+export default function Mcq({ subject: deepSubject = null }) {
   const { content, progress, track } = useApp()
-  const [view, setView] = useState({ name: 'home' })
   const exam = track?.mcqExam || 'NEET MDS'
   const neg = track ? track.negativeMarking : true
   const qs = content.mcqs.filter((q) => (q.exam || 'NEET MDS') === exam)
+  // Deep link from the Portions tracker: #/mcq?subject=Oral%20Pathology
+  const [view, setView] = useState(() => {
+    const list = deepSubject ? qs.filter((q) => q.subject === deepSubject) : []
+    return list.length ? { name: 'practice', title: deepSubject, ids: list.map((q) => q.id) } : { name: 'home' }
+  })
   const subjects = [...new Set(qs.map((q) => q.subject))]
   const acc = (list) => { const a = list.filter((q) => q.id in progress.answers); return { done: a.length, pct: a.length ? Math.round(a.filter((q) => progress.answers[q.id]).length / a.length * 100) : 0 } }
 

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, Layers3, Search } from 'lucide-react'
 import MerideeAvatar from '../components/MerideeAvatar.jsx'
+import { HubSwitch } from './Portions.jsx'
 import { useApp } from '../state/AppContext.jsx'
 import { Badge, Button, Card, Empty, Icon, PageHeader, PriorityBadge, Segmented, cx } from '../components/ui.jsx'
 import { navigate } from '../state/router.js'
@@ -44,6 +45,7 @@ export function TopicHub() {
 
   return (
     <div className="animate-fade-in">
+      <HubSwitch value="topics" />
       <PageHeader title={track?.key === 'ADC' ? 'Australian Practice Hub' : 'Syllabus & High-Yield Hub'} subtitle={track?.key === 'ADC' ? 'ADC cases first, then the core clinical subjects – answers structured the way examiners expect' : `University-pattern answers, broken down the way examiners expect${profile?.university ? ` · ${profile.university}` : ''}`} />
       <Card className="mb-5 space-y-3 p-4">
         <label className="relative block">

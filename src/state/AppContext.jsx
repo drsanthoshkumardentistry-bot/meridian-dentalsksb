@@ -22,6 +22,7 @@ export function progressReducer(p, a) {
     case 'bookmark': return { ...p, bookmarks: a.on ? [...new Set([...p.bookmarks, a.qid])] : p.bookmarks.filter((x) => x !== a.qid) }
     case 'mock': return { ...p, mocks: [a.result, ...p.mocks].slice(0, 50) }
     case 'viva': { const { messages, ...v } = a.viva; return { ...p, vivas: [v, ...p.vivas].slice(0, 100) } }
+    case 'portion': return { ...p, portions: { ...(p.portions || {}), [a.id]: a.status } }
     case 'reset': return emptyProgress()
     default: return p
   }
@@ -100,6 +101,7 @@ export function AppProvider({ children }) {
     toggleBookmark: (qid) => act({ type: 'bookmark', qid, on: !state.progress.bookmarks.includes(qid) }),
     saveMock: (result) => act({ type: 'mock', result }),
     saveViva: (viva) => act({ type: 'viva', viva }),
+    setPortion: (id, status) => act({ type: 'portion', id, status }),
     resetProgress: () => act({ type: 'reset' }),
     track: trackOf(state.profile),
     /** Save approved StudySync cards into the Leitner deck. */
