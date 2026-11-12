@@ -3984,8 +3984,16 @@ export default function App() {
 
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 sm:gap-3">
                 <div>
+                  {(() => {
+                    const welcomeName = String(authUser?.displayName || (authUser?.email || "").split("@")[0] || "").trim();
+                    return (
+                      <p className="text-base sm:text-lg font-semibold text-blue-700 mb-0.5 truncate" data-testid="dashboard-welcome">
+                        Welcome{welcomeName ? `, ${welcomeName}` : ""} 👋
+                      </p>
+                    );
+                  })()}
                   <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Dashboard</h1>
-                  <p className="text-sm text-slate-600 mt-1">Welcome back! Here's what's happening at your clinic today.</p>
+                  <p className="text-sm text-slate-600 mt-1">Here's what's happening at your clinic today.</p>
                   <div className="mt-2 h-1 w-14 rounded-full bg-gradient-to-r from-blue-600 to-sky-400" aria-hidden="true" />
                 </div>
                 <button onClick={() => setActiveNav("Appointments Diary")} className="self-start text-sm font-semibold text-blue-600 hover:text-blue-800 py-1">
