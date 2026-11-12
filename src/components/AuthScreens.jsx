@@ -1,5 +1,6 @@
 import React from "react";
 import { Mail, RefreshCw, ShieldCheck } from "lucide-react";
+import { FairySvg } from "./ToothFairy.jsx";
 
 /* Blue and white screens used around sign-in: loading, email verification, idle warning. */
 
@@ -7,8 +8,12 @@ export function AppLoading({ message = "Checking your MeriDent session…" }) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-6 text-slate-700">
       <div className="text-center">
-        <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
-        <p className="text-sm font-medium">{message}</p>
+        <div className="relative mx-auto mb-3 h-28 w-28" aria-hidden="true">
+          <FairySvg className="h-28 w-28" />
+          <span className="loader-spark loader-spark-a" /><span className="loader-spark loader-spark-b" /><span className="loader-spark loader-spark-c" />
+        </div>
+        <p role="status" className="text-sm font-medium">{message}</p>
+        <div className="mt-2 flex justify-center gap-1.5" aria-hidden="true"><span className="loader-dot" /><span className="loader-dot" style={{ animationDelay: "0.15s" }} /><span className="loader-dot" style={{ animationDelay: "0.3s" }} /></div>
       </div>
     </div>
   );

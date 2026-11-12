@@ -62,7 +62,7 @@ export default function HelpChat() {
                 <div className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-xs leading-relaxed ${m.role === "user" ? "bg-[#1d4ed8] text-white" : m.error ? "bg-red-50 text-red-700 border border-red-200" : "bg-white text-slate-800 border border-slate-200"}`}>{m.content}</div>
               </div>
             ))}
-            {busy && <div className="text-xs text-slate-500 px-1">Meridee is writing...</div>}
+            {busy && <div role="status" className="flex items-center gap-2 text-xs text-slate-500 px-1"><span className="w-7 h-7 rounded-full bg-white border border-rule flex items-center justify-center overflow-hidden"><FairySvg still className="w-6 h-6" /></span>Meridee is writing<span className="flex gap-1" aria-hidden="true"><span className="loader-dot" /><span className="loader-dot" style={{ animationDelay: "0.15s" }} /><span className="loader-dot" style={{ animationDelay: "0.3s" }} /></span></div>}
             <div ref={endRef} />
           </div>
           <form onSubmit={(e) => { e.preventDefault(); ask(text); }} className="flex gap-2 p-3 border-t border-slate-200 bg-white">
