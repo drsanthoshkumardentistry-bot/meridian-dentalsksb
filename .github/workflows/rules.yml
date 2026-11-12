@@ -39,6 +39,4 @@ jobs:
           path: ~/.cache/firebase/emulators
           key: firestore-emulator-v1.19.8
       - name: Run rules against the Firestore emulator
-        env:
-          TEST_ADMIN_CODE: citest-code-123
         run: npx --yes firebase-tools@13.35.1 emulators:exec --only firestore --project demo-merident "npx vitest run --config vitest.rules.config.mjs"
