@@ -73,6 +73,7 @@ import { patientSummary } from "./patientSummary.js";
 import { buildVisit, addVisit, removeVisit } from "./visits.js";
 import { shiftDay, dayGrid, hourMarks } from "./dayView.js";
 import OpgViewer from "./components/OpgViewer.jsx";
+import Growth from "./components/Growth.jsx";
 import PrePostOp from "./components/PrePostOp.jsx";
 import Connect from "./components/Connect.jsx";
 import { bindApi } from "./connect/api.js";
@@ -156,6 +157,7 @@ import {
   Bell,
   Star,
   BarChart3,
+  Award,
   IndianRupee,
   LayoutDashboard,
   CalendarDays,
@@ -810,6 +812,8 @@ export default function App() {
   const [inventory, setInventory] = useState([]);
   const [employees, setEmployees] = useState(DEFAULT_EMPLOYEES);
   const [allQueue, setQueue] = useState([]);
+  const [leads, setLeads] = useState([]);
+  const [memberships, setMemberships] = useState([]);
   const [bookingRequests, setBookingRequests] = useState([]);
   const [practiceProfile, setPracticeProfile] = useState(DEFAULT_PROFILE);
   const [hydratedFor, setHydratedFor] = useState(null);
@@ -835,6 +839,8 @@ export default function App() {
       setInventory([]);
       setEmployees(DEFAULT_EMPLOYEES);
       setQueue([]);
+      setLeads([]);
+      setMemberships([]);
       setActiveBranch("all");
       setBookingRequests([]);
       setPracticeProfile(DEFAULT_PROFILE);
@@ -859,6 +865,8 @@ export default function App() {
     setInventory(load("inventory", []));
     setEmployees(load("employees", DEFAULT_EMPLOYEES));
     setQueue(pruneQueue(load("queue", [])));
+    setLeads(load("leads", []));
+    setMemberships(load("memberships", []));
     setActiveBranch(load("branch", "all"));
     setPracticeProfile(load("profile", DEFAULT_PROFILE));
     setHydratedFor(CLINIC_ID);
@@ -880,6 +888,8 @@ export default function App() {
   useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "invoices"), readOnly: !canWrite(role, "invoices"), name: "invoices", items: allInvoices, setItems: setInvoices, sortFn: byIdDesc, onError: reportSyncError });
   useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "inventory"), readOnly: !canWrite(role, "inventory"), name: "inventory", items: inventory, setItems: setInventory, onError: reportSyncError });
   useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "queue"), readOnly: !canWrite(role, "queue"), name: "queue", items: allQueue, setItems: setQueue, onError: reportSyncError });
+  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "leads"), readOnly: !canWrite(role, "leads"), name: "leads", items: leads, setItems: setLeads, onError: reportSyncError });
+  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "memberships"), readOnly: !canWrite(role, "memberships"), name: "memberships", items: memberships, setItems: setMemberships, onError: reportSyncError });
   useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "employees"), readOnly: !canWrite(role, "employees"), name: "employees", items: employees, setItems: setEmployees, onError: reportSyncError });
   useCloudDoc({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "profile"), readOnly: !canWrite(role, "profile"), name: "profile", value: practiceProfile, setValue: setPracticeProfile, onError: reportSyncError });
 
@@ -918,6 +928,12 @@ export default function App() {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
     localStorage.setItem(`merident_${CACHE_ID}_queue`, JSON.stringify(allQueue));
   }, [allQueue, hydratedFor, CLINIC_ID]);
+
+  useEffect(() => {
+    if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
+    localStorage.setItem(`merident_${CACHE_ID}_leads`, JSON.stringify(leads));
+    localStorage.setItem(`merident_${CACHE_ID}_memberships`, JSON.stringify(memberships));
+  }, [leads, memberships, hydratedFor, CLINIC_ID]);
 
   // Activity log: one line per important change, written by whoever made it
   const logAudit = (action, subject, detail) => {
@@ -2113,6 +2129,7 @@ export default function App() {
               { label: "OPG & Diagnosis Studio", icon: <ScanSearch className="w-4 h-4" /> },
               { label: "Billing & Invoices", icon: <IndianRupee className="w-4 h-4" /> },
               { label: "MeriDent Connect", icon: <MessagesSquare className="w-4 h-4" /> },
+              { label: "Memberships & Leads", icon: <Award className="w-4 h-4" /> },
               { label: "Reports", icon: <BarChart3 className="w-4 h-4" /> },
               { label: "Stock Maintenance", icon: <Package className="w-4 h-4" /> },
               { label: "Employee Roles & Roster", icon: <UserCog className="w-4 h-4" /> },
@@ -3054,6 +3071,29 @@ export default function App() {
               geocode={geocodeAddress}
               defaults={{ clinicName: practiceProfile.name, clinicAddress: practiceProfile.address, phone: practiceProfile.phone, connectOnly }}
             />
+          )}
+
+          {activeNav === "Memberships & Leads" && (
+            <div className="space-y-4" data-testid="growth-screen">
+              <div>
+                <h1 className="text-lg font-bold text-slate-900">Memberships and leads</h1>
+                <p className="text-xs text-slate-500">Sell yearly plans to patients and keep track of people who asked about treatment but have not booked.</p>
+              </div>
+              <Growth
+                plans={practiceProfile.membershipPlans || []}
+                onPlans={(list) => setPracticeProfile({ ...practiceProfile, membershipPlans: list })}
+                canEditPlans={canWrite(role, "profile")}
+                memberships={memberships}
+                onSell={(m) => setMemberships((prev) => [m, ...prev])}
+                patients={patients}
+                leads={leads}
+                onLeads={setLeads}
+                canEdit={canWrite(role, "leads")}
+                clinicName={practiceProfile.name}
+                showToast={showToast}
+                newId={newId}
+              />
+            </div>
           )}
 
           {/* REPORTS */}

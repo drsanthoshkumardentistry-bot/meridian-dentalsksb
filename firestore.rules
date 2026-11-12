@@ -133,6 +133,8 @@ service cloud.firestore {
                             && request.resource.data.data.matches('^data:image/jpeg;base64,.+');
       allow delete: if memberHasRole(clinicId, ['manager', 'dentist']);
     }
+    match /clinics/{clinicId}/leads/{d}        { allow read, write: if memberHasRole(clinicId, ['manager', 'receptionist']); }
+    match /clinics/{clinicId}/memberships/{d}  { allow read, write: if memberHasRole(clinicId, ['manager', 'receptionist']); }
     match /clinics/{clinicId}/employees/{d}    { allow read, write: if memberHasRole(clinicId, ['manager']); }
     match /clinics/{clinicId}/store/{d} {
       allow read: if memberHasRole(clinicId, ['manager', 'dentist', 'receptionist']);
