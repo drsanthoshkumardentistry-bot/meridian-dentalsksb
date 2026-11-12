@@ -284,9 +284,9 @@ input::placeholder, textarea::placeholder { color: #64748b; opacity: 1; }
 .side-navy {
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 260 520' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='white' stroke-opacity='0.09' stroke-width='1.4'%3E%3Cpath d='M-20 380 C 60 330 120 470 280 400'/%3E%3Cpath d='M-20 410 C 70 360 130 500 280 430'/%3E%3Cpath d='M-20 440 C 80 390 140 530 280 460'/%3E%3Cpath d='M-20 120 C 80 70 160 170 280 90'/%3E%3Cpath d='M-20 150 C 90 100 170 200 280 120'/%3E%3C/g%3E%3C/svg%3E"),
-    radial-gradient(120% 50% at 100% 0%, rgba(125, 211, 252, 0.3) 0%, transparent 60%),
-    radial-gradient(90% 40% at 0% 100%, rgba(99, 102, 241, 0.35) 0%, transparent 70%),
-    linear-gradient(180deg, #2563eb 0%, #1d4ed8 38%, #1e3fae 70%, #172f86 100%);
+    radial-gradient(120% 50% at 100% 0%, rgba(96, 165, 250, 0.45) 0%, transparent 60%),
+    radial-gradient(90% 45% at 0% 100%, rgba(79, 70, 229, 0.5) 0%, transparent 70%),
+    linear-gradient(180deg, #1d4ed8 0%, #1a3fc0 35%, #17339b 68%, #112571 100%);
   background-size: 100% 100%;
   box-shadow: 6px 0 30px -12px rgba(30, 58, 138, 0.45);
 }
@@ -317,12 +317,12 @@ main .bg-white.rounded-xl.border { box-shadow: 0 1px 2px rgba(30, 58, 138, 0.05)
   .stat-card:hover { transform: translateY(-2px); }
 }
 .work-panel {
-  background-color: #e8f0ff;
+  background-color: #c9dcfb;
   background-image:
-    radial-gradient(55% 45% at 92% 0%, rgba(167, 139, 250, 0.28) 0%, transparent 70%),
-    radial-gradient(50% 45% at 8% 28%, rgba(56, 189, 248, 0.24) 0%, transparent 70%),
-    radial-gradient(55% 45% at 85% 95%, rgba(52, 211, 153, 0.16) 0%, transparent 70%),
-    linear-gradient(160deg, #e6eeff 0%, #ecefff 45%, #e3f1ff 100%);
+    radial-gradient(55% 45% at 92% 0%, rgba(139, 112, 246, 0.38) 0%, transparent 70%),
+    radial-gradient(50% 45% at 6% 30%, rgba(56, 189, 248, 0.38) 0%, transparent 70%),
+    radial-gradient(55% 45% at 85% 95%, rgba(45, 212, 191, 0.28) 0%, transparent 70%),
+    linear-gradient(160deg, #c3d7fa 0%, #cdd8fb 45%, #bfe0f8 100%);
   background-attachment: fixed;
 }
 main section.bg-white {
