@@ -10,6 +10,7 @@ import {
   validateProfile, validateConsult, orderResults, filterResults, canMoveTo, waLink, telLink, osmLink, directionsLink, toggleSaved, shareText,
 } from "../connect/rules.js";
 import { geoFields, currentPosition } from "../connect/geo.js";
+import { newRoomName, callLink, inviteText } from "../connect/call.js";
 import { toMillis } from "../connect/api.js";
 
 import ConnectFeed, { ReportsQueue } from "./ConnectFeed.jsx";
@@ -157,6 +158,18 @@ function Finder({ api, me, geocode, showToast, refreshSent, onMessage }) {
   const [radius, setRadius] = useState(10);
   const [state, setState] = useState({ status: "loading", docs: [] });
   const [openId, setOpenId] = useState(null);
+  const [inviteFor, setInviteFor] = useState(null); // { id, when, room }
+  const sendInvite = async (d) => {
+    const room = inviteFor.room;
+    try {
+      await api.sendMessage(me, d.id, inviteText({ fromName: me.fullName, when: inviteFor.when, room }));
+      window.open(callLink(room), "_blank", "noopener,noreferrer");
+      showToast(`Invite sent to ${d.fullName}. Your call room is open.`);
+      setInviteFor(null);
+    } catch {
+      showToast("Could not send the invite. This dentist may have blocked messages, or you are offline.");
+    }
+  };
   // Where to search from: the clinic (default), this device's location, or a typed place.
   const [center, setCenter] = useState({ ...me.geo, label: "your clinic" });
   const [placeText, setPlaceText] = useState("");
@@ -284,8 +297,24 @@ function Finder({ api, me, geocode, showToast, refreshSent, onMessage }) {
               <button type="button" onClick={() => onMessage?.({ id: d.id, name: d.fullName })} className={`${btn} border border-rule text-slate-800`}>Message</button>
               <button type="button" aria-pressed={saved.includes(d.id)} onClick={() => flipSaved(d.id)} className={`${btn} border ${saved.includes(d.id) ? "bg-amber-50 border-amber-300 text-amber-900" : "border-rule text-slate-800"}`}>{saved.includes(d.id) ? "Saved" : "Save"}</button>
               <button type="button" onClick={() => { navigator.clipboard?.writeText(shareText(d)); showToast("Contact copied. Paste it into WhatsApp."); }} className={`${btn} border border-rule text-slate-800`}>Copy contact</button>
+              <button type="button" onClick={() => setInviteFor(inviteFor && inviteFor.id === d.id ? null : { id: d.id, when: "", room: newRoomName() })} className={`${btn} border border-brand-600 text-brand-700`}>Invite to video call</button>
               <button type="button" onClick={() => setOpenId(openId === d.id ? null : d.id)} className={`${btn} bg-brand-600 text-white`}>Ask for a consult</button>
             </div>
+            {inviteFor && inviteFor.id === d.id && (
+              <div className="mt-3 rounded-xl border border-rule bg-mist p-3 space-y-2" aria-label={`Video call invite for ${d.fullName}`}>
+                <p className="text-xs text-slate-700">{d.fullName} gets the invite in Messages and can join with one tap. Free, no app to install. Do not share a patient's name or phone number on the call without their consent.</p>
+                <label className="block text-xs font-semibold text-slate-600">When (optional)
+                  <input value={inviteFor.when} maxLength={60} onChange={(e) => setInviteFor({ ...inviteFor, when: e.target.value })} placeholder="For example: now, or today 6 pm" className={`${field} mt-1`} />
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" onClick={() => sendInvite(d)} className={`${btn} bg-brand-600 text-white`}>Send invite and open call</button>
+                  {waLink(d.whatsapp || d.phone, inviteText({ fromName: me.fullName, when: inviteFor.when, room: inviteFor.room })) && (
+                    <a href={waLink(d.whatsapp || d.phone, inviteText({ fromName: me.fullName, when: inviteFor.when, room: inviteFor.room }))} target="_blank" rel="noopener noreferrer" className={`${btn} bg-emerald-600 text-white`}>Send the invite on WhatsApp instead</a>
+                  )}
+                  <button type="button" onClick={() => setInviteFor(null)} className={`${btn} text-slate-600 hover:bg-slate-100`}>Cancel</button>
+                </div>
+              </div>
+            )}
             {openId === d.id && (
               <ConsultForm
                 target={d}
