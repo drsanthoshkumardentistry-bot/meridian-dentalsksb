@@ -32,6 +32,7 @@ import HelpChat from "./components/HelpChat.jsx";
 import DmyDateInput from "./components/DmyDateInput.jsx";
 import BulkMessage from "./components/BulkMessage.jsx";
 import ReferralPanel from "./components/ReferralPanel.jsx";
+import { sendLoginAlert } from "./loginAlert.js";
 import { alertText, regularMedicines, SYSTEMIC_CONDITIONS } from "./medicalAlert.js";
 import { addReferral, setReferralStatus, removeReferral, referralSlipHtml, openReferrals, urgencyOf } from "./referrals.js";
 import { patientsInRange, presetRange, rangeText, DATE_MODES } from "./patientDates.js";
@@ -658,6 +659,11 @@ export default function App() {
     );
     return () => { clearTimeout(fallback); stop(); };
   }, [isVerified, authUser?.email]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Tell the owner (by email, if switched on) that this person signed in
+  useEffect(() => {
+    if (authUser?.uid && authUser.emailVerified) sendLoginAlert(authUser.uid);
+  }, [authUser?.uid, authUser?.emailVerified]);
 
   useEffect(() => {
     if (!firebaseConfigured || !auth) {
