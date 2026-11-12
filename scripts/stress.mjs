@@ -15,6 +15,7 @@ import { recordSheetHtml } from "../src/recordSheet.js";
 
 const SEED = Number(process.argv[2] || 20261113);
 const N = Number(process.argv[3] || 10000);
+const NB = Number(process.env.BUG_N || N), NE = Number(process.env.ERR_N || N), NR = Number(process.env.RND_N || N); // per-suite sizes
 const MIXED = process.argv[4] === "mixed"; // every property from both batteries together
 const WIDE = process.argv[4] === "wide" || MIXED; // second battery: different properties, wider values, other operation mix
 let s = SEED >>> 0;
@@ -114,7 +115,7 @@ const PROPS2 = {
 };
 const ALL = MIXED ? { ...PROPS, ...PROPS2 } : WIDE ? PROPS2 : PROPS;
 const propNames = Object.keys(ALL);
-for (let i = 0; i < N; i++) { const name = pick(propNames); counts.bug["#" + name] = (counts.bug["#" + name] || 0) + 1; try { ALL[name](); } catch (e) { fail("bug", `${name}: threw`, e && e.stack ? e.stack.split("\n").slice(0, 2).join(" | ") : e); } }
+for (let i = 0; i < NB; i++) { const name = pick(propNames); counts.bug["#" + name] = (counts.bug["#" + name] || 0) + 1; try { ALL[name](); } catch (e) { fail("bug", `${name}: threw`, e && e.stack ? e.stack.split("\n").slice(0, 2).join(" | ") : e); } }
 
 /* ---------------------------------- Suite 2: hostile inputs ---------------------------------- */
 const HOSTILE = [...(WIDE ? [{ lines: [null] }, { payments: [{ amountP: "5" }] }, [{}], [[], []], "\u0000", "9".repeat(400), -0, 0.1 + 0.2, 2 ** 53, { fields: null }, { fields: "x" }, { items: [1] }] : []), undefined, null, NaN, Infinity, -Infinity, 0, -1, 1e308, "", " ", "abc", "<b>", {}, [], [[]], [null], [undefined], { name: null }, { id: 1 }, { quantity: "x", minThreshold: {} }, { amount: [] }, true, false, () => 1, Symbol.iterator.toString(), "x".repeat(100000), new Date("invalid"), { payments: "x" }, { payments: [null] }, { lines: "x" }, { visits: 5 }, "2026-02-31", "99:99", "{}", "[]", "{\"format\":\"meridian-backup\"}"];
@@ -136,10 +137,10 @@ const TARGETS = [
   ["buildNotifications", () => buildNotifications({ inventory: [H()], appointments: [H()], now: NOW }), false], ["recordSheetHtml", () => recordSheetHtml(H(), { appointments: [H()], invoices: [H()] }, H(), NOW), false],
   ["navFor/canWrite/firstScreen", () => { roles.navFor(H(), [{ label: H() }]); roles.canWrite(H(), H()); roles.canRead(H(), H()); roles.firstScreen(H()); }, true],
 ];
-for (let i = 0; i < N; i++) { const [name, fn, must] = pick(TARGETS); counts.error["#" + name] = (counts.error["#" + name] || 0) + 1; try { fn(); } catch (e) { fail("error", `${must ? "MUST-NOT-THROW " : "internal "}${name}`, e && e.message ? e.message : e); } }
+for (let i = 0; i < NE; i++) { const [name, fn, must] = pick(TARGETS); counts.error["#" + name] = (counts.error["#" + name] || 0) + 1; try { fn(); } catch (e) { fail("error", `${must ? "MUST-NOT-THROW " : "internal "}${name}`, e && e.message ? e.message : e); } }
 
 /* ---------------------------------- Suite 3: random operation sequences ---------------------------------- */
-for (let i = 0; i < N; i++) {
+for (let i = 0; i < NR; i++) {
   const clinic = { patients: [], appts: [], invoices: [], stock: [] }; let serial = 0;
   try {
     for (let step = 0; step < int(10, 50); step++) {
@@ -168,5 +169,5 @@ for (let i = 0; i < N; i++) {
 /* ---------------------------------- Report ---------------------------------- */
 const summarise = (suite) => { const by = {}; for (const f of fails[suite]) by[f.name] = by[f.name] || { n: counts[suite][f.name], sample: f.detail }; return by; };
 const out = { seed: SEED, casesPerSuite: N };
-for (const suite of ["bug", "error", "random"]) { const failing = Object.values(counts[suite]).filter((v, k) => !Object.keys(counts[suite])[k].startsWith("#")).reduce((a, b) => a + b, 0); out[suite] = { cases: N, failures: failing, distinct: summarise(suite) }; }
+for (const suite of ["bug", "error", "random"]) { const failing = Object.values(counts[suite]).filter((v, k) => !Object.keys(counts[suite])[k].startsWith("#")).reduce((a, b) => a + b, 0); out[suite] = { cases: { bug: NB, error: NE, random: NR }[suite], failures: failing, distinct: summarise(suite) }; }
 console.log(JSON.stringify(out, null, 2));
