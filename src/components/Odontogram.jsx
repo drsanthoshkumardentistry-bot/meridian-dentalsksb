@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { CARIES_CLASSES, SURFACES, DEPTHS, surfaceName, cariesText } from "../caries.js";
 import { toothInfo, groupFindings, STATUS_COLORS, archLayout, codesOf, primaryCode, normalizeConditions } from "../odontogram.js";
 
 const PERMANENT_UPPER = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
@@ -106,6 +107,8 @@ export default function Odontogram({
   onSelectStatus,
   onTap,
   onRemoveFinding,
+  caries = {},
+  onCaries,
   onClear,
   isDeciduous,
   onToggleDeciduous,
@@ -261,6 +264,63 @@ export default function Odontogram({
                   })}
                 </li>
               ))}
+          </ul>
+        </div>
+      )}
+
+      {onCaries && Object.entries(conditions).some(([, codes]) => codes.includes("CAR")) && (
+        <div data-testid="caries-details">
+          <div className="text-sm font-bold text-ink mb-1">Caries details</div>
+          <p className="text-xs text-slate-500 mb-2">Mark the surfaces and MeriDent suggests the G.V. Black class. You can change the class. A guide only: the dentist decides.</p>
+          <ul className="space-y-2">
+            {Object.entries(conditions)
+              .filter(([, codes]) => codes.includes("CAR"))
+              .sort((a, b) => Number(a[0]) - Number(b[0]))
+              .map(([tooth]) => {
+                const d = (caries && caries[tooth]) || {};
+                const front = ["incisor", "canine"].includes((toothInfo(tooth) || {}).type);
+                const depth = DEPTHS.find((x) => x.id === d.depth);
+                return (
+                  <li key={tooth} className="rounded-xl border border-rule bg-white p-3 text-sm space-y-2" aria-label={`Caries details for tooth ${tooth}`}>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <strong className="text-ink">Tooth {tooth}</strong>
+                      <span className="text-xs text-slate-600">{cariesText(d) || "Not detailed yet"}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5" role="group" aria-label={`Surfaces on tooth ${tooth}`}>
+                      {SURFACES.map((sf) => {
+                        const on = (d.surfaces || []).includes(sf);
+                        return (
+                          <button key={sf} type="button" aria-pressed={on} title={surfaceName(sf, tooth)} onClick={() => onCaries(Number(tooth), { surfaces: on ? (d.surfaces || []).filter((x) => x !== sf) : [...(d.surfaces || []), sf] })}
+                            className={`px-2.5 py-1 rounded-full border text-xs font-semibold ${on ? "bg-[#1d4ed8] text-white border-[#1d4ed8]" : "bg-white text-slate-700 border-rule"}`}>
+                            {sf === "O" && front ? "I" : sf}
+                          </button>
+                        );
+                      })}
+                      <label className="inline-flex items-center gap-1 text-xs text-slate-700 ml-1">
+                        <input type="checkbox" checked={!!d.cervical} onChange={(e) => onCaries(Number(tooth), { cervical: e.target.checked })} /> Near the gum
+                      </label>
+                      <label className="inline-flex items-center gap-1 text-xs text-slate-700">
+                        <input type="checkbox" checked={!!d.tip} onChange={(e) => onCaries(Number(tooth), { tip: e.target.checked })} /> {front ? "Incisal edge" : "Cusp tip"}
+                      </label>
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-2">
+                      <label className="text-xs text-slate-600">Black class
+                        <select value={d.cls || ""} onChange={(e) => onCaries(Number(tooth), { cls: e.target.value })} className="mt-0.5 w-full rounded-lg border border-rule bg-white px-2 py-1.5 text-sm text-slate-900">
+                          <option value="">Not set</option>
+                          {CARIES_CLASSES.map((c) => <option key={c.id} value={c.id}>{c.label}: {c.text}</option>)}
+                        </select>
+                      </label>
+                      <label className="text-xs text-slate-600">Depth
+                        <select value={d.depth || ""} onChange={(e) => onCaries(Number(tooth), { depth: e.target.value })} className="mt-0.5 w-full rounded-lg border border-rule bg-white px-2 py-1.5 text-sm text-slate-900">
+                          <option value="">Not set</option>
+                          {DEPTHS.map((x) => <option key={x.id} value={x.id}>{x.label}</option>)}
+                        </select>
+                      </label>
+                    </div>
+                    {depth && <p className="text-[11px] text-slate-500">{depth.hint}.</p>}
+                  </li>
+                );
+              })}
           </ul>
         </div>
       )}
