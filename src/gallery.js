@@ -2,7 +2,7 @@
 // area at clinics/{clinicId}/patientImages/{id}, so no extra storage service is needed.
 import { dateKey } from "./reminders.js";
 
-export const IMAGE_KINDS = ["Before", "After", "Pre-op", "Post-op", "X-ray", "Intraoral", "Face", "Other"];
+export const IMAGE_KINDS = ["Before", "After", "Pre-op", "Post-op", "OPG", "IOPA", "CBCT", "X-ray", "Intraoral", "Face", "Other"];
 export const MAX_IMAGES_PER_PATIENT = 30;
 export const MAX_DATA_CHARS = 190000; // a Firestore document holds up to 1 MB; this leaves plenty of room
 

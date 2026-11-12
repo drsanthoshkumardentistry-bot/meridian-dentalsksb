@@ -33,7 +33,7 @@ const input = (container, label) => {
 };
 const type = (el, value) => fireEvent.change(el, { target: { value } });
 
-beforeEach(() => { cleanup(); localStorage.clear(); });
+beforeEach(() => { cleanup(); localStorage.clear(); sessionStorage.setItem("merident_nav", "Patients & Odontogram"); });
 
 async function fillPatient(form, o = {}) {
   type(input(form, "Full Name"), o.name ?? "Asha Devi");
@@ -690,7 +690,8 @@ describe("branches in the app", () => {
   });
   it("opens Practice Profile when the round account letter in the top corner is clicked", async () => {
     await openApp();
-    fireEvent.click(screen.getByLabelText("Open Practice Profile"));
+    fireEvent.click(screen.getByLabelText("Account menu"));
+    fireEvent.click(screen.getByRole("menuitem", { name: /Practice Profile/ }));
     expect(await screen.findByText(/Practice Profile & Legal Registration/)).toBeTruthy();
   });
 });

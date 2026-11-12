@@ -41,7 +41,7 @@ const member = (o = {}) => ({ email: "staff@example.com", clinicId: "clinicA", c
 const type = (el, value) => fireEvent.change(el, { target: { value } });
 const navLabels = () => within(screen.getAllByRole("navigation")[0]).getAllByRole("button").map((b) => b.textContent.trim());
 
-beforeEach(() => { cleanup(); localStorage.clear(); h.writes.length = 0; h.audit = []; h.silent = false; h.member = null; h.user = { ...h.user, uid: "u-staff", email: "staff@example.com" }; });
+beforeEach(() => { cleanup(); localStorage.clear(); sessionStorage.setItem("merident_nav", "Patients & Odontogram"); h.writes.length = 0; h.audit = []; h.silent = false; h.member = null; h.user = { ...h.user, uid: "u-staff", email: "staff@example.com" }; });
 
 describe("role-based logins in the app", () => {
   it("tells a paused team login why it cannot see the clinic, and does not open the clinic's data", async () => {

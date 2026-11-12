@@ -72,9 +72,13 @@ export default function HelpChat() {
           <p className="px-3 pb-2 text-[10px] text-slate-400 bg-white">AI can make mistakes. For medical decisions, the dentist decides.</p>
         </div>
       )}
-      <button type="button" onClick={() => setOpen((v) => !v)} aria-label={open ? "Close Meridee help" : "Open Meridee help"} className="ml-auto flex items-center gap-2 pl-1.5 pr-4 py-1.5 rounded-full bg-[#1d4ed8] hover:bg-blue-700 text-white shadow-xl font-semibold text-sm">
-        <span className="w-11 h-11 rounded-full bg-white flex items-center justify-center overflow-hidden shrink-0"><FairySvg still className="w-10 h-10" /></span> {open ? <X className="w-4 h-4" /> : <span>Meridee</span>}
-      </button>
+      {/* Only the tooth fairy shows until the cursor comes near; the wider padded wrapper makes "near" generous. */}
+      <div className="group flex justify-end -m-8 p-8">
+        <button type="button" onClick={() => setOpen((v) => !v)} aria-label={open ? "Close Meridee help" : "Open Meridee help"} className="flex items-center rounded-full bg-[#1d4ed8] hover:bg-blue-700 text-white shadow-xl font-semibold text-sm p-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+          <span className="w-11 h-11 rounded-full bg-white flex items-center justify-center overflow-hidden shrink-0"><FairySvg still className="w-10 h-10" /></span>
+          <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ease-out flex items-center ${open ? "max-w-[2rem] px-2" : "max-w-0 group-hover:max-w-[6rem] group-hover:pl-2 group-hover:pr-3 group-focus-within:max-w-[6rem] group-focus-within:pl-2 group-focus-within:pr-3"}`}>{open ? <X className="w-4 h-4" /> : "Meridee"}</span>
+        </button>
+      </div>
     </div>
   );
 }

@@ -25,6 +25,7 @@ import { watchMyMembership, watchTeam, createInvite, acceptInvite, updateMember,
 import BranchesCard from "./components/BranchesCard.jsx";
 import DataPortability from "./components/DataPortability.jsx";
 import { buildPatientBackup, backupFileName } from "./portability.js";
+import { recordSheetHtml } from "./recordSheet.js";
 import { branchesOf, filterByBranch, writeBranchId, tagBranch, scopeToBranches, recordsOfPatient } from "./branches.js";
 import QueuePanel from "./components/QueuePanel.jsx";
 import BookingRequests from "./components/BookingRequests.jsx";
@@ -75,6 +76,10 @@ import { patientSummary } from "./patientSummary.js";
 import { buildVisit, addVisit, removeVisit } from "./visits.js";
 import { shiftDay, dayGrid, hourMarks } from "./dayView.js";
 import OpgViewer from "./components/OpgViewer.jsx";
+import ExtraRadiographs from "./components/ExtraRadiographs.jsx";
+import NotificationBell from "./components/NotificationBell.jsx";
+import AccountMenu from "./components/AccountMenu.jsx";
+import { buildNotifications } from "./notifications.js";
 import { AreaLine } from "./components/Sparkline.jsx";
 import { StatCard, ActionTile } from "./components/DashCards.jsx";
 import PerioChart from "./components/PerioChart.jsx";
@@ -798,6 +803,8 @@ export default function App() {
   const handleLogout = async (notice) => {
     try {
       await logoutUser();
+      try { window.sessionStorage.removeItem("merident_nav"); } catch (e) { /* ignore */ }
+      setActiveNav("Dashboard");
       setAuthUser(null);
       setAuthError("");
       setAuthNotice(typeof notice === "string" ? notice : "");
@@ -812,7 +819,13 @@ export default function App() {
   });
 
   // Navigation State
-  const [activeNav, setActiveNav] = useState("Patients & Odontogram");
+  // Remember the open screen across a refresh (this tab only); a fresh sign-in starts on the Dashboard.
+  const [activeNav, setActiveNav] = useState(() => {
+    try { return window.sessionStorage.getItem("merident_nav") || "Dashboard"; } catch (e) { return "Dashboard"; }
+  });
+  useEffect(() => {
+    try { window.sessionStorage.setItem("merident_nav", activeNav); } catch (e) { /* storage unavailable */ }
+  }, [activeNav]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState(""); // filters the Patients list only
   const [toastMessage, setToastMessage] = useState(null);
@@ -2247,7 +2260,7 @@ export default function App() {
             <button
               type="button"
               onClick={handleLogout}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-white/20 px-3 py-2 text-xs font-semibold text-blue-100 transition hover:bg-white/10"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-red-400/60 bg-red-600/15 px-3 py-2 text-xs font-semibold text-red-300 transition hover:bg-red-600 hover:text-white"
             >
               <LogOut className="h-4 w-4" /> Sign out
             </button>
@@ -2301,21 +2314,22 @@ export default function App() {
                 }
               }}
             />
-            {navFor(role, [{ label: "Practice Profile" }]).length > 0 ? (
-              <button
-                type="button"
-                onClick={() => setActiveNav("Practice Profile")}
-                title={`${authUser.email}. Open Practice Profile`}
-                aria-label="Open Practice Profile"
-                className="rounded-full hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
-              >
-                <UserAvatar user={authUser} className="w-8 h-8" />
-              </button>
-            ) : (
-              <div title={authUser.email}>
-                <UserAvatar user={authUser} className="w-8 h-8" />
-              </div>
-            )}
+            <NotificationBell
+              items={buildNotifications({
+                inventory,
+                appointments,
+                showStock: navFor(role, [{ label: "Stock Maintenance" }]).length > 0,
+                showAppointments: navFor(role, [{ label: "Appointments Diary" }]).length > 0,
+              })}
+              onOpen={(to) => setActiveNav(to)}
+            />
+            <AccountMenu
+              user={authUser}
+              canProfile={navFor(role, [{ label: "Practice Profile" }]).length > 0}
+              canSettings={navFor(role, [{ label: "Settings" }]).length > 0}
+              onGo={(to) => setActiveNav(to)}
+              onLogout={() => handleLogout()}
+            />
           </div>
         </header>
 
@@ -2505,6 +2519,18 @@ export default function App() {
                   }
                   showToast={showToast}
                 />
+                {currentOpgPatient && (
+                  <ExtraRadiographs
+                    key={`xr-${currentOpgPatient.id}`}
+                    patient={currentOpgPatient}
+                    api={{ list: (pid) => listImages(db, CLINIC_ID, pid), add: (img) => addImage(db, CLINIC_ID, img) }}
+                    compress={compressImage}
+                    canWrite={role === "owner" || role === "manager" || role === "dentist"}
+                    authorName={authUser?.displayName || authUser?.email || ""}
+                    showToast={showToast}
+                    newId={newId}
+                  />
+                )}
                 {currentOpgPatient && (
                   <PrePostOp
                     key={`pp-${currentOpgPatient.id}`}
@@ -3621,6 +3647,11 @@ export default function App() {
                 )}
               </div>
 
+              <div className="pt-4 border-t border-rule">
+                <button type="button" onClick={() => handleLogout()} className="flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-600 hover:text-white">
+                  <LogOut className="h-4 w-4" /> Log out
+                </button>
+              </div>
             </div>
             </ProfileNotesContext.Provider>
           )}
@@ -3909,7 +3940,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="flex items-center justify-center gap-2 rounded-lg border border-rule px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
+                  className="flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-600 hover:text-white"
                 >
                   <LogOut className="h-4 w-4" /> Log out
                 </button>
@@ -5267,6 +5298,19 @@ export default function App() {
                 ) : null;
               })()}
 
+              <button
+                type="button"
+                onClick={() => {
+                  const win = window.open("", "_blank");
+                  if (!win) { showToast("Allow pop-ups to open the record"); return; }
+                  win.document.write(recordSheetHtml(activePatient, { appointments: allAppointments, invoices: allInvoices }, practiceProfile));
+                  win.document.close();
+                }}
+                className="text-brand-700 hover:text-brand-900 font-medium flex items-center gap-1.5"
+              >
+                <Download className="w-3.5 h-3.5" /> Readable record (print / PDF)
+              </button>
+
               {!allowedBranchIds && (role === "owner" || role === "manager") && (
                 <button
                   type="button"
@@ -5280,7 +5324,7 @@ export default function App() {
                   }}
                   className="text-brand-700 hover:text-brand-900 font-medium flex items-center gap-1.5"
                 >
-                  <Download className="w-3.5 h-3.5" /> Backup file (not a receipt)
+                  <Download className="w-3.5 h-3.5" /> Backup file (for restoring, not for reading)
                 </button>
               )}
 

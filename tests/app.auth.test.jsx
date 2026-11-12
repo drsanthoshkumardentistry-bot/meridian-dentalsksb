@@ -36,7 +36,7 @@ import { friendlyAuthError, usesPasswordLogin, isValidEmailAddress } from "../sr
 const googleUser = { uid: "u-g", email: "g@example.com", displayName: "G", emailVerified: true, providerData: [{ providerId: "google.com" }] };
 const passwordUser = (verified) => ({ uid: "u-pw", email: "pw@example.com", displayName: "PW", emailVerified: verified, providerData: [{ providerId: "password" }] });
 
-beforeEach(() => { cleanup(); localStorage.clear(); h.user = null; h.listeners = []; h.calls = []; h.failSignIn = false; h.verifyResult = false; });
+beforeEach(() => { cleanup(); localStorage.clear(); sessionStorage.setItem("merident_nav", "Patients & Odontogram"); h.user = null; h.listeners = []; h.calls = []; h.failSignIn = false; h.verifyResult = false; });
 afterEach(() => { vi.useRealTimers(); });
 
 const openEmailForm = async () => {
@@ -135,7 +135,8 @@ describe("authentication gate", () => {
     // the sidebar now shows the storage meter; Log out and Customer support live in Practice Profile
     expect(screen.getByTestId("storage-meter")).toBeTruthy();
     expect(screen.queryByText("Sign out")).toBeNull();
-    fireEvent.click(screen.getByLabelText("Open Practice Profile"));
+    fireEvent.click(screen.getByLabelText("Account menu"));
+    fireEvent.click(screen.getByRole("menuitem", { name: /Practice Profile/ }));
     expect(await screen.findByText("Customer support")).toBeTruthy();
     expect(screen.getByText("+91 80983 18039").closest("a").getAttribute("href")).toBe("tel:+918098318039");
     fireEvent.click(screen.getByText("Log out"));
