@@ -5,6 +5,7 @@
  * File: src/App.jsx
  * ============================================================================== */
 
+import { profileGaps } from "./profileGaps.js";
 import { AGING_BUCKETS, agingSummary, filterInvoices, invoiceAgeDays } from "./receivables.js";
 import { toggleFinding, normalizeConditions, chartedCount as chartedTeeth } from "./odontogram.js";
 import { billingSummary, invoiceView, invoicesCsv, buildInvoiceMessage, isOverdue, daysOverdue, dueDateIn } from "./billingView.js";
@@ -3656,7 +3657,7 @@ export default function App() {
                   <ShieldCheck className="w-4 h-4" /> Cloud Persistence Active
                 </span>
                 <button
-                  onClick={() => showToast("Practice credentials saved")}
+                  onClick={() => { const g = profileGaps(practiceProfile); showToast(g.length ? `Saved. Still needed: ${g.join(", ")}` : "Practice credentials saved"); }}
                   className="px-4 py-2 bg-[#1d4ed8] text-white rounded-lg text-xs font-semibold shadow-card hover:bg-blue-700"
                 >
                   Update Profile
@@ -3667,12 +3668,11 @@ export default function App() {
           )}
 
           {/* TAB 8: DASHBOARD OVERVIEW */}
-          {activeNav !== "Practice Profile" && (!practiceProfile.drName || !practiceProfile.state || !practiceProfile.councilRegNumber) && (
+          {activeNav !== "Practice Profile" && profileGaps(practiceProfile).length > 0 && (
             <div className="mt-5 mb-6 rounded-xl border border-brand-100 bg-brand-50 p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
               <div className="text-sm text-slate-700">
-                <strong className="text-brand-700">Complete your clinic profile.</strong> Add the doctor name, state and Dental Council registration number so
-                prescriptions and invoices are correct.
-              </div>
+                <strong className="text-brand-700">Complete your clinic profile.</strong> Still needed: {profileGaps(practiceProfile).join(", ")}, so
+                prescriptions and invoices are correct.</div>
               <button
                 type="button"
                 onClick={() => setActiveNav("Practice Profile")}
