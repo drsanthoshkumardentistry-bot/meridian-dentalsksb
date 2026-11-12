@@ -2173,12 +2173,24 @@ export default function App() {
                 }
               }}
             />
-            <div
-              title={authUser.email}
-              className="w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-bold"
-            >
-              {(authUser.displayName || authUser.email || "M").trim().charAt(0).toUpperCase()}
-            </div>
+            {navFor(role, [{ label: "Practice Profile" }]).length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setActiveNav("Practice Profile")}
+                title={`${authUser.email}. Open Practice Profile`}
+                aria-label="Open Practice Profile"
+                className="w-8 h-8 rounded-full bg-brand-600 hover:bg-brand-700 text-white flex items-center justify-center text-xs font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+              >
+                {(authUser.displayName || authUser.email || "M").trim().charAt(0).toUpperCase()}
+              </button>
+            ) : (
+              <div
+                title={authUser.email}
+                className="w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-bold"
+              >
+                {(authUser.displayName || authUser.email || "M").trim().charAt(0).toUpperCase()}
+              </div>
+            )}
           </div>
         </header>
 

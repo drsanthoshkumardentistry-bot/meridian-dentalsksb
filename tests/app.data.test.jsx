@@ -688,4 +688,9 @@ describe("branches in the app", () => {
     fireEvent.click(within(card).getByLabelText("Remove Peelamedu"));
     await waitFor(() => expect(screen.queryByLabelText("Branch")).toBeNull());
   });
+  it("opens Practice Profile when the round account letter in the top corner is clicked", async () => {
+    await openApp();
+    fireEvent.click(screen.getByLabelText("Open Practice Profile"));
+    expect(await screen.findByText(/Practice Profile & Legal Registration/)).toBeTruthy();
+  });
 });
