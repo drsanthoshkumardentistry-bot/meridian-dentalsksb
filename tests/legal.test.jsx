@@ -20,6 +20,7 @@ describe("legal pages", () => {
     PRIVACY.sections.forEach((s) => expect(screen.getByText(s.h)).toBeTruthy());
     expect(screen.getByText("Terms of Use").getAttribute("href")).toBe("/?page=terms");
     expect(screen.getByText("+91 90432 05927").getAttribute("href")).toContain("wa.me/919043205927");
+    expect(screen.getByText("+91 80983 18039").getAttribute("href")).toContain("wa.me/918098318039");
   });
   it("pricing promises notice before charging and never invents a price", () => {
     render(<LegalPage page="pricing" />);
