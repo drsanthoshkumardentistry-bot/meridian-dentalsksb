@@ -2098,7 +2098,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen app-backdrop text-slate-800 font-sans overflow-hidden md:p-4 md:gap-4">
+    <div className="flex h-screen app-backdrop text-slate-800 font-sans overflow-hidden">
       
       {idleSecondsLeft !== null && (
         <IdleWarning secondsLeft={idleSecondsLeft} onStay={staySignedIn} onLogout={() => handleLogout()} />
@@ -2146,7 +2146,7 @@ export default function App() {
 
       {/* --- SIDEBAR --- */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 side-navy text-white flex flex-col justify-between overflow-y-auto side-scroll shadow-2xl transition-transform duration-300 md:static md:translate-x-0 md:rounded-3xl md:shrink-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 side-navy text-white flex flex-col justify-between overflow-y-auto side-scroll shadow-2xl transition-transform duration-300 md:static md:translate-x-0 md:shrink-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -2202,13 +2202,11 @@ export default function App() {
                     setActiveNav(item.label);
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13px] font-medium transition-colors ${
-                    isActive
-                      ? "bg-white/20 text-white font-semibold shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18)]"
-                      : "text-blue-100/70 hover:bg-white/10 hover:text-white"
+                  className={`nav-item group w-full flex items-center gap-3 px-3.5 py-2.5 rounded-full text-[13px] font-medium ${
+                    isActive ? "nav-item-active text-white font-semibold" : "text-blue-100/80 hover:text-white"
                   }`}
                 >
-                  {item.icon}
+                  <span className="nav-icon">{item.icon}</span>
                   <span>{item.label}</span>
                 </button>
               );
@@ -2262,8 +2260,8 @@ export default function App() {
       </aside>
 
       {/* --- WORKSPACE --- */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto work-panel md:rounded-3xl md:shadow-[0_20px_60px_-20px_rgba(30,58,138,0.35)]">
-        <header className="h-16 bg-white/90 backdrop-blur border-b border-rule px-3 sm:px-6 flex items-center justify-between gap-2 sticky top-0 z-30">
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto work-panel">
+        <header className="h-16 bg-white/55 backdrop-blur-md border-b border-white/70 px-3 sm:px-6 flex items-center justify-between gap-2 sticky top-0 z-30">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0 shrink">
             <button
               onClick={() => setSidebarOpen(true)}
