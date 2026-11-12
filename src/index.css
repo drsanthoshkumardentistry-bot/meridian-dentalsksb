@@ -329,3 +329,15 @@ main section.bg-white {
   background-color: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(6px);
 }
+
+/* Pop-up windows: start at the top and scroll when taller than the screen. Plain centring pushed the top out of reach. */
+.fixed.inset-0.justify-center.p-4.items-center:not(.flex-col),
+.fixed.inset-0.justify-center.items-end.sm\:items-center {
+  align-items: flex-start;
+  overflow-y: auto;
+}
+.fixed.inset-0.justify-center.p-4.items-center:not(.flex-col) > *,
+.fixed.inset-0.justify-center.items-end.sm\:items-center > * {
+  margin-top: auto;
+  margin-bottom: auto;
+}
