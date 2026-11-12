@@ -1,3 +1,4 @@
+import { isOwnerEmail } from "../connect/owner.js";
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import ConnectMessages from "./ConnectMessages.jsx";
 import ConnectAccess from "./ConnectAccess.jsx";
@@ -408,12 +409,12 @@ export default function Connect({ api, defaults = {}, geocode, showToast, uid, e
 
   const loadMe = useCallback(async () => {
     try {
-      const [me, admin] = await Promise.all([api.getProfile(), api.isAdmin()]);
-      setState({ status: "ready", me, admin });
+      const [me, adminDoc, owner] = await Promise.all([api.getProfile(), api.isAdmin(), isOwnerEmail(email)]);
+      setState({ status: "ready", me, admin: adminDoc || owner });
     } catch {
       setState({ status: "error", me: null, admin: false });
     }
-  }, [api]);
+  }, [api, email]);
   useEffect(() => { loadMe(); }, [loadMe]);
 
   const loadConsults = useCallback(async () => {

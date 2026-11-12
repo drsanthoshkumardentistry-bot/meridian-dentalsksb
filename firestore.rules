@@ -23,9 +23,14 @@ service cloud.firestore {
           && exists(dentistDoc(request.auth.uid))
           && get(dentistDoc(request.auth.uid)).data.status == 'verified';
     }
+    // The MeriDent owner's sign-in address, kept as a fingerprint so it is not written out in the public code.
+    function isOwnerEmail() {
+      return request.auth.token.email_verified == true
+          && hashing.sha256(request.auth.token.email.lower()).toHexString().lower() == '4a7294b1936c18184eebe2d2fe8074291f00d2552b84d4b99f9d0b7fef0aff3d';
+    }
     function isAdmin() {
       return signedIn()
-          && exists(/databases/$(database)/documents/connectAdmins/$(request.auth.uid));
+          && (exists(/databases/$(database)/documents/connectAdmins/$(request.auth.uid)) || isOwnerEmail());
     }
 
     // A poll vote: this dentist's vote document did not exist before this write, exists after it, and picked option idx.
