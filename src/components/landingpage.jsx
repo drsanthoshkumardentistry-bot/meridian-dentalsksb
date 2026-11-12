@@ -7,7 +7,7 @@
 
 import React, { useState } from "react";
 import { isValidEmailAddress } from "../authErrors";
-import { setPendingConnectOnly, hasPendingConnectOnly } from "../connectOnly";
+import { setSignInChoice, signInChoice } from "../connectOnly";
 import Hero3D from "./Hero3D.jsx";
 import {
   ArrowRight,
@@ -316,8 +316,8 @@ export default function LandingPage({
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState("");
-  const [specialist, setSpecialist] = useState(() => hasPendingConnectOnly());
-  const pickSpecialist = (on) => { setSpecialist(on); setPendingConnectOnly(on); };
+  const [specialist, setSpecialist] = useState(() => signInChoice() === true);
+  const pickSpecialist = (on) => { setSpecialist(on); setSignInChoice(on); };
 
   const submitEmail = (event) => {
     event.preventDefault();
