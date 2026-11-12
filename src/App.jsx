@@ -73,6 +73,7 @@ import { patientSummary } from "./patientSummary.js";
 import { buildVisit, addVisit, removeVisit } from "./visits.js";
 import { shiftDay, dayGrid, hourMarks } from "./dayView.js";
 import OpgViewer from "./components/OpgViewer.jsx";
+import PrePostOp from "./components/PrePostOp.jsx";
 import Connect from "./components/Connect.jsx";
 import { bindApi } from "./connect/api.js";
 import { geocodeAddress } from "./connect/geo.js";
@@ -2416,7 +2417,8 @@ export default function App() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                {/* Left: OPG viewer */}
+                {/* Left: OPG viewer and pre-op / post-op pictures */}
+                <div className="space-y-4 min-w-0">
                 <OpgViewer
                   key={currentOpgPatient ? currentOpgPatient.id : "none"}
                   patient={currentOpgPatient}
@@ -2437,6 +2439,19 @@ export default function App() {
                   }
                   showToast={showToast}
                 />
+                {currentOpgPatient && (
+                  <PrePostOp
+                    key={`pp-${currentOpgPatient.id}`}
+                    patient={currentOpgPatient}
+                    api={{ list: (pid) => listImages(db, CLINIC_ID, pid), add: (img) => addImage(db, CLINIC_ID, img) }}
+                    compress={compressImage}
+                    canWrite={role === "owner" || role === "manager" || role === "dentist"}
+                    authorName={authUser?.displayName || authUser?.email || ""}
+                    showToast={showToast}
+                    newId={newId}
+                  />
+                )}
+                </div>
 
                 {/* Right: Diagnostic Entry Pane */}
                 <div className="bg-white rounded-xl border border-rule p-6 flex flex-col justify-between">

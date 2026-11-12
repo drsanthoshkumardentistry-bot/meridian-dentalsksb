@@ -2,7 +2,7 @@
 // area at clinics/{clinicId}/patientImages/{id}, so no extra storage service is needed.
 import { dateKey } from "./reminders.js";
 
-export const IMAGE_KINDS = ["Before", "After", "X-ray", "Intraoral", "Face", "Other"];
+export const IMAGE_KINDS = ["Before", "After", "Pre-op", "Post-op", "X-ray", "Intraoral", "Face", "Other"];
 export const MAX_IMAGES_PER_PATIENT = 30;
 export const MAX_DATA_CHARS = 190000; // a Firestore document holds up to 1 MB; this leaves plenty of room
 
@@ -33,3 +33,15 @@ export const suggestPair = (images = []) => {
 };
 
 export const countByKind = (images = []) => images.reduce((m, i) => ({ ...m, [i.kind]: (m[i.kind] || 0) + 1 }), {});
+
+/**
+ * The pre-op and post-op pictures to show side by side. With a tooth given, only pictures of that tooth are used.
+ * Newest of each kind. Also lists the teeth that have a pre-op or post-op picture.
+ */
+export const prePostPair = (images = [], tooth = "") => {
+  const t = String(tooth || "").trim();
+  const sorted = sortImages(images).filter((i) => i && (!t || String(i.tooth || "").trim() === t));
+  return { pre: sorted.find((i) => i.kind === "Pre-op") || null, post: sorted.find((i) => i.kind === "Post-op") || null };
+};
+export const prePostTeeth = (images = []) =>
+  [...new Set(images.filter((i) => i && (i.kind === "Pre-op" || i.kind === "Post-op") && String(i.tooth || "").trim()).map((i) => String(i.tooth).trim()))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
