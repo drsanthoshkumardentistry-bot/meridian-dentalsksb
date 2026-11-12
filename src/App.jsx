@@ -2064,6 +2064,7 @@ export default function App() {
               { label: "Stock Maintenance", icon: <Package className="w-4 h-4" /> },
               { label: "Employee Roles & Roster", icon: <UserCog className="w-4 h-4" /> },
               { label: "Practice Profile", icon: <Hospital className="w-4 h-4" /> },
+              { label: "Settings", icon: <Settings className="w-4 h-4" /> },
             ]).filter((item) => !connectOnly || item.label === "MeriDent Connect").map((item) => {
               const isActive = activeNav === item.label;
               return (
@@ -3364,6 +3365,74 @@ export default function App() {
             </div>
           )}
 
+          {/* SETTINGS: lists and switches the clinic can customise */}
+          {activeNav === "Settings" && (
+            <ProfileNotesContext.Provider value={{ notes: practiceProfile.notes || {}, setNote: (k, t) => setPracticeProfile(setProfileNote(practiceProfile, k, t)) }}>
+            <div className="max-w-3xl bg-white rounded-xl border border-rule p-6 md:p-8 space-y-6">
+              <div>
+                <h1 className="text-xl font-bold text-slate-900">Settings</h1>
+                <p className="text-xs text-slate-500">Chairs, medicines, fees, message texts, drop-down lists and switches for this clinic. Clinic details, branches and logins stay in Practice Profile.</p>
+              </div>
+
+              {(role === "owner" || role === "manager") && (
+                <div className="space-y-2">
+                  <PracticeChairs
+                    profile={practiceProfile}
+                    newId={() => newId("CH")}
+                    showToast={showToast}
+                    onChange={(chairs) => setPracticeProfile({ ...practiceProfile, chairs })}
+                    onRenamed={(from, to) => setAppointments((prev) => prev.map((x) => (x.chair === from ? { ...x, chair: to } : x)))}
+                  />
+                </div>
+              )}
+
+              {(role === "owner" || role === "manager") && (
+                <TextTemplates profile={practiceProfile} onProfile={setPracticeProfile} />
+              )}
+
+              {(role === "owner" || role === "manager") && (
+                <MedicineLibrary profile={practiceProfile} onProfile={setPracticeProfile} newId={newId} showToast={showToast} />
+              )}
+
+              {(role === "owner" || role === "manager") && (
+                <OptionLists profile={practiceProfile} onProfile={setPracticeProfile} showToast={showToast} />
+              )}
+
+              {(role === "owner" || role === "manager") && <FeeList fees={practiceProfile.fees} newId={newId} onChange={(list) => setPracticeProfile({ ...practiceProfile, fees: list })} />}
+
+              {(role === "owner" || role === "manager") && (
+                <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-xs space-y-2" data-testid="ai-settings">
+                  <label className="flex items-center gap-2 font-semibold text-slate-800">
+                    <input type="checkbox" checked={Boolean(practiceProfile.aiEnabled)} onChange={(e) => setPracticeProfile({ ...practiceProfile, aiEnabled: e.target.checked })} />
+                    Use Meridee writing help (drafts only)
+                  </label>
+                  <p className="text-slate-600">When on, staff can ask Meridee to tidy visit notes and explain a treatment plan in the patient's language. Only the text typed for that request is sent to an outside AI service (Google Gemini on its free plan, which may keep the text and use it to improve Google products), never the patient's name or phone number. Every draft must be checked by the dentist.</p>
+                </div>
+              )}
+
+              <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-xs space-y-2" data-testid="booking-settings">
+                <label className="flex items-center gap-2 font-semibold text-slate-800">
+                  <input type="checkbox" checked={Boolean(practiceProfile.onlineBooking)} onChange={(e) => setPracticeProfile({ ...practiceProfile, onlineBooking: e.target.checked })} />
+                  Accept online appointment requests
+                </label>
+                {practiceProfile.onlineBooking ? (
+                  <>
+                    <p className="text-slate-600">Share this link on WhatsApp, Instagram or Google Business Profile. Patients send a request and you confirm it in the Appointments Diary.</p>
+                    <BookingShare url={bookingUrl(window.location.origin, CLINIC_ID)} clinicName={practiceProfile.name} onCopy={() => { navigator.clipboard?.writeText(bookingUrl(window.location.origin, CLINIC_ID)); showToast("Booking link copied"); }} />
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <input readOnly aria-label="Booking link" value={bookingUrl(window.location.origin, CLINIC_ID)} onFocus={(e) => e.target.select()} className="flex-1 min-w-[220px] px-3 py-2 border border-slate-300 rounded-lg bg-white" />
+                      <button type="button" onClick={() => { navigator.clipboard?.writeText(bookingUrl(window.location.origin, CLINIC_ID)); showToast("Booking link copied"); }} className="px-3 py-2 rounded-lg bg-[#1d4ed8] text-white font-semibold">Copy link</button>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-slate-500">Off. Patients cannot book online.</p>
+                )}
+              </div>
+
+            </div>
+            </ProfileNotesContext.Provider>
+          )}
+
           {/* TAB 7: PRACTICE PROFILE */}
           {activeNav === "Practice Profile" && (
             <ProfileNotesContext.Provider value={{ notes: practiceProfile.notes || {}, setNote: (k, t) => setPracticeProfile(setProfileNote(practiceProfile, k, t)) }}>
@@ -3421,61 +3490,6 @@ export default function App() {
               )}
 
               {(role === "owner" || role === "manager") && <ActivityLog entries={auditEntries} />}
-
-              {(role === "owner" || role === "manager") && (
-                <div className="space-y-2">
-                  <PracticeChairs
-                    profile={practiceProfile}
-                    newId={() => newId("CH")}
-                    showToast={showToast}
-                    onChange={(chairs) => setPracticeProfile({ ...practiceProfile, chairs })}
-                    onRenamed={(from, to) => setAppointments((prev) => prev.map((x) => (x.chair === from ? { ...x, chair: to } : x)))}
-                  />
-                </div>
-              )}
-
-              {(role === "owner" || role === "manager") && (
-                <TextTemplates profile={practiceProfile} onProfile={setPracticeProfile} />
-              )}
-
-              {(role === "owner" || role === "manager") && (
-                <MedicineLibrary profile={practiceProfile} onProfile={setPracticeProfile} newId={newId} showToast={showToast} />
-              )}
-
-              {(role === "owner" || role === "manager") && (
-                <OptionLists profile={practiceProfile} onProfile={setPracticeProfile} showToast={showToast} />
-              )}
-
-              {(role === "owner" || role === "manager") && <FeeList fees={practiceProfile.fees} newId={newId} onChange={(list) => setPracticeProfile({ ...practiceProfile, fees: list })} />}
-
-              {(role === "owner" || role === "manager") && (
-                <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-xs space-y-2" data-testid="ai-settings">
-                  <label className="flex items-center gap-2 font-semibold text-slate-800">
-                    <input type="checkbox" checked={Boolean(practiceProfile.aiEnabled)} onChange={(e) => setPracticeProfile({ ...practiceProfile, aiEnabled: e.target.checked })} />
-                    Use Meridee writing help (drafts only)
-                  </label>
-                  <p className="text-slate-600">When on, staff can ask Meridee to tidy visit notes and explain a treatment plan in the patient's language. Only the text typed for that request is sent to an outside AI service (Google Gemini on its free plan, which may keep the text and use it to improve Google products), never the patient's name or phone number. Every draft must be checked by the dentist.</p>
-                </div>
-              )}
-
-              <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-xs space-y-2" data-testid="booking-settings">
-                <label className="flex items-center gap-2 font-semibold text-slate-800">
-                  <input type="checkbox" checked={Boolean(practiceProfile.onlineBooking)} onChange={(e) => setPracticeProfile({ ...practiceProfile, onlineBooking: e.target.checked })} />
-                  Accept online appointment requests
-                </label>
-                {practiceProfile.onlineBooking ? (
-                  <>
-                    <p className="text-slate-600">Share this link on WhatsApp, Instagram or Google Business Profile. Patients send a request and you confirm it in the Appointments Diary.</p>
-                    <BookingShare url={bookingUrl(window.location.origin, CLINIC_ID)} clinicName={practiceProfile.name} onCopy={() => { navigator.clipboard?.writeText(bookingUrl(window.location.origin, CLINIC_ID)); showToast("Booking link copied"); }} />
-                    <div className="flex flex-wrap gap-2 items-center">
-                      <input readOnly aria-label="Booking link" value={bookingUrl(window.location.origin, CLINIC_ID)} onFocus={(e) => e.target.select()} className="flex-1 min-w-[220px] px-3 py-2 border border-slate-300 rounded-lg bg-white" />
-                      <button type="button" onClick={() => { navigator.clipboard?.writeText(bookingUrl(window.location.origin, CLINIC_ID)); showToast("Booking link copied"); }} className="px-3 py-2 rounded-lg bg-[#1d4ed8] text-white font-semibold">Copy link</button>
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-slate-500">Off. Patients cannot book online.</p>
-                )}
-              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div>
