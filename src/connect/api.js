@@ -298,6 +298,25 @@ export const myVotes = async (db, uid, postIds) => {
   return Object.fromEntries(found.filter(Boolean));
 };
 
+// ---------------- Approved email addresses (closed-access mode) ----------------
+
+export const normalizeEmail = (e) => String(e || "").trim().toLowerCase();
+export const isEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(normalizeEmail(e));
+
+export const listAllowed = async (db) => {
+  const snap = await getDocs(query(collection(db, "allowedEmails"), limit(500)));
+  return snap.docs.map((d) => ({ email: d.id, ...d.data() })).sort((a, b) => a.email.localeCompare(b.email));
+};
+export const getRestrict = async (db) => {
+  const snap = await getDoc(doc(db, "config", "access"));
+  return snap.exists() && snap.data().restrict === true;
+};
+export const addAllowed = (db, uid, email) =>
+  setDoc(doc(db, "allowedEmails", normalizeEmail(email)), { ok: true, addedBy: uid, addedAt: serverTimestamp() });
+export const removeAllowed = (db, email) => deleteDoc(doc(db, "allowedEmails", normalizeEmail(email)));
+export const setRestrict = (db, uid, on) =>
+  setDoc(doc(db, "config", "access"), { restrict: Boolean(on), updatedBy: uid, updatedAt: serverTimestamp() });
+
 // ---------------- Direct messages ----------------
 
 export const chatIdFor = (a, b) => [a, b].sort().join("_");
@@ -379,6 +398,11 @@ export const bindApi = (db, uid) => ({
   countFollowers: () => countFollowers(db, uid),
   vote: (postId, option) => castVote(db, uid, postId, option),
   myVotes: (postIds) => myVotes(db, uid, postIds),
+  listAllowed: () => listAllowed(db),
+  getRestrict: () => getRestrict(db),
+  addAllowed: (email) => addAllowed(db, uid, email),
+  removeAllowed: (email) => removeAllowed(db, email),
+  setRestrict: (on) => setRestrict(db, uid, on),
   listChats: () => listChats(db, uid),
   listMessages: (chatId) => listMessages(db, chatId),
   sendMessage: (me, otherId, text) => sendMessage(db, uid, me, otherId, text),

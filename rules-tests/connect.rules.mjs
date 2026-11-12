@@ -515,3 +515,25 @@ describe("direct messages", () => {
     await assertFails(send("alice", "bob", "x".repeat(801)));
   });
 });
+
+describe("approved email list (staff only)", () => {
+  it("staff can add, list, switch and remove; others cannot", async () => {
+    const staff = as(env, "admin");
+    await assertSucceeds(setDoc(doc(staff, "allowedEmails", "doc@gmail.com"), { ok: true, addedBy: "admin", addedAt: serverTimestamp() }));
+    await assertSucceeds(getDocs(collection(staff, "allowedEmails")));
+    await assertSucceeds(deleteDoc(doc(staff, "allowedEmails", "doc@gmail.com")));
+    await assertSucceeds(setDoc(doc(staff, "config", "access"), { restrict: true, updatedBy: "admin", updatedAt: serverTimestamp() }));
+
+    const other = as(env, "alice");
+    await assertFails(setDoc(doc(other, "allowedEmails", "x@gmail.com"), { ok: true, addedBy: "alice", addedAt: serverTimestamp() }));
+    await assertFails(setDoc(doc(other, "config", "access"), { restrict: false, updatedBy: "alice", updatedAt: serverTimestamp() }));
+    await assertFails(getDocs(collection(other, "allowedEmails")));
+  });
+  it("rejects badly shaped entries", async () => {
+    const staff = as(env, "admin");
+    await assertFails(setDoc(doc(staff, "allowedEmails", "NotLower@Gmail.com"), { ok: true, addedBy: "admin", addedAt: serverTimestamp() }));
+    await assertFails(setDoc(doc(staff, "allowedEmails", "nope"), { ok: true, addedBy: "admin", addedAt: serverTimestamp() }));
+    await assertFails(setDoc(doc(staff, "allowedEmails", "ok@gmail.com"), { ok: true, extra: 1 }));
+    await assertFails(setDoc(doc(staff, "config", "other"), { restrict: true, updatedBy: "admin", updatedAt: serverTimestamp() }));
+  });
+});

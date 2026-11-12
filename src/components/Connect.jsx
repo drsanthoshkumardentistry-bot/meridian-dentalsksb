@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import ConnectMessages from "./ConnectMessages.jsx";
+import ConnectAccess from "./ConnectAccess.jsx";
 import { countUnread, lastSeen, markSeen } from "../connect/unread.js";
 import { MapPin, Phone, MessageCircle, ShieldCheck, Search } from "lucide-react";
 import {
@@ -365,7 +366,7 @@ function AdminQueue({ api, showToast }) {
   );
 }
 
-export default function Connect({ api, defaults = {}, geocode, showToast, uid, initialTab = "network" }) {
+export default function Connect({ api, defaults = {}, geocode, showToast, uid, email = "", initialTab = "network" }) {
   const [state, setState] = useState({ status: "loading", me: null, admin: false });
   const [tab, setTab] = useState(initialTab);
   const [received, setReceived] = useState([]);
@@ -419,7 +420,7 @@ export default function Connect({ api, defaults = {}, geocode, showToast, uid, i
   const tabs = verified
     ? [["network", "Network"], ["find", "Find specialists"], ["messages", `Messages${unread ? ` (${unread})` : ""}`], ["inbox", `Requests received${newCount ? ` (${newCount})` : ""}`], ["sent", "Requests sent"], ["listing", "My listing"]]
     : [];
-  if (admin) tabs.push(["admin", "Verify dentists"], ["reports", "Reports"]);
+  if (admin) tabs.push(["admin", "Verify dentists"], ["reports", "Reports"], ["access", "Access list"]);
 
   let body;
   if (!me || editing) {
@@ -440,6 +441,7 @@ export default function Connect({ api, defaults = {}, geocode, showToast, uid, i
   else if (tab === "inbox") body = <ConsultList api={api} side="received" items={received} reload={loadConsults} showToast={showToast} />;
   else if (tab === "sent") body = <ConsultList api={api} side="sent" items={sent} reload={loadConsults} showToast={showToast} />;
   else if (tab === "listing") body = <Listing api={api} me={me} reloadMe={loadMe} showToast={showToast} />;
+  else if (tab === "access" && admin) body = <ConnectAccess api={api} myEmail={email} showToast={showToast} />;
   else if (tab === "admin") body = <AdminQueue api={api} showToast={showToast} />;
   else if (tab === "reports") body = <ReportsQueue api={api} showToast={showToast} />;
 

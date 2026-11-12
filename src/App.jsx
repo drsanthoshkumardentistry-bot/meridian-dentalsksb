@@ -2835,6 +2835,7 @@ export default function App() {
             <Connect
               api={connectApi}
               uid={CLINIC_ID}
+              email={authUser?.email || ""}
               showToast={showToast}
               geocode={geocodeAddress}
               defaults={{ clinicName: practiceProfile.name, clinicAddress: practiceProfile.address, phone: practiceProfile.phone }}
