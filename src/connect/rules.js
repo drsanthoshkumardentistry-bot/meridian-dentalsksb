@@ -15,7 +15,7 @@ export const SPECIALTIES = [
 ];
 export const specialtyLabel = (id) => (SPECIALTIES.find(([k]) => k === id) || [id, id])[1];
 
-export const DISTANCES_KM = [5, 10, 25, 50];
+export const DISTANCES_KM = [5, 10, 25, 50, 100];
 export const URGENCIES = [
   ["routine", "Routine"],
   ["soon", "Soon (this week)"],
@@ -64,10 +64,12 @@ export const validateConsult = ({ urgency, patientRef, caseSummary, consent }) =
 export const orderResults = (list) =>
   [...list].sort((a, b) => a.distanceKm - b.distanceKm || String(a.fullName).localeCompare(String(b.fullName)));
 
-export const filterResults = (list, { specialty = "all", acceptingOnly = true, excludeId } = {}) =>
+export const filterResults = (list, { specialty = "all", acceptingOnly = true, excludeId, emergencyOnly = false, onlyIds = null } = {}) =>
   list.filter(
     (d) =>
       d.id !== excludeId &&
+      (!emergencyOnly || d.emergencyAvailable === true) &&
+      (!onlyIds || onlyIds.includes(d.id)) &&
       (specialty === "all" || d.specialty === specialty) &&
       (!acceptingOnly || d.acceptingReferrals !== false)
   );
@@ -81,3 +83,18 @@ export const waLink = (number, text) => {
 };
 export const telLink = (number) => (digits10(number) ? `tel:+91${digits10(number)}` : "");
 export const osmLink = (lat, lng) => `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=17/${lat}/${lng}`;
+
+/** Turn-by-turn directions in the phone's maps app (Google Maps opens on Android and the web). */
+export const directionsLink = (lat, lng) =>
+  Number.isFinite(lat) && Number.isFinite(lng) ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}` : "";
+
+/** Saved specialists are kept on this device only. */
+export const toggleSaved = (ids, id) => {
+  const list = Array.isArray(ids) ? ids.filter((x) => typeof x === "string") : [];
+  return list.includes(id) ? list.filter((x) => x !== id) : [...list, id].slice(-100);
+};
+
+/** A short text a dentist can paste into WhatsApp to pass a specialist on. */
+export const shareText = (d) =>
+  [`${d.fullName}, ${d.qualification}`, specialtyLabel(d.specialty), `${d.clinicName}, ${d.clinicAddress}`, d.phone ? `Phone: ${digits10(d.phone)}` : "", d.timings ? `Timings: ${d.timings}` : ""]
+    .filter(Boolean).join("\n");

@@ -87,3 +87,35 @@ describe("Connect geography", () => {
     expect(validCoords(NaN, 1)).toBe(false);
   });
 });
+
+import { directionsLink, toggleSaved, shareText, DISTANCES_KM } from "../src/connect/rules.js";
+import { currentPosition } from "../src/connect/geo.js";
+describe("connect location and saving", () => {
+  const list = [{ id: "1", specialty: "endodontics", emergencyAvailable: true }, { id: "2", specialty: "endodontics", emergencyAvailable: false }, { id: "3", specialty: "general" }];
+  it("filters by emergency and by saved ids", () => {
+    expect(filterResults(list, { emergencyOnly: true }).map((d) => d.id)).toEqual(["1"]);
+    expect(filterResults(list, { onlyIds: ["2", "3"] }).map((d) => d.id)).toEqual(["2", "3"]);
+    expect(filterResults(list, { onlyIds: [] })).toEqual([]);
+  });
+  it("offers up to 100 km", () => { expect(DISTANCES_KM.at(-1)).toBe(100); });
+  it("builds directions only for real coordinates", () => {
+    expect(directionsLink(11.0, 76.9)).toBe("https://www.google.com/maps/dir/?api=1&destination=11,76.9");
+    expect(directionsLink(undefined, 76.9)).toBe("");
+  });
+  it("toggles saved ids and survives bad data", () => {
+    expect(toggleSaved(["a"], "b")).toEqual(["a", "b"]);
+    expect(toggleSaved(["a", "b"], "a")).toEqual(["b"]);
+    expect(toggleSaved(null, "a")).toEqual(["a"]);
+    expect(toggleSaved([1, "x"], "y")).toEqual(["x", "y"]);
+  });
+  it("writes a shareable contact", () => {
+    expect(shareText({ fullName: "Dr A", qualification: "MDS", specialty: "endodontics", clinicName: "C", clinicAddress: "Coimbatore", phone: "9043205927" })).toBe("Dr A, MDS\nEndodontics (root canal)\nC, Coimbatore\nPhone: 9043205927");
+  });
+  it("reads the device location and explains a refusal", async () => {
+    const ok = { getCurrentPosition: (s) => s({ coords: { latitude: 11, longitude: 77 } }) };
+    expect(await currentPosition(ok)).toEqual({ lat: 11, lng: 77 });
+    const no = { getCurrentPosition: (_s, e) => e({ code: 1 }) };
+    await expect(currentPosition(no)).rejects.toThrow(/blocked/);
+    await expect(currentPosition(null)).rejects.toThrow(/cannot share/);
+  });
+});

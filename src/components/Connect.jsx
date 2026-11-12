@@ -7,9 +7,9 @@ import { tabTitle } from "../connectOnly.js";
 import { MapPin, Phone, MessageCircle, ShieldCheck, Search } from "lucide-react";
 import {
   SPECIALTIES, specialtyLabel, DISTANCES_KM, URGENCIES, CONSENT_TEXT, MAX_SUMMARY,
-  validateProfile, validateConsult, orderResults, filterResults, canMoveTo, waLink, telLink, osmLink,
+  validateProfile, validateConsult, orderResults, filterResults, canMoveTo, waLink, telLink, osmLink, directionsLink, toggleSaved, shareText,
 } from "../connect/rules.js";
-import { geoFields } from "../connect/geo.js";
+import { geoFields, currentPosition } from "../connect/geo.js";
 import { toMillis } from "../connect/api.js";
 
 import ConnectFeed, { ReportsQueue } from "./ConnectFeed.jsx";
@@ -152,23 +152,59 @@ function ConsultForm({ target, onCancel, onSend }) {
   );
 }
 
-function Finder({ api, me, showToast, refreshSent, onMessage }) {
+function Finder({ api, me, geocode, showToast, refreshSent, onMessage }) {
   const [specialty, setSpecialty] = useState("all");
   const [radius, setRadius] = useState(10);
   const [state, setState] = useState({ status: "loading", docs: [] });
   const [openId, setOpenId] = useState(null);
+  // Where to search from: the clinic (default), this device's location, or a typed place.
+  const [center, setCenter] = useState({ ...me.geo, label: "your clinic" });
+  const [placeText, setPlaceText] = useState("");
+  const [locating, setLocating] = useState(false);
+  const [emergencyOnly, setEmergencyOnly] = useState(false);
+  const [savedOnly, setSavedOnly] = useState(false);
+  const [saved, setSaved] = useState(() => {
+    try { const v = JSON.parse(localStorage.getItem("merident_connect_saved") || "[]"); return Array.isArray(v) ? v.filter((x) => typeof x === "string") : []; } catch { return []; }
+  });
+  const flipSaved = (id) => {
+    setSaved((cur) => {
+      const next = toggleSaved(cur, id);
+      try { localStorage.setItem("merident_connect_saved", JSON.stringify(next)); } catch { /* storage can be blocked */ }
+      return next;
+    });
+  };
+  const useHere = async () => {
+    setLocating(true);
+    try { setCenter({ ...(await currentPosition()), label: "your location" }); }
+    catch (e) { showToast(e.message); }
+    setLocating(false);
+  };
+  const usePlace = async (e) => {
+    e.preventDefault();
+    if (!placeText.trim()) return;
+    setLocating(true);
+    try {
+      const g = geocode ? await geocode(placeText.trim()) : null;
+      if (g) setCenter({ lat: g.lat, lng: g.lng, label: placeText.trim() });
+      else showToast("Could not find that place. Add the city or PIN code.");
+    } catch { showToast("Could not look up that place. Check your connection."); }
+    setLocating(false);
+  };
 
   const run = useCallback(async () => {
     setState({ status: "loading", docs: [] });
     try {
-      setState({ status: "ready", docs: await api.search(me.geo, radius) });
+      setState({ status: "ready", docs: await api.search({ lat: center.lat, lng: center.lng }, radius) });
     } catch {
       setState({ status: "error", docs: [] });
     }
-  }, [api, me.geo, radius]);
+  }, [api, center, radius]);
   useEffect(() => { run(); }, [run]);
 
-  const results = useMemo(() => orderResults(filterResults(state.docs, { specialty, excludeId: api.uid })), [state.docs, specialty, api.uid]);
+  const results = useMemo(
+    () => orderResults(filterResults(state.docs, { specialty, excludeId: api.uid, emergencyOnly, onlyIds: savedOnly ? saved : null })),
+    [state.docs, specialty, api.uid, emergencyOnly, savedOnly, saved]
+  );
   const nextRadius = DISTANCES_KM.find((d) => d > radius);
 
   return (
@@ -190,9 +226,23 @@ function Finder({ api, me, showToast, refreshSent, onMessage }) {
           ))}
         </div>
       </div>
-      <p className="text-xs text-slate-500">Nearest first. Results are not ranked by payment, ratings or popularity.</p>
+      <div className="flex flex-wrap items-center gap-2" aria-label="Where to search from">
+        <button type="button" aria-pressed={center.label === "your clinic"} onClick={() => setCenter({ ...me.geo, label: "your clinic" })}
+          className={`${btn} border ${center.label === "your clinic" ? "bg-ink text-white border-ink" : "bg-white text-slate-700 border-rule hover:bg-mist"}`}>My clinic</button>
+        <button type="button" aria-pressed={center.label === "your location"} disabled={locating} onClick={useHere}
+          className={`${btn} border ${center.label === "your location" ? "bg-ink text-white border-ink" : "bg-white text-slate-700 border-rule hover:bg-mist"}`}>{locating ? "Finding…" : "My current location"}</button>
+        <form onSubmit={usePlace} className="flex gap-1.5">
+          <input aria-label="Search another place" value={placeText} onChange={(e) => setPlaceText(e.target.value)} placeholder="Another city or PIN code" className={`${field} w-48`} />
+          <button type="submit" disabled={locating} className={`${btn} border border-rule bg-white text-slate-700 hover:bg-mist`}>Go</button>
+        </form>
+      </div>
+      <div className="flex flex-wrap items-center gap-4 text-xs text-slate-700">
+        <label className="inline-flex items-center gap-1.5"><input type="checkbox" checked={emergencyOnly} onChange={(e) => setEmergencyOnly(e.target.checked)} /> Emergency available</label>
+        <label className="inline-flex items-center gap-1.5"><input type="checkbox" checked={savedOnly} onChange={(e) => setSavedOnly(e.target.checked)} /> Saved only ({saved.length})</label>
+      </div>
+      <p className="text-xs text-slate-500">Nearest first, measured from {center.label}. Results are not ranked by payment, ratings or popularity.</p>
 
-      {state.status === "loading" && <p role="status" className="text-sm text-slate-600">Searching near your clinic…</p>}
+      {state.status === "loading" && <p role="status" className="text-sm text-slate-600">Searching near {center.label}…</p>}
       {state.status === "error" && (
         <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
           Could not search right now. Check your connection and <button type="button" onClick={run} className="font-bold underline">try again</button>.
@@ -230,7 +280,10 @@ function Finder({ api, me, showToast, refreshSent, onMessage }) {
                   <MessageCircle className="w-3 h-3" /> WhatsApp
                 </a>
               )}
+              {directionsLink(d.geo && d.geo.lat, d.geo && d.geo.lng) && <a href={directionsLink(d.geo.lat, d.geo.lng)} target="_blank" rel="noopener noreferrer" className={`${btn} border border-rule text-slate-800 inline-flex items-center gap-1`}><MapPin className="w-3 h-3" /> Directions</a>}
               <button type="button" onClick={() => onMessage?.({ id: d.id, name: d.fullName })} className={`${btn} border border-rule text-slate-800`}>Message</button>
+              <button type="button" aria-pressed={saved.includes(d.id)} onClick={() => flipSaved(d.id)} className={`${btn} border ${saved.includes(d.id) ? "bg-amber-50 border-amber-300 text-amber-900" : "border-rule text-slate-800"}`}>{saved.includes(d.id) ? "Saved" : "Save"}</button>
+              <button type="button" onClick={() => { navigator.clipboard?.writeText(shareText(d)); showToast("Contact copied. Paste it into WhatsApp."); }} className={`${btn} border border-rule text-slate-800`}>Copy contact</button>
               <button type="button" onClick={() => setOpenId(openId === d.id ? null : d.id)} className={`${btn} bg-brand-600 text-white`}>Ask for a consult</button>
             </div>
             {openId === d.id && (
@@ -493,7 +546,7 @@ export default function Connect({ api, defaults = {}, geocode, showToast, uid, e
       </div>
     );
   } else if (tab === "network") body = <ConnectFeed api={api} me={me} admin={admin} showToast={showToast} onMessage={(d) => { setChatWith(d); setTab("messages"); }} />;
-  else if (tab === "find") body = <Finder api={api} me={me} showToast={showToast} refreshSent={loadConsults} onMessage={(d) => { setChatWith(d); setTab("messages"); }} />;
+  else if (tab === "find") body = <Finder api={api} me={me} geocode={geocode} showToast={showToast} refreshSent={loadConsults} onMessage={(d) => { setChatWith(d); setTab("messages"); }} />;
   else if (tab === "messages") body = <ConnectMessages api={api} me={me} start={chatWith} showToast={showToast} />;
   else if (tab === "inbox") body = <ConsultList api={api} side="received" items={received} reload={loadConsults} showToast={showToast} />;
   else if (tab === "sent") body = <ConsultList api={api} side="sent" items={sent} reload={loadConsults} showToast={showToast} />;
