@@ -53,6 +53,7 @@ function Plans({ plans, onPlans, canEdit, showToast, newId }) {
 
 function Memberships({ plans, memberships, onSell, patients, canSell, clinicName, showToast, newId }) {
   const [f, setF] = useState({ patientId: "", planId: "", startOn: dateKey(), paid: "", mode: "Cash" });
+  const [makeInvoice, setMakeInvoice] = useState(true);
   const today = dateKey();
   const sum = useMemo(() => membershipSummary(memberships, today), [memberships, today]);
   const rows = useMemo(() => [...memberships].sort((a, b) => (a.endOn < b.endOn ? -1 : 1)), [memberships]);
@@ -61,7 +62,7 @@ function Memberships({ plans, memberships, onSell, patients, canSell, clinicName
     e.preventDefault();
     const r = sellMembership({ patient: patients.find((p) => p.id === f.patientId), plan, startOn: f.startOn, paidRupees: f.paid, mode: f.mode }, newId("MB"));
     if (!r.ok) return showToast(r.error);
-    onSell(r.membership);
+    onSell(r.membership, { invoice: makeInvoice });
     setF({ ...f, patientId: "", paid: "" });
     showToast("Membership recorded");
   };
@@ -90,7 +91,7 @@ function Memberships({ plans, memberships, onSell, patients, canSell, clinicName
           <div className="col-span-2 sm:col-span-6 flex items-center gap-3">
             <select aria-label="Payment mode" className={`${field} w-32`} value={f.mode} onChange={(e) => setF({ ...f, mode: e.target.value })}>{["Cash", "UPI", "Card", "Net banking"].map((m) => <option key={m}>{m}</option>)}</select>
             <button className={`${btn} bg-[#1d4ed8] text-white`}>Record membership</button>
-            <span className="text-[11px] text-slate-500">This records the membership and the fee. It does not create an invoice.</span>
+            <label className="text-[11px] text-slate-600 inline-flex items-center gap-1.5"><input type="checkbox" checked={makeInvoice} onChange={(e) => setMakeInvoice(e.target.checked)} /> Also create a paid invoice (GST exempt)</label>
           </div>
         </form>
       )}
@@ -120,7 +121,7 @@ function Memberships({ plans, memberships, onSell, patients, canSell, clinicName
   );
 }
 
-function Leads({ leads, onLeads, canEdit, clinicName, showToast, newId }) {
+function Leads({ leads, onLeads, canEdit, onConvert, clinicName, showToast, newId }) {
   const [f, setF] = useState({ name: "", phone: "", source: "Walk-in", interest: "", note: "", followUpOn: "" });
   const [filter, setFilter] = useState("Open");
   const today = dateKey();
@@ -171,6 +172,7 @@ function Leads({ leads, onLeads, canEdit, clinicName, showToast, newId }) {
                 </div>
                 <div className="flex items-center gap-2">
                   {link && <a href={link} target="_blank" rel="noopener noreferrer" className="text-emerald-700 font-semibold underline">WhatsApp</a>}
+                  {canEdit && onConvert && l.status !== "Booked" && <button type="button" aria-label={`Make ${l.name} a patient`} onClick={() => onConvert(l)} className="text-blue-700 font-semibold underline">Make patient</button>}
                   {canEdit && (
                     <select aria-label={`Status for ${l.name}`} className={`${field} w-32`} value={l.status} onChange={(e) => onLeads(leads.map((x) => (x.id === l.id ? setLeadStatus(x, e.target.value) : x)))}>
                       {LEAD_STATUSES.map((s) => <option key={s}>{s}</option>)}
@@ -188,7 +190,7 @@ function Leads({ leads, onLeads, canEdit, clinicName, showToast, newId }) {
 }
 
 /** Membership packages and a lead list for the clinic. */
-export default function Growth({ plans = [], onPlans, canEditPlans, memberships = [], onSell, patients = [], leads = [], onLeads, canEdit = true, clinicName = "", showToast, newId }) {
+export default function Growth({ plans = [], onPlans, canEditPlans, memberships = [], onSell, patients = [], leads = [], onLeads, onConvertLead, canEdit = true, clinicName = "", showToast, newId }) {
   const [tab, setTab] = useState("Memberships");
   return (
     <div className="space-y-4">
@@ -203,7 +205,7 @@ export default function Growth({ plans = [], onPlans, canEditPlans, memberships 
           <Plans plans={plans} onPlans={onPlans} canEdit={canEditPlans} showToast={showToast} newId={newId} />
         </>
       ) : (
-        <Leads leads={leads} onLeads={onLeads} canEdit={canEdit} clinicName={clinicName} showToast={showToast} newId={newId} />
+        <Leads leads={leads} onLeads={onLeads} onConvert={onConvertLead} canEdit={canEdit} clinicName={clinicName} showToast={showToast} newId={newId} />
       )}
     </div>
   );

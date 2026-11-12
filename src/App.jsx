@@ -6,6 +6,8 @@
  * ============================================================================== */
 
 import { profileGaps } from "./profileGaps.js";
+import { todaySummary } from "./today.js";
+import { memberDiscountRupees, membershipInvoice, leadPatientPrefill, setLeadStatus, activeMembershipFor } from "./growth.js";
 import { AGING_BUCKETS, agingSummary, filterInvoices, invoiceAgeDays } from "./receivables.js";
 import { toggleFinding, normalizeConditions, chartedCount as chartedTeeth } from "./odontogram.js";
 import { billingSummary, invoiceView, invoicesCsv, buildInvoiceMessage, isOverdue, daysOverdue, dueDateIn } from "./billingView.js";
@@ -73,6 +75,7 @@ import { patientSummary } from "./patientSummary.js";
 import { buildVisit, addVisit, removeVisit } from "./visits.js";
 import { shiftDay, dayGrid, hourMarks } from "./dayView.js";
 import OpgViewer from "./components/OpgViewer.jsx";
+import TodayDesk from "./components/TodayDesk.jsx";
 import Growth from "./components/Growth.jsx";
 import PrePostOp from "./components/PrePostOp.jsx";
 import Connect from "./components/Connect.jsx";
@@ -158,6 +161,7 @@ import {
   Star,
   BarChart3,
   Award,
+  CalendarCheck,
   IndianRupee,
   LayoutDashboard,
   CalendarDays,
@@ -1141,6 +1145,12 @@ export default function App() {
 
     setPatients((prev) => [tagBranch(created, writeBranch), ...prev]);
     logAudit("patient.add", created.name);
+    if (convertLeadId) {
+      // Only when the saved patient has this lead's mobile number, so a cancelled form never marks the wrong lead
+      const last10 = (v) => String(v || "").replace(/\D/g, "").slice(-10);
+      setLeads((prev) => prev.map((l) => (l.id === convertLeadId && last10(l.phone) === last10(created.phone) ? setLeadStatus(l, "Booked") : l)));
+      setConvertLeadId(null);
+    }
     setNewPatientForm({ ...EMPTY_PATIENT_FORM });
     setIsAddPatientOpen(false);
     setSelectedPatientId(created.id);
@@ -1809,6 +1819,24 @@ export default function App() {
     showToast(`Invoice ${inv.id} generated for ₹${formatINR(inv.totalP)}`);
   };
 
+  // Memberships and leads
+  const handleSellMembership = (m, { invoice } = {}) => {
+    setMemberships((prev) => [m, ...prev]);
+    logAudit("membership.sell", m.patientName, `${m.planName}, ₹${formatINR(m.paidP)}`);
+    if (invoice && m.paidP > 0) {
+      const inv = membershipInvoice(m, nextInvoiceNumber(allInvoices), new Date().toLocaleDateString("en-IN"));
+      setInvoices((prev) => [tagBranch(inv, writeBranch), ...prev]);
+    }
+  };
+  const [convertLeadId, setConvertLeadId] = useState(null);
+  const handleConvertLead = (lead) => {
+    setConvertLeadId(lead.id);
+    setNewPatientForm({ ...EMPTY_PATIENT_FORM, ...leadPatientPrefill(lead) });
+    setActiveNav("Patients & Odontogram");
+    setIsAddPatientOpen(true);
+    showToast("Fill in the rest of the details and save. The lead will be marked Booked.");
+  };
+
   const handleCollectPayment = (e) => {
     e.preventDefault();
     const current = normalizeInvoice(invoices.find((i) => i.id === activeUpiQrInvoice?.id));
@@ -2124,6 +2152,7 @@ export default function App() {
           <nav className="p-3 space-y-1">
             {navFor(role, [
               { label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
+              { label: "Today", icon: <CalendarCheck className="w-4 h-4" /> },
               { label: "Appointments Diary", icon: <CalendarDays className="w-4 h-4" /> },
               { label: "Patients & Odontogram", icon: <Users className="w-4 h-4" /> },
               { label: "OPG & Diagnosis Studio", icon: <ScanSearch className="w-4 h-4" /> },
@@ -3073,6 +3102,14 @@ export default function App() {
             />
           )}
 
+          {activeNav === "Today" && (
+            <TodayDesk
+              summary={todaySummary({ appointments, invoices, leads, memberships })}
+              onGo={setActiveNav}
+              clinicName={practiceProfile.name}
+            />
+          )}
+
           {activeNav === "Memberships & Leads" && (
             <div className="space-y-4" data-testid="growth-screen">
               <div>
@@ -3084,7 +3121,8 @@ export default function App() {
                 onPlans={(list) => setPracticeProfile({ ...practiceProfile, membershipPlans: list })}
                 canEditPlans={canWrite(role, "profile")}
                 memberships={memberships}
-                onSell={(m) => setMemberships((prev) => [m, ...prev])}
+                onSell={handleSellMembership}
+                onConvertLead={handleConvertLead}
                 patients={patients}
                 leads={leads}
                 onLeads={setLeads}
@@ -5812,6 +5850,25 @@ export default function App() {
                 </button>
               )}
             </div>
+
+            {(() => {
+              const member = newInvoiceForm.patientId ? activeMembershipFor(memberships, newInvoiceForm.patientId) : null;
+              if (!member || !member.discountPct) return null;
+              const off = memberDiscountRupees(newInvoiceForm.items, member.discountPct);
+              return (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-2.5 flex flex-wrap items-center justify-between gap-2" data-testid="member-discount">
+                  <span className="text-emerald-900">Member: {member.planName}, {member.discountPct}% off{off ? ` (₹${off})` : ""}</span>
+                  <button
+                    type="button"
+                    disabled={!off || newInvoiceForm.discount === off}
+                    onClick={() => setNewInvoiceForm({ ...newInvoiceForm, discount: off })}
+                    className="px-3 py-1.5 rounded-lg bg-emerald-600 disabled:opacity-50 text-white font-semibold"
+                  >
+                    {newInvoiceForm.discount === off ? "Applied" : "Apply member discount"}
+                  </button>
+                </div>
+              );
+            })()}
 
             <div className="grid grid-cols-2 gap-3">
               <div>

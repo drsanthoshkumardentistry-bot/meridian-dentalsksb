@@ -1,5 +1,6 @@
 // Membership packages and a simple lead list. Plain functions, no storage: the app keeps the records.
 import { whatsappLink, dateKey } from "./reminders.js";
+import { computeLineItemTotals, toPaise } from "./billing.js";
 
 const clampText = (v, n) => String(v == null ? "" : v).trim().slice(0, n);
 const digits = (v) => String(v || "").replace(/\D/g, "");
@@ -127,3 +128,26 @@ export const sortLeads = (leads = [], today = dateKey()) =>
 
 export const leadWhatsAppLink = (lead, clinicName) =>
   whatsappLink(lead.phone, `Hello ${lead.name}, this is ${clinicName || "our dental clinic"}. Thank you for your interest${lead.interest ? ` in ${lead.interest}` : ""}. Would you like to book a visit? Reply with a day and time that suits you.`);
+
+// ---- Linking to billing and patients ------------------------------------------------------------------------
+
+/** The discount in rupees (as text for the Discount field) for a member's percentage off the bill items. */
+export const memberDiscountRupees = (items = [], pct) => {
+  const subtotalP = items.reduce((sum, it) => sum + Math.max(0, toPaise(it.amount)), 0);
+  const off = Math.round((subtotalP * (Number(pct) || 0)) / 100);
+  return off > 0 ? String(off / 100) : "";
+};
+
+/** A fully paid invoice for a membership fee. Treated as GST exempt, like other clinic fees; change it on the bill if your accountant says otherwise. */
+export const membershipInvoice = (m, invoiceId, paidOn) => {
+  const totals = computeLineItemTotals({ items: [{ description: `${m.planName} membership (${m.startOn} to ${m.endOn})`, amount: m.paidP / 100, taxCategory: "therapeutic" }] });
+  return {
+    id: invoiceId, patientId: m.patientId, patient: m.patientName, paymentMode: m.mode || "Cash",
+    treatment: totals.lines.map((l) => l.description).join(", "), taxCategory: "therapeutic", ...totals,
+    payments: m.paidP > 0 ? [{ date: paidOn, mode: m.mode || "Cash", amountP: m.paidP }] : [],
+    total: (totals.totalP / 100).toLocaleString("en-IN"), rawAmount: String(totals.totalP / 100), date: paidOn, membershipId: m.id,
+  };
+};
+
+/** Starting values for the New patient form from a lead. */
+export const leadPatientPrefill = (lead) => ({ name: lead.name, phone: lead.phone });

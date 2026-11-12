@@ -17,9 +17,9 @@ const ACCESS = {
 
 export const NAV_BY_ROLE = {
   owner: null, // everything
-  manager: ["Dashboard", "Appointments Diary", "Patients & Odontogram", "OPG & Diagnosis Studio", "Billing & Invoices", "Memberships & Leads", "Reports", "Stock Maintenance", "Employee Roles & Roster", "Practice Profile", "Settings"],
+  manager: ["Dashboard", "Today", "Appointments Diary", "Patients & Odontogram", "OPG & Diagnosis Studio", "Billing & Invoices", "Memberships & Leads", "Reports", "Stock Maintenance", "Employee Roles & Roster", "Practice Profile", "Settings"],
   dentist: ["Dashboard", "Appointments Diary", "Patients & Odontogram", "OPG & Diagnosis Studio"],
-  receptionist: ["Dashboard", "Appointments Diary", "Patients & Odontogram", "Billing & Invoices", "Memberships & Leads"],
+  receptionist: ["Dashboard", "Today", "Appointments Diary", "Patients & Odontogram", "Billing & Invoices", "Memberships & Leads"],
 };
 
 export const accessOf = (role, collection) => (ACCESS[role] || {})[collection] || "";
@@ -29,7 +29,7 @@ export const navFor = (role, items) => {
   const allowed = NAV_BY_ROLE[role];
   return allowed === null || allowed === undefined ? (role === "owner" ? items : []) : items.filter((i) => allowed.includes(i.label));
 };
-export const firstScreen = (role) => (NAV_BY_ROLE[role] ? NAV_BY_ROLE[role][2] : "Patients & Odontogram");
+export const firstScreen = (role) => (NAV_BY_ROLE[role] && !NAV_BY_ROLE[role].includes("Patients & Odontogram") ? NAV_BY_ROLE[role][0] : "Patients & Odontogram");
 
 /** Owners are never restricted; members see only their assigned branches (empty list = all). */
 export const branchScope = (member) => (member && Array.isArray(member.branchIds) && member.branchIds.length ? member.branchIds : null);
