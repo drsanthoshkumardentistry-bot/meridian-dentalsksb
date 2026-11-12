@@ -16,7 +16,8 @@ export const daysToExpiry = (item, now = new Date()) => {
 };
 
 /** Everything the screen needs to know about one item. */
-export const stockState = (item, now = new Date()) => {
+export const stockState = (item = {}, now = new Date()) => {
+  item = item || {};
   const qty = wholeNumber(item.quantity);
   const min = wholeNumber(item.minThreshold);
   const days = daysToExpiry(item, now);
@@ -60,7 +61,7 @@ export const buildStockItem = (form, id) => {
 
 export const stockSummary = (items = [], now = new Date()) => {
   const s = { total: items.length, out: 0, low: 0, expiring: 0, expired: 0 };
-  for (const it of items) {
+  for (const it of (Array.isArray(items) ? items : []).filter(Boolean)) {
     const st = stockState(it, now);
     if (st.out) s.out += 1;
     else if (st.low) s.low += 1;

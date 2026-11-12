@@ -24,7 +24,7 @@ export const canAddMore = (count) => count < MAX_IMAGES_PER_PATIENT;
 
 /** Newest picture first (by the date taken, then by when it was added). */
 export const sortImages = (images = []) =>
-  [...images].sort((a, b) => String(b.takenOn).localeCompare(String(a.takenOn)) || String(b.createdAt).localeCompare(String(a.createdAt)));
+  [...(Array.isArray(images) ? images : [])].filter(Boolean).sort((a, b) => String(b.takenOn).localeCompare(String(a.takenOn)) || String(b.createdAt).localeCompare(String(a.createdAt)));
 
 /** Suggests the newest "Before" and "After" for the side-by-side view. */
 export const suggestPair = (images = []) => {

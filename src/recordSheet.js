@@ -5,7 +5,11 @@ const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", 
 const dmy = (k) => (/^\d{4}-\d{2}-\d{2}$/.test(String(k || "")) ? String(k).split("-").reverse().join("/") : esc(k || ""));
 const row = (a, b) => (b ? `<tr><th>${esc(a)}</th><td>${esc(b)}</td></tr>` : "");
 
-export const recordSheetHtml = (patient = {}, { appointments = [], invoices = [] } = {}, profile = {}, now = new Date()) => {
+export const recordSheetHtml = (patient, { appointments = [], invoices = [] } = {}, profile, now = new Date()) => {
+  patient = patient && typeof patient === "object" ? patient : {};
+  profile = profile && typeof profile === "object" ? profile : {};
+  appointments = (Array.isArray(appointments) ? appointments : []).filter(Boolean);
+  invoices = (Array.isArray(invoices) ? invoices : []).filter(Boolean);
   const mine = (name, id) => (id ? id === patient.id : String(name || "").trim().toLowerCase() === String(patient.name || "").trim().toLowerCase());
   const appts = appointments.filter((a) => mine(a.patientName, a.patientId)).sort((x, y) => `${y.date} ${y.time}`.localeCompare(`${x.date} ${x.time}`));
   const invs = invoices.map(normalizeInvoice).filter((i) => mine(i.patient, i.patientId));

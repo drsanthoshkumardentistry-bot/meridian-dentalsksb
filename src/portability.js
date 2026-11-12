@@ -20,6 +20,13 @@ const KDF_ITERATIONS = 250000;
 const ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/; // used as Firestore document ids, so no slashes
 
 const plain = (v) => v && typeof v === "object" && !Array.isArray(v);
+// Keys that JSON can carry but that break string conversion or the prototype chain when a record is later read.
+const UNSAFE_KEYS = ["toString", "valueOf", "__proto__"];
+const hasUnsafeKey = (v, depth = 0) => {
+  if (!v || typeof v !== "object" || depth > 8) return false;
+  if (Array.isArray(v)) return v.some((x) => hasUnsafeKey(x, depth + 1));
+  return Object.keys(v).some((k) => UNSAFE_KEYS.includes(k) || hasUnsafeKey(v[k], depth + 1));
+};
 const COLLECTIONS = ["patients", "appointments", "invoices", "inventory", "employees"];
 
 /* ------------------------------- Building a backup ------------------------------- */
@@ -108,6 +115,7 @@ export const validateBackup = (b) => {
     const seen = new Set();
     for (const rec of list) {
       if (!plain(rec) || typeof rec.id !== "string" || !ID_RE.test(rec.id)) return { ok: false, error: `A record in ${key} has no valid id. The file may be damaged` };
+      if (hasUnsafeKey(rec)) return { ok: false, error: `A record in ${key} has unreadable fields. The file may be damaged` };
       if (seen.has(rec.id)) return { ok: false, error: `The backup lists the same ${key.replace(/s$/, "")} twice` };
       seen.add(rec.id);
     }

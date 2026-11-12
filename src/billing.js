@@ -141,8 +141,8 @@ export const normalizeInvoice = (inv) => {
   };
 };
 
-export const paidPaise = (inv) => (inv.payments || []).reduce((s, p) => s + ((p && p.amountP) || 0), 0);
-export const balancePaise = (inv) => Math.max(0, (inv.totalP || 0) - paidPaise(inv));
+export const paidPaise = (inv) => (Array.isArray(inv?.payments) ? inv.payments : []).reduce((s, p) => s + ((p && Number(p.amountP)) || 0), 0);
+export const balancePaise = (inv) => Math.max(0, (Number(inv?.totalP) || 0) - paidPaise(inv));
 
 export const paymentStatus = (inv) => {
   const paid = paidPaise(inv);
