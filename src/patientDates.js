@@ -42,7 +42,7 @@ export const patientsInRange = (patients = [], { appointments = [], invoices = [
   }
   if (mode === "seen") {
     for (const inv of invoices) if (inRange(key(inv.date), from, to)) hit.add(String(inv.patientId));
-    for (const p of patients) if ((p.visits || []).some((v) => inRange(key(v.date), from, to))) hit.add(String(p.id));
+    for (const p of patients) if ((p.visits || []).some((v) => v && inRange(key(v.date), from, to))) hit.add(String(p.id));
   }
   return patients.filter((p) => hit.has(String(p.id)));
 };
