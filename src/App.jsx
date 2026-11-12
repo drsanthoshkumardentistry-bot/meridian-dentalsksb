@@ -4009,7 +4009,7 @@ export default function App() {
                   <p className="text-sm text-slate-500 py-8 text-center">Nothing recorded in the last 30 days yet. Book visits and take payments and the trend will appear here.</p>
                 ) : (
                   <div className="grid grid-cols-1 gap-2">
-                    <AreaLine labels={trend30.labels} series={[{ name: "Collected", color: "#2563eb", data: trend30.collected }]} height={150} />
+                    <AreaLine labels={trend30.labels} showLabels={false} series={[{ name: "Collected", color: "#2563eb", data: trend30.collected }]} height={150} />
                     <AreaLine labels={trend30.labels} series={[{ name: "Visits", color: "#0ea5e9", data: trend30.visits }]} height={110} />
                   </div>
                 )}
