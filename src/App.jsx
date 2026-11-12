@@ -1756,6 +1756,16 @@ export default function App() {
     win.document.close();
   };
 
+  const handleDownloadPdf = async (inv, receipt = false) => {
+    try {
+      const { downloadInvoicePdf } = await import("./invoicePdf.js");
+      await downloadInvoicePdf(inv, practiceProfile, { receipt });
+      showToast(receipt ? "Receipt PDF downloaded" : "Invoice PDF downloaded");
+    } catch (e) {
+      showToast("Could not make the PDF. Try Print instead.");
+    }
+  };
+
   const handleStockAdjust = (stockId, delta) => {
     setInventory((prev) => prev.map((item) => (item.id === stockId ? adjustStock(item, delta) : item)));
   };
@@ -2889,6 +2899,13 @@ export default function App() {
                               className="px-3 py-1.5 bg-white hover:bg-blue-50 border border-rule text-slate-800 rounded-lg text-xs font-semibold"
                             >
                               Print
+                            </button>
+                            <button
+                              onClick={() => handleDownloadPdf(inv, paidPaise(inv) > 0)}
+                              className="px-3 py-1.5 bg-white hover:bg-blue-50 border border-rule text-slate-800 rounded-lg text-xs font-semibold inline-flex items-center gap-1"
+                              aria-label={`Download ${paidPaise(inv) > 0 ? "receipt" : "invoice"} ${inv.id} as PDF`}
+                            >
+                              <Download className="w-3.5 h-3.5" /> PDF
                             </button>
                             {balancePaise(inv) > 0 && (() => {
                               const due = duePayReminders.find((d) => d.inv.id === inv.id);
@@ -4949,7 +4966,7 @@ export default function App() {
                   }}
                   className="text-brand-700 hover:text-brand-900 font-medium flex items-center gap-1.5"
                 >
-                  <Download className="w-3.5 h-3.5" /> Download record
+                  <Download className="w-3.5 h-3.5" /> Backup file (not a receipt)
                 </button>
               )}
 
@@ -5844,6 +5861,9 @@ export default function App() {
                   Print receipt
                 </button>
               )}
+              <button onClick={() => handleDownloadPdf(qrInvoice, paidPaise(qrInvoice) > 0)} className="flex-1 py-2 border border-rule rounded-lg text-xs font-semibold text-slate-700 hover:bg-enamel">
+                Download PDF
+              </button>
             </div>
           </div>
         </div>
