@@ -53,6 +53,7 @@ import PatientGallery from "./components/PatientGallery.jsx";
 import { todayActionTiles, totalActions, liveFlow } from "./todayActions.js";
 import { listImages, addImage, removeImage, countImages } from "./galleryStore.js";
 import { buildPayLink } from "./payLink.js";
+import { whatsappAutoEnabled, sendWhatsAppTemplate } from "./whatsappApi.js";
 import StorageMeter from "./components/StorageMeter.jsx";
 import { CONTACT, CONTACT_CO } from "./legal.js";
 import { setCariesDetail, pruneCariesDetails, cariesText } from "./caries.js";
@@ -177,7 +178,7 @@ import { AppLoading, VerifyEmailScreen, IdleWarning } from "./components/AuthScr
 import { friendlyAuthError, usesPasswordLogin } from "./authErrors";
 import {
   dateKey, dueAppointmentReminders, buildAppointmentReminder, duePaymentReminders, buildPaymentReminder,
-  whatsappLink, markAppointmentReminded, markInvoiceReminded, formatTime12,
+  whatsappLink, markAppointmentReminded, markInvoiceReminded, formatTime12, hasWhatsAppConsent,
   dueRecalls, buildRecallMessage, markPatientRecalled, RECALL_OPTIONS, DEFAULT_RECALL_MONTHS, whatsappNumber, formatDateLong } from "./reminders";
 import {
   MODE_KEYS, currentMonthKey, collectionsForMonth, gstSummaryForMonth, outstandingTotalP,
@@ -1523,6 +1524,49 @@ export default function App() {
     window.open(link, "_blank", "noopener,noreferrer");
   };
 
+  // --- Send many WhatsApp reminders in one tap through the WhatsApp Business API (only when the server has it set up) ---
+  const [waAuto, setWaAuto] = useState(false);
+  const [waBusy, setWaBusy] = useState(false);
+  useEffect(() => {
+    if (!authUser || !authUser.emailVerified || hydratedFor !== CLINIC_ID) return undefined;
+    let off = false;
+    whatsappAutoEnabled().then((on) => { if (!off) setWaAuto(on); });
+    return () => { off = true; };
+  }, [authUser, hydratedFor, CLINIC_ID]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const sendAllByApi = async () => {
+    const clinic = practiceProfile.name || "your dental clinic";
+    const clinicPhone = practiceProfile.phone || "the clinic";
+    const consented = (id, fallback) => { const p = patients.find((x) => String(x.id) === String(id)); return p ? hasWhatsAppConsent(p) : fallback; };
+    const jobs = [];
+    dueApptReminders.forEach((d) => {
+      if (!whatsappNumber(d.appt.phone) || !consented(d.appt.patientId, false)) return;
+      jobs.push({ kind: "appointment", to: d.appt.phone, params: [d.appt.patientName, clinic, `${d.kind === "sameDay" ? "today" : "tomorrow"}, ${formatDateLong(d.appt.date)} at ${formatTime12(d.appt.time)}`, d.appt.doctor || "the doctor", clinicPhone], done: () => setAppointments((prev) => prev.map((a) => (a.id === d.appt.id ? markAppointmentReminded(a, d.kind) : a))) });
+    });
+    duePayReminders.forEach((d) => {
+      const phone = d.phone || (patients.find((x) => String(x.id) === String(d.inv.patientId)) || {}).phone;
+      if (!whatsappNumber(phone) || !consented(d.inv.patientId, false)) return;
+      const link = buildPayLink(window.location.origin, { vpa: practiceProfile.upiId, name: practiceProfile.name, amountP: balancePaise(normalizeInvoice(d.inv)), note: d.inv.id });
+      jobs.push({ kind: "payment", to: phone, params: [d.inv.patient, clinic, formatINR(balancePaise(normalizeInvoice(d.inv))), d.inv.id, link || `at ${clinicPhone}`], done: () => setInvoices((prev) => prev.map((i) => (i.id === d.inv.id ? markInvoiceReminded(i) : i))) });
+    });
+    dueRecallList.forEach((d) => {
+      if (!whatsappNumber(d.patient.phone)) return;
+      jobs.push({ kind: "recall", to: d.patient.phone, params: [d.patient.name, String(d.months), clinic, clinicPhone], done: () => setPatients((prev) => prev.map((p) => (p.id === d.patient.id ? markPatientRecalled(p) : p))) });
+    });
+    if (!jobs.length) { showToast("No reminders can be sent automatically right now."); return; }
+    if (!confirm(`Send ${jobs.length} WhatsApp message${jobs.length === 1 ? "" : "s"} now? Only patients who agreed to WhatsApp messages are included.`)) return;
+    setWaBusy(true);
+    let ok = 0;
+    let failed = 0;
+    let lastError = "";
+    for (const j of jobs) {
+      try { await sendWhatsAppTemplate(j.kind, j.to, j.params); j.done(); ok += 1; }
+      catch (e) { failed += 1; lastError = e.message; if (/limit/i.test(e.message)) break; }
+    }
+    setWaBusy(false);
+    showToast(failed ? `Sent ${ok}, ${failed} did not send. ${lastError}` : `Sent ${ok} WhatsApp message${ok === 1 ? "" : "s"}`);
+  };
+
   const sendApptReminder = ({ appt, kind }) => {
     const link = whatsappLink(
       appt.phone,
@@ -2478,8 +2522,15 @@ export default function App() {
 
               {(dueApptReminders.length > 0 || duePayReminders.length > 0) && (
                 <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-3" data-testid="reminders-panel">
-                  <div className="text-xs font-bold text-blue-900">
-                    Reminders to send ({dueApptReminders.length + duePayReminders.length})
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-xs font-bold text-blue-900">
+                      Reminders to send ({dueApptReminders.length + duePayReminders.length})
+                    </div>
+                    {waAuto && (
+                      <button type="button" disabled={waBusy} onClick={sendAllByApi} className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white rounded text-[11px] font-semibold inline-flex items-center gap-1">
+                        <Send className="w-3 h-3" /> {waBusy ? "Sending…" : "Send all on WhatsApp"}
+                      </button>
+                    )}
                   </div>
                   <div className="space-y-2">
                     {dueApptReminders.map((d) => (
