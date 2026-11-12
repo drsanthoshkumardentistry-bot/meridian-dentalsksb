@@ -223,3 +223,37 @@ describe("closed access list", () => {
     await assertSucceeds(getDoc(doc(d, "clinics", "clinicA", "patients", "p1")));
   });
 });
+
+describe("patient portal pages", () => {
+  const page = (over = {}) => ({
+    clinicId: OWNER, clinicName: "Smile", clinicPhone: "9000000000", upiId: "", patientFirstName: "Asha",
+    upcoming: [], bills: [], plans: [], advice: "Rinse with warm salt water", nextVisitOn: "", outstandingP: 0,
+    updatedAt: "2026-11-12T00:00:00Z", expiresAt: new Date(Date.now() + 86400000), ...over,
+  });
+  it("anyone with the link can read one page; nobody can list", async () => {
+    await assertSucceeds(setDoc(doc(as(env, OWNER), "portalPages", "tok1"), page()));
+    await assertSucceeds(getDoc(doc(anon(env), "portalPages", "tok1")));
+    await assertFails(getDocs(collection(anon(env), "portalPages")));
+  });
+  it("the owner, a manager and a receptionist can publish; a dentist and strangers cannot", async () => {
+    await assertSucceeds(setDoc(doc(asEmail("mgr"), "portalPages", "t2"), page()));
+    await assertSucceeds(setDoc(doc(asEmail("rec"), "portalPages", "t3"), page()));
+    await assertFails(setDoc(doc(asEmail("doc"), "portalPages", "t4"), page()));
+    await assertFails(setDoc(doc(as(env, "intruder"), "portalPages", "t5"), page()));
+    await assertFails(setDoc(doc(anon(env), "portalPages", "t6"), page()));
+  });
+  it("rejects extra fields, oversize lists and a page for someone else's clinic", async () => {
+    await assertFails(setDoc(doc(as(env, OWNER), "portalPages", "x1"), page({ phone: "9876543210" })));
+    await assertFails(setDoc(doc(as(env, OWNER), "portalPages", "x2"), page({ bills: Array.from({ length: 13 }, () => ({})) })));
+    await assertFails(setDoc(doc(as(env, OWNER), "portalPages", "x3"), page({ advice: "a".repeat(501) })));
+    await assertFails(setDoc(doc(as(env, "intruder"), "portalPages", "x4"), page({ clinicId: OWNER })));
+  });
+  it("only the clinic changes or deletes it, and cannot hand it to another clinic", async () => {
+    await seed(env, (db) => setDoc(doc(db, "portalPages", "tok1"), page()));
+    await assertFails(updateDoc(doc(anon(env), "portalPages", "tok1"), { advice: "hacked" }));
+    await assertFails(deleteDoc(doc(anon(env), "portalPages", "tok1")));
+    await assertFails(setDoc(doc(as(env, "intruder"), "portalPages", "tok1"), page({ clinicId: "intruder" })));
+    await assertSucceeds(setDoc(doc(as(env, OWNER), "portalPages", "tok1"), page({ advice: "new" })));
+    await assertSucceeds(deleteDoc(doc(asEmail("mgr"), "portalPages", "tok1")));
+  });
+});
