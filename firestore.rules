@@ -60,6 +60,10 @@ service cloud.firestore {
       allow write: if docId == 'access' && isAdmin()
                    && request.resource.data.keys().hasOnly(['restrict', 'updatedBy', 'updatedAt'])
                    && request.resource.data.restrict is bool;
+      // The setup lock is written only together with the first admin entry (see connectAdmins).
+      allow create: if docId == 'adminLock' && signedIn()
+                    && existsAfter(/databases/$(database)/documents/connectAdmins/$(request.auth.uid))
+                    && request.resource.data.keys().hasOnly(['by', 'at']);
     }
     match /allowedEmails/{emailKey} {
       allow get: if request.auth != null && request.auth.token.email_verified == true
@@ -214,7 +218,17 @@ service cloud.firestore {
     // MeriDent staff. Documents here are created by hand in the Firebase console, never by the app.
     match /connectAdmins/{uid} {
       allow get: if signedIn() && request.auth.uid == uid;
-      allow list, write: if false;
+      allow list: if false;
+      // One-time setup: the owner types the setup code in the app. The code is checked here against its
+      // fingerprint, and the setup lock is created in the same write, so it can only happen once.
+      allow create: if signedIn() && request.auth.uid == uid
+                    && !exists(/databases/$(database)/documents/config/adminLock)
+                    && existsAfter(/databases/$(database)/documents/config/adminLock)
+                    && request.resource.data.keys().hasOnly(['ok', 'code'])
+                    && request.resource.data.ok == true
+                    && request.resource.data.code is string
+                    && hashing.sha256(request.resource.data.code).toHexString().lower() == '5fa5808eccc4b0ae237a7585cc18f42637296060aadc4f30b70355574ad09fb9';
+      allow update, delete: if false;
     }
 
     // Private profile: registration details. Only the owner and staff can read it.
