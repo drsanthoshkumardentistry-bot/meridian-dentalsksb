@@ -39,6 +39,9 @@ import AccessLimited from "./components/AccessLimited.jsx";
 import StaffRota from "./components/StaffRota.jsx";
 import TextTemplates from "./components/TextTemplates.jsx";
 import { rxAdviceLines } from "./templates.js";
+import { medicinesOf, upsertMedicine, prescriptionLine } from "./medicines.js";
+import MedicineForm from "./components/MedicineForm.jsx";
+import MedicineLibrary from "./components/MedicineLibrary.jsx";
 import OptionLists from "./components/OptionLists.jsx";
 import { listOf, withCurrent } from "./optionLists.js";
 import PracticeChairs, { ProfileNote, ProfileNotesContext } from "./components/PracticeChairs.jsx";
@@ -142,7 +145,8 @@ import {
   UserCog,
   Hospital,
   Wallet,
-  UsersRound
+  UsersRound,
+  Pencil
 } from "lucide-react";
 
 // Safe dynamic import from ./firebase
@@ -218,14 +222,6 @@ const DENTAL_DEPARTMENTS = [
   { id: "phd", code: "PHD", name: "Public Health Dentistry", room: "Room 8" }
 ];
 
-const PRESET_MEDICATIONS = [
-  { name: "Zerodol-SP", generic: "Aceclofenac 100mg + Paracetamol 325mg + Serratiopeptidase 15mg", frequency: "1-0-1", duration: "3 Days", timing: "After Food" },
-  { name: "Moxikind-CV 625", generic: "Amoxicillin 500mg + Clavulanic Acid 125mg", frequency: "1-0-1", duration: "5 Days", timing: "After Food" },
-  { name: "Ketorol-DT", generic: "Ketorolac Tromethamine 10mg (Dispersible)", frequency: "SOS", duration: "2 Days", timing: "Dissolve in half cup water" },
-  { name: "Metrogyl 400", generic: "Metronidazole 400mg", frequency: "1-1-1", duration: "3 Days", timing: "After Food" },
-  { name: "Rexidin 0.2%", generic: "Chlorhexidine Gluconate 0.2% w/v Mouthwash", frequency: "1-0-1", duration: "7 Days", timing: "10ml rinse for 1 min after brushing" },
-  { name: "Kenacort 0.1%", generic: "Triamcinolone Acetonide 0.1% Oral Paste", frequency: "0-0-1", duration: "5 Days", timing: "Apply thinly at bedtime over ulcer" },
-];
 
 // ---------------------------------------------------------------------------
 // Cloud sync helpers: every record is stored under clinics/{uid}/..., one
@@ -1181,29 +1177,28 @@ export default function App() {
   };
 
   // Add Prescription to Patient
+  const patchRx = (fn) => setPatients((prev) => prev.map((p) => (p.id === activePatient?.id ? { ...p, prescriptions: fn(p.prescriptions || []) } : p)));
   const handleAddPrescription = (med) => {
     if (!activePatient) return;
-    const newRxItem = {
-      id: Date.now(),
-      drug: med.name || med.drug,
-      generic: med.generic,
-      dosage: med.dosage || "1 Tab",
-      frequency: med.frequency,
-      duration: med.duration,
-      instruction: med.timing || med.instruction || "After food",
-    };
-    setPatients((prev) =>
-      prev.map((p) => {
-        if (p.id === activePatient.id) {
-          return {
-            ...p,
-            prescriptions: [...(p.prescriptions || []), newRxItem],
-          };
-        }
-        return p;
-      })
-    );
-    showToast(`Added ${newRxItem.drug} to prescription slip`);
+    const line = prescriptionLine(med, Date.now());
+    patchRx((list) => [...list, line]);
+    showToast(`Added ${line.drug} to prescription slip`);
+  };
+  // A line written by hand for this patient, optionally kept in the clinic's own medicine list
+  const handleCustomPrescription = (med, saveToList) => {
+    if (!activePatient) return;
+    if (saveToList) {
+      const r = upsertMedicine(practiceProfile, med, () => newId("MED"));
+      if (r.error) showToast(r.error);
+      else setPracticeProfile(r.profile);
+    }
+    handleAddPrescription(med);
+  };
+  const [rxEditing, setRxEditing] = useState(null);
+  const handleUpdatePrescription = (med) => {
+    patchRx((list) => list.map((x) => (x.id === rxEditing.id ? prescriptionLine(med, x.id) : x)));
+    setRxEditing(null);
+    showToast("Prescription line updated");
   };
 
   const handleRemovePrescription = (rxId) => {
@@ -3367,6 +3362,10 @@ export default function App() {
               )}
 
               {(role === "owner" || role === "manager") && (
+                <MedicineLibrary profile={practiceProfile} onProfile={setPracticeProfile} newId={newId} showToast={showToast} />
+              )}
+
+              {(role === "owner" || role === "manager") && (
                 <OptionLists profile={practiceProfile} onProfile={setPracticeProfile} showToast={showToast} />
               )}
 
@@ -4656,10 +4655,10 @@ export default function App() {
 
                   <div>
                     <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1.5">
-                      Quick-Select Dental Presets:
+                      Quick-select from your medicine list:
                     </label>
                     <div className="flex flex-wrap gap-2">
-                      {PRESET_MEDICATIONS.map((med) => (
+                      {medicinesOf(practiceProfile).map((med) => (
                         <button
                           key={med.name}
                           type="button"
@@ -4690,7 +4689,7 @@ export default function App() {
                         {(activePatient.prescriptions || []).length === 0 ? (
                           <tr>
                             <td colSpan={6} className="p-4 text-center text-slate-500 italic">
-                              No medications prescribed yet. Tap presets above to add.
+                              No medications prescribed yet. Tap a medicine above, or write one below.
                             </td>
                           </tr>
                         ) : (
@@ -4709,7 +4708,12 @@ export default function App() {
                               <td className="p-3 font-medium text-slate-700">{p.duration}</td>
                               <td className="p-3 text-slate-600">{p.instruction}</td>
                               <td className="p-3 text-center">
+                                <button type="button" aria-label={`Edit ${p.drug}`} onClick={() => setRxEditing({ id: p.id, name: p.drug, generic: p.generic, dosage: p.dosage, frequency: p.frequency, duration: p.duration, instruction: p.instruction })} className="text-slate-500 hover:text-blue-700 mr-2">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
                                 <button
+                                  type="button"
+                                  aria-label={`Remove ${p.drug}`}
                                   onClick={() => handleRemovePrescription(p.id)}
                                   className="text-rose-500 hover:text-rose-700"
                                 >
@@ -4721,6 +4725,12 @@ export default function App() {
                         )}
                       </tbody>
                     </table>
+                  </div>
+
+                  <div className="rounded-xl border border-rule bg-enamel p-3">
+                    <div className="text-[11px] font-bold text-slate-600 mb-2">{rxEditing ? `Edit ${rxEditing.name}` : "Write a medicine for this patient"}</div>
+                    <MedicineForm key={rxEditing?.id || "new"} idPrefix="rx" initial={rxEditing} submitLabel={rxEditing ? "Save changes" : "Add to slip"} saveToListOption
+                      onSubmit={rxEditing ? handleUpdatePrescription : handleCustomPrescription} onCancel={rxEditing ? () => setRxEditing(null) : undefined} />
                   </div>
                 </div>
               )}
