@@ -11,7 +11,7 @@ describe("NextVisitPanel", () => {
     render(<NextVisitPanel items={[item]} onRemind={onRemind} onSnooze={() => {}} />);
     expect(screen.getByText(/2 days overdue/)).toBeTruthy();
     fireEvent.click(screen.getByText("Remind"));
-    expect(onRemind).toHaveBeenCalledWith(item);
+    expect(onRemind).toHaveBeenCalledWith({ patient: item.patient, visit: item.visit });
   });
   it("shows nothing when nobody is due", () => {
     const { container } = render(<NextVisitPanel items={[]} onRemind={() => {}} onSnooze={() => {}} />);
