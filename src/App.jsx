@@ -78,6 +78,7 @@ import OpgViewer from "./components/OpgViewer.jsx";
 import { AreaLine } from "./components/Sparkline.jsx";
 import { StatCard, ActionTile } from "./components/DashCards.jsx";
 import PerioChart from "./components/PerioChart.jsx";
+import ExtraOralExam from "./components/ExtraOralExam.jsx";
 import CertificatePanel from "./components/CertificatePanel.jsx";
 import InstalmentPlan from "./components/InstalmentPlan.jsx";
 import { withInstalments, syncDueDate } from "./instalments.js";
@@ -4544,6 +4545,7 @@ export default function App() {
                   "Visit Notes",
                   "Assessments",
                   "Department Referrals",
+                  "Extra-oral Exam",
                   "Perio Chart",
                   "Diagnosis & Trauma",
                   "Systemic Review",
@@ -4760,6 +4762,18 @@ export default function App() {
               )}
 
               {/* TAB 2: DEPARTMENT REFERRALS */}
+              {activeModalTab === "Extra-oral Exam" && (
+                <ExtraOralExam
+                  key={`eo-${activePatient.id}`}
+                  exams={activePatient.extraOralExams || []}
+                  canWrite={canWrite(role, "patients")}
+                  onSave={(list) => updateActivePatient({ extraOralExams: list })}
+                  newId={() => newId("EO")}
+                  today={dateKey()}
+                  showToast={showToast}
+                />
+              )}
+
               {activeModalTab === "Perio Chart" && (
                 <PerioChart
                   key={`perio-${activePatient.id}`}

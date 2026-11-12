@@ -60,6 +60,9 @@ const FEATURE_GROUPS = [
       { icon: ScanSearch, title: "OPG & diagnosis studio", text: "Open a panoramic film at full size, zoom in, adjust brightness and contrast, and invert the negative. Calibrate against an object of known length to measure in millimetres." },
       { icon: ClipboardList, title: "Treatment plans & estimates", text: "Price a plan tooth by tooth and send the patient a link on WhatsApp. They approve or decline from their phone, with no sign-in. Approved plans turn into an invoice." },
       { icon: ClipboardList, title: "Draft visit notes from the chart", text: "One tap fills findings, advice and the next planned treatment from the patient's chart. You edit the note before you save it, and treatment done is left for you to write." },
+      { icon: Users, title: "Extra-oral examination", text: "Record the face, jaw joints, lymph nodes, lips and skin, plus mouth opening in mm. Each exam is saved with its date, and anything unusual is listed at the top. A new exam is compared with the last one." },
+      { icon: ShieldCheck, title: "Perio chart", text: "Enter six probing depths per tooth, with bleeding and mobility. Depths colour-code green, amber and red, and a summary shows deep sites, bleeding percentage and the deepest tooth. Each exam is saved with its date and compared with the previous one." },
+      { icon: FileText, title: "Medical, treatment & fitness certificates", text: "Print a medical certificate (rest advised), a dental treatment certificate or a fitness certificate with your clinic name, the doctor's name and council number. It prints on plain paper with space for a signature and seal." },
       { icon: ShieldCheck, title: "Caries risk & gum screening", text: "Tick risk factors to see low, moderate or high caries risk with a suggested recall. Score six sextants for a gum (BPE) screening. Both are saved on the patient." },
       { icon: FileText, title: "Signed treatment consents", text: "Pick a consent for an extraction, root canal, implant, braces and more, edit the wording, and have the patient or a parent sign on screen. The signed copy stays on the patient's record and prints on demand." },
       { icon: FileText, title: "Prescriptions & referrals", text: "Add medicines from presets and share the prescription on WhatsApp. Refer patients between departments." }
@@ -77,6 +80,7 @@ const FEATURE_GROUPS = [
       { icon: MessageCircle, title: "Patient feedback", text: "After a visit, one tap opens WhatsApp asking for a rating from 1 to 5. Record the reply, get a flag when someone is unhappy, and send a review link to happy patients." },
       { icon: Package, title: "Lab order tracking", text: "Send crowns, bridges and dentures to a lab with a due date. See what is late, message the lab on WhatsApp, and tell the patient the moment their work is back." },
       { icon: ClipboardList, title: "Treatment plan follow-up", text: "See estimates patients have not answered and approved plans nobody has booked, and nudge them on WhatsApp with one tap." },
+      { icon: IndianRupee, title: "Pay in instalments", text: "In the Collect window, split the balance into 2 to 24 monthly parts. Each one shows Paid, Part paid, Due or Overdue. The bill's due date follows the next unpaid instalment, so the overdue list and reminders follow the plan. Collect any down payment first." },
       { icon: Wallet, title: "Dues and overdue tracking", text: "Set a due date, see unpaid money by age, filter to overdue invoices, search by patient and export the list to a spreadsheet." }
     ]
   },
