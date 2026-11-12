@@ -371,6 +371,31 @@ function AdminQueue({ api, showToast }) {
   );
 }
 
+/** Owner-only, one time: type the setup code to become the MeriDent admin who verifies dentists. */
+function AdminSetup({ api, onDone, showToast }) {
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const go = async (e) => {
+    e.preventDefault();
+    if (!code.trim() || busy) return;
+    setBusy(true);
+    try {
+      await api.claimAdmin(code);
+      showToast("You are now the MeriDent admin");
+      onDone();
+    } catch {
+      showToast("That code was not accepted, or admin setup was already done.");
+    } finally { setBusy(false); }
+  };
+  return (
+    <form onSubmit={go} className="mt-3 space-y-2" aria-label="Admin setup">
+      <label htmlFor="admin-code" className="block font-semibold text-slate-700">MeriDent owner setup code</label>
+      <input id="admin-code" type="password" autoComplete="off" value={code} onChange={(e) => setCode(e.target.value)} className="w-full max-w-xs px-3 py-1.5 border border-slate-300 rounded-lg bg-white" />
+      <button type="submit" disabled={busy || !code.trim()} className={`${btn} bg-[#1d4ed8] text-white disabled:opacity-60`}>{busy ? "Checking..." : "Become admin"}</button>
+    </form>
+  );
+}
+
 export default function Connect({ api, defaults = {}, geocode, showToast, uid, email = "", initialTab = "network" }) {
   const [state, setState] = useState({ status: "loading", me: null, admin: false });
   const [tab, setTab] = useState(initialTab);
@@ -501,6 +526,7 @@ export default function Connect({ api, defaults = {}, geocode, showToast, uid, e
         <details className="text-xs text-slate-500 max-w-2xl">
           <summary className="cursor-pointer">Account ID (for MeriDent staff setup)</summary>
           <code className="select-all break-all">{uid}</code>
+          {!state.admin && <AdminSetup api={api} showToast={showToast} onDone={loadMe} />}
         </details>
       )}
     </div>

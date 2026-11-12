@@ -537,3 +537,29 @@ describe("approved email list (staff only)", () => {
     await assertFails(setDoc(doc(staff, "config", "other"), { restrict: true, updatedBy: "admin", updatedAt: serverTimestamp() }));
   });
 });
+
+// One-time owner setup: the setup code is checked in the rules and the lock makes it happen once.
+describe("admin setup", () => {
+  const CODE = process.env.TEST_ADMIN_CODE;
+  const claim = (db, uid, code) => {
+    const b = writeBatch(db);
+    b.set(doc(db, "connectAdmins", uid), { ok: true, code });
+    b.set(doc(db, "config", "adminLock"), { by: uid, at: serverTimestamp() });
+    return b.commit();
+  };
+  beforeEach(async () => { await seed(env, async (db) => { await setDoc(doc(db, "connectAdmins", "admin"), { ok: true }); }); });
+  it.skipIf(!CODE)("lets the owner claim admin with the right code, once", async () => {
+    await env.clearFirestore();
+    await assertSucceeds(claim(as(env, "owner"), "owner", CODE));
+    await assertFails(claim(as(env, "second"), "second", CODE));
+  });
+  it.skipIf(!CODE)("refuses a wrong code and writing for someone else", async () => {
+    await env.clearFirestore();
+    await assertFails(claim(as(env, "owner"), "owner", "wrong"));
+    await assertFails(claim(as(env, "owner"), "other", CODE));
+  });
+  it("refuses admin without the lock", async () => {
+    await env.clearFirestore();
+    await assertFails(setDoc(doc(as(env, "owner"), "connectAdmins", "owner"), { ok: true, code: "x" }));
+  });
+});

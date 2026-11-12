@@ -40,6 +40,14 @@ export const isAdmin = async (db, uid) => {
   }
 };
 
+/** One-time owner setup: writes the first admin entry and the setup lock together. Fails if setup was done or the code is wrong. */
+export const claimAdmin = async (db, uid, code) => {
+  const batch = writeBatch(db);
+  batch.set(doc(db, ADMINS, uid), { ok: true, code: String(code || "").trim() });
+  batch.set(doc(db, "config", "adminLock"), { by: uid, at: serverTimestamp() });
+  await batch.commit();
+};
+
 /** First registration, or editing while still pending. Always saved as pending and unlisted. */
 export const saveNewProfile = async (db, uid, p) => {
   await setDoc(doc(db, DENTISTS, uid), {
@@ -364,6 +372,7 @@ export const bindApi = (db, uid) => ({
   uid,
   getProfile: () => getProfile(db, uid),
   isAdmin: () => isAdmin(db, uid),
+  claimAdmin: (code) => claimAdmin(db, uid, code),
   saveNewProfile: (p) => saveNewProfile(db, uid, p),
   updateOwnSettings: (c) => updateOwnSettings(db, uid, c),
   setListed: (profile, listed) => setListed(db, uid, profile, listed),
