@@ -75,7 +75,12 @@ import { patientSummary } from "./patientSummary.js";
 import { buildVisit, addVisit, removeVisit } from "./visits.js";
 import { shiftDay, dayGrid, hourMarks } from "./dayView.js";
 import OpgViewer from "./components/OpgViewer.jsx";
-import { MiniBars, AreaLine } from "./components/Sparkline.jsx";
+import { AreaLine } from "./components/Sparkline.jsx";
+import { StatCard, ActionTile } from "./components/DashCards.jsx";
+import PerioChart from "./components/PerioChart.jsx";
+import CertificatePanel from "./components/CertificatePanel.jsx";
+import InstalmentPlan from "./components/InstalmentPlan.jsx";
+import { withInstalments, syncDueDate } from "./instalments.js";
 import TodayDesk from "./components/TodayDesk.jsx";
 import Growth from "./components/Growth.jsx";
 import PrePostOp from "./components/PrePostOp.jsx";
@@ -1847,7 +1852,9 @@ export default function App() {
       showToast(result.error);
       return;
     }
-    setInvoices((prev) => prev.map((i) => (i.id === current.id ? result.invoice : i)));
+    const synced = syncDueDate(result.invoice);
+    result.invoice = synced;
+    setInvoices((prev) => prev.map((i) => (i.id === current.id ? synced : i)));
     logAudit("payment.add", current.id, `₹${formatINR(toPaise(payForm.amount))} by ${payForm.mode}`);
     setActiveUpiQrInvoice(result.invoice);
     setPayForm({ amount: "", mode: payForm.mode });
@@ -2197,7 +2204,7 @@ export default function App() {
                   }}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13px] font-medium transition-colors ${
                     isActive
-                      ? "bg-white/15 text-white font-semibold shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]"
+                      ? "bg-white/20 text-white font-semibold shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18)]"
                       : "text-blue-100/70 hover:bg-white/10 hover:text-white"
                   }`}
                 >
@@ -2255,7 +2262,7 @@ export default function App() {
       </aside>
 
       {/* --- WORKSPACE --- */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto bg-white md:rounded-3xl md:shadow-[0_20px_60px_-20px_rgba(30,58,138,0.35)]">
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto work-panel md:rounded-3xl md:shadow-[0_20px_60px_-20px_rgba(30,58,138,0.35)]">
         <header className="h-16 bg-white/90 backdrop-blur border-b border-rule px-3 sm:px-6 flex items-center justify-between gap-2 sticky top-0 z-30">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0 shrink">
             <button
@@ -3955,8 +3962,9 @@ export default function App() {
 
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 sm:gap-3">
                 <div>
-                  <h1 className="text-2xl font-bold tracking-tight text-slate-900">Clinical Overview</h1>
-                  <p className="text-sm text-slate-500 mt-1">MeriDent Clinical Workspace</p>
+                  <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Dashboard</h1>
+                  <p className="text-sm text-slate-600 mt-1">Welcome back! Here's what's happening at your clinic today.</p>
+                  <div className="mt-2 h-1 w-14 rounded-full bg-gradient-to-r from-blue-600 to-sky-400" aria-hidden="true" />
                 </div>
                 <button onClick={() => setActiveNav("Appointments Diary")} className="self-start text-sm font-semibold text-blue-600 hover:text-blue-800 py-1">
                   View today's diary ›
@@ -3971,27 +3979,10 @@ export default function App() {
               />}
 
               <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4" data-testid="stat-cards">
-                {[
-                  { title: "Patients", value: patients.length, note: "Registered patient records", icon: <UsersRound className="w-4 h-4" />, tone: "bg-blue-50 text-blue-600", bars: dashboardPatientSeries.map((d) => d.value), color: "#2563eb" },
-                  { title: "Visits Today", value: diarySum.today, note: diarySum.tomorrow ? `${diarySum.tomorrow} tomorrow` : "Active bookings today", icon: <CalendarDays className="w-4 h-4" />, tone: "bg-sky-50 text-sky-600", bars: dashboardVisitSeries, color: "#0ea5e9" },
-                  { title: "Collected this month", value: `₹${formatINR(billing.collectedP)}`, note: `₹${formatINR(billing.billedP)} billed this month`, icon: <IndianRupee className="w-4 h-4" />, dark: true, bars: dashboardRevenueSeries.map((d) => d.value), color: "#7dd3fc" },
-                  { title: "Outstanding", value: `₹${formatINR(billing.outstandingP)}`, note: billing.overdueCount ? `${billing.overdueCount} overdue, ₹${formatINR(billing.overdueP)}` : "Unpaid balance across invoices", icon: <Wallet className="w-4 h-4" />, tone: billing.overdueCount ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600" },
-                ].map((card) => (
-                  <div
-                    key={card.title}
-                    className={`stat-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between gap-3 min-h-[8.5rem] ${card.dark ? "bg-gradient-to-br from-navy-800 to-navy-950 text-white shadow-lift" : "bg-white border border-rule shadow-card"}`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div className={`w-8 h-8 shrink-0 rounded-lg flex items-center justify-center ${card.dark ? "bg-white/15 text-sky-200" : card.tone}`}>{card.icon}</div>
-                      <div className={`text-[13px] font-medium ${card.dark ? "text-blue-100/80" : "text-slate-500"}`}>{card.title}</div>
-                    </div>
-                    <div>
-                      <div className={`text-xl sm:text-2xl font-bold break-words tabular ${card.dark ? "text-white" : "text-slate-900"}`}>{card.value}</div>
-                      <div className={`text-[11px] sm:text-xs mt-1 leading-snug ${card.dark ? "text-blue-100/70" : "text-slate-500"}`}>{card.note}</div>
-                    </div>
-                    {card.bars && <MiniBars data={card.bars} color={card.color} />}
-                  </div>
-                ))}
+                <StatCard title="Patients" value={patients.length} note="Registered patient records" icon={<UsersRound className="w-5 h-5" />} tone="blue" bars={dashboardPatientSeries.map((d) => d.value)} />
+                <StatCard title="Visits Today" value={diarySum.today} note={diarySum.tomorrow ? `${diarySum.tomorrow} tomorrow` : "Active bookings today"} icon={<CalendarDays className="w-5 h-5" />} tone="mint" bars={dashboardVisitSeries} />
+                <StatCard title="Collected this month" value={`₹${formatINR(billing.collectedP)}`} note={`₹${formatINR(billing.billedP)} billed this month`} icon={<IndianRupee className="w-5 h-5" />} tone="violet" bars={dashboardRevenueSeries.map((d) => d.value)} />
+                <StatCard title="Outstanding" value={`₹${formatINR(billing.outstandingP)}`} note={billing.overdueCount ? `${billing.overdueCount} overdue, ₹${formatINR(billing.overdueP)}` : "Unpaid balance across invoices"} icon={<Wallet className="w-5 h-5" />} tone={billing.overdueCount ? "rose" : "peach"} />
               </div>
 
               <section className="bg-white rounded-2xl border border-rule p-4 sm:p-5 shadow-card" data-testid="trend-chart" aria-label="Last 30 days">
@@ -4009,7 +4000,7 @@ export default function App() {
                   <p className="text-sm text-slate-500 py-8 text-center">Nothing recorded in the last 30 days yet. Book visits and take payments and the trend will appear here.</p>
                 ) : (
                   <div className="grid grid-cols-1 gap-2">
-                    <AreaLine labels={trend30.labels} series={[{ name: "Collected", color: "#2563eb", data: trend30.collected }]} height={150} />
+                    <AreaLine labels={trend30.labels} showLabels={false} series={[{ name: "Collected", color: "#2563eb", data: trend30.collected }]} height={150} />
                     <AreaLine labels={trend30.labels} series={[{ name: "Visits", color: "#0ea5e9", data: trend30.visits }]} height={110} />
                   </div>
                 )}
@@ -4034,22 +4025,8 @@ export default function App() {
                     <span className="text-xs rounded-full bg-emerald-50 text-emerald-700 px-3 py-1 font-semibold">All caught up</span>
                   )}
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-                  {actionTiles.map((a) => {
-                    const tone = { blue: ["border-blue-200 bg-blue-50 hover:bg-blue-100", "text-blue-700"], aqua: ["border-aqua-100 bg-aqua-50 hover:bg-aqua-100", "text-aqua-700"], gold: ["border-amber-200 bg-gold-50 hover:bg-amber-100", "text-gold-700"], rose: ["border-rose-200 bg-rose-50 hover:bg-rose-100", "text-rose-700"] }[a.tone];
-                    return (
-                      <button
-                        key={a.id}
-                        type="button"
-                        onClick={() => setActiveNav(a.to)}
-                        className={`text-left rounded-xl border p-3 sm:p-4 transition-colors ${a.count > 0 ? tone[0] : "border-rule bg-enamel hover:bg-slate-100"}`}
-                      >
-                        <div className={`text-2xl font-bold ${a.count > 0 ? tone[1] : "text-slate-500"}`}>{a.count}</div>
-                        <div className="text-xs font-semibold text-slate-700 mt-0.5">{a.label}</div>
-                        <div className="text-[11px] text-slate-500 mt-1 leading-snug">{a.count > 0 ? `${a.cta} ›` : "Nothing to do"}</div>
-                      </button>
-                    );
-                  })}
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5 sm:gap-3">
+                  {actionTiles.map((a) => <ActionTile key={a.id} tile={a} onOpen={() => setActiveNav(a.to)} />)}
                 </div>
               </section>
 
@@ -4569,12 +4546,14 @@ export default function App() {
                   "Visit Notes",
                   "Assessments",
                   "Department Referrals",
+                  "Perio Chart",
                   "Diagnosis & Trauma",
                   "Systemic Review",
                   "Prescriptions",
                   "Treatment Plan",
                   "Lab Work",
                   "Consent",
+                  "Certificates",
                   "Photos & X-rays",
                   "Medical History",
                   "Patient Details",
@@ -4783,6 +4762,29 @@ export default function App() {
               )}
 
               {/* TAB 2: DEPARTMENT REFERRALS */}
+              {activeModalTab === "Perio Chart" && (
+                <PerioChart
+                  key={`perio-${activePatient.id}`}
+                  exams={activePatient.perioExams || []}
+                  canWrite={canWrite(role, "patients")}
+                  onSave={(list) => updateActivePatient({ perioExams: list })}
+                  newId={() => newId("PE")}
+                  today={dateKey()}
+                  showToast={showToast}
+                />
+              )}
+
+              {activeModalTab === "Certificates" && (
+                <CertificatePanel
+                  key={`cert-${activePatient.id}`}
+                  patient={activePatient}
+                  profile={practiceProfile}
+                  today={dateKey()}
+                  showToast={showToast}
+                  onPrinted={(kind) => logAudit("certificate.print", activePatient.name, kind)}
+                />
+              )}
+
               {activeModalTab === "Department Referrals" && (
                 <ReferralPanel
                   referrals={activePatient.referrals || []}
@@ -6166,6 +6168,31 @@ export default function App() {
                   </div>
                 </form>
               </>
+            )}
+
+            {(qrBalanceP > 0 || qrInvoice.instalments) && (
+              <details className="text-left border-t border-slate-100 pt-2" open={Boolean(qrInvoice.instalments)}>
+                <summary className="text-xs font-semibold text-blue-700 cursor-pointer">Pay in instalments</summary>
+                <div className="mt-2">
+                  <InstalmentPlan
+                    inv={qrInvoice}
+                    canEdit={canWrite(role, "invoices")}
+                    showToast={showToast}
+                    onCreate={(schedule, downP) => {
+                      const next = withInstalments(qrInvoice, schedule, downP);
+                      setInvoices((prev) => prev.map((i) => (i.id === qrInvoice.id ? next : i)));
+                      setActiveUpiQrInvoice(next);
+                      logAudit("invoice.instalments", qrInvoice.id, `${schedule.length} instalments`);
+                      showToast(`Plan created: ${schedule.length} instalments`);
+                    }}
+                    onRemove={() => {
+                      const { instalments, ...rest } = qrInvoice;
+                      setInvoices((prev) => prev.map((i) => (i.id === qrInvoice.id ? rest : i)));
+                      setActiveUpiQrInvoice(rest);
+                    }}
+                  />
+                </div>
+              </details>
             )}
 
             {(qrInvoice.payments || []).length > 0 && (
