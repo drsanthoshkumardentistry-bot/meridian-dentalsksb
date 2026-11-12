@@ -521,8 +521,8 @@ describe("approved email list (staff only)", () => {
     const staff = as(env, "admin");
     await assertSucceeds(setDoc(doc(staff, "allowedEmails", "doc@gmail.com"), { ok: true, addedBy: "admin", addedAt: serverTimestamp() }));
     await assertSucceeds(getDocs(collection(staff, "allowedEmails")));
-    await assertSucceeds(setDoc(doc(staff, "config", "access"), { restrict: true, updatedBy: "admin", updatedAt: serverTimestamp() }));
     await assertSucceeds(deleteDoc(doc(staff, "allowedEmails", "doc@gmail.com")));
+    await assertSucceeds(setDoc(doc(staff, "config", "access"), { restrict: true, updatedBy: "admin", updatedAt: serverTimestamp() }));
 
     const other = as(env, "alice");
     await assertFails(setDoc(doc(other, "allowedEmails", "x@gmail.com"), { ok: true, addedBy: "alice", addedAt: serverTimestamp() }));
