@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase.js'
 import { emptyProgress, loadContent, loadProfile, loadProgress, persist, saveProfile } from '../lib/api.js'
 import { nextState } from '../lib/leitner.js'
 import { trackOf } from '../lib/tracks.js'
+import { addCards, localCards } from '../lib/studyApi.js'
 
 const Ctx = createContext(null)
 
@@ -29,7 +30,8 @@ export function progressReducer(p, a) {
 function reducer(s, a) {
   switch (a.type) {
     case 'boot': return { ...s, ...a.payload, ready: true }
-    case 'user': return { ...s, user: a.user, profile: a.profile, progress: a.progress }
+    case 'user': return { ...s, user: a.user, profile: a.profile, progress: a.progress, content: a.content || s.content }
+    case 'cards': return { ...s, content: { ...s.content, flashcards: [...s.content.flashcards, ...a.cards] } }
     case 'profile': return { ...s, profile: a.profile }
     case 'theme': return { ...s, theme: a.theme }
     case 'notice': return { ...s, notice: a.notice }
@@ -53,9 +55,9 @@ export function AppProvider({ children }) {
   useEffect(() => {
     let alive = true
     ;(async () => {
-      const content = await loadContent()
       let user = null
       if (supabase) user = (await supabase.auth.getSession()).data.session?.user ?? null
+      const content = withLocalCards(await loadContent(), user)
       const [profile, progress] = await Promise.all([
         loadProfile(user).catch(() => null),
         loadProgress(user).catch(() => emptyProgress()),
@@ -67,9 +69,9 @@ export function AppProvider({ children }) {
     const { data: sub } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event !== 'SIGNED_IN' && event !== 'SIGNED_OUT') return
       const user = session?.user ?? null
-      const [profile, progress] = await Promise.all([loadProfile(user).catch(() => null), loadProgress(user).catch(() => emptyProgress())])
+      const [profile, progress, content] = await Promise.all([loadProfile(user).catch(() => null), loadProgress(user).catch(() => emptyProgress()), loadContent()])
       progressRef.current = progress; userRef.current = user
-      dispatch({ type: 'user', user, profile, progress })
+      dispatch({ type: 'user', user, profile, progress, content: withLocalCards(content, user) })
     })
     return () => { alive = false; sub.subscription.unsubscribe() }
   }, [])
@@ -100,6 +102,12 @@ export function AppProvider({ children }) {
     saveViva: (viva) => act({ type: 'viva', viva }),
     resetProgress: () => act({ type: 'reset' }),
     track: trackOf(state.profile),
+    /** Save approved StudySync cards into the Leitner deck. */
+    addFlashcards: async (cards) => {
+      const saved = await addCards(state.user, cards)
+      dispatch({ type: 'cards', cards: saved })
+      return saved
+    },
     setTrack: async (key) => {
       const profile = await saveProfile(state.user, { target_exam: key })
       dispatch({ type: 'profile', profile })
@@ -116,3 +124,9 @@ export function AppProvider({ children }) {
 }
 
 export const useApp = () => useContext(Ctx)
+
+// Guests keep their StudySync cards on this device; add them to the deck.
+function withLocalCards(content, user) {
+  if (user) return content
+  return { ...content, flashcards: [...content.flashcards, ...localCards()] }
+}

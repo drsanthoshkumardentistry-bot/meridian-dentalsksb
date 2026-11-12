@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowRight, BookOpenCheck, ChevronDown, ClipboardList, ExternalLink, Flame, Layers3, ScanEye, Sparkles } from 'lucide-react'
+import { ArrowRight, BookOpenCheck, ChevronDown, ClipboardList, ExternalLink, FileUp, Flame, Layers3, ScanEye, Sparkles } from 'lucide-react'
 import { useApp } from '../state/AppContext.jsx'
 import { dueCards } from '../lib/leitner.js'
 import { TRACKS } from '../lib/tracks.js'
@@ -47,6 +47,7 @@ export default function Dashboard() {
     topics: { href: '#/topics', icon: BookOpenCheck, tone: 'from-clinic-500 to-clinic-700', title: track.key === 'ADC' ? 'Australian Practice Hub' : 'Syllabus & High-Yield Hub', text: `${trackTopics.length} topics with structured, exam-style answers` },
     viva: { href: '#/viva', avatar: true, title: track.key === 'ADC' ? 'Meridee – clinical case examiner' : 'Meridee – AI viva examiner', text: track.key === 'ADC' ? 'Case scenarios judged on safety, consent and Australian guidelines' : 'Strict examiner, probing follow-ups, live scoring' },
     spotters: { href: '#/spotters', icon: ScanEye, tone: 'from-rose-500 to-pink-600', title: 'Spotter & Image Bank', text: `${spotters.length} radiographs, slides, instruments & specimens – timed` },
+    study: { href: '#/study', icon: FileUp, tone: 'from-indigo-500 to-clinic-600', title: 'StudySync – your lecture PDFs', text: 'Upload slides → cited summary, flashcards and search' },
     flashcards: { href: '#/flashcards', icon: Layers3, tone: 'from-sky-400 to-sky-600', title: 'Flashcards', text: `${due} due today · spaced repetition` },
     mcq: { href: '#/mcq', icon: ClipboardList, tone: 'from-teal-500 to-emerald-600', title: track.mcqLabel, text: track.key === 'ADC' ? `${bank.length} scenario-based questions in the Australian context` : `${bank.length} PYQ & important questions · mock tests (+4/−1)` },
   }

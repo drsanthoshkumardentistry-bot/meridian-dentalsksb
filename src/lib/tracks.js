@@ -5,7 +5,7 @@ export const TRACKS = {
     blurb: 'BDS theory, viva voce and spotters for your university exams.',
     hero: 'Walk into your viva ready for the toughest external examiner.',
     mcqExam: 'NEET MDS', mcqLabel: 'MCQ practice', mcqShort: 'MCQs', negativeMarking: true,
-    modules: ['topics', 'viva', 'spotters', 'flashcards', 'mcq'],
+    modules: ['topics', 'viva', 'study', 'spotters', 'flashcards', 'mcq'],
     meridee: 'a strict university external examiner',
   },
   'NEET MDS': {
@@ -13,7 +13,7 @@ export const TRACKS = {
     blurb: 'NEET MDS PYQs, high-yield MCQs and timed mock tests (+4 / −1).',
     hero: 'Every PYQ, every high-yield fact, one rank at a time.',
     mcqExam: 'NEET MDS', mcqLabel: 'NEET MDS MCQs', mcqShort: 'NEET MCQs', negativeMarking: true,
-    modules: ['mcq', 'flashcards', 'topics', 'viva', 'spotters'],
+    modules: ['mcq', 'flashcards', 'study', 'topics', 'viva', 'spotters'],
     meridee: 'a rapid-fire NEET MDS mentor who drills high-yield facts',
   },
   ADC: {
@@ -21,7 +21,7 @@ export const TRACKS = {
     blurb: 'Scenario-based MCQs and clinical cases in the Australian practice context.',
     hero: 'Think like an Australian dentist: safe, ethical, evidence-based.',
     mcqExam: 'ADC', mcqLabel: 'ADC written practice', mcqShort: 'ADC MCQs', negativeMarking: false,
-    modules: ['mcq', 'viva', 'topics', 'flashcards', 'spotters'],
+    modules: ['mcq', 'viva', 'topics', 'study', 'flashcards', 'spotters'],
     meridee: 'an Australian Dental Council examiner assessing clinical reasoning, patient safety, consent and Australian guidelines',
   },
 }

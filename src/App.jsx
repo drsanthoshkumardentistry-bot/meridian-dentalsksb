@@ -8,6 +8,7 @@ import Spotters from './pages/Spotters.jsx'
 import Flashcards from './pages/Flashcards.jsx'
 import Mcq from './pages/Mcq.jsx'
 import { Auth, Profile } from './pages/Account.jsx'
+import { CourseView, DocView, StudyHome } from './pages/Study.jsx'
 
 export default function App() {
   const { ready } = useApp()
@@ -23,6 +24,9 @@ export default function App() {
     case 'spotters': page = <Spotters />; break
     case 'flashcards': page = <Flashcards />; break
     case 'mcq': page = <Mcq />; break
+    case 'study': page = <StudyHome />; break
+    case 'course': page = <CourseView key={a} id={a} />; break
+    case 'doc': page = <DocView key={a} id={a} />; break
     case 'auth': page = <Auth />; break
     case 'profile': page = <Profile />; break
     default: page = <Dashboard />

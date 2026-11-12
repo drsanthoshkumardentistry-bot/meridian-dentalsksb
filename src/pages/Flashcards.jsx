@@ -8,7 +8,7 @@ export default function Flashcards() {
   const { content, progress, reviewCard } = useApp()
   const [subject, setSubject] = useState('all')
   const topicSubject = Object.fromEntries(content.topics.map((t) => [t.id, t.subject_id]))
-  const deck = content.flashcards.filter((c) => subject === 'all' || topicSubject[c.topic_id] === Number(subject))
+  const deck = content.flashcards.filter((c) => subject === 'all' || (subject === 'slides' ? Boolean(c.document_id) : topicSubject[c.topic_id] === Number(subject)))
   const counts = boxCounts(deck, progress.cards)
   // Freeze the queue when a session starts so cards don't jump while reviewing.
   const [session, setSession] = useState(null)
@@ -41,7 +41,7 @@ export default function Flashcards() {
         <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800"><div className="h-full bg-sky-500 transition-all" style={{ width: `${(session.i / queue.length) * 100}%` }} /></div>
         <button onClick={() => setSession((s) => ({ ...s, flipped: !s.flipped }))} className="block w-full text-left">
           <Card className={cx('flex min-h-[260px] flex-col p-6 transition', session.flipped && 'border-clinic-300 dark:border-clinic-700')}>
-            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400"><span>{topicTitle[card.topic_id] || 'Personal card'}</span><span>{box ? `Box ${box}` : 'New'}</span></div>
+            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400"><span>{topicTitle[card.topic_id] || (card.document_id ? `Your slides${card.page ? ` · p.${card.page}` : ''}` : 'Personal card')}</span><span>{box ? `Box ${box}` : 'New'}</span></div>
             <div className="flex flex-1 items-center justify-center py-6 text-center text-xl font-semibold leading-snug">{session.flipped ? card.back : card.front}</div>
             {!session.flipped && <div className="text-center text-sm text-slate-400">Tap to reveal the answer</div>}
           </Card>
@@ -62,6 +62,7 @@ export default function Flashcards() {
       <Card className="mb-4 p-4">
         <select value={subject} onChange={(e) => setSubject(e.target.value)} className="mb-4 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium dark:border-slate-700 dark:bg-slate-900 sm:w-auto">
           <option value="all">All subjects</option>
+          <option value="slides">My slides (StudySync)</option>
           {content.subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
         <div className="grid grid-cols-6 gap-2 text-center">
