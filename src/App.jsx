@@ -2099,7 +2099,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen app-backdrop text-slate-800 font-sans overflow-hidden">
+    <div className="flex h-screen app-backdrop text-slate-800 font-sans overflow-hidden app-shell">
       
       {idleSecondsLeft !== null && (
         <IdleWarning secondsLeft={idleSecondsLeft} onStay={staySignedIn} onLogout={() => handleLogout()} />
