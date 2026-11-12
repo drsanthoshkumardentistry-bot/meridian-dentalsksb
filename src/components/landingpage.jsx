@@ -368,7 +368,7 @@ export default function LandingPage({
             <img
               src="/logo.png"
               alt="MeriDent logo"
-              className="w-9 h-9 rounded-lg object-cover border border-rule"
+              className="w-9 h-9 object-contain"
               onError={(e) => {
                 e.currentTarget.style.display = "none";
               }}

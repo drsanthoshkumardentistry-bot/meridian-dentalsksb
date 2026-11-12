@@ -2180,7 +2180,7 @@ export default function App() {
               <img
                 src="/logo.png"
                 alt=""
-                className="w-9 h-9 rounded-xl object-cover bg-white/90"
+                className="w-9 h-9 object-contain"
                 onError={(e) => {
                   e.currentTarget.style.display = "none";
                 }}
