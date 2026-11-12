@@ -4587,6 +4587,7 @@ export default function App() {
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {[
                       { id: "hypertension", label: "Hypertension (BP)" },
+                      { id: "hypotension", label: "Hypotension (low BP)" },
                       { id: "diabetes", label: "Diabetes Mellitus" },
                       { id: "thyroid", label: "Thyroid (Thyroxine)" },
                       { id: "cardiac", label: "Heart Disease" },
@@ -4927,6 +4928,19 @@ export default function App() {
                           );
                         }}
                         className="w-full text-sm font-medium text-slate-800 border-b border-rule focus:outline-none"
+                      />
+                    </div>
+                    <div className="md:col-span-2 border border-rule rounded-xl p-4 bg-white">
+                      <label htmlFor="current-meds" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                        Medicines the patient takes regularly
+                      </label>
+                      <textarea
+                        id="current-meds"
+                        rows={2}
+                        value={activePatient.currentMedicines || ""}
+                        placeholder="For example: Amlodipine 5 mg once a day, Midodrine 2.5 mg twice a day. Type None if none"
+                        onChange={(e) => updateActivePatient({ currentMedicines: e.target.value })}
+                        className="w-full text-sm font-medium text-slate-800 border border-rule rounded-lg p-2 focus:outline-none"
                       />
                     </div>
                     <div className="border border-rose-100 rounded-xl p-4 bg-rose-50/40">

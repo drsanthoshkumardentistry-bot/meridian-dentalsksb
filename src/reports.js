@@ -133,8 +133,8 @@ export const buildReportHtml = (invoices, ym, profile = {}) => {
   const dayRows = c.days
     .map((d) => `<tr><td>${esc(d.date)}</td>${modeCols.map((m) => `<td class="r">${formatINR(d.byMode[m])}</td>`).join("")}<td class="r"><b>${formatINR(d.totalP)}</b></td></tr>`)
     .join("");
-  return `<!doctype html><html><head><meta charset="utf-8"><title>Report ${esc(monthLabel(ym))}</title>
-<style>body{font-family:Arial,Helvetica,sans-serif;color:#0f172a;margin:28px;font-size:12px}h1{font-size:18px;color:#1d4ed8;margin:0}
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="color-scheme" content="light only"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Report ${esc(monthLabel(ym))}</title>
+<style>html,body{background:#fff !important;color:#0f172a;color-scheme:light only;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{font-family:Arial,Helvetica,sans-serif;color:#0f172a;margin:28px;font-size:12px}h1{font-size:18px;color:#1d4ed8;margin:0}
 h2{font-size:14px;margin:22px 0 6px}.muted{color:#64748b}table{width:100%;border-collapse:collapse}td,th{padding:5px 6px;border-bottom:1px solid #e2e8f0;text-align:left}
 th{background:#f1f5f9;font-size:11px}.r{text-align:right}@media print{body{margin:10mm}}</style></head><body>
 <h1>${esc(profile.name || "Dental Clinic")}</h1><div class="muted">Collections and GST report · ${esc(monthLabel(ym))}</div>
