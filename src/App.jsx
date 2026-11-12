@@ -23,7 +23,7 @@ import { watchMyMembership, watchTeam, createInvite, acceptInvite, updateMember,
 import BranchesCard from "./components/BranchesCard.jsx";
 import DataPortability from "./components/DataPortability.jsx";
 import { buildPatientBackup, backupFileName } from "./portability.js";
-import { branchesOf, filterByBranch, writeBranchId, tagBranch, scopeToBranches } from "./branches.js";
+import { branchesOf, filterByBranch, writeBranchId, tagBranch, scopeToBranches, recordsOfPatient } from "./branches.js";
 import QueuePanel from "./components/QueuePanel.jsx";
 import BookingRequests from "./components/BookingRequests.jsx";
 import Assessments from "./components/Assessments.jsx";
@@ -52,6 +52,7 @@ import MedicineLibrary from "./components/MedicineLibrary.jsx";
 import PatientGallery from "./components/PatientGallery.jsx";
 import { todayActionTiles, totalActions, liveFlow } from "./todayActions.js";
 import { listImages, addImage, removeImage, countImages } from "./galleryStore.js";
+import { setCariesDetail, pruneCariesDetails, cariesText } from "./caries.js";
 import { opgUsage, galleryUpperBytes, formatBytes, usageLevel, CLINIC_WARN_BYTES } from "./storageUsage.js";
 import { compressImage } from "./imageCompress.js";
 import OptionLists from "./components/OptionLists.jsx";
@@ -1129,14 +1130,20 @@ export default function App() {
   const handleToothTap = (toothNumber) => {
     if (!activePatient) return;
     const next = toggleFinding(activePatient.toothConditions, toothNumber, activePaletteStatus);
-    setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? { ...p, toothConditions: next } : p)));
+    setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? { ...p, toothConditions: next, cariesDetails: pruneCariesDetails(p.cariesDetails, next) } : p)));
   };
 
   // Remove one finding from one tooth (from the per-tooth list under the chart)
   const handleRemoveFinding = (toothNumber, code) => {
     if (!activePatient) return;
     const next = toggleFinding(activePatient.toothConditions, toothNumber, code);
-    setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? { ...p, toothConditions: next } : p)));
+    setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? { ...p, toothConditions: next, cariesDetails: pruneCariesDetails(p.cariesDetails, next) } : p)));
+  };
+
+  // Black class, surfaces and depth for one carious tooth
+  const handleCariesDetail = (toothNumber, patch) => {
+    if (!activePatient) return;
+    setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? { ...p, cariesDetails: setCariesDetail(p.cariesDetails, toothNumber, patch) } : p)));
   };
 
   // Update Diagnostic Fields in Realtime
@@ -1226,7 +1233,8 @@ export default function App() {
       .sort((a, b) => Number(a[0]) - Number(b[0]))
       .map(([tooth, codes]) => {
         const labels = codes.map((code) => (CLINICAL_PALETTE.find((p) => p.id === code) || { label: code }).label);
-        return `#${tooth} (${labels.join(" + ")})`;
+        const detail = codes.includes("CAR") ? cariesText((activePatient.cariesDetails || {})[tooth]) : "";
+        return `#${tooth} (${labels.join(" + ")}${detail ? `: ${detail}` : ""})`;
       })
       .join(", ") || "General Oral Examination";
 
@@ -2173,7 +2181,7 @@ export default function App() {
           </div>
         </header>
 
-        <main className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto w-full">
+        <main className="p-4 sm:p-6 md:p-8 pb-28 max-w-7xl mx-auto w-full">
           
           {/* TAB 1: PATIENTS & ODONTOGRAM */}
           {activeNav === "Patients & Odontogram" && (
@@ -4348,8 +4356,10 @@ export default function App() {
                   onSelectStatus={setActivePaletteStatus}
                   onTap={handleToothTap}
                   onRemoveFinding={handleRemoveFinding}
+                  caries={activePatient.cariesDetails || {}}
+                  onCaries={canWrite(role, "patients") ? handleCariesDetail : undefined}
                   onClear={() => {
-                    if (confirm("Clear every finding on this chart?")) updateActivePatient({ toothConditions: {} });
+                    if (confirm("Clear every finding on this chart?")) updateActivePatient({ toothConditions: {}, cariesDetails: {} });
                   }}
                   isDeciduous={isDeciduous}
                   onToggleDeciduous={() => setIsDeciduous(!isDeciduous)}
@@ -4980,6 +4990,17 @@ export default function App() {
               >
                 <Trash2 className="w-3.5 h-3.5" /> Delete Chart
               </button>
+
+              {(() => {
+                const mine = recordsOfPatient(activePatient, { patients: allPatients, appointments: allAppointments, invoices: allInvoices }).invoices.map(normalizeInvoice);
+                const paidOnes = mine.filter((i) => paidPaise(i) > 0);
+                const target = paidOnes[paidOnes.length - 1] || mine[mine.length - 1];
+                return target ? (
+                  <button type="button" onClick={() => handleDownloadPdf(target, paidPaise(target) > 0)} className="text-brand-700 hover:text-brand-900 font-medium flex items-center gap-1.5">
+                    <Download className="w-3.5 h-3.5" /> {paidPaise(target) > 0 ? "Receipt (PDF)" : "Invoice (PDF)"}
+                  </button>
+                ) : null;
+              })()}
 
               {!allowedBranchIds && (role === "owner" || role === "manager") && (
                 <button
