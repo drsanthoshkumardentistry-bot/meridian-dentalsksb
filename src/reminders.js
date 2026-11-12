@@ -112,12 +112,12 @@ export const duePaymentReminders = (invoices = [], patients = [], now = new Date
   return due;
 };
 
-export const buildPaymentReminder = ({ clinicName, inv, upiId, language }) =>
-  localized("payment", language, { clinicName, name: inv.patient, invoiceId: inv.id, amount: formatINR(balancePaise(inv)), upiId }) ||
+export const buildPaymentReminder = ({ clinicName, inv, upiId, language, payLink = "" }) =>
+  (localized("payment", language, { clinicName, name: inv.patient, invoiceId: inv.id, amount: formatINR(balancePaise(inv)), upiId }) ||
   `Hello ${inv.patient},\n\n` +
   `A gentle reminder from ${clinicName || "your dental clinic"}: ₹${formatINR(balancePaise(inv))} is pending on invoice ${inv.id}.\n\n` +
   (upiId ? `You can pay by UPI to ${upiId}.\n\n` : "") +
-  `If you have already paid, please ignore this message. Thank you.`;
+  `If you have already paid, please ignore this message. Thank you.`) + (payLink ? `\n\nPay now: ${payLink}` : "");
 
 export const markAppointmentReminded = (appt, kind, now = new Date()) => ({
   ...appt,

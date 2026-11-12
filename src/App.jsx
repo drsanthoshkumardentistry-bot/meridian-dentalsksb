@@ -52,6 +52,7 @@ import MedicineLibrary from "./components/MedicineLibrary.jsx";
 import PatientGallery from "./components/PatientGallery.jsx";
 import { todayActionTiles, totalActions, liveFlow } from "./todayActions.js";
 import { listImages, addImage, removeImage, countImages } from "./galleryStore.js";
+import { buildPayLink } from "./payLink.js";
 import StorageMeter from "./components/StorageMeter.jsx";
 import { CONTACT, CONTACT_CO } from "./legal.js";
 import { setCariesDetail, pruneCariesDetails, cariesText } from "./caries.js";
@@ -1538,7 +1539,11 @@ export default function App() {
   const sendPayReminder = ({ inv, phone }) => {
     const link = whatsappLink(
       phone,
-      buildPaymentReminder({ clinicName: practiceProfile.name, inv, upiId: isValidUpiId(practiceProfile.upiId) ? practiceProfile.upiId : "", language: languageOf(patients.find((p) => String(p.id) === String(inv.patientId))) })
+      buildPaymentReminder({
+        clinicName: practiceProfile.name, inv, upiId: isValidUpiId(practiceProfile.upiId) ? practiceProfile.upiId : "",
+        language: languageOf(patients.find((p) => String(p.id) === String(inv.patientId))),
+        payLink: buildPayLink(window.location.origin, { vpa: practiceProfile.upiId, name: practiceProfile.name, amountP: balancePaise(normalizeInvoice(inv)), note: inv.id }),
+      })
     );
     if (!link) {
       showToast("This patient has no valid mobile number");
@@ -5952,6 +5957,14 @@ export default function App() {
               {paidPaise(qrInvoice) > 0 && (
                 <button onClick={() => handlePrintInvoice(qrInvoice, true)} className="flex-1 py-2 border border-rule rounded-lg text-xs font-semibold text-slate-700 hover:bg-enamel">
                   Print receipt
+                </button>
+              )}
+              {qrBalanceP > 0 && isValidUpiId(practiceProfile.upiId) && (
+                <button
+                  onClick={() => { navigator.clipboard?.writeText(buildPayLink(window.location.origin, { vpa: practiceProfile.upiId, name: practiceProfile.name, amountP: qrBalanceP, note: qrInvoice.id })); showToast("Payment link copied. Paste it into WhatsApp."); }}
+                  className="flex-1 py-2 border border-rule rounded-lg text-xs font-semibold text-slate-700 hover:bg-enamel"
+                >
+                  Copy payment link
                 </button>
               )}
               <button onClick={() => handleDownloadPdf(qrInvoice, paidPaise(qrInvoice) > 0)} className="flex-1 py-2 border border-rule rounded-lg text-xs font-semibold text-slate-700 hover:bg-enamel">
