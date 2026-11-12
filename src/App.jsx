@@ -86,6 +86,9 @@ import {
   buildReviewMessage, markReviewAsked, isValidReviewLink, duePlanFollowUps, buildPlanFollowUp, markPlanFollowedUp
 } from "./followup.js";
 import { createShare, fetchShare, deleteShare } from "./planShare.js";
+import { publishPortal, deletePortal } from "./portalStore.js";
+import { buildPortalDoc, newPortalToken } from "./portal.js";
+import PortalShare from "./components/PortalShare.jsx";
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Menu,
@@ -1596,6 +1599,18 @@ export default function App() {
     }
   };
   const snoozeNextVisit = ({ patient, visit }) => setPatients((prev) => prev.map((p) => (p.id === patient.id ? markNextVisitReminded(p, visit.id) : p)));
+  // Patient portal: publish a fresh snapshot under the patient's private token (created on first use)
+  const publishPatientPortal = async (patient) => {
+    if (!db || !CLINIC_ID) throw new Error("offline");
+    const token = patient.portalToken || newPortalToken();
+    await publishPortal(db, token, buildPortalDoc({ clinicId: CLINIC_ID, profile: practiceProfile, patient, appointments, invoices }));
+    if (!patient.portalToken) setPatients((prev) => prev.map((p) => (p.id === patient.id ? { ...p, portalToken: token } : p)));
+    return token;
+  };
+  const revokePatientPortal = async (patient) => {
+    if (patient.portalToken) await deletePortal(db, patient.portalToken);
+    setPatients((prev) => prev.map((p) => (p.id === patient.id ? { ...p, portalToken: "" } : p)));
+  };
   const snoozePlan = ({ patient, plan }) => setPatients((prev) => prev.map((p) => (p.id === patient.id ? markPlanFollowedUp(p, plan.id) : p)));
 
   // "Not now": hides this patient from the recall list for 30 days
@@ -4355,6 +4370,10 @@ export default function App() {
                       <button type="submit" className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg font-semibold">Save visit note</button>
                     </div>
                   </form>
+
+                  {(role === "owner" || role === "manager" || role === "receptionist") && (
+                    <PortalShare patient={activePatient} clinicName={practiceProfile.name} onPublish={publishPatientPortal} onRevoke={revokePatientPortal} showToast={showToast} />
+                  )}
 
                   <AftercareSender
                     patient={activePatient}

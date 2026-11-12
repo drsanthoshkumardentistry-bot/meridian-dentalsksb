@@ -151,6 +151,29 @@ service cloud.firestore {
                         && request.resource.data.decidedName.size() <= 80);
     }
 
+    // Patient portal pages. One private link per patient (the random token is the key). Anyone holding
+    // the link can read that one page; nobody can list. Only the clinic (owner, manager or receptionist)
+    // writes it, in a fixed shape with small limits. No phone, address, diagnosis or images are stored here.
+    function portalShapeOk() {
+      return request.resource.data.keys().hasOnly(['clinicId', 'clinicName', 'clinicPhone', 'upiId', 'patientFirstName',
+                                                   'upcoming', 'bills', 'plans', 'advice', 'nextVisitOn', 'outstandingP',
+                                                   'updatedAt', 'expiresAt'])
+          && request.resource.data.upcoming.size() <= 10
+          && request.resource.data.bills.size() <= 12
+          && request.resource.data.plans.size() <= 10
+          && request.resource.data.advice.size() <= 500;
+    }
+    function portalWriter(clinicId) { return isClinicOwner(clinicId) || memberHasRole(clinicId, ['manager', 'receptionist']); }
+    match /portalPages/{token} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if portalWriter(request.resource.data.clinicId) && portalShapeOk();
+      allow update: if portalWriter(resource.data.clinicId)
+                    && request.resource.data.clinicId == resource.data.clinicId
+                    && portalShapeOk();
+      allow delete: if portalWriter(resource.data.clinicId);
+    }
+
     // Online booking. The page document is public to read by id (never listable) and only the clinic
     // can write it. Anyone may create a request, but only a small validated shape and only while
     // the clinic has booking switched on. Only the clinic can read, answer or delete requests.
