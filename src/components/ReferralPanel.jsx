@@ -47,7 +47,7 @@ export default function ReferralPanel({ referrals = [], canWrite = true, onAdd, 
         </form>
       )}
       <div className="space-y-2">
-        {referrals.length === 0 ? (
+        {(referrals = referrals.filter((r) => r && typeof r === "object")).length === 0 ? (
           <div className="p-6 text-center text-xs text-slate-500 bg-enamel rounded-xl">No referrals yet. Send this patient to another department or an outside specialist above.</div>
         ) : referrals.map((r, i) => (
           <div key={r.id || i} className="p-3 rounded-xl border border-rule bg-white text-xs space-y-2">
