@@ -77,6 +77,7 @@ import { buildVisit, addVisit, removeVisit } from "./visits.js";
 import { shiftDay, dayGrid, hourMarks } from "./dayView.js";
 import OpgViewer from "./components/OpgViewer.jsx";
 import ExtraRadiographs from "./components/ExtraRadiographs.jsx";
+import NowPanel from "./components/NowPanel.jsx";
 import NotificationBell from "./components/NotificationBell.jsx";
 import AccountMenu from "./components/AccountMenu.jsx";
 import { buildNotifications } from "./notifications.js";
@@ -2160,8 +2161,9 @@ export default function App() {
       </datalist>
 
       {/* --- SIDEBAR --- */}
+      <div className="hidden md:block w-[76px] shrink-0" aria-hidden="true" />
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 side-navy text-white flex flex-col justify-between overflow-y-auto side-scroll shadow-2xl transition-transform duration-300 md:static md:translate-x-0 md:shrink-0 ${
+        className={`rail group/rail fixed inset-y-0 left-0 z-50 w-64 side-navy text-white flex flex-col justify-between overflow-y-auto overflow-x-hidden side-scroll shadow-2xl transition-[transform,width] duration-300 md:translate-x-0 md:w-[76px] md:hover:w-64 md:focus-within:w-64 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -2176,7 +2178,7 @@ export default function App() {
                   e.currentTarget.style.display = "none";
                 }}
               />
-              <div>
+              <div className="rail-label">
                 <div className="font-display text-lg font-extrabold text-white tracking-tight leading-none">
                   MeriDent
                 </div>
@@ -2220,8 +2222,8 @@ export default function App() {
                     isActive ? "nav-item-active text-white font-semibold" : "text-blue-100/80 hover:text-white"
                   }`}
                 >
-                  <span className="nav-icon">{item.icon}</span>
-                  <span>{item.label}</span>
+                  <span className="nav-icon" title={item.label}>{item.icon}</span>
+                  <span className="rail-label">{item.label}</span>
                 </button>
               );
             })}
@@ -2234,7 +2236,7 @@ export default function App() {
         <div className="p-4 border-t border-white/10">
           <div className="flex items-center gap-3 min-w-0">
             <UserAvatar user={authUser} className="h-9 w-9" textClass="text-sm" />
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 rail-label">
               <div className="truncate text-xs font-semibold text-white">{authUser.displayName || "Dr. Clinician"}</div>
               <div className="truncate text-[11px] text-blue-200/70">{authUser.email}</div>
               {activeMember && <div className="truncate text-[11px] text-sky-300" data-testid="member-role">{ROLE_LABEL[role]} at {activeMember.clinicName || "this clinic"}</div>}
@@ -2252,7 +2254,7 @@ export default function App() {
             </button>
           )}
           {navFor(role, [{ label: "Practice Profile" }]).length > 0 ? (
-            <div className="mt-3 rounded-2xl bg-white p-3 shadow-lg">
+            <div className="mt-3 rounded-2xl bg-white p-3 shadow-lg rail-label">
               <StorageMeter patients={allPatients} galleryCount={galleryCount} />
             </div>
           ) : (
@@ -4167,6 +4169,20 @@ export default function App() {
 
         </main>
       </div>
+
+      {!connectOnly && (
+        <NowPanel
+          next={diaryView(appointments, { view: "upcoming" }).find((a) => a.date === dateKey()) || null}
+          alerts={[
+            navFor(role, [{ label: "Billing & Invoices" }]).length > 0 && billing.overdueCount > 0 && { tone: "red", text: `${billing.overdueCount} overdue ${billing.overdueCount === 1 ? "bill" : "bills"}`, to: "Billing & Invoices" },
+            navFor(role, [{ label: "Stock Maintenance" }]).length > 0 && stockSum.out + stockSum.low > 0 && { tone: "red", text: `${stockSum.out + stockSum.low} ${stockSum.out + stockSum.low === 1 ? "item" : "items"} to reorder`, to: "Stock Maintenance" },
+            diarySum.needsUpdate > 0 && { text: `${diarySum.needsUpdate} past ${diarySum.needsUpdate === 1 ? "visit has" : "visits have"} no outcome`, to: "Appointments Diary" },
+          ].filter(Boolean)}
+          onGo={(to) => setActiveNav(to)}
+          canBook={canWrite(role, "appointments")}
+          onNewAppointment={() => { setActiveNav("Appointments Diary"); setIsAddApptOpen(true); }}
+        />
+      )}
 
       {/* ======================================================== */}
       {/* ADD STAFF MODAL                                          */}
