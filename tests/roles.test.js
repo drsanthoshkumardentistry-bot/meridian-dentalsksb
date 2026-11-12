@@ -58,3 +58,13 @@ describe("team invitations", () => {
     expect(normalizeEmail(" A@B.com ")).toBe("a@b.com");
   });
 });
+
+describe("Settings screen", () => {
+  it("is open to owner and manager only", () => {
+    const items = [{ label: "Settings" }, { label: "Dashboard" }];
+    expect(navFor("owner", items).map((i) => i.label)).toContain("Settings");
+    expect(navFor("manager", items).map((i) => i.label)).toContain("Settings");
+    expect(navFor("dentist", items).map((i) => i.label)).not.toContain("Settings");
+    expect(navFor("receptionist", items).map((i) => i.label)).not.toContain("Settings");
+  });
+});

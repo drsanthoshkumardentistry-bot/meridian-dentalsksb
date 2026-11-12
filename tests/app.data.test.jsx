@@ -637,7 +637,7 @@ describe("clinic suite in the app", () => {
 
   it("shows the booking link only when online booking is switched on", async () => {
     await openApp();
-    nav("Practice Profile");
+    nav("Settings");
     const box = await screen.findByTestId("booking-settings");
     expect(within(box).queryByLabelText("Booking link")).toBeNull();
     fireEvent.click(within(box).getByLabelText(/Accept online appointment requests/));

@@ -17,7 +17,7 @@ const ACCESS = {
 
 export const NAV_BY_ROLE = {
   owner: null, // everything
-  manager: ["Dashboard", "Appointments Diary", "Patients & Odontogram", "OPG & Diagnosis Studio", "Billing & Invoices", "Reports", "Stock Maintenance", "Employee Roles & Roster", "Practice Profile"],
+  manager: ["Dashboard", "Appointments Diary", "Patients & Odontogram", "OPG & Diagnosis Studio", "Billing & Invoices", "Reports", "Stock Maintenance", "Employee Roles & Roster", "Practice Profile", "Settings"],
   dentist: ["Dashboard", "Appointments Diary", "Patients & Odontogram", "OPG & Diagnosis Studio"],
   receptionist: ["Dashboard", "Appointments Diary", "Patients & Odontogram", "Billing & Invoices"],
 };
