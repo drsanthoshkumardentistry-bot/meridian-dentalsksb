@@ -563,3 +563,23 @@ describe("admin setup", () => {
     await assertFails(setDoc(doc(as(env, "owner"), "connectAdmins", "owner"), { ok: true, code: "x" }));
   });
 });
+
+// The owner's sign-in address is an admin without any setup document.
+describe("owner email admin", () => {
+  const OWNER = process.env.TEST_OWNER_EMAIL;
+  beforeEach(async () => { await seed(env, async (db) => { await setDoc(doc(db, "connectDentists", "pat2"), dentist("Dr Pending Two", "pending")); }); });
+  it.skipIf(!OWNER)("the owner address can list and verify pending dentists", async () => {
+    const db = as(env, "ownerUid", { email: OWNER });
+    await assertSucceeds(getDocs(query(collection(db, "connectDentists"), where("status", "==", "pending"))));
+    await assertSucceeds(updateDoc(doc(db, "connectDentists", "pat2"), { status: "verified", verifiedBy: "ownerUid", verifiedAt: serverTimestamp() }));
+  });
+  it.skipIf(!OWNER)("an unverified email with the same address is not admin", async () => {
+    const db = as(env, "ownerUid", { email: OWNER, email_verified: false });
+    await assertFails(getDocs(query(collection(db, "connectDentists"), where("status", "==", "pending"))));
+  });
+  it("any other address is not admin", async () => {
+    const db = as(env, "someone", { email: "someone@example.com" });
+    await assertFails(getDocs(query(collection(db, "connectDentists"), where("status", "==", "pending"))));
+    await assertFails(updateDoc(doc(db, "connectDentists", "pat2"), { status: "verified" }));
+  });
+});
