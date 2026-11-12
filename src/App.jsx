@@ -3612,6 +3612,7 @@ export default function App() {
                   <label className="block font-semibold text-slate-600 mb-1">Doctor name (Lead Dental Surgeon)</label>
                   <input
                     type="text"
+                    id="pf-drName"
                     value={practiceProfile.drName}
                     onChange={(e) => setPracticeProfile({ ...practiceProfile, drName: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
@@ -3713,6 +3714,7 @@ export default function App() {
 
                 <Field label="State" hint="Used for GST place of supply.">
                   <select
+                    id="pf-state"
                     value={practiceProfile.state || ""}
                     onChange={(e) => setPracticeProfile({ ...practiceProfile, state: e.target.value })}
                     className={fieldInputClass}
@@ -3755,6 +3757,7 @@ export default function App() {
                 <Field label="Dental Council Registration No.">
                   <input
                     type="text"
+                    id="pf-councilRegNumber"
                     value={practiceProfile.councilRegNumber || ""}
                     onChange={(e) => setPracticeProfile({ ...practiceProfile, councilRegNumber: e.target.value })}
                     className={`${fieldInputClass} font-mono`}
@@ -3821,8 +3824,22 @@ export default function App() {
           {activeNav !== "Practice Profile" && profileGaps(practiceProfile).length > 0 && (
             <div className="mt-5 mb-6 rounded-xl border border-brand-100 bg-brand-50 p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
               <div className="text-sm text-slate-700">
-                <strong className="text-brand-700">Complete your clinic profile.</strong> Still needed: {profileGaps(practiceProfile).join(", ")}, so
-                prescriptions and invoices are correct.</div>
+                <strong className="text-brand-700">Complete your clinic profile.</strong> Still needed:{" "}
+                {profileGaps(practiceProfile).map((g, i, arr) => (
+                  <React.Fragment key={g}>
+                    <button
+                      type="button"
+                      className="underline font-semibold text-blue-700"
+                      onClick={() => {
+                        setActiveNav("Practice Profile");
+                        const id = g === "doctor name" ? "pf-drName" : g === "state" ? "pf-state" : "pf-councilRegNumber";
+                        setTimeout(() => { const el = document.getElementById(id); if (el) { el.scrollIntoView({ block: "center" }); el.focus(); } }, 80);
+                      }}
+                    >{g}</button>
+                    {i < arr.length - 1 ? ", " : ""}
+                  </React.Fragment>
+                ))}
+                , so prescriptions and invoices are correct. The Udyam number and the Dental Council registration number are two different fields.</div>
               <button
                 type="button"
                 onClick={() => setActiveNav("Practice Profile")}
