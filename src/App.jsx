@@ -174,7 +174,6 @@ import {
   Star,
   BarChart3,
   Award,
-  CalendarCheck,
   IndianRupee,
   LayoutDashboard,
   CalendarDays,
@@ -821,7 +820,7 @@ export default function App() {
   // Navigation State
   // Remember the open screen across a refresh (this tab only); a fresh sign-in starts on the Dashboard.
   const [activeNav, setActiveNav] = useState(() => {
-    try { return window.sessionStorage.getItem("merident_nav") || "Dashboard"; } catch (e) { return "Dashboard"; }
+    try { const saved = window.sessionStorage.getItem("merident_nav") || "Dashboard"; return saved === "Today" ? "Appointments Diary" : saved; } catch (e) { return "Dashboard"; }
   });
   useEffect(() => {
     try { window.sessionStorage.setItem("merident_nav", activeNav); } catch (e) { /* storage unavailable */ }
@@ -2196,7 +2195,6 @@ export default function App() {
           <nav className="p-3 space-y-1">
             {navFor(role, [
               { label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
-              { label: "Today", icon: <CalendarCheck className="w-4 h-4" /> },
               { label: "Appointments Diary", icon: <CalendarDays className="w-4 h-4" /> },
               { label: "Patients & Odontogram", icon: <Users className="w-4 h-4" /> },
               { label: "OPG & Diagnosis Studio", icon: <ScanSearch className="w-4 h-4" /> },
@@ -2612,12 +2610,12 @@ export default function App() {
           )}
 
           {/* TAB 3: APPOINTMENTS DIARY */}
-          {activeNav === "Appointments Diary" && (
+          {activeNav === "Appointments Diary" && (() => { const dsum = diarySummary(appointments); return (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">Appointments Diary</h1>
-                  <p className="text-xs text-slate-500">Chair-side scheduling & automated WhatsApp alerts</p>
+                  <p className="text-xs text-slate-500">Today at the desk, chair-side schedule and WhatsApp reminders in one place</p>
                 </div>
                 <button
                   onClick={() => setIsAddApptOpen(true)}
@@ -2627,131 +2625,22 @@ export default function App() {
                 </button>
               </div>
 
-              {(dueApptReminders.length > 0 || duePayReminders.length > 0) && (
-                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-3" data-testid="reminders-panel">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="text-xs font-bold text-blue-900">
-                      Reminders to send ({dueApptReminders.length + duePayReminders.length})
-                    </div>
-                    {waAuto && (
-                      <button type="button" disabled={waBusy} onClick={sendAllByApi} className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white rounded text-[11px] font-semibold inline-flex items-center gap-1">
-                        <Send className="w-3 h-3" /> {waBusy ? "Sending…" : "Send all on WhatsApp"}
-                      </button>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    {dueApptReminders.map((d) => (
-                      <div key={`${d.appt.id}-${d.kind}`} className="flex items-center justify-between gap-3 bg-white rounded-lg border border-blue-100 px-3 py-2 text-xs">
-                        <div>
-                          <div className="font-semibold text-slate-900">{d.appt.patientName}</div>
-                          <div className="text-[11px] text-slate-500">
-                            {d.kind === "sameDay" ? "Today" : "Tomorrow"} at {formatTime12(d.appt.time)} · {d.appt.procedure}
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => sendApptReminder(d)}
-                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-semibold inline-flex items-center gap-1 whitespace-nowrap"
-                        >
-                          <Send className="w-3 h-3" /> Remind
-                        </button>
-                      </div>
-                    ))}
-                    {duePayReminders.map((d) => (
-                      <div key={`${d.inv.id}-pay`} className="flex items-center justify-between gap-3 bg-white rounded-lg border border-blue-100 px-3 py-2 text-xs">
-                        <div>
-                          <div className="font-semibold text-slate-900">{d.inv.patient}</div>
-                          <div className="text-[11px] text-slate-500">
-                            Payment due ₹{formatINR(balancePaise(d.inv))} · {d.inv.id}
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => sendPayReminder(d)}
-                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-semibold inline-flex items-center gap-1 whitespace-nowrap"
-                        >
-                          <Send className="w-3 h-3" /> Remind
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-[10px] text-blue-800/70">
-                    WhatsApp opens with the message ready. Tap Send there, then come back for the next one.
-                  </p>
-                </div>
-              )}
-
-              {dueRecallList.length > 0 && (
-                <div className="bg-white border border-rule rounded-xl p-4 space-y-3" data-testid="recall-panel">
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs font-bold text-slate-900">Patient recall ({dueRecallList.length} due)</div>
-                    {dueRecallList.length > 5 && (
-                      <button
-                        onClick={() => setShowAllRecalls(!showAllRecalls)}
-                        className="text-[11px] font-semibold text-blue-700"
-                      >
-                        {showAllRecalls ? "Show fewer" : "Show all"}
-                      </button>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    {(showAllRecalls ? dueRecallList : dueRecallList.slice(0, 5)).map((d) => (
-                      <div key={d.patient.id} className="flex items-center justify-between gap-3 bg-enamel rounded-lg border border-slate-100 px-3 py-2 text-xs">
-                        <div>
-                          <div className="font-semibold text-slate-900">{d.patient.name}</div>
-                          <div className="text-[11px] text-slate-500">
-                            Last visit {d.lastVisit.toLocaleDateString("en-IN")} · {d.months} months ago
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => snoozeRecall(d)}
-                            className="px-2 py-1.5 text-slate-500 hover:text-slate-700 text-[11px] font-semibold whitespace-nowrap"
-                          >
-                            Not now
-                          </button>
-                          <button
-                            onClick={() => sendRecall(d)}
-                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-semibold inline-flex items-center gap-1 whitespace-nowrap"
-                          >
-                            <Send className="w-3 h-3" /> Recall
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-[10px] text-slate-500">
-                    Patients whose last visit was 6+ months ago (or the interval set on their profile), with no visit booked. Opted-out patients are never listed.
-                  </p>
-                </div>
-              )}
-
-              <FollowUpPanels
-                feedbackDue={feedbackDue} awaiting={awaitingList} low={lowList} plansDue={planFollowUps} summary={feedbackStats}
-                reviewLink={practiceProfile.reviewLink} canWrite={canWrite(role, "appointments")}
-                onAsk={askFeedback} onRate={rateFeedback} onResolve={handleFeedback} onPlan={followUpPlan} onSnoozePlan={snoozePlan}
+              <TodayDesk
+                summary={todaySummary({ appointments, invoices, leads, memberships })}
+                needsUpdate={dsum.needsUpdate}
+                onGo={setActiveNav}
+                onShowToday={() => { setDayDate(dateKey()); setDiaryViewId("day"); }}
+                onShowNeedsStatus={() => setDiaryViewId("update")}
+                clinicName={practiceProfile.name}
               />
-              <NextVisitPanel items={nextVisitsDue} canWrite={canWrite(role, "appointments")} onRemind={remindNextVisit} onSnooze={snoozeNextVisit} />
-              {(() => {
-                const open = openReferrals(patients);
-                if (!open.length) return null;
-                return (
-                  <section className="bg-white border border-rule rounded-xl p-4 space-y-2" data-testid="referral-panel" aria-label="Open referrals">
-                    <h3 className="text-xs font-bold text-slate-900">Open referrals ({open.length})</h3>
-                    {open.slice(0, 8).map(({ patient, referral, status }) => (
-                      <button key={`${patient.id}-${referral.id}`} type="button"
-                        onClick={() => { setSelectedPatientId(patient.id); setActiveModalTab("Department Referrals"); setIsChartModalOpen(true); }}
-                        className="w-full text-left flex flex-wrap items-center justify-between gap-2 rounded-lg border border-rule px-3 py-2 text-xs hover:bg-slate-50">
-                        <span><b className="text-slate-900">{patient.name}</b> <span className="text-slate-600">{referral.treatment}, {referral.department}</span></span>
-                        <span className="font-semibold text-slate-600">{urgencyOf(referral)} · {status}</span>
-                      </button>
-                    ))}
-                  </section>
-                );
-              })()}
-              <LabBoard rows={labRows} canWrite={canWrite(role, "patients")} onReceive={receiveLab} onFit={fitLab} onChase={chaseLab} onTellPatient={tellPatientLab} />
-              <ReviewInvites appointments={appointments} reviewLink={practiceProfile.reviewLink} onReview={inviteReview} />
 
               <BookingRequests requests={bookingRequests} onConfirm={confirmBooking} onDecline={declineBooking} onContact={contactBooking} />
               <QueuePanel queue={queue} today={dateKey()} onAdd={handleAddWalkIn} onStatus={handleQueueStatus} onRemove={handleQueueRemove} />
+
+              <div className="flex items-baseline justify-between gap-2 pt-1">
+                <h2 className="text-base font-bold text-slate-900">Schedule</h2>
+                {dsum.tomorrow > 0 && <span className="text-[11px] font-semibold text-slate-500">{dsum.tomorrow} booked for tomorrow</span>}
+              </div>
 
               {appointments.length === 0 ? (
                 <div className="bg-white rounded-xl border border-rule p-12 text-center space-y-3">
@@ -2760,26 +2649,11 @@ export default function App() {
                   <p className="text-xs text-slate-500 max-w-sm mx-auto">Book a visit to see today's list, get reminders ready to send, and avoid double-booking a chair.</p>
                 </div>
               ) : (() => {
-                const dsum = diarySummary(appointments);
-                const rows = diaryView(appointments, { view: diaryViewId, query: diaryQuery });
+                                const rows = diaryView(appointments, { view: diaryViewId, query: diaryQuery });
                 return (
                 <>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-testid="diary-summary">
-                    {[
-                      { label: "Today", value: dsum.today, tone: "text-slate-900" },
-                      { label: "Tomorrow", value: dsum.tomorrow, tone: "text-slate-900" },
-                      { label: "Upcoming", value: dsum.upcoming, tone: "text-slate-900" },
-                      { label: "Needs a status", value: dsum.needsUpdate, tone: dsum.needsUpdate ? "text-amber-600" : "text-slate-900" },
-                    ].map((c) => (
-                      <div key={c.label} className="bg-white border border-rule rounded-xl p-4">
-                        <div className="text-[11px] font-semibold text-slate-500">{c.label}</div>
-                        <div className={`text-lg font-bold mt-1 tabular ${c.tone}`}>{c.value}</div>
-                      </div>
-                    ))}
-                  </div>
-
                   <div className="flex flex-wrap items-center gap-2 text-xs" role="group" aria-label="Show appointments">
-                    {[["day", "Day view"], ["today", "Today"], ["upcoming", "Upcoming"], ["past", "Past"], ["update", `Needs a status (${dsum.needsUpdate})`], ["all", "All"]].map(([id, label]) => (
+                    {[["day", "Day view"], ["today", `Today (${dsum.today})`], ["upcoming", `Upcoming (${dsum.upcoming})`], ["past", "Past"], ["update", `Needs a status (${dsum.needsUpdate})`], ["all", "All"]].map(([id, label]) => (
                       <button
                         key={id}
                         type="button"
@@ -2917,8 +2791,135 @@ export default function App() {
                 </>
                 );
               })()}
+
+              <div className="pt-2 border-t border-rule" data-testid="diary-followups">
+                <h2 className="text-base font-bold text-slate-900 pt-3">Reminders & follow-ups</h2>
+                <p className="text-xs text-slate-500">Messages to send, recalls, feedback, referrals and lab work.</p>
+              </div>
+              {(dueApptReminders.length > 0 || duePayReminders.length > 0) && (
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-3" data-testid="reminders-panel">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-xs font-bold text-blue-900">
+                      Reminders to send ({dueApptReminders.length + duePayReminders.length})
+                    </div>
+                    {waAuto && (
+                      <button type="button" disabled={waBusy} onClick={sendAllByApi} className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white rounded text-[11px] font-semibold inline-flex items-center gap-1">
+                        <Send className="w-3 h-3" /> {waBusy ? "Sending…" : "Send all on WhatsApp"}
+                      </button>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    {dueApptReminders.map((d) => (
+                      <div key={`${d.appt.id}-${d.kind}`} className="flex items-center justify-between gap-3 bg-white rounded-lg border border-blue-100 px-3 py-2 text-xs">
+                        <div>
+                          <div className="font-semibold text-slate-900">{d.appt.patientName}</div>
+                          <div className="text-[11px] text-slate-500">
+                            {d.kind === "sameDay" ? "Today" : "Tomorrow"} at {formatTime12(d.appt.time)} · {d.appt.procedure}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => sendApptReminder(d)}
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-semibold inline-flex items-center gap-1 whitespace-nowrap"
+                        >
+                          <Send className="w-3 h-3" /> Remind
+                        </button>
+                      </div>
+                    ))}
+                    {duePayReminders.map((d) => (
+                      <div key={`${d.inv.id}-pay`} className="flex items-center justify-between gap-3 bg-white rounded-lg border border-blue-100 px-3 py-2 text-xs">
+                        <div>
+                          <div className="font-semibold text-slate-900">{d.inv.patient}</div>
+                          <div className="text-[11px] text-slate-500">
+                            Payment due ₹{formatINR(balancePaise(d.inv))} · {d.inv.id}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => sendPayReminder(d)}
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-semibold inline-flex items-center gap-1 whitespace-nowrap"
+                        >
+                          <Send className="w-3 h-3" /> Remind
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-blue-800/70">
+                    WhatsApp opens with the message ready. Tap Send there, then come back for the next one.
+                  </p>
+                </div>
+              )}
+
+              {dueRecallList.length > 0 && (
+                <div className="bg-white border border-rule rounded-xl p-4 space-y-3" data-testid="recall-panel">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs font-bold text-slate-900">Patient recall ({dueRecallList.length} due)</div>
+                    {dueRecallList.length > 5 && (
+                      <button
+                        onClick={() => setShowAllRecalls(!showAllRecalls)}
+                        className="text-[11px] font-semibold text-blue-700"
+                      >
+                        {showAllRecalls ? "Show fewer" : "Show all"}
+                      </button>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    {(showAllRecalls ? dueRecallList : dueRecallList.slice(0, 5)).map((d) => (
+                      <div key={d.patient.id} className="flex items-center justify-between gap-3 bg-enamel rounded-lg border border-slate-100 px-3 py-2 text-xs">
+                        <div>
+                          <div className="font-semibold text-slate-900">{d.patient.name}</div>
+                          <div className="text-[11px] text-slate-500">
+                            Last visit {d.lastVisit.toLocaleDateString("en-IN")} · {d.months} months ago
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => snoozeRecall(d)}
+                            className="px-2 py-1.5 text-slate-500 hover:text-slate-700 text-[11px] font-semibold whitespace-nowrap"
+                          >
+                            Not now
+                          </button>
+                          <button
+                            onClick={() => sendRecall(d)}
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-semibold inline-flex items-center gap-1 whitespace-nowrap"
+                          >
+                            <Send className="w-3 h-3" /> Recall
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-slate-500">
+                    Patients whose last visit was 6+ months ago (or the interval set on their profile), with no visit booked. Opted-out patients are never listed.
+                  </p>
+                </div>
+              )}
+
+              <FollowUpPanels
+                feedbackDue={feedbackDue} awaiting={awaitingList} low={lowList} plansDue={planFollowUps} summary={feedbackStats}
+                reviewLink={practiceProfile.reviewLink} canWrite={canWrite(role, "appointments")}
+                onAsk={askFeedback} onRate={rateFeedback} onResolve={handleFeedback} onPlan={followUpPlan} onSnoozePlan={snoozePlan}
+              />
+              <NextVisitPanel items={nextVisitsDue} canWrite={canWrite(role, "appointments")} onRemind={remindNextVisit} onSnooze={snoozeNextVisit} />
+              {(() => {
+                const open = openReferrals(patients);
+                if (!open.length) return null;
+                return (
+                  <section className="bg-white border border-rule rounded-xl p-4 space-y-2" data-testid="referral-panel" aria-label="Open referrals">
+                    <h3 className="text-xs font-bold text-slate-900">Open referrals ({open.length})</h3>
+                    {open.slice(0, 8).map(({ patient, referral, status }) => (
+                      <button key={`${patient.id}-${referral.id}`} type="button"
+                        onClick={() => { setSelectedPatientId(patient.id); setActiveModalTab("Department Referrals"); setIsChartModalOpen(true); }}
+                        className="w-full text-left flex flex-wrap items-center justify-between gap-2 rounded-lg border border-rule px-3 py-2 text-xs hover:bg-slate-50">
+                        <span><b className="text-slate-900">{patient.name}</b> <span className="text-slate-600">{referral.treatment}, {referral.department}</span></span>
+                        <span className="font-semibold text-slate-600">{urgencyOf(referral)} · {status}</span>
+                      </button>
+                    ))}
+                  </section>
+                );
+              })()}
+              <LabBoard rows={labRows} canWrite={canWrite(role, "patients")} onReceive={receiveLab} onFit={fitLab} onChase={chaseLab} onTellPatient={tellPatientLab} />
+              <ReviewInvites appointments={appointments} reviewLink={practiceProfile.reviewLink} onReview={inviteReview} />
             </div>
-          )}
+          ); })()}
 
           {/* TAB 4: BILLING & INVOICES */}
           {activeNav === "Billing & Invoices" && (
@@ -3148,13 +3149,6 @@ export default function App() {
             />
           )}
 
-          {activeNav === "Today" && (
-            <TodayDesk
-              summary={todaySummary({ appointments, invoices, leads, memberships })}
-              onGo={setActiveNav}
-              clinicName={practiceProfile.name}
-            />
-          )}
 
           {activeNav === "Memberships & Leads" && (
             <div className="space-y-4" data-testid="growth-screen">

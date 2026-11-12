@@ -483,9 +483,9 @@ describe("demographics and required data", () => {
     ]));
     await openApp();
     nav("Appointments Diary");
-    const sum = await screen.findByTestId("diary-summary");
-    expect(within(sum).getByText("Needs a status").nextSibling.textContent).toBe("1");
-    expect(within(sum).getByText("Upcoming").nextSibling.textContent).toBe("2");
+    const needs = await screen.findByTestId("today-needs-status");
+    expect(within(needs).getByText("1")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Upcoming (2)" })).toBeTruthy();
     const names = () => screen.getAllByRole("row").slice(1).map((r) => r.textContent);
     expect(names()[0]).toMatch(/Soon Visit/);
     expect(names()[1]).toMatch(/Later Visit/);

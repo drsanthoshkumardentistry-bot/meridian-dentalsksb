@@ -1,58 +1,96 @@
 import React from "react";
+import { CalendarDays, ClipboardList, IndianRupee, UserPlus, Award } from "lucide-react";
 import { formatINR } from "../billing.js";
-import { formatTime12, formatDateLong, whatsappLink } from "../reminders.js";
+import { formatDateLong, whatsappLink } from "../reminders.js";
+import { STAT_TONES } from "./DashCards.jsx";
 
-const Card = ({ title, count, children, empty }) => (
-  <section className="bg-white border border-rule rounded-xl p-4" aria-label={title}>
-    <div className="flex items-center justify-between">
-      <h2 className="text-sm font-bold text-slate-900">{title}</h2>
-      <span className="text-lg font-bold tabular text-slate-900">{count}</span>
-    </div>
-    <div className="mt-2 text-xs space-y-1.5">{count === 0 ? <p className="text-slate-500">{empty}</p> : children}</div>
-  </section>
-);
-const linkBtn = "underline font-semibold text-blue-700";
+const linkBtn = "font-semibold text-blue-700 hover:underline";
 
-/** The reception desk for today: visits, unpaid bills, follow-ups and memberships about to end. */
-export default function TodayDesk({ summary, onGo, clinicName = "" }) {
-  const s = summary;
+/** A coloured, clickable count tile in the same gradient family as the Dashboard cards. */
+function Tile({ tone, icon, title, value, note, onClick, testId }) {
+  const t = STAT_TONES[tone] || STAT_TONES.blue;
   return (
-    <div className="space-y-4" data-testid="today-screen">
-      <div>
-        <h1 className="text-lg font-bold text-slate-900">Today</h1>
-        <p className="text-xs text-slate-500">{s.upcomingCount} visit{s.upcomingCount === 1 ? "" : "s"} still to come, {s.doneCount} done or cancelled.</p>
+    <button
+      type="button"
+      onClick={onClick}
+      data-testid={testId}
+      className={`text-left rounded-2xl border bg-gradient-to-br ${t.card} p-3.5 sm:p-4 flex flex-col gap-2 shadow-card transition-all hover:-translate-y-0.5 hover:shadow-lift`}
+    >
+      <span className="flex items-center gap-2.5">
+        <span className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center shadow-lg ${t.bubble}`}>{icon}</span>
+        <span className="text-[12px] font-semibold text-slate-600 leading-tight">{title}</span>
+      </span>
+      <span className="text-xl font-bold text-slate-900 tabular leading-none">{value}</span>
+      <span className="text-[11px] text-slate-600/80 leading-snug">{note}</span>
+    </button>
+  );
+}
+
+/** A short list card under the tiles; only shown when there is something in it. */
+function ListCard({ title, accent, children, action, onAction }) {
+  return (
+    <section className={`bg-white border border-rule border-t-4 ${accent} rounded-xl p-4 space-y-1.5 text-xs`} aria-label={title}>
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-xs font-bold text-slate-900">{title}</h3>
+        <button type="button" className={`${linkBtn} text-[11px]`} onClick={onAction}>{action} ›</button>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card title="Today's visits" count={s.appts.length} empty="No visits booked for today.">
-          {s.appts.map((a) => (
-            <div key={a.id} className="flex justify-between gap-2">
-              <span><strong>{formatTime12(a.time)}</strong> {a.patientName}{a.procedure ? ` · ${a.procedure}` : ""}</span>
-              <span className="text-slate-500">{a.status || "Scheduled"}</span>
-            </div>
-          ))}
-          <button type="button" className={linkBtn} onClick={() => onGo("Appointments Diary")}>Open diary</button>
-        </Card>
-        <Card title="Unpaid bills" count={s.unpaidCount} empty="Every bill is paid.">
-          <p>₹{formatINR(s.unpaidP)} to collect{s.overdue.length ? `, ${s.overdue.length} overdue` : ""}.</p>
-          {s.overdue.slice(0, 5).map((d) => (
-            <div key={d.inv.id} className="flex justify-between gap-2"><span>{d.inv.patient} · due {formatDateLong(d.inv.dueDate)}</span><span className="font-semibold">₹{formatINR(d.balanceP)}</span></div>
-          ))}
-          <button type="button" className={linkBtn} onClick={() => onGo("Billing & Invoices")}>Open billing</button>
-        </Card>
-        <Card title="Lead follow-ups due" count={s.leadsDue.length} empty="No lead follow-ups due.">
-          {s.leadsDue.slice(0, 6).map((l) => {
-            const link = whatsappLink(l.phone, `Hello ${l.name}, this is ${clinicName || "our dental clinic"}. Would you like to book a visit${l.interest ? ` for ${l.interest}` : ""}? Reply with a day and time that suits you.`);
-            return <div key={l.id} className="flex justify-between gap-2"><span>{l.name} · {l.phone}</span>{link && <a className={linkBtn} href={link} target="_blank" rel="noopener noreferrer">WhatsApp</a>}</div>;
-          })}
-          <button type="button" className={linkBtn} onClick={() => onGo("Memberships & Leads")}>Open leads</button>
-        </Card>
-        <Card title="Memberships ending soon" count={s.expiring.length} empty="No memberships ending in the next 30 days.">
-          {s.expiring.slice(0, 6).map(({ m, daysLeft }) => (
-            <div key={m.id} className="flex justify-between gap-2"><span>{m.patientName} · {m.planName}</span><span className="text-amber-800 font-semibold">{daysLeft} day{daysLeft === 1 ? "" : "s"}</span></div>
-          ))}
-          <button type="button" className={linkBtn} onClick={() => onGo("Memberships & Leads")}>Open memberships</button>
-        </Card>
+      {children}
+    </section>
+  );
+}
+
+/**
+ * The "Today" part of the Appointments Diary: today's visits, what needs a status,
+ * money to collect, lead follow-ups and memberships ending soon.
+ */
+export default function TodayDesk({ summary, needsUpdate = 0, onGo, onShowToday, onShowNeedsStatus, clinicName = "" }) {
+  const s = summary;
+  const todayLabel = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
+  const hasLists = s.overdue.length > 0 || s.leadsDue.length > 0 || s.expiring.length > 0;
+  return (
+    <section className="space-y-3" data-testid="today-screen" aria-label="Today">
+      <div className="flex items-baseline justify-between gap-2">
+        <h2 className="text-base font-bold text-slate-900">Today <span className="font-semibold text-slate-500">· {todayLabel}</span></h2>
       </div>
-    </div>
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <Tile testId="today-visits" tone="blue" icon={<CalendarDays className="w-4 h-4" />} title="Visits today"
+          value={s.appts.length} note={`${s.upcomingCount} still to come · ${s.doneCount} done`} onClick={onShowToday} />
+        <Tile testId="today-needs-status" tone="peach" icon={<ClipboardList className="w-4 h-4" />} title="Needs a status"
+          value={needsUpdate} note={needsUpdate ? "Mark past visits done or no-show" : "All visits are up to date"} onClick={onShowNeedsStatus} />
+        <Tile testId="today-to-collect" tone="rose" icon={<IndianRupee className="w-4 h-4" />} title="To collect"
+          value={`₹${formatINR(s.unpaidP)}`} note={s.unpaidCount ? `${s.unpaidCount} unpaid bill${s.unpaidCount === 1 ? "" : "s"}${s.overdue.length ? `, ${s.overdue.length} overdue` : ""}` : "Every bill is paid"} onClick={() => onGo("Billing & Invoices")} />
+        <Tile testId="today-leads" tone="mint" icon={<UserPlus className="w-4 h-4" />} title="Lead follow-ups"
+          value={s.leadsDue.length} note={s.leadsDue.length ? "Due today — message them" : "None due today"} onClick={() => onGo("Memberships & Leads")} />
+        <Tile testId="today-memberships" tone="violet" icon={<Award className="w-4 h-4" />} title="Memberships ending"
+          value={s.expiring.length} note="In the next 30 days" onClick={() => onGo("Memberships & Leads")} />
+      </div>
+
+      {hasLists && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          {s.overdue.length > 0 && (
+            <ListCard title={`Overdue bills (${s.overdue.length})`} accent="border-t-rose-400" action="Billing" onAction={() => onGo("Billing & Invoices")}>
+              {s.overdue.slice(0, 5).map((d) => (
+                <div key={d.inv.id} className="flex justify-between gap-2"><span className="truncate">{d.inv.patient} · due {formatDateLong(d.inv.dueDate)}</span><span className="font-semibold text-rose-700 whitespace-nowrap">₹{formatINR(d.balanceP)}</span></div>
+              ))}
+            </ListCard>
+          )}
+          {s.leadsDue.length > 0 && (
+            <ListCard title={`Leads to call back (${s.leadsDue.length})`} accent="border-t-emerald-400" action="Leads" onAction={() => onGo("Memberships & Leads")}>
+              {s.leadsDue.slice(0, 5).map((l) => {
+                const link = whatsappLink(l.phone, `Hello ${l.name}, this is ${clinicName || "our dental clinic"}. Would you like to book a visit${l.interest ? ` for ${l.interest}` : ""}? Reply with a day and time that suits you.`);
+                return <div key={l.id} className="flex justify-between gap-2"><span className="truncate">{l.name} · {l.phone}</span>{link && <a className="font-semibold text-emerald-700 hover:underline" href={link} target="_blank" rel="noopener noreferrer">WhatsApp</a>}</div>;
+              })}
+            </ListCard>
+          )}
+          {s.expiring.length > 0 && (
+            <ListCard title={`Memberships ending (${s.expiring.length})`} accent="border-t-violet-400" action="Memberships" onAction={() => onGo("Memberships & Leads")}>
+              {s.expiring.slice(0, 5).map(({ m, daysLeft }) => (
+                <div key={m.id} className="flex justify-between gap-2"><span className="truncate">{m.patientName} · {m.planName}</span><span className="text-violet-700 font-semibold whitespace-nowrap">{daysLeft} day{daysLeft === 1 ? "" : "s"}</span></div>
+              ))}
+            </ListCard>
+          )}
+        </div>
+      )}
+    </section>
   );
 }

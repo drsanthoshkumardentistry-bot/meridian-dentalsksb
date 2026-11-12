@@ -51,10 +51,11 @@ describe("billing links", () => {
 });
 
 describe("menu", () => {
-  it("shows Today to reception and managers, not dentists, and still opens on Patients", () => {
-    const items = [{ label: "Today" }];
-    expect(navFor("receptionist", items)).toHaveLength(1);
-    expect(navFor("dentist", items)).toHaveLength(0);
+  it("folds Today into the Appointments Diary for every role, and still opens on Patients", () => {
+    const items = [{ label: "Today" }, { label: "Appointments Diary" }];
+    for (const role of ["manager", "dentist", "receptionist"]) {
+      expect(navFor(role, items).map((i) => i.label)).toEqual(["Appointments Diary"]);
+    }
     expect(firstScreen("receptionist")).toBe("Patients & Odontogram");
     expect(firstScreen("dentist")).toBe("Patients & Odontogram");
   });
