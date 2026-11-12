@@ -26,7 +26,7 @@ service cloud.firestore {
     // The MeriDent owner's sign-in address, kept as a fingerprint so it is not written out in the public code.
     function isOwnerEmail() {
       return request.auth.token.email_verified == true
-          && hashing.sha256(request.auth.token.email.lower()).toHexString().lower() == '4a7294b1936c18184eebe2d2fe8074291f00d2552b84d4b99f9d0b7fef0aff3d';
+          && hashing.sha256(request.auth.token.email.lower()).toHexString().lower() == '616169891b6f7de5f84b6aec39d78fd58a9a6235c3e79ec60f984d53563f3c5f';
     }
     function isAdmin() {
       return signedIn()
