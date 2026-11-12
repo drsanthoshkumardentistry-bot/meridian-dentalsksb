@@ -40,7 +40,7 @@ describe("Dashboard today's actions", () => {
   it("says all caught up when nothing is due", async () => {
     const card = await openDashboard();
     expect(within(card).getByText("All caught up")).toBeTruthy();
-    expect(within(card).getAllByText("Nothing to send").length).toBe(3);
+    expect(within(card).getAllByText("Nothing to do").length).toBe(7);
   });
 
   it("counts due reminders and recalls and jumps to the diary", async () => {
