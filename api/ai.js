@@ -58,19 +58,26 @@ export default async function handler(req, res) {
       });
       let r;
       let lastBody = "";
-      for (const model of models) {
+      const withoutThinking = JSON.stringify({ ...JSON.parse(body), generationConfig: { maxOutputTokens: 700, temperature: 0.3 } });
+      const attempt = async (model, payload) => {
         try {
-          r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+          return await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
             method: "POST",
             headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
-            body,
+            body: payload,
             signal: AbortSignal.timeout(8000),
           });
-        } catch (e) { console.error("meridee gemini", model, String(e && e.name)); r = null; continue; }
+        } catch (e) { console.error("meridee gemini", model, String(e && e.name)); return null; }
+      };
+      for (const model of models) {
+        r = await attempt(model, body);
+        // Some models reject the "no thinking" setting (400): ask again without it.
+        if (r && r.status === 400) r = await attempt(model, withoutThinking);
+        if (!r) continue;
         if (r.ok) break;
         lastBody = typeof r.text === "function" ? (await r.text().catch(() => "")).slice(0, 300) : "";
         console.error("meridee gemini", model, r.status, lastBody);
-        // Model retired (404), busy (429, 5xx) or not accepting this setting (400): try the next one. A bad key (401/403) will not improve.
+        // Model retired (404), busy (429, 5xx) or still refusing (400): try the next one. A bad key (401/403) will not improve.
         if (![400, 404, 429, 500, 503].includes(r.status)) break;
       }
       if (!r) return send(res, 504, { error: "Meridee took too long. Try again." });
