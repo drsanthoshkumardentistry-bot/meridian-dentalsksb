@@ -42,6 +42,9 @@ import { rxAdviceLines } from "./templates.js";
 import { medicinesOf, upsertMedicine, prescriptionLine } from "./medicines.js";
 import MedicineForm from "./components/MedicineForm.jsx";
 import MedicineLibrary from "./components/MedicineLibrary.jsx";
+import PatientGallery from "./components/PatientGallery.jsx";
+import { listImages, addImage, removeImage } from "./galleryStore.js";
+import { compressImage } from "./imageCompress.js";
 import OptionLists from "./components/OptionLists.jsx";
 import { listOf, withCurrent } from "./optionLists.js";
 import PracticeChairs, { ProfileNote, ProfileNotesContext } from "./components/PracticeChairs.jsx";
@@ -4211,6 +4214,7 @@ export default function App() {
                   "Treatment Plan",
                   "Lab Work",
                   "Consent",
+                  "Photos & X-rays",
                   "Medical History",
                   "Patient Details",
                 ].map((tab) => {
@@ -4625,6 +4629,19 @@ export default function App() {
                     win.document.write(consentHtml(c, activePatient, practiceProfile));
                     win.document.close();
                   }}
+                />
+              )}
+
+              {activeModalTab === "Photos & X-rays" && (
+                <PatientGallery
+                  key={activePatient.id}
+                  patient={activePatient}
+                  api={{ list: (pid) => listImages(db, CLINIC_ID, pid), add: (img) => addImage(db, CLINIC_ID, img), remove: (id) => removeImage(db, CLINIC_ID, id) }}
+                  compress={compressImage}
+                  canWrite={role === "owner" || role === "manager" || role === "dentist"}
+                  authorName={authUser?.displayName || authUser?.email || ""}
+                  showToast={showToast}
+                  newId={newId}
                 />
               )}
 
