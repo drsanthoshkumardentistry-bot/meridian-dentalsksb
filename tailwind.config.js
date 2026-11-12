@@ -8,7 +8,7 @@ export default {
         sans: ["Figtree", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "sans-serif"]
       },
       boxShadow: {
-        card: "0 1px 2px rgba(15,23,42,.04), 0 1px 1px rgba(15,23,42,.03)",
+        card: "0 1px 2px rgba(30,58,138,.05), 0 6px 18px -10px rgba(30,58,138,.18)",
         lift: "0 8px 24px -8px rgba(15,23,42,.12)"
       },
       colors: {
@@ -19,7 +19,8 @@ export default {
         ink: "#0f172a",
         enamel: "#f8fafc",
         mist: "#eaf0fa",
-        rule: "#e2e8f0"
+        rule: "#e3eaf6",
+        navy: { 700: "#14295c", 800: "#0f2046", 900: "#0a1733", 950: "#070f24" }
       }
     }
   },

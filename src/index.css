@@ -24,7 +24,7 @@ body {
     "Segoe UI",
     sans-serif;
 
-  background: #f8fafc;
+  background: #dfe9fb;
   color: #0f172a;
   -webkit-font-smoothing: antialiased;
 }
@@ -270,3 +270,26 @@ input::placeholder, textarea::placeholder { color: #64748b; opacity: 1; }
 .loader-spark-c { bottom: 8px; right: 0; animation-delay: 1s; width: 7px; height: 7px; }
 @keyframes loader-twinkle { 0%, 100% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.1); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .loader-dot, .loader-spark { animation: none; opacity: 0.8; } }
+
+
+/* ---- Premium theme: soft blue backdrop with a faint grid, floating navy sidebar and white workspace ---- */
+.app-backdrop {
+  background-color: #dbe7fc;
+  background-image:
+    linear-gradient(rgba(37, 99, 235, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37, 99, 235, 0.06) 1px, transparent 1px),
+    linear-gradient(160deg, #eaf1ff 0%, #d5e3ff 55%, #bfd3fb 100%);
+  background-size: 36px 36px, 36px 36px, 100% 100%;
+}
+.side-navy {
+  background: linear-gradient(180deg, #0f2046 0%, #0a1733 100%);
+}
+.side-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); }
+.side-scroll::-webkit-scrollbar-track { background: transparent; }
+main .rounded-xl { border-radius: 1rem; }
+main section.bg-white.rounded-xl,
+main .bg-white.rounded-xl.border { box-shadow: 0 1px 2px rgba(30, 58, 138, 0.05), 0 8px 20px -12px rgba(30, 58, 138, 0.18); }
+@media (prefers-reduced-motion: no-preference) {
+  .stat-card { transition: transform 0.18s ease, box-shadow 0.18s ease; }
+  .stat-card:hover { transform: translateY(-2px); }
+}
