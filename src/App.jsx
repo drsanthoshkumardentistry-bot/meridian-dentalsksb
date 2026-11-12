@@ -30,6 +30,7 @@ import { draftVisitNote } from "./clinicalNote.js";
 import { askAi } from "./aiClient.js";
 import HelpChat from "./components/HelpChat.jsx";
 import DmyDateInput from "./components/DmyDateInput.jsx";
+import BulkMessage from "./components/BulkMessage.jsx";
 import { patientsInRange, presetRange, rangeText, DATE_MODES } from "./patientDates.js";
 import PatientSummary from "./components/PatientSummary.jsx";
 import PhysicianConsult from "./components/PhysicianConsult.jsx";
@@ -151,7 +152,8 @@ import {
   Hospital,
   Wallet,
   UsersRound,
-  Pencil
+  Pencil,
+  MessageCircle,
 } from "lucide-react";
 
 // Safe dynamic import from ./firebase
@@ -1485,6 +1487,7 @@ export default function App() {
   const [diaryViewId, setDiaryViewId] = useState("upcoming");
   const [dayDate, setDayDate] = useState(dateKey());
   const [labelFilter, setLabelFilter] = useState("");
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [dateMode, setDateMode] = useState("seen");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -2166,6 +2169,11 @@ export default function App() {
                   <h1 className="text-xl font-bold text-slate-900">Patient Records</h1>
                   <p className="text-xs text-slate-500">FDI 32-Tooth Odontogram, Trauma, Rx & History</p>
                 </div>
+                {canWrite(role, "patients") && patients.length > 0 && (
+                  <button type="button" onClick={() => setBulkOpen(true)} className="shrink-0 whitespace-nowrap px-4 py-2 bg-white border border-slate-300 text-slate-700 hover:bg-emerald-50 rounded-lg text-xs font-semibold flex items-center gap-1.5">
+                    <MessageCircle className="w-4 h-4" /> Message a group
+                  </button>
+                )}
                 <button
                   onClick={() => setIsAddPatientOpen(true)}
                   className="shrink-0 whitespace-nowrap px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-card"
@@ -2215,6 +2223,7 @@ export default function App() {
                   )}
                 </div>
               )}
+              {bulkOpen && <BulkMessage patients={patients} shown={filteredPatients} appointments={appointments} invoices={invoices} clinicName={practiceProfile.name} onClose={() => setBulkOpen(false)} />}
               {filteredPatients.length === 0 ? (
                 <div className="bg-white rounded-xl border border-rule p-12 text-center space-y-3">
                   <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
