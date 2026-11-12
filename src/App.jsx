@@ -821,7 +821,7 @@ export default function App() {
   // Navigation State
   // Remember the open screen across a refresh (this tab only); a fresh sign-in starts on the Dashboard.
   const [activeNav, setActiveNav] = useState(() => {
-    try { return window.sessionStorage.getItem("merident_nav") || "Dashboard"; } catch (e) { return "Dashboard"; }
+    try { const v = window.sessionStorage.getItem("merident_nav"); return !v ? "Dashboard" : v === "Today" ? "Appointments Diary" : v; } catch (e) { return "Dashboard"; }
   });
   useEffect(() => {
     try { window.sessionStorage.setItem("merident_nav", activeNav); } catch (e) { /* storage unavailable */ }
@@ -2196,7 +2196,6 @@ export default function App() {
           <nav className="p-3 space-y-1">
             {navFor(role, [
               { label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
-              { label: "Today", icon: <CalendarCheck className="w-4 h-4" /> },
               { label: "Appointments Diary", icon: <CalendarDays className="w-4 h-4" /> },
               { label: "Patients & Odontogram", icon: <Users className="w-4 h-4" /> },
               { label: "OPG & Diagnosis Studio", icon: <ScanSearch className="w-4 h-4" /> },
@@ -2614,6 +2613,14 @@ export default function App() {
           {/* TAB 3: APPOINTMENTS DIARY */}
           {activeNav === "Appointments Diary" && (
             <div className="space-y-6">
+              {role !== "dentist" && (
+                <TodayDesk
+                  embedded
+                  summary={todaySummary({ appointments, invoices, leads, memberships })}
+                  onGo={setActiveNav}
+                  clinicName={practiceProfile.name}
+                />
+              )}
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">Appointments Diary</h1>
@@ -3145,14 +3152,6 @@ export default function App() {
               showToast={showToast}
               geocode={geocodeAddress}
               defaults={{ clinicName: practiceProfile.name, clinicAddress: practiceProfile.address, phone: practiceProfile.phone, connectOnly }}
-            />
-          )}
-
-          {activeNav === "Today" && (
-            <TodayDesk
-              summary={todaySummary({ appointments, invoices, leads, memberships })}
-              onGo={setActiveNav}
-              clinicName={practiceProfile.name}
             />
           )}
 

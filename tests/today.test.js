@@ -51,9 +51,9 @@ describe("billing links", () => {
 });
 
 describe("menu", () => {
-  it("shows Today to reception and managers, not dentists, and still opens on Patients", () => {
+  it("no longer lists Today separately (it lives in the Appointments Diary) and still opens on Patients", () => {
     const items = [{ label: "Today" }];
-    expect(navFor("receptionist", items)).toHaveLength(1);
+    expect(navFor("receptionist", items)).toHaveLength(0);
     expect(navFor("dentist", items)).toHaveLength(0);
     expect(firstScreen("receptionist")).toBe("Patients & Odontogram");
     expect(firstScreen("dentist")).toBe("Patients & Odontogram");
