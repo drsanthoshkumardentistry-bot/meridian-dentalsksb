@@ -157,7 +157,7 @@ import * as FirebaseModule from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, doc, setDoc, onSnapshot, deleteDoc } from "firebase/firestore";
 import LandingPage from "./components/landingpage";
-import { claimPendingConnectOnly, connectOnlyChoice, setConnectOnly } from "./connectOnly.js";
+import { resolveConnectOnly, setConnectOnly, setSignInChoice } from "./connectOnly.js";
 import { AppLoading, VerifyEmailScreen, IdleWarning } from "./components/AuthScreens";
 import { friendlyAuthError, usesPasswordLogin } from "./authErrors";
 import {
@@ -927,23 +927,11 @@ export default function App() {
   // Specialist mode: someone who joined only for MeriDent Connect sees just that screen.
   const [connectOnly, setConnectOnlyState] = useState(false);
   useEffect(() => {
-    if (!authUser || !CLINIC_ID || activeMember) { setConnectOnlyState(false); return undefined; }
-    let live = true;
-    claimPendingConnectOnly(authUser.uid);
-    const local = connectOnlyChoice(authUser.uid);
-    setConnectOnlyState(local === 1);
-    if (local === null) {
-      connectApi.getProfile().then((p) => {
-        if (!live) return;
-        const on = Boolean(p && p.connectOnly);
-        setConnectOnly(authUser.uid, on);
-        setConnectOnlyState(on);
-      }).catch(() => {});
-    }
-    return () => { live = false; };
-  }, [authUser, CLINIC_ID, activeMember, connectApi]);
+    if (!authUser || !CLINIC_ID || activeMember) { setConnectOnlyState(false); return; }
+    setConnectOnlyState(resolveConnectOnly(authUser.uid));
+  }, [authUser, CLINIC_ID, activeMember]);
   useEffect(() => { if (connectOnly && activeNav !== "MeriDent Connect") setActiveNav("MeriDent Connect"); }, [connectOnly, activeNav]);
-  const leaveConnectOnly = () => { setConnectOnly(authUser.uid, false); setConnectOnlyState(false); setActiveNav("Dashboard"); };
+  const leaveConnectOnly = () => { setConnectOnly(authUser.uid, false); setSignInChoice(false); setConnectOnlyState(false); setActiveNav("Dashboard"); };
 
   // Keep a team member on a screen their role allows
   useEffect(() => {
