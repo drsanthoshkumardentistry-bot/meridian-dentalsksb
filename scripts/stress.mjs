@@ -15,7 +15,8 @@ import { recordSheetHtml } from "../src/recordSheet.js";
 
 const SEED = Number(process.argv[2] || 20261113);
 const N = Number(process.argv[3] || 10000);
-const WIDE = process.argv[4] === "wide"; // second battery: different properties, wider values, other operation mix
+const MIXED = process.argv[4] === "mixed"; // every property from both batteries together
+const WIDE = process.argv[4] === "wide" || MIXED; // second battery: different properties, wider values, other operation mix
 let s = SEED >>> 0;
 const rnd = () => { s |= 0; s = (s + 0x6d2b79f5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 const int = (a, b) => a + Math.floor(rnd() * (b - a + 1));
@@ -111,7 +112,7 @@ const PROPS2 = {
   stockBoundaries() { const q = pick([0, 1, 5, 6, 100000]); const m = 5; const st = stock.stockState({ quantity: q, minThreshold: m }, NOW); ok("bug", st.out === (q === 0) && st.low === (q > 0 && q <= m), "stock boundaries: out at 0, low up to the reorder level", () => `${q}/${m} ${JSON.stringify(st)}`);
     const dd = int(-3, 40); const st2 = stock.stockState({ quantity: 10, minThreshold: 1, expiry: dayKey(dd) }, NOW); ok("bug", st2.expired === (dd < 0) && st2.expiringSoon === (dd >= 0 && dd <= 30), "stock boundaries: expiry flags at 0 and 30 days", () => `${dd} ${JSON.stringify(st2)}`); },
 };
-const ALL = WIDE ? PROPS2 : PROPS;
+const ALL = MIXED ? { ...PROPS, ...PROPS2 } : WIDE ? PROPS2 : PROPS;
 const propNames = Object.keys(ALL);
 for (let i = 0; i < N; i++) { const name = pick(propNames); counts.bug["#" + name] = (counts.bug["#" + name] || 0) + 1; try { ALL[name](); } catch (e) { fail("bug", `${name}: threw`, e && e.stack ? e.stack.split("\n").slice(0, 2).join(" | ") : e); } }
 
