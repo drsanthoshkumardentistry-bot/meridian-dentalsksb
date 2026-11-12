@@ -9,17 +9,17 @@ export const ROLE_NOTE = {
 };
 
 const ACCESS = {
-  owner: { patients: "rw", appointments: "rw", queue: "rw", invoices: "rw", inventory: "rw", employees: "rw", profile: "rw" },
-  manager: { patients: "rw", appointments: "rw", queue: "rw", invoices: "rw", inventory: "rw", employees: "rw", profile: "rw" },
+  owner: { patients: "rw", appointments: "rw", queue: "rw", invoices: "rw", inventory: "rw", employees: "rw", profile: "rw", leads: "rw", memberships: "rw" },
+  manager: { patients: "rw", appointments: "rw", queue: "rw", invoices: "rw", inventory: "rw", employees: "rw", profile: "rw", leads: "rw", memberships: "rw" },
   dentist: { patients: "rw", appointments: "rw", queue: "rw", invoices: "r", inventory: "r", employees: "", profile: "r" },
-  receptionist: { patients: "rw", appointments: "rw", queue: "rw", invoices: "rw", inventory: "r", employees: "", profile: "r" },
+  receptionist: { patients: "rw", appointments: "rw", queue: "rw", invoices: "rw", inventory: "r", employees: "", profile: "r", leads: "rw", memberships: "rw" },
 };
 
 export const NAV_BY_ROLE = {
   owner: null, // everything
-  manager: ["Dashboard", "Appointments Diary", "Patients & Odontogram", "OPG & Diagnosis Studio", "Billing & Invoices", "Reports", "Stock Maintenance", "Employee Roles & Roster", "Practice Profile", "Settings"],
+  manager: ["Dashboard", "Appointments Diary", "Patients & Odontogram", "OPG & Diagnosis Studio", "Billing & Invoices", "Memberships & Leads", "Reports", "Stock Maintenance", "Employee Roles & Roster", "Practice Profile", "Settings"],
   dentist: ["Dashboard", "Appointments Diary", "Patients & Odontogram", "OPG & Diagnosis Studio"],
-  receptionist: ["Dashboard", "Appointments Diary", "Patients & Odontogram", "Billing & Invoices"],
+  receptionist: ["Dashboard", "Appointments Diary", "Patients & Odontogram", "Billing & Invoices", "Memberships & Leads"],
 };
 
 export const accessOf = (role, collection) => (ACCESS[role] || {})[collection] || "";
