@@ -43,6 +43,7 @@ import { medicinesOf, upsertMedicine, prescriptionLine } from "./medicines.js";
 import MedicineForm from "./components/MedicineForm.jsx";
 import MedicineLibrary from "./components/MedicineLibrary.jsx";
 import PatientGallery from "./components/PatientGallery.jsx";
+import { todayActionTiles, totalActions, liveFlow } from "./todayActions.js";
 import { listImages, addImage, removeImage } from "./galleryStore.js";
 import { compressImage } from "./imageCompress.js";
 import OptionLists from "./components/OptionLists.jsx";
@@ -1468,6 +1469,12 @@ export default function App() {
   const feedbackStats = feedbackSummary(appointments);
   const planFollowUps = duePlanFollowUps(patients, appointments);
   const nextVisitsDue = dueNextVisits(patients, appointments);
+  const actionTiles = todayActionTiles({
+    reminders: dueApptReminders.length, recalls: dueRecallList.length, payments: duePayReminders.length,
+    nextVisits: nextVisitsDue.length, plans: planFollowUps.length, feedback: feedbackDue.length,
+    bookings: bookingRequests.filter((r) => r.status === "new").length,
+  });
+  const flowNow = liveFlow(queue, dateKey());
   const labRows = openLabOrders(patients);
   const labLate = labOverdueCount(patients);
   const [showAllRecalls, setShowAllRecalls] = useState(false);
@@ -3653,31 +3660,41 @@ export default function App() {
                 ))}
               </div>
 
+              {flowNow && (
+                <section className="bg-white rounded-xl border border-rule p-4 shadow-card flex flex-wrap items-center gap-x-6 gap-y-2" data-testid="flow-now" aria-label="Waiting room now">
+                  <h2 className="text-sm font-bold text-slate-900">Waiting room now</h2>
+                  <span className="text-sm"><strong className="text-lg tabular">{flowNow.waiting}</strong> waiting{flowNow.urgent > 0 && <span className="ml-1 text-rose-700 font-semibold">({flowNow.urgent} urgent)</span>}</span>
+                  <span className="text-sm"><strong className="text-lg tabular">{flowNow.inChair}</strong> in chair</span>
+                  <span className="text-sm"><strong className="text-lg tabular">{flowNow.seen}</strong> seen</span>
+                  {flowNow.next && <span className="text-sm text-slate-600">Next: <strong className="text-slate-900">{flowNow.next.name}</strong>{flowNow.longest && flowNow.longest.name === flowNow.next.name ? ` (waited ${flowNow.longest.minutes} min)` : ""}</span>}
+                  {flowNow.longest && flowNow.longest.minutes >= 30 && <span className="text-sm text-amber-800 font-semibold">{flowNow.longest.name} has waited {flowNow.longest.minutes} min</span>}
+                  <button type="button" onClick={() => setActiveNav("Appointments Diary")} className="ml-auto text-xs font-semibold text-blue-600 hover:text-blue-800">Open queue ›</button>
+                </section>
+              )}
+
               <section className="bg-white rounded-xl border border-rule p-5 shadow-card" data-testid="today-actions">
                 <div className="flex items-center justify-between gap-3 mb-3">
                   <h2 className="text-base font-bold text-slate-900">Today's actions</h2>
-                  {dueApptReminders.length + dueRecallList.length + duePayReminders.length === 0 && (
+                  {totalActions(actionTiles) === 0 && (
                     <span className="text-xs rounded-full bg-emerald-50 text-emerald-700 px-3 py-1 font-semibold">All caught up</span>
                   )}
                 </div>
-                <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                  {[
-                    { label: "Appointment reminders", count: dueApptReminders.length, to: "Appointments Diary", on: "border-blue-200 bg-blue-50 hover:bg-blue-100", num: "text-blue-700" },
-                    { label: "Patients due for recall", count: dueRecallList.length, to: "Appointments Diary", on: "border-aqua-100 bg-aqua-50 hover:bg-aqua-100", num: "text-aqua-700" },
-                    { label: "Payments to chase", count: duePayReminders.length, to: "Billing & Invoices", on: "border-amber-200 bg-gold-50 hover:bg-amber-100", num: "text-gold-700" },
-                  ].map((a) => (
-                    <button
-                      key={a.label}
-                      onClick={() => setActiveNav(a.to)}
-                      className={`text-left rounded-xl border p-3 sm:p-4 transition-colors ${
-                        a.count > 0 ? a.on : "border-rule bg-enamel hover:bg-slate-100"
-                      }`}
-                    >
-                      <div className={`text-2xl font-bold ${a.count > 0 ? a.num : "text-slate-500"}`}>{a.count}</div>
-                      <div className="text-xs font-semibold text-slate-700 mt-0.5">{a.label}</div>
-                      <div className="text-[11px] text-slate-500 mt-1 leading-snug">{a.count > 0 ? "Tap to send ›" : "Nothing to send"}</div>
-                    </button>
-                  ))}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+                  {actionTiles.map((a) => {
+                    const tone = { blue: ["border-blue-200 bg-blue-50 hover:bg-blue-100", "text-blue-700"], aqua: ["border-aqua-100 bg-aqua-50 hover:bg-aqua-100", "text-aqua-700"], gold: ["border-amber-200 bg-gold-50 hover:bg-amber-100", "text-gold-700"], rose: ["border-rose-200 bg-rose-50 hover:bg-rose-100", "text-rose-700"] }[a.tone];
+                    return (
+                      <button
+                        key={a.id}
+                        type="button"
+                        onClick={() => setActiveNav(a.to)}
+                        className={`text-left rounded-xl border p-3 sm:p-4 transition-colors ${a.count > 0 ? tone[0] : "border-rule bg-enamel hover:bg-slate-100"}`}
+                      >
+                        <div className={`text-2xl font-bold ${a.count > 0 ? tone[1] : "text-slate-500"}`}>{a.count}</div>
+                        <div className="text-xs font-semibold text-slate-700 mt-0.5">{a.label}</div>
+                        <div className="text-[11px] text-slate-500 mt-1 leading-snug">{a.count > 0 ? `${a.cta} ›` : "Nothing to do"}</div>
+                      </button>
+                    );
+                  })}
                 </div>
               </section>
 
