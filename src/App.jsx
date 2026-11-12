@@ -4301,7 +4301,7 @@ export default function App() {
                     ))}
                     <div>
                       <label htmlFor="visit-date" className="block font-semibold text-slate-600 mb-1">Visit date</label>
-                      <input id="visit-date" type="date" max={dateKey()} value={visitForm.date || dateKey()} onChange={(e) => setVisitForm({ ...visitForm, date: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none" />
+                      <DmyDateInput id="visit-date" ariaLabel="Visit date (dd/mm/yyyy)" max={dateKey()} value={visitForm.date || dateKey()} onChange={(v) => setVisitForm({ ...visitForm, date: v })} className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none" />
                     </div>
                     <div>
                       <label htmlFor="visit-next" className="block font-semibold text-slate-600 mb-1">Next visit plan</label>

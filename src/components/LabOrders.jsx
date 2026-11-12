@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import DmyDateInput from "./DmyDateInput.jsx";
 import { WORK_TYPES, LAB_STATUS, validateLabOrder, createLabOrder, moveLabOrder, canMove, isOverdue } from "../lab.js";
 import { dateKey, addDays, formatDateLong } from "../reminders.js";
 
@@ -49,9 +50,9 @@ export default function LabOrders({ patient, labs = [], newId, onChange, canWrit
                 <input id="lab-shade" className={field} maxLength={20} value={form.shade} onChange={set("shade")} placeholder="e.g. A2" /></div>
             </div>
             <div><label htmlFor="lab-sent" className="block text-xs font-semibold text-slate-600 mb-1">Sent on</label>
-              <input id="lab-sent" type="date" className={field} value={form.sentOn} onChange={set("sentOn")} /></div>
+              <DmyDateInput id="lab-sent" ariaLabel="Sent to lab (dd/mm/yyyy)" className={field} value={form.sentOn} onChange={(v) => setForm({ ...form, sentOn: v })} /></div>
             <div><label htmlFor="lab-due" className="block text-xs font-semibold text-slate-600 mb-1">Expected back</label>
-              <input id="lab-due" type="date" className={field} value={form.dueOn} onChange={set("dueOn")} /></div>
+              <DmyDateInput id="lab-due" ariaLabel="Due back (dd/mm/yyyy)" className={field} value={form.dueOn} onChange={(v) => setForm({ ...form, dueOn: v })} /></div>
           </div>
           <div><label htmlFor="lab-note" className="block text-xs font-semibold text-slate-600 mb-1">Instructions (optional)</label>
             <textarea id="lab-note" rows={2} maxLength={300} className={field} value={form.note} onChange={set("note")} placeholder="Margin, occlusion, material" /></div>
