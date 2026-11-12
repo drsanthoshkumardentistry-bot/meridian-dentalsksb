@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { MessageCircle, X, Send } from "lucide-react";
+import { X, Send } from "lucide-react";
 import { askAi } from "../aiClient.js";
 import { FairySvg } from "./ToothFairy.jsx";
 
@@ -72,8 +72,8 @@ export default function HelpChat() {
           <p className="px-3 pb-2 text-[10px] text-slate-400 bg-white">AI can make mistakes. For medical decisions, the dentist decides.</p>
         </div>
       )}
-      <button type="button" onClick={() => setOpen((v) => !v)} aria-label={open ? "Close Meridee help" : "Open Meridee help"} className="ml-auto flex items-center gap-2 px-4 py-3 rounded-full bg-[#1d4ed8] hover:bg-blue-700 text-white shadow-xl font-semibold text-sm">
-        <MessageCircle className="w-5 h-5" /> {!open && <span>Help</span>}
+      <button type="button" onClick={() => setOpen((v) => !v)} aria-label={open ? "Close Meridee help" : "Open Meridee help"} className="ml-auto flex items-center gap-2 pl-1.5 pr-4 py-1.5 rounded-full bg-[#1d4ed8] hover:bg-blue-700 text-white shadow-xl font-semibold text-sm">
+        <span className="w-11 h-11 rounded-full bg-white flex items-center justify-center overflow-hidden shrink-0"><FairySvg still className="w-10 h-10" /></span> {open ? <X className="w-4 h-4" /> : <span>Meridee</span>}
       </button>
     </div>
   );
