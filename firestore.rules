@@ -227,7 +227,7 @@ service cloud.firestore {
                     && request.resource.data.keys().hasOnly(['ok', 'code'])
                     && request.resource.data.ok == true
                     && request.resource.data.code is string
-                    && hashing.sha256(request.resource.data.code).toHexString() == '10162b0800de9df16e0b0179e51161140f6b50af1f12ff636a95a04be8f1bd66';
+                    && hashing.sha256(request.resource.data.code).toHexString().lower() == '10162b0800de9df16e0b0179e51161140f6b50af1f12ff636a95a04be8f1bd66';
       allow update, delete: if false;
     }
 
