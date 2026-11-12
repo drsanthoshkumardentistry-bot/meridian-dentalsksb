@@ -3,6 +3,7 @@
 import { SUBJECTS, TOPICS, SPOTTERS } from '../data/academy.js'
 import { MCQS } from '../data/mcq.js'
 import { ADC_MCQS } from '../data/adc.js'
+import { IMPORTED_MCQS } from '../data/imported.js'
 
 export function buildLocalContent() {
   const subjects = SUBJECTS.map((s, i) => ({ id: i + 1, track: null, ...s }))
@@ -23,6 +24,8 @@ export function buildLocalContent() {
   const mcqs = [
     ...MCQS.map((q) => ({ exam: 'NEET MDS', ...q })),
     ...ADC_MCQS.map((q) => ({ exam: 'ADC', is_pyq: false, is_important: false, ...q })),
+    // Added with the Python extractor (tools/extractor): python -m merident_extract mcq paper.pdf --merge
+    ...IMPORTED_MCQS.map(({ fingerprint, source, ...q }) => ({ is_pyq: false, is_important: false, ...q })),
   ]
   return { subjects, topics, flashcards, spotters, mcqs }
 }

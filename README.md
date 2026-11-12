@@ -37,3 +37,27 @@ npm test                  # examiner + Leitner unit tests
 The bundled images in `public/spotters` are **schematic teaching illustrations** (`npm run spotters` → `scripts/make-spotters.mjs`). Upload real radiographs and slides to the `spotters` storage bucket and set `spotters.image_url` to the public URL.
 
 > Content is for revision. Always cross-check with your prescribed textbooks.
+
+## Python extraction tool (`tools/extractor`)
+Turns PDFs into app content: MCQ question papers become question-bank entries, and lecture slides become page-cited chunks for StudySync.
+
+```bash
+pip install -r tools/extractor/requirements.txt      # pdfplumber, pypdf (+ pytesseract for scanned pages)
+
+# Question paper → MCQs (inline "Ans: B" or a separate ANSWER KEY section)
+npm run extract -- mcq papers/oral-path-2024.pdf --exam "NEET MDS" --pyq --subject "Oral Pathology"
+npm run extract -- mcq papers/adc-mock.pdf --exam ADC --merge   # --merge adds them to src/data/imported.js
+
+# Lecture slides → chunks for StudySync (RAG)
+npm run extract -- lecture slides/ameloblastoma.pdf --max-words 350
+
+# See the cleaned text of each page
+npm run extract -- text slides/ameloblastoma.pdf
+
+npm run test:extract                                  # extractor tests
+```
+
+* Understands `1.` / `Q1)` / `Q.1` question numbers; `(a)`, `A.` and `1)` options on one line or several; `Ans:`, `Answer:`, `Correct answer -` and `Key:` answers; `Explanation:`/`Ref:` lines; `Subject:` headers; and end-of-paper answer keys (`1. B  2. C`).
+* Running headers, footers, page numbers and bullet glyphs are removed. Pages with no text layer are OCR'd automatically when Tesseract is installed.
+* Questions without exactly 4 options or an answer go to `needs_review` in the output JSON, never into the bank. `--merge` skips duplicates (matched by a question fingerprint).
+* After merging, run `npm run seed:sql` to push the new questions to Supabase as well.
