@@ -30,7 +30,7 @@ export default function SignaturePad({ onChange, resetKey = 0, label = "Signatur
     ctx.lineWidth = 3;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    ctx.strokeStyle = "#0f1c33";
+    ctx.strokeStyle = "#0f172a";
     ctx.beginPath();
     const [x, y] = point(e);
     ctx.moveTo(x, y);
