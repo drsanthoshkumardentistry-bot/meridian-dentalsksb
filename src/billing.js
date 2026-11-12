@@ -141,7 +141,7 @@ export const normalizeInvoice = (inv) => {
   };
 };
 
-export const paidPaise = (inv) => (inv.payments || []).reduce((s, p) => s + (p.amountP || 0), 0);
+export const paidPaise = (inv) => (inv.payments || []).reduce((s, p) => s + ((p && p.amountP) || 0), 0);
 export const balancePaise = (inv) => Math.max(0, (inv.totalP || 0) - paidPaise(inv));
 
 export const paymentStatus = (inv) => {
