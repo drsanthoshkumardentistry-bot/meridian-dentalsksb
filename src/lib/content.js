@@ -2,9 +2,10 @@
 // The same ids are written into supabase/seed.sql, so local and cloud content line up.
 import { SUBJECTS, TOPICS, SPOTTERS } from '../data/academy.js'
 import { MCQS } from '../data/mcq.js'
+import { ADC_MCQS } from '../data/adc.js'
 
 export function buildLocalContent() {
-  const subjects = SUBJECTS.map((s, i) => ({ id: i + 1, ...s }))
+  const subjects = SUBJECTS.map((s, i) => ({ id: i + 1, track: null, ...s }))
   const sid = Object.fromEntries(subjects.map((s) => [s.slug, s.id]))
   const topics = TOPICS.map((t, i) => ({
     id: i + 1, subject_id: sid[t.subject], slug: t.slug, title: t.title, priority: t.priority,
@@ -19,6 +20,9 @@ export function buildLocalContent() {
     key_findings: s.key_findings, differentials: s.differentials, distractors: s.distractors,
     diagnostic_pearl: s.diagnostic_pearl, uses: s.uses || [], difficulty: s.difficulty,
   }))
-  const mcqs = MCQS.map((q) => ({ ...q }))
+  const mcqs = [
+    ...MCQS.map((q) => ({ exam: 'NEET MDS', ...q })),
+    ...ADC_MCQS.map((q) => ({ exam: 'ADC', is_pyq: false, is_important: false, ...q })),
+  ]
   return { subjects, topics, flashcards, spotters, mcqs }
 }

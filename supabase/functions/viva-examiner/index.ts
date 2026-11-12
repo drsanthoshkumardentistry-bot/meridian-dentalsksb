@@ -1,4 +1,4 @@
-// Supabase Edge Function: AI external examiner for MeriDent Prep.
+// Supabase Edge Function: Meridee – the AI examiner for MeriDent Prep (University / NEET MDS / ADC tracks).
 // Uses Google Gemini (free tier) when GEMINI_API_KEY is set, or Anthropic when ANTHROPIC_API_KEY is set.
 // Without a key it returns 503 and the app falls back to its built-in examiner.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
@@ -11,7 +11,15 @@ const CORS = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 
-const SYSTEM = `You are a strict but fair EXTERNAL EXAMINER conducting a BDS (dental) university viva voce in India.
+const PERSONAS: Record<string, string> = {
+  University: "a strict but fair EXTERNAL EXAMINER conducting a BDS (dental) university viva voce in India",
+  "NEET MDS": "a rapid-fire NEET MDS mentor who drills high-yield, exam-relevant facts and corrects misconceptions",
+  ADC: "an Australian Dental Council (ADC) examiner who assesses clinical reasoning, patient safety, informed consent, infection control and current Australian guidelines (Dental Board of Australia, Therapeutic Guidelines)",
+};
+const systemFor = (track: string) => `Your name is Meridee, the AI examiner inside the MeriDent Prep app. You are ${PERSONAS[track] ?? PERSONAS.University}. Refer to yourself as Meridee if asked.
+` + SYSTEM_RULES;
+
+const SYSTEM_RULES = `
 Rules:
 - Ask ONE question at a time. Start from the case/spotter given, then go deeper: definition → classification → features → investigations → management → "why" questions.
 - If the student's answer is weak, vague or hedged, challenge it with a probing follow-up before moving on. Do NOT give away the answer.
@@ -76,7 +84,8 @@ Deno.serve(async (req) => {
 
   const convo = `${buildContext(body)}\n\nTRANSCRIPT SO FAR:\n${history}\nSTUDENT: ${answer}\n\n${body.finalTurn ? "This is the FINAL turn: set done=true." : ""}`;
   try {
-    const raw = gemini ? await callGemini(gemini, SYSTEM, convo) : await callAnthropic(anthropic!, SYSTEM, convo);
+    const system = systemFor(String(body.track ?? "University"));
+    const raw = gemini ? await callGemini(gemini, system, convo) : await callAnthropic(anthropic!, system, convo);
     const parsed = JSON.parse(raw.replace(/^```(json)?|```$/g, "").trim());
     if (typeof parsed.reply !== "string") throw new Error("bad model output");
     return json(parsed);

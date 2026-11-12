@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useReducer,
 import { supabase } from '../lib/supabase.js'
 import { emptyProgress, loadContent, loadProfile, loadProgress, persist, saveProfile } from '../lib/api.js'
 import { nextState } from '../lib/leitner.js'
+import { trackOf } from '../lib/tracks.js'
 
 const Ctx = createContext(null)
 
@@ -98,6 +99,11 @@ export function AppProvider({ children }) {
     saveMock: (result) => act({ type: 'mock', result }),
     saveViva: (viva) => act({ type: 'viva', viva }),
     resetProgress: () => act({ type: 'reset' }),
+    track: trackOf(state.profile),
+    setTrack: async (key) => {
+      const profile = await saveProfile(state.user, { target_exam: key })
+      dispatch({ type: 'profile', profile })
+    },
     updateProfile: async (patch) => {
       const profile = await saveProfile(state.user, patch)
       dispatch({ type: 'profile', profile })

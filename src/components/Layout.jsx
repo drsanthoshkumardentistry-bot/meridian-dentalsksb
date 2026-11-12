@@ -1,20 +1,21 @@
-import { BookOpenCheck, ClipboardList, Layers3, LayoutDashboard, LogIn, Mic, Moon, ScanEye, Sun, UserRound } from 'lucide-react'
+import { BookOpenCheck, ClipboardList, Layers3, LayoutDashboard, LogIn, Moon, ScanEye, Sparkles, Sun, UserRound } from 'lucide-react'
 import { useApp } from '../state/AppContext.jsx'
 import { cloudEnabled } from '../lib/supabase.js'
 import { cx } from './ui.jsx'
 
-const NAV = [
+const navFor = (track) => [
   { to: 'home', label: 'Dashboard', short: 'Home', icon: LayoutDashboard },
-  { to: 'topics', label: 'Topic Hub', short: 'Topics', icon: BookOpenCheck },
-  { to: 'viva', label: 'Viva Simulator', short: 'Viva', icon: Mic },
+  { to: 'topics', label: track?.key === 'ADC' ? 'Australian Practice' : 'Topic Hub', short: 'Topics', icon: BookOpenCheck },
+  { to: 'viva', label: 'Meridee Viva', short: 'Meridee', icon: Sparkles },
   { to: 'spotters', label: 'Spotter Bank', short: 'Spotters', icon: ScanEye },
   { to: 'flashcards', label: 'Flashcards', short: 'Cards', icon: Layers3 },
-  { to: 'mcq', label: 'NEET MDS MCQs', short: 'MCQs', icon: ClipboardList },
+  { to: 'mcq', label: track?.mcqLabel || 'MCQs', short: track?.key === 'ADC' ? 'ADC' : 'MCQs', icon: ClipboardList },
 ]
 const ACTIVE = { topic: 'topics', 'viva-session': 'viva' }
 
 export default function Layout({ route, children }) {
-  const { theme, setTheme, user, profile, notice: toast } = useApp()
+  const { theme, setTheme, user, profile, notice: toast, track } = useApp()
+  const NAV = navFor(track)
   const active = ACTIVE[route.path] || route.path
   const ThemeIcon = theme === 'dark' ? Sun : Moon
 
@@ -73,7 +74,7 @@ function Brand({ compact }) {
       <img src="favicon.svg" alt="" className={compact ? 'h-8 w-8' : 'h-9 w-9'} />
       <div className="leading-tight">
         <div className="font-extrabold tracking-tight">MeriDent <span className="text-clinic-600 dark:text-clinic-400">Prep</span></div>
-        {!compact && <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">BDS · Viva · NEET MDS</div>}
+        {!compact && <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">University · MDS · ADC</div>}
       </div>
     </a>
   )

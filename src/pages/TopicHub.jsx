@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { ChevronDown, Layers3, Mic, Search } from 'lucide-react'
+import { ChevronDown, Layers3, Search } from 'lucide-react'
+import MerideeAvatar from '../components/MerideeAvatar.jsx'
 import { useApp } from '../state/AppContext.jsx'
 import { Badge, Button, Card, Empty, Icon, PageHeader, PriorityBadge, Segmented, cx } from '../components/ui.jsx'
 import { navigate } from '../state/router.js'
@@ -16,27 +17,34 @@ export const SECTIONS = [
   ['viva_pearls', 'Viva pearls', 'Sparkles'],
 ]
 
+/** ADC track: ADC subjects first, then the rest. Other tracks: hide ADC-only subjects. */
+export function trackSubjects(subjects, track) {
+  if (track?.key === 'ADC') return [...subjects.filter((s) => s.track === 'adc'), ...subjects.filter((s) => s.track !== 'adc')]
+  return subjects.filter((s) => s.track !== 'adc')
+}
+
 export function TopicHub() {
-  const { content, profile } = useApp()
+  const { content, profile, track } = useApp()
   const [q, setQ] = useState('')
   const [prio, setPrio] = useState('all')
   const [subj, setSubj] = useState('all')
-  const subjects = content.subjects
+  const subjects = trackSubjects(content.subjects, track)
   const subjectOf = Object.fromEntries(subjects.map((s) => [s.id, s]))
 
   const list = useMemo(() => {
     const needle = q.trim().toLowerCase()
-    return content.topics.filter((t) =>
+    const allowed = new Set(subjects.map((x) => x.id))
+    return content.topics.filter((t) => allowed.has(t.subject_id) &&
       (prio === 'all' || t.priority === prio) &&
       (subj === 'all' || t.subject_id === Number(subj)) &&
       (!needle || `${t.title} ${(t.tags || []).join(' ')} ${JSON.stringify(t.content)}`.toLowerCase().includes(needle)))
-  }, [content.topics, q, prio, subj])
+  }, [content.topics, subjects, q, prio, subj])
 
   const grouped = subjects.map((s) => ({ s, items: list.filter((t) => t.subject_id === s.id) })).filter((g) => g.items.length)
 
   return (
     <div className="animate-fade-in">
-      <PageHeader title="Syllabus & High-Yield Hub" subtitle={`University-pattern answers, broken down the way examiners expect${profile?.university ? ` · ${profile.university}` : ''}`} />
+      <PageHeader title={track?.key === 'ADC' ? 'Australian Practice Hub' : 'Syllabus & High-Yield Hub'} subtitle={track?.key === 'ADC' ? 'ADC cases first, then the core clinical subjects – answers structured the way examiners expect' : `University-pattern answers, broken down the way examiners expect${profile?.university ? ` · ${profile.university}` : ''}`} />
       <Card className="mb-5 space-y-3 p-4">
         <label className="relative block">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -87,7 +95,7 @@ export function TopicDetail({ slug }) {
     <div className="animate-fade-in">
       <PageHeader back="#/topics" title={topic.title}
         subtitle={<span className="flex flex-wrap items-center gap-2"><span>{subject?.name}</span><PriorityBadge priority={topic.priority} />{topic.marks_hint && <Badge tone="blue">{topic.marks_hint}</Badge>}</span>}
-        actions={<Button icon="Mic" onClick={() => navigate(`viva-session/topic/${topic.id}`)}>Face the examiner</Button>} />
+        actions={<Button icon="Sparkles" onClick={() => navigate(`viva-session/topic/${topic.id}`)}>Viva with Meridee</Button>} />
 
       {lastViva && <Card className="mb-4 flex items-center justify-between p-3 text-sm"><span className="text-slate-500">Last viva on this topic</span><b>{Number(lastViva.overall).toFixed(1)}/10</b></Card>}
 
@@ -130,9 +138,9 @@ export function TopicDetail({ slug }) {
       )}
 
       <Card className="mt-6 flex flex-wrap items-center gap-3 p-4">
-        <Mic className="h-6 w-6 text-clinic-600" />
-        <div className="flex-1"><p className="font-bold">Ready to be grilled?</p><p className="text-sm text-slate-500">The examiner will open with this case and probe your weak answers.</p></div>
-        <Button icon="Mic" onClick={() => navigate(`viva-session/topic/${topic.id}`)}>Start viva</Button>
+        <MerideeAvatar />
+        <div className="flex-1"><p className="font-bold">Ready to be grilled?</p><p className="text-sm text-slate-500">Meridee will open with this case and probe your weak answers.</p></div>
+        <Button icon="Sparkles" onClick={() => navigate(`viva-session/topic/${topic.id}`)}>Start viva</Button>
       </Card>
     </div>
   )

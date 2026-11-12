@@ -15,6 +15,7 @@ export const SUBJECTS = [
   { slug: 'pedodontics', name: 'Pedodontics', bds_year: 4, icon: 'Baby', color: 'pink', sort_order: 7 },
   { slug: 'dental-materials', name: 'Dental Materials', bds_year: 2, icon: 'FlaskConical', color: 'teal', sort_order: 8 },
   { slug: 'pharmacology', name: 'Pharmacology', bds_year: 2, icon: 'Pill', color: 'indigo', sort_order: 9 },
+  { slug: 'adc-practice', name: 'ADC: Australian Clinical Practice', bds_year: null, icon: 'Stethoscope', color: 'sky', sort_order: 10, track: 'adc' },
 ]
 
 export const TOPICS = [
@@ -558,6 +559,99 @@ export const TOPICS = [
       ['Max dose of lignocaine with adrenaline?', '7 mg/kg (max 500 mg). Without adrenaline: 4.4 mg/kg (max 300 mg).'],
       ['LA causing methaemoglobinaemia?', 'Prilocaine (metabolite o-toluidine). Also benzocaine.'],
       ['Most cardiotoxic LA?', 'Bupivacaine.'],
+    ],
+  },
+
+  // ---------------- ADC track: Australian practice cases ----------------
+  {
+    slug: 'adc-anaphylaxis', subject: 'adc-practice', title: 'Anaphylaxis in the Dental Chair', priority: 'must_know', marks_hint: 'ADC practical – medical emergency',
+    tags: ['ADC', 'medical emergency'],
+    vignette: 'A 34-year-old woman becomes flushed and wheezy, with swelling of her lips, 3 minutes after you place a latex rubber dam. Her pulse is 124/min and blood pressure 80/50 mmHg.',
+    content: {
+      definition: 'A severe, potentially life-threatening systemic hypersensitivity reaction of rapid onset, with airway, breathing or circulation problems, usually with skin or mucosal changes.',
+      etiology: ['Common dental triggers: latex, antibiotics (e.g. penicillins), chlorhexidine, NSAIDs', 'True allergy to amide local anaesthetics is very rare – reactions are more often vasovagal or adrenaline effects'],
+      clinical_features: ['Skin/mucosa: urticaria, flushing, angioedema of lips, tongue and face', 'Airway/breathing: hoarse voice, stridor, wheeze, shortness of breath', 'Circulation: tachycardia, hypotension, pale and floppy (children), collapse', 'Gastrointestinal: abdominal pain, vomiting'],
+      management: [
+        'Stop treatment and remove the trigger (take out the latex dam)',
+        'Call for help and an ambulance (000)',
+        'Lay the patient flat – do not let them stand or walk; sit up only if breathing is difficult',
+        'Adrenaline 0.01 mg/kg IM (max 0.5 mg; 0.5 mL of 1:1000) into the anterolateral thigh; repeat every 5 minutes if needed',
+        'Oxygen; start CPR if unresponsive and not breathing normally',
+        'Transfer to hospital for observation (biphasic reactions), document fully, and refer to a clinical immunologist',
+      ],
+      viva_pearls: ['Antihistamines do not treat airway swelling or shock – adrenaline first.', 'Flag latex allergy in the record and plan latex-free care.'],
+    },
+    viva: [
+      { q: 'What is your diagnosis and why?', keywords: ['anaphylaxis', 'latex', 'wheeze|bronchospasm|breathing', 'hypotension|blood pressure|low bp', 'angioedema|swelling|urticaria'], probe: 'Which systems are involved, and what is the likely trigger?' },
+      { q: 'What are your immediate actions?', keywords: ['remove|stop', 'help|ambulance|000', 'flat|lie|supine', 'adrenaline|epinephrine', 'oxygen'], probe: 'How will you position her, and who will you call?' },
+      { q: 'Give the adrenaline dose, concentration and route.', keywords: ['0.5 mg|0.5mg|500 microgram|0.01 mg/kg', '1:1000|1 in 1000', 'intramuscular|im', 'thigh', 'repeat|5 minutes|five minutes'], probe: 'Where exactly do you inject it, and when can you repeat it?' },
+      { q: 'What happens after she recovers?', keywords: ['hospital|observation|biphasic', 'document|record', 'immunolog|allergist|referral', 'latex free|latex-free|alert'], probe: 'Why must she still go to hospital?' },
+    ],
+    flashcards: [
+      ['Adult adrenaline dose for anaphylaxis?', '0.01 mg/kg IM, maximum 0.5 mg (0.5 mL of 1:1000), anterolateral thigh; repeat every 5 minutes if needed.'],
+      ['Why should a patient in anaphylaxis not stand up?', 'Standing can cause sudden cardiovascular collapse; keep them lying flat (or sitting if breathing is difficult).'],
+    ],
+  },
+  {
+    slug: 'adc-consent-notification', subject: 'adc-practice', title: 'Consent, Material Risk & Mandatory Notification', priority: 'must_know', marks_hint: 'ADC – ethics & law',
+    tags: ['ADC', 'ethics', 'AHPRA'],
+    vignette: 'A 52-year-old woman asks you to remove a lower third molar whose roots lie close to the inferior alveolar canal. She is anxious and says, "Just do whatever you think is best."',
+    content: {
+      definition: 'Valid consent is voluntary, informed, specific to the procedure, and given by a person with capacity. In Australia, Rogers v Whitaker (1992) requires practitioners to warn of material risks.',
+      classification: ['Implied, verbal and written consent', 'Mature minors can consent when they fully understand the treatment (Gillick principle, adopted in Marion\'s case)', 'Substitute decision-makers for adults without capacity, as set out by state and territory law'],
+      clinical_features: [
+        'Discuss the diagnosis and the proposed treatment',
+        'Explain the risks, both common and serious (e.g. inferior alveolar nerve injury causing numbness)',
+        'Explain the alternatives, including coronectomy and no treatment',
+        'Discuss cost (informed financial consent) and invite questions',
+      ],
+      management: [
+        '"Do whatever you think is best" is not informed consent – explain, check understanding and give time',
+        'Use a professional interpreter where needed rather than family members',
+        'Record the discussion, the risks explained and the patient\'s decision',
+        'The patient can withdraw consent at any time',
+      ],
+      viva_pearls: [
+        'Material risk (Rogers v Whitaker): one a reasonable person in the patient\'s position would consider significant, or one the practitioner knows this particular patient would.',
+        'Mandatory notification to AHPRA covers practising while intoxicated, sexual misconduct, impairment placing the public at substantial risk, and a significant departure from accepted professional standards.',
+      ],
+    },
+    viva: [
+      { q: 'What makes consent valid?', keywords: ['voluntary', 'inform', 'capacity|competent|competence', 'specific'], probe: 'Name the four elements.' },
+      { q: 'Which case defines material risk in Australia, and what does it say?', keywords: ['rogers|whitaker', 'material', 'reasonable person|reasonable patient', 'particular patient|this patient|significance|significant'], probe: 'Is it judged by what other dentists would do, or by the patient?' },
+      { q: 'What will you discuss with this patient before extracting the tooth?', keywords: ['nerve|paraesthesia|paresthesia|numbness', 'alternative|coronectomy|no treatment', 'cost|fee|financial', 'benefit|reason', 'question|understand'], probe: 'What are her options besides extraction?' },
+      { q: 'When must a dentist make a mandatory notification, and to whom?', keywords: ['ahpra', 'intoxicat|alcohol|drug', 'sexual', 'impairment', 'departure|professional standards'], probe: 'List the four types of notifiable conduct.' },
+    ],
+    flashcards: [
+      ['Australian case defining material risk?', 'Rogers v Whitaker (1992), High Court of Australia.'],
+      ['Four types of notifiable conduct (National Law)?', 'Practising while intoxicated; sexual misconduct in practice; impairment placing the public at substantial risk; significant departure from accepted professional standards.'],
+    ],
+  },
+  {
+    slug: 'adc-avulsion', subject: 'adc-practice', title: 'Avulsion of a Permanent Incisor', priority: 'must_know', marks_hint: 'ADC – dental trauma',
+    tags: ['ADC', 'trauma', 'IADT'],
+    vignette: 'A 9-year-old was hit by a cricket ball 30 minutes ago. His mother has brought the avulsed upper right central incisor wrapped in a dry tissue.',
+    content: {
+      definition: 'Complete displacement of a tooth out of its socket. Prognosis depends mainly on extra-oral dry time, the storage medium and the stage of root development.',
+      management: [
+        'Phone advice: find the tooth, hold it by the crown, rinse briefly if dirty (do not scrub the root) and replant immediately; otherwise store in milk, saline or saliva and come in at once',
+        'In the clinic: rinse with saline, replant with gentle pressure, check the position on a radiograph, and place a flexible splint for about 2 weeks',
+        'Open apex: allow a chance of pulp revascularisation and monitor closely; closed apex: start root canal treatment within 2 weeks',
+        'Systemic antibiotics (amoxicillin or penicillin in children; doxycycline only over 12 years), check tetanus status, chlorhexidine mouthwash, soft diet',
+        'Follow-up: 2 weeks, 4 weeks, 3 months, 6 months, 1 year, then yearly',
+      ],
+      clinical_features: ['Dry time over 60 minutes: periodontal ligament cells are non-viable, so replacement resorption (ankylosis) is expected', 'Avulsed primary teeth are not replanted'],
+      viva_pearls: ['Milk is the best widely available storage medium; Hank\'s balanced salt solution is better if available.', 'IADT guidelines (2020) are the reference for dental trauma management.'],
+    },
+    viva: [
+      { q: 'What should the mother have been told on the phone?', keywords: ['replant', 'crown|hold', 'milk|saline|saliva', 'scrub|touch the root|rinse', 'immediately|straight away|urgent|at once'], probe: 'How should she handle and store the tooth?' },
+      { q: 'How will you manage this in the clinic?', keywords: ['saline|rinse', 'replant', 'radiograph|x ray|x-ray', 'flexible|splint', '2 weeks|two weeks'], probe: 'What type of splint, and for how long?' },
+      { q: 'What about the pulp in this 9-year-old?', keywords: ['open apex|immature|incomplete', 'revascular|pulp healing', 'monitor|review|follow', 'root canal|endodontic'], probe: 'How does root development change your plan?' },
+      { q: 'What medication and aftercare will you give?', keywords: ['antibiotic|amoxicillin|penicillin|doxycycline', 'tetanus', 'chlorhexidine|mouthwash', 'soft diet', 'follow up|follow-up|review'], probe: 'Which antibiotic is suitable for a 9-year-old, and why not doxycycline?' },
+    ],
+    flashcards: [
+      ['Splint for a replanted avulsed permanent tooth?', 'Flexible splint for about 2 weeks.'],
+      ['Best widely available storage medium for an avulsed tooth?', 'Milk (Hank\'s balanced salt solution if available).'],
     ],
   },
 ]

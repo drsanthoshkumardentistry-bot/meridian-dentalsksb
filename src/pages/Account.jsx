@@ -77,7 +77,7 @@ export function Profile() {
             <input className={input} list="unis" value={f.university} onChange={(e) => setF({ ...f, university: e.target.value })} placeholder="Start typing…" />
             <datalist id="unis">{UNIVERSITIES.map((u) => <option key={u} value={u} />)}</datalist></label>
           <label className="block"><span className="mb-1 block text-sm font-bold">College</span><input className={input} value={f.college} onChange={(e) => setF({ ...f, college: e.target.value })} /></label>
-          <div><span className="mb-1 block text-sm font-bold">Preparing for</span><Segmented value={f.target_exam} onChange={(v) => setF({ ...f, target_exam: v })} options={['University', 'NEET MDS', 'INBDE', 'ORE']} /></div>
+          <div><span className="mb-1 block text-sm font-bold">Preparing for</span><Segmented value={f.target_exam} onChange={(v) => setF({ ...f, target_exam: v })} options={[['University', 'University'], ['NEET MDS', 'MDS (NEET)'], ['ADC', 'ADC (Australia)']]} /></div>
           <Button type="submit" className="w-full">Save profile</Button>
         </form>
       </Card>

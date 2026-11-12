@@ -5,18 +5,27 @@ import { createSession, liveMetrics, respond, summarize } from '../lib/examiner.
 import { askAiExaminer } from '../lib/api.js'
 import { Badge, Button, Card, Empty, Icon, Meter, PageHeader, PriorityBadge, Ring, Segmented, cx } from '../components/ui.jsx'
 import { navigate } from '../state/router.js'
+import MerideeAvatar from '../components/MerideeAvatar.jsx'
+import { trackSubjects } from './TopicHub.jsx'
 
 /* ---------------- Picker ---------------- */
 export function VivaHome() {
-  const { content, progress } = useApp()
+  const { content, progress, track } = useApp()
   const [mode, setMode] = useState('topic')
   const subjectOf = Object.fromEntries(content.subjects.map((s) => [s.id, s]))
   const last = Object.fromEntries([...progress.vivas].reverse().map((v) => [`${v.mode}-${v.topic_id ?? v.spotter_id}`, v]))
-  const topics = [...content.topics].sort((a, b) => (a.priority === b.priority ? 0 : a.priority === 'must_know' ? -1 : 1))
+  const subs = trackSubjects(content.subjects, track)
+  const order = Object.fromEntries(subs.map((x, i) => [x.id, i]))
+  const topics = content.topics.filter((t) => t.subject_id in order)
+    .sort((a, b) => (order[a.subject_id] - order[b.subject_id]) || (a.priority === b.priority ? 0 : a.priority === 'must_know' ? -1 : 1))
 
   return (
     <div className="animate-fade-in">
-      <PageHeader title="AI Viva Voce Simulator" subtitle="A strict external examiner: case first, then probing follow-ups. Scored on accuracy, terminology and confidence." />
+      <div className="mb-5 flex items-center gap-3">
+        <MerideeAvatar size="lg" />
+        <div><h1 className="text-2xl font-bold tracking-tight">Meridee <span className="text-base font-semibold text-slate-400">· your AI examiner</span></h1>
+          <p className="text-sm text-slate-500">{track?.key === 'ADC' ? 'Australian clinical cases: Meridee judges your reasoning on patient safety, consent and current guidelines.' : track?.key === 'NEET MDS' ? 'Rapid recall drills on high-yield topics, with follow-up questions on anything you miss.' : 'A strict external examiner: case first, then probing follow-ups. Scored on accuracy, terminology and confidence.'}</p></div>
+      </div>
       <Card className="mb-5 grid gap-3 p-4 sm:grid-cols-3">
         {[['ClipboardList', 'Case vignette', 'Every viva opens with a clinical case or spotter.'], ['MessageSquareWarning', 'Probing follow-ups', 'Weak answers get challenged – just like the real thing.'], ['Gauge', 'Live evaluation', 'Terminology, accuracy and confidence tracked per answer.']].map(([i, t, d]) => (
           <div key={t} className="flex gap-3"><Icon name={i} className="mt-0.5 h-5 w-5 shrink-0 text-clinic-600" /><div><p className="text-sm font-bold">{t}</p><p className="text-xs text-slate-500">{d}</p></div></div>
@@ -53,13 +62,13 @@ const MAX_AI_TURNS = 10
 
 export function VivaSession({ kind, id }) {
   const app = useApp()
-  const { content, user, saveViva, toast } = app
+  const { content, user, saveViva, toast, track } = app
   const topic = kind === 'topic' ? content.topics.find((t) => t.id === Number(id)) : null
   const spotter = kind === 'spotter' ? content.spotters.find((s) => s.id === Number(id)) : null
   const subject = content.subjects.find((s) => s.id === (topic || spotter)?.subject_id)
 
   const [engine, setEngine] = useState('local')        // 'local' | 'ai'
-  const [state, setState] = useState(() => createSession({ topic, spotter }))
+  const [state, setState] = useState(() => createSession({ topic, spotter, track: track?.key }))
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const [startedAt] = useState(() => new Date().toISOString())
@@ -80,7 +89,7 @@ export function VivaSession({ kind, id }) {
     setSaved(true)
     const s = summarize(state)
     saveViva({
-      id: crypto.randomUUID(), mode: kind, topic_id: topic?.id ?? null, spotter_id: spotter?.id ?? null, engine,
+      id: crypto.randomUUID(), mode: kind, topic_id: topic?.id ?? null, spotter_id: spotter?.id ?? null, engine, track: track?.key ?? null,
       overall: s.overall, scores: { terminology: s.terminology, accuracy: s.accuracy, confidence: s.confidence, gaps: s.gaps },
       feedback: s.verdict, started_at: startedAt, ended_at: new Date().toISOString(), messages: state.messages,
     })
@@ -105,6 +114,8 @@ export function VivaSession({ kind, id }) {
           history: state.messages.map(({ role, content }) => ({ role, content })),
           answer,
           finalTurn: studentTurns >= MAX_AI_TURNS,
+          track: track?.key || 'University',
+          persona: track?.meridee,
         })
         const ev = normaliseAiEval(data.evaluation)
         setState((s) => {
@@ -113,7 +124,7 @@ export function VivaSession({ kind, id }) {
           return { ...s, messages: msgs, results, done: Boolean(data.done) || studentTurns >= MAX_AI_TURNS }
         })
       } catch (err) {
-        toast('AI examiner unavailable – switching to the built-in examiner', 'error')
+        toast('Meridee AI is unavailable – switching to offline Meridee', 'error')
         setEngine('local')
         // Re-run this answer through the built-in engine from the pre-answer state.
         const r = respond(state, answer)
@@ -130,7 +141,7 @@ export function VivaSession({ kind, id }) {
   }
 
   function restart(nextEngine = engine) {
-    setEngine(nextEngine); setState(createSession({ topic, spotter })); setSaved(false); setElapsed(0); setRevealSpotter(false)
+    setEngine(nextEngine); setState(createSession({ topic, spotter, track: track?.key })); setSaved(false); setElapsed(0); setRevealSpotter(false)
   }
 
   const studentCount = state.messages.filter((m) => m.role === 'student').length
@@ -138,13 +149,13 @@ export function VivaSession({ kind, id }) {
 
   return (
     <div className="animate-fade-in">
-      <PageHeader back="#/viva" title={topic ? `Viva: ${topic.title}` : `Spotter viva #${spotter.id}`}
-        subtitle={<span className="flex flex-wrap items-center gap-2">{subject?.name}<Badge tone={engine === 'ai' ? 'violet' : 'blue'}>{engine === 'ai' ? <><Sparkles className="h-3 w-3" />AI examiner</> : <><GraduationCap className="h-3 w-3" />Built-in examiner</>}</Badge><Badge><Clock className="h-3 w-3" />{Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, '0')}</Badge></span>}
+      <PageHeader back="#/viva" title={topic ? `Meridee viva: ${topic.title}` : `Meridee spotter viva #${spotter.id}`}
+        subtitle={<span className="flex flex-wrap items-center gap-2">{subject?.name}<Badge tone={engine === 'ai' ? 'violet' : 'blue'}>{engine === 'ai' ? <><Sparkles className="h-3 w-3" />Meridee AI</> : <><GraduationCap className="h-3 w-3" />Meridee (offline)</>}</Badge><Badge><Clock className="h-3 w-3" />{Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, '0')}</Badge></span>}
         actions={studentCount === 0 && !state.done && (
           <Segmented value={engine} onChange={(v) => {
-            if (v === 'ai' && !canUseAi) { toast('Sign in to use the AI examiner'); return }
+            if (v === 'ai' && !canUseAi) { toast('Sign in to use Meridee AI'); return }
             restart(v)
-          }} options={[['local', 'Built-in'], ['ai', 'AI (beta)']]} />
+          }} options={[['local', 'Meridee (offline)'], ['ai', 'Meridee AI (beta)']]} />
         )} />
 
       <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
@@ -172,7 +183,7 @@ export function VivaSession({ kind, id }) {
           <Card className="flex flex-col">
             <div className="max-h-[52vh] min-h-[280px] space-y-4 overflow-y-auto p-4">
               {state.messages.map((m, i) => <Bubble key={i} m={m} />)}
-              {busy && <div className="flex items-center gap-2 text-sm text-slate-400"><Bot className="h-4 w-4" /><span className="animate-pulse">Examiner is listening…</span></div>}
+              {busy && <div className="flex items-center gap-2 text-sm text-slate-400"><Bot className="h-4 w-4" /><span className="animate-pulse">Meridee is thinking…</span></div>}
               <div ref={chatEnd} />
             </div>
             {!state.done ? (
@@ -218,8 +229,9 @@ function Bubble({ m }) {
   const me = m.role === 'student'
   return (
     <div className={cx('flex gap-2.5', me && 'flex-row-reverse')}>
-      <span className={cx('grid h-8 w-8 shrink-0 place-items-center rounded-full', me ? 'bg-clinic-600 text-white' : 'bg-slate-800 text-white dark:bg-slate-700')}>{me ? <UserRound className="h-4 w-4" /> : <GraduationCap className="h-4 w-4" />}</span>
+      {me ? <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-clinic-600 text-white"><UserRound className="h-4 w-4" /></span> : <MerideeAvatar size="sm" />}
       <div className={cx('max-w-[85%]', me && 'text-right')}>
+        {!me && <div className="mb-0.5 text-[11px] font-bold text-clinic-600 dark:text-clinic-400">Meridee</div>}
         <div className={cx('inline-block whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-left text-[15px] leading-relaxed', me ? 'rounded-tr-sm bg-clinic-600 text-white' : 'rounded-tl-sm bg-slate-100 dark:bg-slate-800')}>{m.content}</div>
         {me && m.evaluation && (
           <div className="mt-1 flex flex-wrap justify-end gap-1 text-[11px]">
@@ -235,7 +247,7 @@ function Bubble({ m }) {
 function Summary({ summary }) {
   return (
     <Card className="p-4">
-      <h3 className="mb-3 text-sm font-bold">Examiner's verdict</h3>
+      <h3 className="mb-3 text-sm font-bold">Meridee's verdict</h3>
       <div className="flex justify-center"><Ring value={summary.overall} max={10} label={summary.overall} sub="out of 10" /></div>
       <p className={cx('mt-3 text-center text-sm font-bold', summary.overall >= 5 ? 'text-emerald-600' : 'text-rose-600')}>{summary.verdict}</p>
       <div className="mt-4 space-y-3">

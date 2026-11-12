@@ -4,30 +4,35 @@ import { useApp } from '../state/AppContext.jsx'
 import { Badge, Button, Card, Empty, Modal, PageHeader, Ring, Segmented, cx, fmtTime, shuffle } from '../components/ui.jsx'
 
 export default function Mcq() {
-  const { content, progress } = useApp()
+  const { content, progress, track } = useApp()
   const [view, setView] = useState({ name: 'home' })
-  const qs = content.mcqs
+  const exam = track?.mcqExam || 'NEET MDS'
+  const neg = track ? track.negativeMarking : true
+  const qs = content.mcqs.filter((q) => (q.exam || 'NEET MDS') === exam)
   const subjects = [...new Set(qs.map((q) => q.subject))]
   const acc = (list) => { const a = list.filter((q) => q.id in progress.answers); return { done: a.length, pct: a.length ? Math.round(a.filter((q) => progress.answers[q.id]).length / a.length * 100) : 0 } }
 
   const practice = (title, list) => setView({ name: 'practice', title, ids: list.map((q) => q.id) })
   if (view.name === 'practice') return <Practice {...view} onExit={() => setView({ name: 'home' })} />
-  if (view.name === 'setup') return <TestSetup subjects={subjects} onStart={(t) => setView({ name: 'test', ...t })} onExit={() => setView({ name: 'home' })} />
-  if (view.name === 'test') return <Test {...view} onDone={(r) => setView({ name: 'result', ...r })} />
+  if (view.name === 'setup') return <TestSetup bank={qs} neg={neg} exam={exam} subjects={subjects} onStart={(t) => setView({ name: 'test', ...t })} onExit={() => setView({ name: 'home' })} />
+  if (view.name === 'test') return <Test {...view} neg={neg} onDone={(r) => setView({ name: 'result', ...r })} />
   if (view.name === 'result') return <TestResult {...view} onHome={() => setView({ name: 'home' })} onAgain={() => setView({ name: 'setup' })} />
 
   const pyq = qs.filter((q) => q.is_pyq), imp = qs.filter((q) => q.is_important)
   const wrong = qs.filter((q) => progress.answers[q.id] === false)
   const bm = qs.filter((q) => progress.bookmarks.includes(q.id))
-  const best = progress.mocks.length ? Math.max(...progress.mocks.map((m) => m.pct ?? 0)) : null
+  const mocks = progress.mocks.filter((m) => (m.kind || '').startsWith(exam === 'ADC' ? 'ADC' : '') && (exam === 'ADC' || !(m.kind || '').startsWith('ADC')))
+  const best = mocks.length ? Math.max(...mocks.map((m) => m.pct ?? 0)) : null
 
   return (
     <div className="animate-fade-in">
-      <PageHeader title="NEET MDS MCQs" subtitle={`${qs.length} questions · NEET MDS marking +4 / −1 · best mock ${best != null ? best + '%' : '–'}`} />
+      <PageHeader title={track?.mcqLabel || 'NEET MDS MCQs'} subtitle={`${qs.length} questions · ${neg ? 'NEET MDS marking +4 / −1' : 'scored as % correct'} · best mock ${best != null ? best + '%' : '–'}`} />
       <div className="grid gap-3 sm:grid-cols-2">
-        <Tile icon={ScrollText} tone="text-violet-600 bg-violet-50 dark:bg-violet-950/40" title="PYQs" text="Repeated previous-year topics" meta={`${pyq.length} questions · ${acc(pyq).done} done · ${acc(pyq).pct}%`} onClick={() => practice('PYQs', pyq)} />
-        <Tile icon={Star} tone="text-amber-600 bg-amber-50 dark:bg-amber-950/40" title="Most Important" text="High-yield, must-know facts" meta={`${imp.length} questions · ${acc(imp).done} done · ${acc(imp).pct}%`} onClick={() => practice('Most Important', imp)} />
-        <Tile icon={Timer} tone="text-clinic-600 bg-clinic-50 dark:bg-clinic-950" title="Mock test" text="Timed, with palette & mark-for-review" meta={`${progress.mocks.length} taken`} onClick={() => setView({ name: 'setup' })} />
+        {exam === 'ADC'
+          ? <Tile icon={ScrollText} tone="text-violet-600 bg-violet-50 dark:bg-violet-950/40" title="All scenarios" text="Clinical scenarios in the Australian context" meta={`${qs.length} questions · ${acc(qs).done} done · ${acc(qs).pct}%`} onClick={() => practice('ADC scenarios', qs)} />
+          : <Tile icon={ScrollText} tone="text-violet-600 bg-violet-50 dark:bg-violet-950/40" title="PYQs" text="Repeated previous-year topics" meta={`${pyq.length} questions · ${acc(pyq).done} done · ${acc(pyq).pct}%`} onClick={() => practice('PYQs', pyq)} />}
+        <Tile icon={Star} tone="text-amber-600 bg-amber-50 dark:bg-amber-950/40" title={exam === 'ADC' ? 'Must-know for ADC' : 'Most Important'} text={exam === 'ADC' ? 'Emergencies, law, infection control' : 'High-yield, must-know facts'} meta={`${imp.length} questions · ${acc(imp).done} done · ${acc(imp).pct}%`} onClick={() => practice(exam === 'ADC' ? 'Must-know for ADC' : 'Most Important', imp)} />
+        <Tile icon={Timer} tone="text-clinic-600 bg-clinic-50 dark:bg-clinic-950" title="Mock test" text="Timed, with palette & mark-for-review" meta={`${mocks.length} taken`} onClick={() => setView({ name: 'setup' })} />
         <Tile icon={XCircle} tone="text-rose-600 bg-rose-50 dark:bg-rose-950/40" title="Revise mistakes" text="Questions you got wrong" meta={`${wrong.length} to revise`} onClick={() => wrong.length && practice('Revise mistakes', wrong)} />
         <Tile icon={BookmarkCheck} tone="text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40" title="Bookmarks" text="Saved for last-minute revision" meta={`${bm.length} saved`} onClick={() => bm.length && practice('Bookmarks', bm)} />
       </div>
@@ -40,7 +45,7 @@ export default function Mcq() {
           </Card></button>
         ) })}
       </div>
-      <p className="mt-6 text-center text-xs text-slate-400">PYQs are recall-based on frequently repeated topics, not reproduced official papers. Verify with standard textbooks.</p>
+      <p className="mt-6 text-center text-xs text-slate-400">{exam === 'ADC' ? 'ADC-style practice written for MeriDent Prep – not official ADC questions. Confirm current Australian guidelines.' : 'PYQs are recall-based on frequently repeated topics, not reproduced official papers. Verify with standard textbooks.'}</p>
     </div>
   )
 }
@@ -89,27 +94,26 @@ function Practice({ title, ids, onExit }) {
   )
 }
 
-function TestSetup({ subjects, onStart, onExit }) {
-  const { content } = useApp()
-  const [src, setSrc] = useState('all'), [subj, setSubj] = useState('all'), [n, setN] = useState(20), [secs, setSecs] = useState(45)
-  const pool = content.mcqs.filter((q) => (src === 'all' || (src === 'pyq' ? q.is_pyq : q.is_important)) && (subj === 'all' || q.subject === subj))
+function TestSetup({ bank, neg, exam, subjects, onStart, onExit }) {
+  const [src, setSrc] = useState('all'), [subj, setSubj] = useState('all'), [n, setN] = useState(20), [secs, setSecs] = useState(exam === 'ADC' ? 60 : 45)
+  const pool = bank.filter((q) => (src === 'all' || (src === 'pyq' ? q.is_pyq : q.is_important)) && (subj === 'all' || q.subject === subj))
   const count = Math.min(n === 'all' ? pool.length : n, pool.length)
   return (
     <div className="mx-auto max-w-2xl animate-fade-in">
       <PageHeader title="Mock test" back="#/mcq" />
       <Card className="space-y-4 p-5">
-        <div><p className="mb-2 text-sm font-bold">Source</p><Segmented value={src} onChange={setSrc} options={[['all', 'All'], ['pyq', 'PYQs'], ['imp', 'Most Important']]} /></div>
+        <div><p className="mb-2 text-sm font-bold">Source</p><Segmented value={src} onChange={setSrc} options={exam === 'ADC' ? [['all', 'All'], ['imp', 'Must-know']] : [['all', 'All'], ['pyq', 'PYQs'], ['imp', 'Most Important']]} /></div>
         <div><p className="mb-2 text-sm font-bold">Subject</p><select value={subj} onChange={(e) => setSubj(e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-900"><option value="all">All subjects</option>{subjects.map((s) => <option key={s}>{s}</option>)}</select></div>
         <div><p className="mb-2 text-sm font-bold">Questions</p><Segmented value={n} onChange={setN} options={[[10, '10'], [20, '20'], [30, '30'], ['all', 'All']]} /></div>
-        <div><p className="mb-2 text-sm font-bold">Time per question</p><Segmented value={secs} onChange={setSecs} options={[[45, '45 s (NEET pace)'], [60, '60 s'], [90, '90 s']]} /></div>
-        <p className="rounded-xl bg-slate-50 p-3 text-sm dark:bg-slate-800/60"><b>{count} questions · {fmtTime(count * secs)} min.</b> +4 correct, −1 wrong, 0 skipped. NEET MDS: 240 questions in 3 hours.</p>
-        <div className="flex gap-2"><Button variant="secondary" onClick={onExit}>Cancel</Button><Button className="flex-1" disabled={!count} onClick={() => onStart({ ids: shuffle(pool).slice(0, count).map((q) => q.id), total: count * secs, kind: src === 'all' ? 'ALL' : src.toUpperCase() })}>Start test</Button></div>
+        <div><p className="mb-2 text-sm font-bold">Time per question</p><Segmented value={secs} onChange={setSecs} options={exam === 'ADC' ? [[60, '60 s'], [90, '90 s'], [120, '2 min']] : [[45, '45 s (NEET pace)'], [60, '60 s'], [90, '90 s']]} /></div>
+        <p className="rounded-xl bg-slate-50 p-3 text-sm dark:bg-slate-800/60"><b>{count} questions · {fmtTime(count * secs)} min.</b> {neg ? '+4 correct, −1 wrong, 0 skipped. NEET MDS: 240 questions in 3 hours.' : 'Scored as % correct. Read each scenario fully – ADC questions reward safe, guideline-based decisions.'}</p>
+        <div className="flex gap-2"><Button variant="secondary" onClick={onExit}>Cancel</Button><Button className="flex-1" disabled={!count} onClick={() => onStart({ ids: shuffle(pool).slice(0, count).map((q) => q.id), total: count * secs, kind: `${exam === 'ADC' ? 'ADC-' : ''}${src === 'all' ? 'ALL' : src.toUpperCase()}` })}>Start test</Button></div>
       </Card>
     </div>
   )
 }
 
-function Test({ ids, total, kind, onDone }) {
+function Test({ ids, total, kind, neg, onDone }) {
   const { content, answerMcq, saveMock } = useApp()
   const [i, setI] = useState(0), [ans, setAns] = useState({}), [rev, setRev] = useState({}), [left, setLeft] = useState(total), [confirm, setConfirm] = useState(false)
   const q = content.mcqs.find((x) => x.id === ids[i])
@@ -124,7 +128,7 @@ function Test({ ids, total, kind, onDone }) {
       const ok = a === qq.answer; ok ? c++ : w++; if (ok) bySub[qq.subject].c++
       answerMcq(id, ok)
     })
-    const n = ids.length, score = c * 4 - w, max = n * 4
+    const n = ids.length, score = neg ? c * 4 - w : c, max = neg ? n * 4 : n
     const result = { kind, n, c, w, u: n - c - w, score, max, pct: Math.max(0, Math.round((score / max) * 100)), time: total - Math.max(0, left), created_at: new Date().toISOString() }
     saveMock(result)
     onDone({ result, bySub, ids, ans })

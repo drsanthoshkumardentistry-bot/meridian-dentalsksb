@@ -13,6 +13,7 @@ export const MCQS = [
   "answer": 2,
   "explanation": "The mandibular first molar erupts at about 6 years, usually just before the mandibular central incisor. It is the first succedaneous-free (non-replacing) permanent tooth.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -28,6 +29,7 @@ export const MCQS = [
   "answer": 2,
   "explanation": "The cusp of Carabelli is an accessory cusp on the palatal surface of the mesiopalatal (mesiolingual) cusp of the maxillary first molar.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -43,6 +45,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "The maxillary canine has the longest root of all teeth, making it a key abutment and the 'cornerstone' of the arch.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": false
  },
  {
@@ -58,6 +61,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "The three-cusp (one buccal, two lingual) form of the mandibular second premolar shows a Y-shaped groove; the two-cusp form shows an H or U pattern.",
   "is_pyq": false,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -73,6 +77,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "The maxillary first premolar usually has two roots – buccal and palatal. The second premolar usually has one.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": false
  },
  {
@@ -88,6 +93,7 @@ export const MCQS = [
   "answer": 2,
   "explanation": "All four muscles of mastication (masseter, temporalis, medial and lateral pterygoid) are supplied by the mandibular division of the trigeminal nerve (V3).",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -103,6 +109,7 @@ export const MCQS = [
   "answer": 3,
   "explanation": "Palatoglossus is supplied by the vagus nerve via the pharyngeal plexus. All other tongue muscles are supplied by the hypoglossal nerve.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -118,6 +125,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Stensen's duct pierces the buccinator and opens into the vestibule opposite the crown of the maxillary second molar.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": false
  },
  {
@@ -133,6 +141,7 @@ export const MCQS = [
   "answer": 2,
   "explanation": "The lingual nerve (V3) carries general sensation from the anterior 2/3. Taste from that area travels in the chorda tympani (VII).",
   "is_pyq": false,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -148,6 +157,7 @@ export const MCQS = [
   "answer": 3,
   "explanation": "The lateral pterygoid pulls the condyle and disc forward, so it protrudes the mandible and helps open the mouth. The other three muscles close it.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": false
  },
  {
@@ -163,6 +173,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "At rest the submandibular gland produces about 65–70% of saliva. On stimulation, the parotid's share rises sharply.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -178,6 +189,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "The SA node has the fastest intrinsic rate of depolarisation, so it sets the heart rate.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": false
  },
  {
@@ -193,6 +205,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Parathormone raises serum calcium by increasing bone resorption, renal calcium reabsorption and calcitriol formation. Calcitonin lowers calcium.",
   "is_pyq": false,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -208,6 +221,7 @@ export const MCQS = [
   "answer": 2,
   "explanation": "Bleeding time reflects platelet number and function (primary haemostasis). PT tests the extrinsic pathway and aPTT the intrinsic pathway.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -223,6 +237,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Factors II, VII, IX and X (plus proteins C and S) need vitamin K for gamma-carboxylation. Warfarin antagonises this step.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -238,6 +253,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Ascorbic acid is a cofactor for prolyl and lysyl hydroxylases. Without it, collagen is unstable, which causes scurvy with bleeding, swollen gums.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -253,6 +269,7 @@ export const MCQS = [
   "answer": 2,
   "explanation": "Glycine occupies every third position (Gly-X-Y), which allows the tight triple-helix packing.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": false
  },
  {
@@ -268,6 +285,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Reed–Sternberg cells are large 'owl-eye' cells and are the hallmark of Hodgkin lymphoma.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": false
  },
  {
@@ -283,6 +301,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Over 90% of oral cancers are squamous cell carcinomas.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -298,6 +317,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "In Burkitt lymphoma, tingible-body macrophages scattered among sheets of tumour cells give the 'starry sky' pattern.",
   "is_pyq": false,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -313,6 +333,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "S. mutans initiates enamel caries. Lactobacilli are linked more with progression of the lesion.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -328,6 +349,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Moist heat at 121 °C and 15 psi for 15 minutes is the standard cycle. The flash cycle is 134 °C at about 30 psi for 3 minutes.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -343,6 +365,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "A. actinomycetemcomitans (which produces leukotoxin) is the key pathogen in localized aggressive periodontitis.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -358,6 +381,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Koplik's spots are bluish-white spots on the buccal mucosa that appear in the prodrome of measles (rubeola).",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": false
  },
  {
@@ -373,6 +397,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Adrenaline 1:1000 at 0.5 mg IM (adult) is first-line. Antihistamines and steroids are only adjuncts.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -388,6 +413,7 @@ export const MCQS = [
   "answer": 2,
   "explanation": "About 7 mg/kg with adrenaline (500 mg max), and about 4.4 mg/kg without it (300 mg max). The vasoconstrictor slows absorption.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -403,6 +429,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Protamine sulfate neutralises heparin. Vitamin K reverses warfarin.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": false
  },
  {
@@ -418,6 +445,7 @@ export const MCQS = [
   "answer": 2,
   "explanation": "Procaine is an ester. The others are amides; a quick check is that amide names contain two 'i's (e.g. l-i-gnoca-i-ne). Articaine is an amide with an ester side chain.",
   "is_pyq": false,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -433,6 +461,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Phenytoin, cyclosporine and calcium-channel blockers (e.g. nifedipine) cause drug-induced gingival overgrowth.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -448,6 +477,7 @@ export const MCQS = [
   "answer": 2,
   "explanation": "Gamma-2 (Sn–Hg) is the weakest and most corrosion-prone phase. High-copper alloys eliminate it by forming Cu6Sn5 instead.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -463,6 +493,7 @@ export const MCQS = [
   "answer": 2,
   "explanation": "GIC's coefficient of thermal expansion is close to that of dentine, which helps it seal well.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -478,6 +509,7 @@ export const MCQS = [
   "answer": 3,
   "explanation": "Type IV (die stone, high strength, low expansion) is used for dies. Type V has high strength with high expansion.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": false
  },
  {
@@ -493,6 +525,7 @@ export const MCQS = [
   "answer": 3,
   "explanation": "Polyether is inherently hydrophilic, but it also absorbs water, so it must not be stored wet.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -508,6 +541,7 @@ export const MCQS = [
   "answer": 2,
   "explanation": "It is buffered phosphoric acid (with Al and Zn salts). Its low initial pH can irritate the pulp.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": false
  },
  {
@@ -523,6 +557,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "The radicular (periapical) cyst is the most common odontogenic cyst. The dentigerous cyst is the most common developmental one.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -538,6 +573,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Ameloblastoma typically shows a multilocular soap-bubble or honeycomb pattern in the molar–ramus region, often with root resorption.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -553,6 +589,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Gorlin–Goltz (nevoid basal cell carcinoma) syndrome: multiple OKCs, basal cell carcinomas, bifid ribs, and calcified falx cerebri.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -568,6 +605,7 @@ export const MCQS = [
   "answer": 0,
   "explanation": "Ghost cells are anucleate, swollen keratinised epithelial cells. They are the hallmark of the calcifying odontogenic cyst (Gorlin cyst).",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": false
  },
  {
@@ -583,6 +621,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "CEOT (Pindborg tumour) shows amyloid-like material with concentric Liesegang ring calcifications.",
   "is_pyq": false,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -598,6 +637,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Hutchinson's triad = notched screwdriver-shaped incisors, interstitial keratitis and VIII-nerve deafness. Mulberry molars are also seen.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -613,6 +653,7 @@ export const MCQS = [
   "answer": 2,
   "explanation": "Small lymphocytes are the most radiosensitive cells. Mature neurons and muscle cells are among the most radioresistant.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": false
  },
  {
@@ -628,6 +669,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Spicules of tumour bone radiating outward give the sunburst appearance in osteosarcoma. Ewing sarcoma gives 'onion-peel'.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -643,6 +685,7 @@ export const MCQS = [
   "answer": 0,
   "explanation": "Fibrous dysplasia shows a ground-glass (orange-peel) appearance with poorly defined margins that blend into normal bone.",
   "is_pyq": false,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -658,6 +701,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Div 2 shows retroclined maxillary centrals, often with proclined laterals and a deep bite. Div 1 shows proclined incisors.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -673,6 +717,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Leeway space is about 0.9 mm per side in the maxilla and 1.7 mm per side in the mandible.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -688,6 +733,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Viggo Andresen developed the activator (Norwegian system). Clark designed the Twin Block, and Frankel the Function Regulator.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": false
  },
  {
@@ -703,6 +749,7 @@ export const MCQS = [
   "answer": 0,
   "explanation": "William J. Clark introduced the Twin Block in 1977. Balters designed the Bionator.",
   "is_pyq": false,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -718,6 +765,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Buckley's formocresol is 19% formaldehyde, 35% cresol and 15% glycerine in water. A 1:5 dilution is commonly used.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -733,6 +781,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Mandibular incisors are protected by the tongue and by saliva from the sublingual and submandibular ducts.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -748,6 +797,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Duraphat is 5% sodium fluoride, which equals 22,600 ppm fluoride.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": false
  },
  {
@@ -763,6 +813,7 @@ export const MCQS = [
   "answer": 2,
   "explanation": "The WHO/CPITN probe has a 0.5 mm ball end with markings at 3.5, 5.5, 8.5 and 11.5 mm.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -778,6 +829,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "11/12 is for mesial surfaces of posterior teeth and 13/14 for distal surfaces. 1/2 and 3/4 are for anteriors.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -793,6 +845,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Biologic width ≈ 0.97 mm epithelial attachment + 1.07 mm connective tissue attachment = 2.04 mm. Sulcus depth is about 0.69 mm.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -808,6 +861,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Plaque Index – Silness & Löe (1964). Gingival Index – Löe & Silness (1963). OHI-S – Greene & Vermillion.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": false
  },
  {
@@ -823,6 +877,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Class I = bilateral posterior edentulous areas; Class II = unilateral distal extension; Class III = unilateral bounded; Class IV = a single anterior area crossing the midline.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -838,6 +893,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "The posterior palatal seal lies between the anterior and posterior vibrating lines, at the junction of hard and soft palate.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -853,6 +909,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "The apex of the arrow-point tracing marks centric relation, a horizontal jaw relation.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": false
  },
  {
@@ -868,6 +925,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Candida albicans, helped by poor denture hygiene and continuous wearing, causes denture stomatitis.",
   "is_pyq": false,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -883,6 +941,7 @@ export const MCQS = [
   "answer": 2,
   "explanation": "Class V = cervical (gingival third) lesions on facial or lingual surfaces.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": false
  },
  {
@@ -898,6 +957,7 @@ export const MCQS = [
   "answer": 2,
   "explanation": "Its high pH (about 12.5) makes it antibacterial and helps stimulate dentine bridge formation.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -913,6 +973,7 @@ export const MCQS = [
   "answer": 2,
   "explanation": "MTA is biocompatible, seals well even when moist, and induces hard-tissue formation. Biodentine is an alternative.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -928,6 +989,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "The apical constriction (CDJ region) is about 0.5–1 mm short of the radiographic apex. It is the narrowest point and the ideal end point.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -943,6 +1005,7 @@ export const MCQS = [
   "answer": 0,
   "explanation": "Weine classified canal configurations (Types I–IV). Vertucci's classification has 8 types.",
   "is_pyq": false,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -958,6 +1021,7 @@ export const MCQS = [
   "answer": 2,
   "explanation": "Le Fort I is a horizontal (Guerin's) fracture above the apices of the teeth. Le Fort II is pyramidal and Le Fort III is craniofacial dysjunction.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -973,6 +1037,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Class I–III describes the relation to the anterior ramus; position A–C describes depth relative to the occlusal plane. Winter's classification is based on angulation.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -988,6 +1053,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "White, Amber and Red lines on a radiograph estimate the depth and difficulty of a third molar impaction.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": false
  },
  {
@@ -1003,6 +1069,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "It is most common after mandibular third molar surgery, typically appearing 2–4 days after extraction.",
   "is_pyq": false,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -1018,6 +1085,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Klein, Palmer and Knutson introduced the DMF index in 1938.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -1033,6 +1101,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "Dean's index (1934, modified 1942) is the classic fluorosis index. TF and TSIF are other indices.",
   "is_pyq": true,
+  "exam": "NEET MDS",
   "is_important": true
  },
  {
@@ -1048,6 +1117,7 @@ export const MCQS = [
   "answer": 1,
   "explanation": "The current concept is that fluoride works mainly topically after eruption: it enhances remineralisation, inhibits demineralisation and affects bacterial enzymes.",
   "is_pyq": false,
+  "exam": "NEET MDS",
   "is_important": true
  }
 ]

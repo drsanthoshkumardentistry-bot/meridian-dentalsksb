@@ -88,7 +88,7 @@ export async function persist(user, action, next) {
     case 'viva': {
       const v = action.viva
       res = await supabase.from('viva_sessions').insert({
-        id: v.id, user_id: uid, mode: v.mode, topic_id: v.topic_id, spotter_id: v.spotter_id, engine: v.engine,
+        id: v.id, user_id: uid, mode: v.mode, topic_id: v.topic_id, spotter_id: v.spotter_id, engine: v.engine, track: v.track ?? null,
         status: 'completed', scores: v.scores, overall: v.overall, feedback: v.feedback, started_at: v.started_at, ended_at: v.ended_at,
       })
       if (!res.error && v.messages?.length) {

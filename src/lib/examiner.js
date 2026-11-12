@@ -8,7 +8,7 @@ const STOP = new Set('the a an of and or with in on at to for from by is are was
 const HEDGES = ['i think', 'i guess', 'maybe', 'not sure', 'probably', 'perhaps', 'i dont know', 'i do not know', 'might be', 'possibly', 'kind of', 'sort of', 'i forgot', 'no idea', 'i am not sure', 'im not sure', 'um', 'uh', 'hmm', 'i believe']
 
 // Rough clinical-vocabulary detector (suffixes + common roots).
-const TERM_RE = /\b\w*(osis|itis|oma|omas|ectomy|otomy|ostomy|plasia|plasty|pathy|algia|aemia|emia|genic|cyte|cytic|blast|clast|keratin\w*|lucen\w*|opaque|opacity|lingual|buccal|palatal|mesial|distal|apical|periapical|alveolar|mandib\w*|maxill\w*|odont\w*|gingiv\w*|periodont\w*|pulp\w*|dentin\w*|enamel|cementum|epitheli\w*|mucos\w*|submucos\w*|fibros\w*|dysplas\w*|neoplas\w*|benign|malignan\w*|metasta\w*|resorption|ankylos\w*|parasthesia|paraesthesia|paresthesia|trismus|ecchymos\w*|haemorrhag\w*|hemorrhag\w*|infiltrat\w*|lymphocyt\w*|palisad\w*|corticat\w*|multilocular|unilocular|biopsy|resection|enucleation|marsupiali\w*|curettage|corticosteroid\w*|intralesional|anaesthe\w*|anesthe\w*|vasoconstrict\w*|aetiolog\w*|etiolog\w*|patholog\w*|histopatholog\w*)\b/g
+const TERM_RE = /\b\w*(osis|itis|oma|omas|ectomy|otomy|ostomy|plasia|plasty|pathy|algia|aemia|emia|genic|cyte|cytic|blast|clast|keratin\w*|lucen\w*|opaque|opacity|lingual|buccal|palatal|mesial|distal|apical|periapical|alveolar|mandib\w*|maxill\w*|odont\w*|gingiv\w*|periodont\w*|pulp\w*|dentin\w*|enamel|cementum|epitheli\w*|mucos\w*|submucos\w*|fibros\w*|dysplas\w*|neoplas\w*|benign|malignan\w*|metasta\w*|resorption|ankylos\w*|parasthesia|paraesthesia|paresthesia|trismus|ecchymos\w*|haemorrhag\w*|hemorrhag\w*|infiltrat\w*|lymphocyt\w*|palisad\w*|corticat\w*|multilocular|unilocular|biopsy|resection|enucleation|marsupiali\w*|curettage|corticosteroid\w*|intralesional|anaesthe\w*|anesthe\w*|vasoconstrict\w*|aetiolog\w*|etiolog\w*|patholog\w*|histopatholog\w*|anaphyla\w*|angioedema|urticaria|hypotens\w*|hypertens\w*|tachycard\w*|wheez\w*|bronchospasm|stridor|adrenaline|epinephrine|intramuscular|glyceryl|trinitrate|hypoglyc\w*|syncope|anticoagula\w*|antibiotic\w*|amoxicillin|prophyla\w*|consent|capacity|ahpra|notification|negligence|avuls\w*|replant\w*|splint\w*|tetanus|revasculari\w*|ankylos\w*|steriliz\w*|sterilis\w*|asepsis|aseptic)\b/g
 
 export function normalize(s = '') {
   return ` ${String(s).toLowerCase().replace(/[’']/g, '').replace(/[-–—_/]/g, ' ').replace(/[^\p{L}\p{N}+.:γηµ ]/gu, ' ').replace(/\s+/g, ' ').trim()} `
@@ -93,11 +93,14 @@ export function spotterSteps(spotter) {
 }
 
 /** Create a new session. */
-export function createSession({ topic, spotter }) {
+const PERSONA = { University: 'your external examiner today', 'NEET MDS': 'your MDS mentor', ADC: 'your ADC examiner' }
+
+export function createSession({ topic, spotter, track }) {
   const steps = spotter ? spotterSteps(spotter) : (topic?.viva || [])
+  const me = `I'm Meridee, ${PERSONA[track] || PERSONA.University}.`
   const opening = spotter
-    ? `I am your external examiner. Look at this ${spotter.category === 'histology' ? 'slide' : spotter.category}. ${steps[0]?.q}`
-    : `I am your external examiner. Read the case above carefully. ${steps[0]?.q}`
+    ? `${me} Look at this ${spotter.category === 'histology' ? 'slide' : spotter.category}. ${steps[0]?.q}`
+    : `${me} Read the case above carefully. ${steps[0]?.q}`
   return {
     steps, idx: 0, probing: false, stepHits: [], results: [],
     messages: [{ role: 'examiner', content: opening }],
