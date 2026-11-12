@@ -38,7 +38,7 @@ export default function Flashcards() {
           <button onClick={() => setSession(null)} className="hover:text-clinic-600">‹ End session</button>
           <span>{session.i + 1} / {queue.length}</span>
         </div>
-        <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800"><div className="h-full bg-clinic-500 transition-all" style={{ width: `${(session.i / queue.length) * 100}%` }} /></div>
+        <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800"><div className="h-full bg-sky-500 transition-all" style={{ width: `${(session.i / queue.length) * 100}%` }} /></div>
         <button onClick={() => setSession((s) => ({ ...s, flipped: !s.flipped }))} className="block w-full text-left">
           <Card className={cx('flex min-h-[260px] flex-col p-6 transition', session.flipped && 'border-clinic-300 dark:border-clinic-700')}>
             <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400"><span>{topicTitle[card.topic_id] || 'Personal card'}</span><span>{box ? `Box ${box}` : 'New'}</span></div>

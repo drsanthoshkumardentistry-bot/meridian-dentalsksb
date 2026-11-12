@@ -104,7 +104,7 @@ export function TopicDetail({ slug }) {
               {isOpen && (
                 <div className="border-t border-slate-100 px-4 py-3.5 text-[15px] leading-relaxed dark:border-slate-800">
                   {Array.isArray(val)
-                    ? <ul className="space-y-2">{val.map((x, i) => <li key={i} className="flex gap-2.5"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-clinic-500" /><span>{x}</span></li>)}</ul>
+                    ? <ul className="space-y-2">{val.map((x, i) => <li key={i} className="flex gap-2.5"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500" /><span>{x}</span></li>)}</ul>
                     : <p>{val}</p>}
                 </div>
               )}

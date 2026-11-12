@@ -32,7 +32,7 @@ export function Button({ variant = 'primary', size = 'md', className, icon, chil
 
 const BADGE = {
   slate: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
-  blue: 'bg-clinic-50 text-clinic-700 dark:bg-clinic-950 dark:text-clinic-300',
+  blue: 'bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-200 dark:bg-sky-950/60 dark:text-sky-300 dark:ring-sky-900',
   red: 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300',
   amber: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300',
   green: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300',
@@ -60,7 +60,7 @@ export function PageHeader({ title, subtitle, back, actions }) {
 }
 
 export function Meter({ label, value, tone = 'blue', hint }) {
-  const color = value >= 75 ? 'bg-emerald-500' : value >= 50 ? (tone === 'blue' ? 'bg-clinic-500' : 'bg-amber-500') : 'bg-rose-500'
+  const color = value >= 75 ? 'bg-emerald-500' : value >= 50 ? (tone === 'blue' ? 'bg-sky-500' : 'bg-amber-500') : 'bg-rose-500'
   return (
     <div>
       <div className="mb-1 flex items-baseline justify-between text-xs font-semibold"><span className="text-slate-600 dark:text-slate-300">{label}</span><span className="tabular-nums">{value ?? '–'}{value != null && '%'}</span></div>
@@ -76,7 +76,7 @@ export function Ring({ value, max = 100, size = 120, label, sub }) {
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth="12" className="stroke-slate-100 dark:stroke-slate-800" />
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth="12" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - pct)} className="stroke-clinic-500 transition-all duration-700" />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth="12" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - pct)} className="stroke-sky-500 transition-all duration-700" />
       </svg>
       <div className="absolute inset-0 grid place-items-center text-center"><div><div className="text-2xl font-extrabold tabular-nums">{label}</div>{sub && <div className="text-xs text-slate-500">{sub}</div>}</div></div>
     </div>

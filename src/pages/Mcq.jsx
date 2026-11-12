@@ -36,7 +36,7 @@ export default function Mcq() {
         {subjects.map((s) => { const l = qs.filter((q) => q.subject === s), a = acc(l); return (
           <button key={s} onClick={() => practice(s, l)} className="text-left"><Card className="p-3.5 transition hover:border-clinic-300 dark:hover:border-clinic-700">
             <div className="flex justify-between text-sm"><b>{s}</b><span className="text-slate-500">{a.done}/{l.length}</span></div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className="h-full bg-clinic-500" style={{ width: `${(a.done / l.length) * 100}%` }} /></div>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className="h-full bg-sky-500" style={{ width: `${(a.done / l.length) * 100}%` }} /></div>
           </Card></button>
         ) })}
       </div>

@@ -63,7 +63,7 @@ function BankCard({ s, stat }) {
         {open ? (
           <div className="mt-2 animate-fade-in text-sm">
             <p className="font-bold">{s.title}</p>
-            <ul className="mt-1.5 space-y-1 text-slate-600 dark:text-slate-300">{s.key_findings.map((k) => <li key={k} className="flex gap-2"><span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-clinic-500" />{k}</li>)}</ul>
+            <ul className="mt-1.5 space-y-1 text-slate-600 dark:text-slate-300">{s.key_findings.map((k) => <li key={k} className="flex gap-2"><span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500" />{k}</li>)}</ul>
             {s.diagnostic_pearl && <p className="mt-2 flex gap-1.5 rounded-lg bg-amber-50 p-2 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"><Lightbulb className="h-4 w-4 shrink-0" />{s.diagnostic_pearl}</p>}
           </div>
         ) : <p className="mt-2 text-sm text-slate-500">Identify it, then reveal.</p>}
@@ -113,7 +113,7 @@ function Quiz({ quiz, onDone, onQuit }) {
         <span className="text-slate-500">Spotter {i + 1} / {quiz.items.length}</span>
         <span className={cx('flex items-center gap-1 tabular-nums', left <= 10 ? 'text-rose-600' : 'text-clinic-600')}><Timer className="h-4 w-4" />{left}s</span>
       </div>
-      <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800"><div className={cx('h-full transition-all duration-1000 ease-linear', left <= 10 ? 'bg-rose-500' : 'bg-clinic-500')} style={{ width: `${pick !== null ? 0 : pct}%` }} /></div>
+      <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800"><div className={cx('h-full transition-all duration-1000 ease-linear', left <= 10 ? 'bg-rose-500' : 'bg-sky-500')} style={{ width: `${pick !== null ? 0 : pct}%` }} /></div>
       <Card className="overflow-hidden">
         <div className="bg-slate-950"><img src={item.s.image_url} alt="Spotter" className="mx-auto max-h-80 w-full object-contain" /></div>
         <div className="p-4">
