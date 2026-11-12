@@ -77,6 +77,10 @@ import { shiftDay, dayGrid, hourMarks } from "./dayView.js";
 import OpgViewer from "./components/OpgViewer.jsx";
 import { AreaLine } from "./components/Sparkline.jsx";
 import { StatCard, ActionTile } from "./components/DashCards.jsx";
+import PerioChart from "./components/PerioChart.jsx";
+import CertificatePanel from "./components/CertificatePanel.jsx";
+import InstalmentPlan from "./components/InstalmentPlan.jsx";
+import { withInstalments, syncDueDate } from "./instalments.js";
 import TodayDesk from "./components/TodayDesk.jsx";
 import Growth from "./components/Growth.jsx";
 import PrePostOp from "./components/PrePostOp.jsx";
@@ -1848,7 +1852,9 @@ export default function App() {
       showToast(result.error);
       return;
     }
-    setInvoices((prev) => prev.map((i) => (i.id === current.id ? result.invoice : i)));
+    const synced = syncDueDate(result.invoice);
+    result.invoice = synced;
+    setInvoices((prev) => prev.map((i) => (i.id === current.id ? synced : i)));
     logAudit("payment.add", current.id, `₹${formatINR(toPaise(payForm.amount))} by ${payForm.mode}`);
     setActiveUpiQrInvoice(result.invoice);
     setPayForm({ amount: "", mode: payForm.mode });
@@ -4540,12 +4546,14 @@ export default function App() {
                   "Visit Notes",
                   "Assessments",
                   "Department Referrals",
+                  "Perio Chart",
                   "Diagnosis & Trauma",
                   "Systemic Review",
                   "Prescriptions",
                   "Treatment Plan",
                   "Lab Work",
                   "Consent",
+                  "Certificates",
                   "Photos & X-rays",
                   "Medical History",
                   "Patient Details",
@@ -4754,6 +4762,29 @@ export default function App() {
               )}
 
               {/* TAB 2: DEPARTMENT REFERRALS */}
+              {activeModalTab === "Perio Chart" && (
+                <PerioChart
+                  key={`perio-${activePatient.id}`}
+                  exams={activePatient.perioExams || []}
+                  canWrite={canWrite(role, "patients")}
+                  onSave={(list) => updateActivePatient({ perioExams: list })}
+                  newId={() => newId("PE")}
+                  today={dateKey()}
+                  showToast={showToast}
+                />
+              )}
+
+              {activeModalTab === "Certificates" && (
+                <CertificatePanel
+                  key={`cert-${activePatient.id}`}
+                  patient={activePatient}
+                  profile={practiceProfile}
+                  today={dateKey()}
+                  showToast={showToast}
+                  onPrinted={(kind) => logAudit("certificate.print", activePatient.name, kind)}
+                />
+              )}
+
               {activeModalTab === "Department Referrals" && (
                 <ReferralPanel
                   referrals={activePatient.referrals || []}
@@ -6137,6 +6168,31 @@ export default function App() {
                   </div>
                 </form>
               </>
+            )}
+
+            {(qrBalanceP > 0 || qrInvoice.instalments) && (
+              <details className="text-left border-t border-slate-100 pt-2" open={Boolean(qrInvoice.instalments)}>
+                <summary className="text-xs font-semibold text-blue-700 cursor-pointer">Pay in instalments</summary>
+                <div className="mt-2">
+                  <InstalmentPlan
+                    inv={qrInvoice}
+                    canEdit={canWrite(role, "invoices")}
+                    showToast={showToast}
+                    onCreate={(schedule, downP) => {
+                      const next = withInstalments(qrInvoice, schedule, downP);
+                      setInvoices((prev) => prev.map((i) => (i.id === qrInvoice.id ? next : i)));
+                      setActiveUpiQrInvoice(next);
+                      logAudit("invoice.instalments", qrInvoice.id, `${schedule.length} instalments`);
+                      showToast(`Plan created: ${schedule.length} instalments`);
+                    }}
+                    onRemove={() => {
+                      const { instalments, ...rest } = qrInvoice;
+                      setInvoices((prev) => prev.map((i) => (i.id === qrInvoice.id ? rest : i)));
+                      setActiveUpiQrInvoice(rest);
+                    }}
+                  />
+                </div>
+              </details>
             )}
 
             {(qrInvoice.payments || []).length > 0 && (
