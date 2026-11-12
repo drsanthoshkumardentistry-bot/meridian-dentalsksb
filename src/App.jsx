@@ -10,16 +10,18 @@ import Mcq from './pages/Mcq.jsx'
 import { Auth, Profile } from './pages/Account.jsx'
 import { CourseView, DocView, StudyHome } from './pages/Study.jsx'
 import Portions from './pages/Portions.jsx'
+import Pyq from './pages/Pyq.jsx'
 
 export default function App() {
   const { ready } = useApp()
   const route = useRoute()
   if (!ready) return <Splash />
-  const [, a, b] = route.parts
+  const [, a, b, c] = route.parts
   let page
   switch (route.path) {
     case 'topics': page = <TopicHub />; break
     case 'portions': page = <Portions />; break
+    case 'pyq': page = <Pyq subject={a} tab={b} session={c} />; break
     case 'topic': page = <TopicDetail slug={a} />; break
     case 'viva': page = <VivaHome />; break
     case 'viva-session': page = <VivaSession key={`${a}-${b}`} kind={a} id={b} />; break

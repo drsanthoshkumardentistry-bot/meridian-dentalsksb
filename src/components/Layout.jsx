@@ -1,4 +1,4 @@
-import { BookOpenCheck, ClipboardList, FileUp, Layers3, LayoutDashboard, LogIn, Moon, ScanEye, Sparkles, Sun, UserRound } from 'lucide-react'
+import { BookOpenCheck, ClipboardList, FileText, FileUp, Layers3, LayoutDashboard, LogIn, Moon, ScanEye, Sparkles, Sun, UserRound } from 'lucide-react'
 import { useApp } from '../state/AppContext.jsx'
 import { cloudEnabled } from '../lib/supabase.js'
 import { cx } from './ui.jsx'
@@ -6,6 +6,7 @@ import { cx } from './ui.jsx'
 const navFor = (track) => [
   { to: 'home', label: 'Dashboard', short: 'Home', icon: LayoutDashboard },
   { to: 'portions', label: 'Portions & Topics', short: 'Portions', icon: BookOpenCheck },
+  { to: 'pyq', label: 'University PYQs', short: 'PYQs', icon: FileText },
   { to: 'viva', label: 'Meridee Viva', short: 'Meridee', icon: Sparkles },
   { to: 'study', label: 'StudySync', short: 'Study', icon: FileUp },
   { to: 'spotters', label: 'Spotter Bank', short: 'Spotters', icon: ScanEye },
@@ -53,9 +54,9 @@ export default function Layout({ route, children }) {
       <main className="mx-auto max-w-5xl px-4 pb-28 pt-5 sm:px-6 lg:pb-10 lg:pt-8">{children}</main>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-7 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-8 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 lg:hidden">
         {NAV.map(({ to, short, icon: I }) => (
-          <a key={to} href={`#/${to}`} className={cx('flex flex-col items-center gap-0.5 py-2 text-[10px] font-semibold', active === to ? 'text-clinic-600 dark:text-clinic-400' : 'text-slate-500')}>
+          <a key={to} href={`#/${to}`} className={cx('flex min-w-0 flex-col items-center gap-0.5 py-2 text-[10px] font-semibold', active === to ? 'text-clinic-600 dark:text-clinic-400' : 'text-slate-500')}>
             <I className="h-5 w-5" />{short}
           </a>
         ))}

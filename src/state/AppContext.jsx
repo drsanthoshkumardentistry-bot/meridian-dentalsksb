@@ -23,6 +23,12 @@ export function progressReducer(p, a) {
     case 'mock': return { ...p, mocks: [a.result, ...p.mocks].slice(0, 50) }
     case 'viva': { const { messages, ...v } = a.viva; return { ...p, vivas: [v, ...p.vivas].slice(0, 100) } }
     case 'portion': return { ...p, portions: { ...(p.portions || {}), [a.id]: a.status } }
+    case 'pyq': {
+      // a.ids: { [id]: value | null } – null removes the entry
+      const pyq = { ...(p.pyq || {}) }
+      for (const [id, v] of Object.entries(a.ids)) { if (v == null) delete pyq[id]; else pyq[id] = v }
+      return { ...p, pyq }
+    }
     case 'reset': return emptyProgress()
     default: return p
   }
@@ -102,6 +108,8 @@ export function AppProvider({ children }) {
     saveMock: (result) => act({ type: 'mock', result }),
     saveViva: (viva) => act({ type: 'viva', viva }),
     setPortion: (id, status) => act({ type: 'portion', id, status }),
+    /** University PYQ progress: { [questionId]: flags | null, ['m:subject:n']: choice | null } */
+    setPyq: (ids) => act({ type: 'pyq', ids }),
     resetProgress: () => act({ type: 'reset' }),
     track: trackOf(state.profile),
     /** Save approved StudySync cards into the Leitner deck. */

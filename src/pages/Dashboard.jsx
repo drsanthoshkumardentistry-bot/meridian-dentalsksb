@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { ArrowRight, BookOpenCheck, ChevronDown, ClipboardList, ExternalLink, FileUp, Flame, Layers3, ScanEye, Sparkles } from 'lucide-react'
+import { ArrowRight, BookOpenCheck, ChevronDown, ClipboardList, ExternalLink, FileText, FileUp, Flame, Layers3, ScanEye, Sparkles } from 'lucide-react'
 import { useApp } from '../state/AppContext.jsx'
 import { dueCards } from '../lib/leitner.js'
 import { TRACKS } from '../lib/tracks.js'
 import { Badge, Card, Icon, Modal, PriorityBadge } from '../components/ui.jsx'
 import TrackPicker from '../components/TrackPicker.jsx'
 import { PORTIONS, completion } from '../data/portions.js'
+import { PYQ_STATS } from '../data/pyqSubjects.js'
 import MerideeAvatar from '../components/MerideeAvatar.jsx'
 import { cloudEnabled } from '../lib/supabase.js'
 
@@ -44,7 +45,9 @@ export default function Dashboard() {
   const portionChapters = PORTIONS[track.key].flatMap((s) => s.chapters)
   const portionPct = completion(portionChapters, progress.portions || {})
 
+  const pyqTotal = Object.values(PYQ_STATS).reduce((n, x) => n + x.questions, 0)
   const MODULES = {
+    pyq: { href: '#/pyq', icon: FileText, tone: 'from-violet-500 to-clinic-600', title: 'University PYQs', text: `${pyqTotal.toLocaleString()} TN MGR questions 2009–2026 · 10/5/2 marks · important repeats` },
     topics: { href: '#/portions', icon: BookOpenCheck, tone: 'from-clinic-500 to-clinic-700', title: 'Portions & high-yield topics', text: `${portionPct}% of ${portionChapters.length} chapters done · ${trackTopics.length} structured answers` },
     viva: { href: '#/viva', avatar: true, title: track.key === 'ADC' ? 'Meridee – clinical case examiner' : 'Meridee – AI viva examiner', text: track.key === 'ADC' ? 'Case scenarios judged on safety, consent and Australian guidelines' : 'Strict examiner, probing follow-ups, live scoring' },
     spotters: { href: '#/spotters', icon: ScanEye, tone: 'from-rose-500 to-pink-600', title: 'Spotter & Image Bank', text: `${spotters.length} radiographs, slides, instruments & specimens – timed` },

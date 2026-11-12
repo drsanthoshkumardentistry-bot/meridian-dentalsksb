@@ -5,7 +5,7 @@ import { supabase } from './supabase.js'
 import { buildLocalContent } from './content.js'
 
 const LS_KEY = 'ma-progress-v1'
-export const emptyProgress = () => ({ cards: {}, spotterAttempts: [], vivas: [], answers: {}, bookmarks: [], mocks: [], portions: {} })
+export const emptyProgress = () => ({ cards: {}, spotterAttempts: [], vivas: [], answers: {}, bookmarks: [], mocks: [], portions: {}, pyq: {} })
 
 function readLocal() {
   try { return { ...emptyProgress(), ...JSON.parse(localStorage.getItem(LS_KEY) || '{}') } } catch { return emptyProgress() }
@@ -59,8 +59,19 @@ export async function loadProgress(user) {
     answers: Object.fromEntries(ans.data.map((r) => [r.question_id, r.correct])),
     bookmarks: bm.data.map((r) => r.question_id),
     mocks: mocks.data.map((r) => ({ ...r, ...(r.details || {}) })),
-    portions: por.error ? {} : Object.fromEntries(por.data.map((r) => [r.chapter_id, r.status])),
+    ...splitPortionRows(por.error ? [] : por.data),
   }
+}
+
+// University PYQ progress shares the portion_progress table, with chapter ids prefixed "pyq:".
+export const PYQ_PREFIX = 'pyq:'
+export function splitPortionRows(rows) {
+  const portions = {}, pyq = {}
+  for (const r of rows) {
+    if (r.chapter_id.startsWith(PYQ_PREFIX)) pyq[r.chapter_id.slice(PYQ_PREFIX.length)] = r.status
+    else portions[r.chapter_id] = r.status
+  }
+  return { portions, pyq }
 }
 
 /** Persist one progress action. `next` is the already-updated progress (used by the local backend). */
@@ -102,6 +113,15 @@ export async function persist(user, action, next) {
     case 'portion':
       res = await supabase.from('portion_progress').upsert({ user_id: uid, chapter_id: action.id, status: action.status, updated_at: new Date().toISOString() })
       break
+    case 'pyq': {
+      const now = new Date().toISOString()
+      const entries = Object.entries(action.ids)
+      const del = entries.filter(([, v]) => v == null).map(([id]) => PYQ_PREFIX + id)
+      const up = entries.filter(([, v]) => v != null).map(([id, v]) => ({ user_id: uid, chapter_id: PYQ_PREFIX + id, status: v, updated_at: now }))
+      if (up.length) res = await supabase.from('portion_progress').upsert(up)
+      if (!res?.error && del.length) res = await supabase.from('portion_progress').delete().eq('user_id', uid).in('chapter_id', del)
+      break
+    }
     case 'reset':
       return
     default:
