@@ -31,6 +31,8 @@ import { askAi } from "./aiClient.js";
 import HelpChat from "./components/HelpChat.jsx";
 import DmyDateInput from "./components/DmyDateInput.jsx";
 import BulkMessage from "./components/BulkMessage.jsx";
+import ReferralPanel from "./components/ReferralPanel.jsx";
+import { addReferral, setReferralStatus, removeReferral, referralSlipHtml, openReferrals, urgencyOf } from "./referrals.js";
 import { patientsInRange, presetRange, rangeText, DATE_MODES } from "./patientDates.js";
 import PatientSummary from "./components/PatientSummary.jsx";
 import PhysicianConsult from "./components/PhysicianConsult.jsx";
@@ -217,17 +219,6 @@ const CLINICAL_PALETTE = [
   { id: "MIS", label: "Missing / Extracted", border: "border-slate-300", bg: "bg-slate-100", text: "text-slate-600" },
 ];
 
-// Institutional Dental Specialty Referral Departments
-const DENTAL_DEPARTMENTS = [
-  { id: "omfs", code: "OMFS", name: "Oral & Maxillofacial Surgery", room: "Room 2" },
-  { id: "perio", code: "PERIO", name: "Periodontics & Implantology", room: "Room 3" },
-  { id: "cons", code: "CONS", name: "Conservative Dentistry & Endodontics", room: "Room 4" },
-  { id: "ortho", code: "ORTHO", name: "Orthodontics & Dentofacial", room: "Room 5" },
-  { id: "pedo", code: "PEDO", name: "Pediatric & Preventive Dentistry", room: "Room 6" },
-  { id: "prostho", code: "PROSTHO", name: "Prosthodontics & Crown-Bridge", room: "Room 7" },
-  { id: "omr", code: "OMR", name: "Oral Medicine & Radiology", room: "Room 1" },
-  { id: "phd", code: "PHD", name: "Public Health Dentistry", room: "Room 8" }
-];
 
 
 // ---------------------------------------------------------------------------
@@ -1012,9 +1003,6 @@ export default function App() {
   const [activePaletteStatus, setActivePaletteStatus] = useState("CAR");
 
   // Inter-Departmental Referrals State
-  const [refTreatment, setRefTreatment] = useState("");
-  const [refTooth, setRefTooth] = useState("");
-  const [refDept, setRefDept] = useState("CONS");
 
 
   // OPG Workstation State
@@ -1147,28 +1135,23 @@ export default function App() {
     );
   };
 
-  // Add Department Referral
-  const handleAddReferral = (e) => {
-    e.preventDefault();
-    if (!refTreatment.trim() || !activePatient) return;
-    const deptObj = DENTAL_DEPARTMENTS.find((d) => d.code === refDept) || { name: refDept, room: "OPD" };
-    const newRef = {
-      id: newId("REF"),
-      treatment: refTreatment.trim(),
-      toothRegion: refTooth.trim() || "U/L",
-      department: deptObj.name,
-      roomNo: deptObj.room,
-      status: "Approved",
-      date: new Date().toLocaleDateString("en-IN"),
-    };
-
-    setPatients((prev) =>
-      prev.map((p) => (p.id === activePatient.id ? { ...p, referrals: [...(p.referrals || []), newRef] } : p))
-    );
-
-    setRefTreatment("");
-    setRefTooth("");
-    showToast(`Referral to ${deptObj.code} added`);
+  // Referrals: add, move through Pending > Seen > Completed, remove, print a slip
+  const referralsToday = () => new Date().toLocaleDateString("en-IN");
+  const patchReferrals = (fn) => setPatients((prev) => prev.map((p) => (p.id === activePatient?.id ? { ...p, referrals: fn(p.referrals || []) } : p)));
+  const handleAddReferral = (referral) => {
+    if (!activePatient) return;
+    const r = addReferral(activePatient.referrals || [], referral);
+    if (r.error) return showToast(r.error);
+    patchReferrals(() => r.list);
+    showToast(`Referral to ${referral.department} added`);
+  };
+  const handleReferralStatus = (id, status) => patchReferrals((list) => setReferralStatus(list, id, status, referralsToday()));
+  const handleRemoveReferral = (id) => { if (confirm("Remove this referral?")) patchReferrals((list) => removeReferral(list, id)); };
+  const handlePrintReferral = (r) => {
+    const win = window.open("", "_blank");
+    if (!win) return showToast("Allow pop-ups to print the referral slip");
+    win.document.write(referralSlipHtml(r, activePatient, practiceProfile));
+    win.document.close();
   };
 
   // Add Prescription to Patient
@@ -2523,6 +2506,23 @@ export default function App() {
                 onAsk={askFeedback} onRate={rateFeedback} onResolve={handleFeedback} onPlan={followUpPlan} onSnoozePlan={snoozePlan}
               />
               <NextVisitPanel items={nextVisitsDue} canWrite={canWrite(role, "appointments")} onRemind={remindNextVisit} onSnooze={snoozeNextVisit} />
+              {(() => {
+                const open = openReferrals(patients);
+                if (!open.length) return null;
+                return (
+                  <section className="bg-white border border-rule rounded-xl p-4 space-y-2" data-testid="referral-panel" aria-label="Open referrals">
+                    <h3 className="text-xs font-bold text-slate-900">Open referrals ({open.length})</h3>
+                    {open.slice(0, 8).map(({ patient, referral, status }) => (
+                      <button key={`${patient.id}-${referral.id}`} type="button"
+                        onClick={() => { setSelectedPatientId(patient.id); setActiveModalTab("Department Referrals"); setIsChartModalOpen(true); }}
+                        className="w-full text-left flex flex-wrap items-center justify-between gap-2 rounded-lg border border-rule px-3 py-2 text-xs hover:bg-slate-50">
+                        <span><b className="text-slate-900">{patient.name}</b> <span className="text-slate-600">{referral.treatment}, {referral.department}</span></span>
+                        <span className="font-semibold text-slate-600">{urgencyOf(referral)} · {status}</span>
+                      </button>
+                    ))}
+                  </section>
+                );
+              })()}
               <LabBoard rows={labRows} canWrite={canWrite(role, "patients")} onReceive={receiveLab} onFit={fitLab} onChase={chaseLab} onTellPatient={tellPatientLab} />
               <ReviewInvites appointments={appointments} reviewLink={practiceProfile.reviewLink} onReview={inviteReview} />
 
@@ -4457,78 +4457,18 @@ export default function App() {
                 </div>
               )}
 
-              {/* TAB 2: DEPARTMENT REFERRALS ROUTER */}
+              {/* TAB 2: DEPARTMENT REFERRALS */}
               {activeModalTab === "Department Referrals" && (
-                <div className="space-y-4">
-                  <form onSubmit={handleAddReferral} className="p-4 rounded-xl bg-enamel border border-rule flex flex-wrap items-end gap-3 text-xs">
-                    <div className="flex-1 min-w-[140px]">
-                      <label className="font-bold text-slate-600 block mb-1">Treatment Directive</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. EXTRACTION, SCALING, GIC"
-                        value={refTreatment}
-                        onChange={(e) => setRefTreatment(e.target.value)}
-                        className="w-full px-3 py-1.5 rounded-lg border border-rule bg-white"
-                      />
-                    </div>
-                    <div className="w-28">
-                      <label className="font-bold text-slate-600 block mb-1">Tooth / Region</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. 18 or 46"
-                        value={refTooth}
-                        onChange={(e) => setRefTooth(e.target.value)}
-                        className="w-full px-3 py-1.5 rounded-lg border border-rule bg-white"
-                      />
-                    </div>
-                    <div className="w-44">
-                      <label className="font-bold text-slate-600 block mb-1">Department</label>
-                      <select
-                        value={refDept}
-                        onChange={(e) => setRefDept(e.target.value)}
-                        className="w-full px-3 py-1.5 rounded-lg border border-rule bg-white"
-                      >
-                        {DENTAL_DEPARTMENTS.map((d) => (
-                          <option key={d.id} value={d.code}>{d.code} ({d.room})</option>
-                        ))}
-                      </select>
-                    </div>
-                    <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-bold">
-                      + Add Referral
-                    </button>
-                  </form>
-
-                  <div className="space-y-2">
-                    {(activePatient.referrals || []).length === 0 ? (
-                      <div className="p-6 text-center text-xs text-slate-500 bg-enamel rounded-xl">
-                        No specialty referrals queued. Route directives to OMFS, Perio, Cons, or Prostho above.
-                      </div>
-                    ) : (
-                      activePatient.referrals.map((r, i) => (
-                        <div key={r.id || i} className="p-3 rounded-xl border border-rule bg-white flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-3">
-                            <span className="w-6 h-6 rounded-md bg-slate-100 flex items-center justify-center font-bold text-slate-700">
-                              {i + 1}
-                            </span>
-                            <div>
-                              <span className="font-bold text-slate-900 uppercase">{r.treatment}</span>
-                              <span className="text-slate-500 font-mono ml-2">Tooth/Arch: <strong>{r.toothRegion}</strong></span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
-                              {r.department} ({r.roomNo})
-                            </span>
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">
-                              Approved
-                            </span>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
+                <ReferralPanel
+                  referrals={activePatient.referrals || []}
+                  canWrite={canWrite(role, "patients")}
+                  onAdd={handleAddReferral}
+                  onStatus={handleReferralStatus}
+                  onRemove={handleRemoveReferral}
+                  onPrint={handlePrintReferral}
+                  newId={() => newId("REF")}
+                  today={referralsToday}
+                />
               )}
 
               {/* TAB 3: DIAGNOSIS & TRAUMA */}
