@@ -8,6 +8,8 @@ const tomorrowKey = (now) => dateKey(new Date(now.getFullYear(), now.getMonth(),
 
 /** Returns [{ id, kind: "stock" | "appointment", tone: "red" | "amber" | "blue", text, to }] most urgent first. */
 export const buildNotifications = ({ inventory = [], appointments = [], now = new Date(), showStock = true, showAppointments = true } = {}) => {
+  inventory = (Array.isArray(inventory) ? inventory : []).filter(Boolean);
+  appointments = (Array.isArray(appointments) ? appointments : []).filter(Boolean);
   const out = [];
   if (showAppointments) {
     const today = dateKey(now);

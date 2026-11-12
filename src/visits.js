@@ -18,7 +18,7 @@ export const buildVisit = (form, id, now = new Date()) => {
 
 /** Newest visit first; same-day notes keep the most recently added first. */
 export const sortVisits = (visits = []) =>
-  visits.map((v, i) => ({ v, i })).sort((a, b) => b.v.date.localeCompare(a.v.date) || a.i - b.i).map((x) => x.v);
+  visits.filter(Boolean).map((v, i) => ({ v, i })).sort((a, b) => String(b.v.date || "").localeCompare(String(a.v.date || "")) || a.i - b.i).map((x) => x.v);
 
-export const addVisit = (patient, visit) => ({ ...patient, visits: sortVisits([visit, ...(patient.visits || [])]) });
+export const addVisit = (patient, visit) => ({ ...patient, visits: sortVisits([visit, ...(Array.isArray(patient.visits) ? patient.visits : [])]) });
 export const removeVisit = (patient, visitId) => ({ ...patient, visits: (patient.visits || []).filter((v) => v.id !== visitId) });

@@ -40,6 +40,8 @@ export const setNotes = (exam, text) => ({ ...exam, notes: String(text || "").sl
 
 /** What differs from the usual finding, in plain words. Mouth opening under 35 mm is flagged as limited. */
 export const findings = (exam) => {
+  if (!exam || typeof exam !== "object") return [];
+  exam = { ...exam, fields: exam.fields || {} };
   const out = FIELDS.filter((f) => exam.fields[f.key] && exam.fields[f.key] !== f.normal).map((f) => ({ label: f.label, value: exam.fields[f.key] }));
   if (exam.mouthOpening != null && exam.mouthOpening < 35) out.push({ label: "Mouth opening", value: `${exam.mouthOpening} mm (limited)` });
   return out;
