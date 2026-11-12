@@ -52,8 +52,9 @@ import MedicineLibrary from "./components/MedicineLibrary.jsx";
 import PatientGallery from "./components/PatientGallery.jsx";
 import { todayActionTiles, totalActions, liveFlow } from "./todayActions.js";
 import { listImages, addImage, removeImage, countImages } from "./galleryStore.js";
+import StorageMeter from "./components/StorageMeter.jsx";
+import { CONTACT, CONTACT_CO } from "./legal.js";
 import { setCariesDetail, pruneCariesDetails, cariesText } from "./caries.js";
-import { opgUsage, galleryUpperBytes, formatBytes, usageLevel, CLINIC_WARN_BYTES } from "./storageUsage.js";
 import { compressImage } from "./imageCompress.js";
 import OptionLists from "./components/OptionLists.jsx";
 import { listOf, withCurrent } from "./optionLists.js";
@@ -1768,11 +1769,11 @@ export default function App() {
 
   const [galleryCount, setGalleryCount] = useState(null);
   useEffect(() => {
-    if (activeNav !== "Practice Profile" || !db || !CLINIC_ID) return undefined;
+    if (!db || !CLINIC_ID || hydratedFor !== CLINIC_ID) return undefined;
     let off = false;
     countImages(db, CLINIC_ID).then((n) => { if (!off) setGalleryCount(n); }).catch(() => { if (!off) setGalleryCount(null); });
     return () => { off = true; };
-  }, [activeNav]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [hydratedFor, CLINIC_ID]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDownloadPdf = async (inv, receipt = false) => {
     try {
@@ -2117,13 +2118,19 @@ export default function App() {
               Leave this clinic
             </button>
           )}
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-rule px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
-          >
-            <LogOut className="h-4 w-4" /> Sign out
-          </button>
+          {navFor(role, [{ label: "Practice Profile" }]).length > 0 ? (
+            <div className="mt-3 rounded-lg border border-rule bg-white p-3">
+              <StorageMeter patients={allPatients} galleryCount={galleryCount} />
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-rule px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
+            >
+              <LogOut className="h-4 w-4" /> Sign out
+            </button>
+          )}
         </div>
       </aside>
 
@@ -3695,24 +3702,6 @@ export default function App() {
                 </Field>
               </div>
 
-              {(() => {
-                const opg = opgUsage(allPatients);
-                const used = opg.bytes + galleryUpperBytes(galleryCount || 0);
-                const level = usageLevel(used);
-                const pct = Math.min(100, Math.round((used / CLINIC_WARN_BYTES) * 100));
-                return (
-                  <div className="pt-4 border-t border-slate-100" data-testid="storage-meter">
-                    <div className="text-xs font-semibold text-slate-700">Pictures stored: about {formatBytes(used)} of {formatBytes(CLINIC_WARN_BYTES)}</div>
-                    <div className="mt-1.5 h-2 rounded-full bg-slate-100 overflow-hidden" role="progressbar" aria-label="Picture storage used" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-                      <div className={`h-full ${level === "ok" ? "bg-brand-600" : level === "watch" ? "bg-amber-500" : "bg-rose-600"}`} style={{ width: `${pct}%` }} />
-                    </div>
-                    <p className="text-[11px] text-slate-500 mt-1.5">
-                      {opg.count} OPG{opg.count === 1 ? "" : "s"}{galleryCount === null ? "" : `, ${galleryCount} photo${galleryCount === 1 ? "" : "s"} and X-rays`}. {level === "ok" ? "Plenty of room on the free plan." : level === "watch" ? "Getting full. Plan to move pictures to bigger storage soon." : "Almost full. Tell MeriDent support so we can move your pictures to bigger storage."}
-                    </p>
-                  </div>
-                );
-              })()}
-
               <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
                 <span className="text-xs text-emerald-700 font-semibold flex items-center gap-1.5">
                   <ShieldCheck className="w-4 h-4" /> Cloud Persistence Active
@@ -3722,6 +3711,31 @@ export default function App() {
                   className="px-4 py-2 bg-[#1d4ed8] text-white rounded-lg text-xs font-semibold shadow-card hover:bg-blue-700"
                 >
                   Update Profile
+                </button>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 space-y-3" data-testid="account-card">
+                <div>
+                  <h2 className="text-sm font-bold text-slate-900">Customer support</h2>
+                  <p className="text-xs text-slate-500">Questions, a problem, or a feature you need? Call or message us on WhatsApp.</p>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {[CONTACT, CONTACT_CO].map((c) => (
+                    <div key={c.whatsapp} className="rounded-xl border border-rule p-3 text-xs">
+                      <div className="font-semibold text-slate-800">{c.name}</div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <a href={`tel:+${c.whatsapp}`} className="px-3 py-1.5 rounded-lg border border-rule text-slate-800 font-semibold inline-flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> {c.display}</a>
+                        <a href={`https://wa.me/${c.whatsapp}`} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-semibold inline-flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5" /> WhatsApp</a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex items-center justify-center gap-2 rounded-lg border border-rule px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
+                >
+                  <LogOut className="h-4 w-4" /> Log out
                 </button>
               </div>
             </div>

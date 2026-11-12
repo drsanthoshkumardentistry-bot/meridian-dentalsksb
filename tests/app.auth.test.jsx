@@ -132,7 +132,13 @@ describe("authentication gate", () => {
     h.user = googleUser;
     render(<App />);
     await screen.findAllByText("Patients & Odontogram");
-    fireEvent.click(screen.getByText("Sign out"));
+    // the sidebar now shows the storage meter; Log out and Customer support live in Practice Profile
+    expect(screen.getByTestId("storage-meter")).toBeTruthy();
+    expect(screen.queryByText("Sign out")).toBeNull();
+    fireEvent.click(screen.getByLabelText("Open Practice Profile"));
+    expect(await screen.findByText("Customer support")).toBeTruthy();
+    expect(screen.getByText("+91 80983 18039").closest("a").getAttribute("href")).toBe("tel:+918098318039");
+    fireEvent.click(screen.getByText("Log out"));
     await waitFor(() => expect(h.calls).toContainEqual(["logout"]));
     expect(await screen.findByText(/Chart the tooth\. Bill the visit/i)).toBeTruthy();
   });
