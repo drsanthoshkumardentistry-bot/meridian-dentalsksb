@@ -2,6 +2,8 @@
 // plus the Firebase web API key.
 import { MODEL, GEMINI_MODELS, buildRequest, parseVisitNote, makeLimiter } from "./_lib/aiCore.js";
 
+export const config = { maxDuration: 30 };
+
 const allow = makeLimiter(40, 60 * 60 * 1000);
 
 const send = (res, status, body) => {
@@ -58,6 +60,8 @@ export default async function handler(req, res) {
       });
       let r;
       let lastBody = "";
+      const deadline = Date.now() + 26000;
+      let lastReply = null;
       const withoutThinking = JSON.stringify({ ...JSON.parse(body), generationConfig: { maxOutputTokens: 700, temperature: 0.3 } });
       const attempt = async (model, payload) => {
         try {
@@ -65,7 +69,7 @@ export default async function handler(req, res) {
             method: "POST",
             headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
             body: payload,
-            signal: AbortSignal.timeout(8000),
+            signal: AbortSignal.timeout(Math.max(3000, Math.min(14000, deadline - Date.now()))),
           });
         } catch (e) { console.error("meridee gemini", model, String(e && e.name)); return null; }
       };
@@ -73,13 +77,15 @@ export default async function handler(req, res) {
         r = await attempt(model, body);
         // Some models reject the "no thinking" setting (400): ask again without it.
         if (r && r.status === 400) r = await attempt(model, withoutThinking);
-        if (!r) continue;
+        if (!r) { if (Date.now() > deadline - 3000) break; continue; }
+        lastReply = r;
         if (r.ok) break;
         lastBody = typeof r.text === "function" ? (await r.text().catch(() => "")).slice(0, 300) : "";
         console.error("meridee gemini", model, r.status, lastBody);
         // Model retired (404), busy (429, 5xx) or still refusing (400): try the next one. A bad key (401/403) will not improve.
         if (![400, 404, 429, 500, 503].includes(r.status)) break;
       }
+      if (!r) r = lastReply;
       if (!r) return send(res, 504, { error: "Meridee took too long. Try again." });
       if (r.status === 401 || r.status === 403) return send(res, 503, { error: "Meridee's access key was refused. The site owner needs to update it." });
       if (r.status === 429) return send(res, 429, { error: "Meridee is busy. Try again in a minute." });
