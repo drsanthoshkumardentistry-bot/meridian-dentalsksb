@@ -94,8 +94,7 @@ const FEATURE_GROUPS = [
       { icon: Network, title: "Branches", text: "Run several clinics from one account. Switch branch from the header, compare patients, visits and billing side by side, and move a patient with their records between branches." },
       { icon: Lock, title: "Team logins & activity log", text: "Give staff their own login as manager, dentist or receptionist. Each person accepts an invitation and sees only what their role allows. Owners and managers can see who changed what." },
       { icon: TrendingUp, title: "Reports for your accountant", text: "Daily collections by cash, UPI and card, plus a monthly GST summary. Download a spreadsheet or print a PDF." },
-      { icon: IndianRupee, title: "Expenses & profit", text: "Record rent, salaries, lab fees and materials. See money received, money spent and the month's profit side by side, and download the expenses as a spreadsheet." },
-      { icon: ShieldCheck, title: "Insurance claims", text: "Note the insurer and claim number on an invoice, track it as submitted, approved, rejected or settled, and see how much the insurers still owe. A settled claim is added to the invoice as a payment." }
+      { icon: IndianRupee, title: "Expenses & profit", text: "Record rent, salaries, lab fees and materials. See money received, money spent and the month's profit side by side, and download the expenses as a spreadsheet." }
     ]
   },
   {
@@ -144,7 +143,7 @@ const FAQS = [
   },
   {
     q: "Does MeriDent handle insurance claims?",
-    a: "You can track them. Note the insurer and claim number on an invoice, follow its status, and record the insurer's payment. MeriDent does not send claims to insurers or connect to cashless networks, so you still submit them on the insurer's own portal."
+    a: "No. MeriDent is built for what patients pay the clinic: GST invoices, part payments, dues and UPI collection. It does not manage insurance or TPA claims."
   },
   {
     q: "What is MeriDent Connect?",
