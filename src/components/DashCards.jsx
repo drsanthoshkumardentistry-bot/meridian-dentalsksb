@@ -14,9 +14,9 @@ export const STAT_TONES = {
 export function StatCard({ title, value, note, icon, tone = "blue", bars }) {
   const t = STAT_TONES[tone] || STAT_TONES.blue;
   return (
-    <div className={`stat-card rounded-2xl border bg-gradient-to-br ${t.card} p-4 sm:p-5 flex flex-col justify-between gap-3 min-h-[9rem] shadow-card`}>
+    <div className={`stat-card rounded-2xl border bg-gradient-to-br ${t.card} p-4 sm:p-5 lg:p-4 flex flex-col justify-between gap-3 lg:gap-2 min-h-[9rem] lg:min-h-[8rem] shadow-card`}>
       <div className="flex items-center gap-3">
-        <div className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center shadow-lg ${t.bubble}`}>{icon}</div>
+        <div className={`w-11 h-11 lg:w-10 lg:h-10 shrink-0 rounded-full flex items-center justify-center shadow-lg ${t.bubble}`}>{icon}</div>
         <div className="text-[13px] font-semibold text-slate-600 leading-tight">{title}</div>
       </div>
       <div>

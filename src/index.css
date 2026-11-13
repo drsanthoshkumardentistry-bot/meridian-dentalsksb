@@ -350,3 +350,8 @@ main section.bg-white {
   .rail:not(:hover):not(:focus-within) .nav-item { transform: none; }
 }
 @media (prefers-reduced-motion: reduce) { .rail { transition: none; } }
+
+/* Desktop and full-screen calibration: small desktop screens stay compact, big monitors scale up so the app fills them. */
+@media (min-width: 1024px) and (max-height: 800px) { .stat-card { min-height: 6.75rem; } }
+@media (min-width: 1700px) { html { font-size: 17px; } }
+@media (min-width: 2200px) { html { font-size: 19px; } }

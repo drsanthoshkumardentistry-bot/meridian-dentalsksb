@@ -2352,7 +2352,7 @@ export default function App() {
         </header>
         <ConnectionBar />
 
-        <main className="p-4 sm:p-6 md:p-8 pb-28 max-w-7xl mx-auto w-full">
+        <main className="p-4 sm:p-6 md:p-8 pb-28 max-w-7xl 2xl:max-w-[96rem] mx-auto w-full">
           
           {/* TAB 1: PATIENTS & ODONTOGRAM */}
           {activeNav === "Patients & Odontogram" && (
@@ -4028,7 +4028,7 @@ export default function App() {
                 onDismiss={() => setPracticeProfile({ ...practiceProfile, setupHidden: true })}
               />}
 
-              <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4" data-testid="stat-cards">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" data-testid="stat-cards">
                 <StatCard title="Patients" value={patients.length} note="Registered patient records" icon={<UsersRound className="w-5 h-5" />} tone="blue" bars={dashboardPatientSeries.map((d) => d.value)} />
                 <StatCard title="Visits Today" value={diarySum.today} note={diarySum.tomorrow ? `${diarySum.tomorrow} tomorrow` : "Active bookings today"} icon={<CalendarDays className="w-5 h-5" />} tone="mint" bars={dashboardVisitSeries} />
                 <StatCard title="Collected this month" value={`₹${formatINR(billing.collectedP)}`} note={`₹${formatINR(billing.billedP)} billed this month`} icon={<IndianRupee className="w-5 h-5" />} tone="violet" bars={dashboardRevenueSeries.map((d) => d.value)} />
