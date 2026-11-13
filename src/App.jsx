@@ -2242,6 +2242,14 @@ export default function App() {
 
       {/* --- SIDEBAR --- */}
       <div className="hidden md:block w-[76px] shrink-0" aria-hidden="true" />
+      {sidebarOpen && (
+        <div
+          data-testid="menu-backdrop"
+          className="fixed inset-0 z-40 bg-slate-900/40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
       <aside
         className={`rail group/rail fixed inset-y-0 left-0 z-50 w-64 side-navy text-white flex flex-col justify-between overflow-y-auto overflow-x-hidden side-scroll shadow-2xl transition-[transform,width] duration-300 md:translate-x-0 md:w-[76px] md:hover:w-64 md:focus-within:w-64 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
