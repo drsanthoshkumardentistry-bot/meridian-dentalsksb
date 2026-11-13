@@ -83,6 +83,7 @@ import AccountMenu from "./components/AccountMenu.jsx";
 import { buildNotifications } from "./notifications.js";
 import { backupNotification, markBackupDone, readLastBackup } from "./reliability.js";
 import ConnectionBar from "./components/ConnectionBar.jsx";
+import useRestorePoints from "./useRestorePoints.js";
 import { AreaLine } from "./components/Sparkline.jsx";
 import { StatCard, ActionTile } from "./components/DashCards.jsx";
 import PerioChart from "./components/PerioChart.jsx";
@@ -922,6 +923,12 @@ export default function App() {
   useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "memberships"), readOnly: !canWrite(role, "memberships"), name: "memberships", items: memberships, setItems: setMemberships, onError: reportSyncError });
   useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "employees"), readOnly: !canWrite(role, "employees"), name: "employees", items: employees, setItems: setEmployees, onError: reportSyncError });
   useCloudDoc({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "profile"), readOnly: !canWrite(role, "profile"), name: "profile", value: practiceProfile, setValue: setPracticeProfile, onError: reportSyncError });
+  const restorePoints = useRestorePoints({
+    db,
+    clinicId: CLINIC_ID,
+    enabled: cloudReady && role === "owner" && !allowedBranchIds,
+    getData: () => ({ patients: allPatients, appointments: allAppointments, invoices: allInvoices, inventory, employees, profile: practiceProfile }),
+  });
 
   // Save changes to localStorage
   useEffect(() => {
@@ -3700,6 +3707,7 @@ export default function App() {
               {!allowedBranchIds && (role === "owner" || role === "manager") && <DataPortability
                 data={{ patients: allPatients, appointments: allAppointments, invoices: allInvoices, inventory, employees, profile: practiceProfile }}
                 newId={newId}
+                restore={role === "owner" ? restorePoints : null}
                 onDownloadFile={(text, name, type, bom) => { downloadFile(text, name, type, bom); if (/backup/i.test(name)) { markBackupDone(CACHE_ID, new Date(), window.localStorage); setBackupTick((n) => n + 1); } }}
                 onAudit={logAudit}
                 onImported={(r) => {

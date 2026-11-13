@@ -1,9 +1,10 @@
 import React, { useRef, useState } from "react";
-import { Download, Upload, Lock, ShieldAlert } from "lucide-react";
+import { Download, Upload, Lock, ShieldAlert, History } from "lucide-react";
 import {
   buildBackup, backupFileName, encryptBackup, decryptBackup, validatePassword, parseBackupText, validateBackup, mergeBackup,
   patientsCsv, appointmentsCsv, invoicesDetailCsv, patientsFromCsv,
 } from "../portability.js";
+import { describePoint } from "../restorePoints.js";
 
 const btn = "px-3 py-2 bg-white border border-rule hover:bg-enamel rounded-lg text-xs font-semibold text-slate-800 inline-flex items-center gap-1.5";
 const primary = "px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-semibold inline-flex items-center gap-1.5";
@@ -20,7 +21,7 @@ const readFile = (file) => new Promise((resolve, reject) => {
  * Take all clinic data out (backup file, spreadsheets) and bring data in (a backup from MeriDent, or a patient list from
  * another system). Owner and manager only; the screen is hidden for branch-limited logins.
  */
-export default function DataPortability({ data, newId, onDownloadFile, onImported, onAudit }) {
+export default function DataPortability({ data, newId, onDownloadFile, onImported, onAudit, restore = null }) {
   const [pw, setPw] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -86,6 +87,12 @@ export default function DataPortability({ data, newId, onDownloadFile, onImporte
     prepareBackup(parsed.backup);
   };
 
+  const openRestorePoint = async (point) => {
+    setError(""); setPlan(null); setNeedPw(null);
+    const backup = await restore.load(point);
+    if (backup) prepareBackup(backup);
+  };
+
   const unlock = async () => {
     setBusy(true); setError("");
     const r = await decryptBackup(needPw, openPw);
@@ -136,6 +143,27 @@ export default function DataPortability({ data, newId, onDownloadFile, onImporte
         <p className="text-xs text-slate-500 flex items-start gap-1"><Lock className="w-3.5 h-3.5 mt-0.5 shrink-0" aria-hidden="true" /> There is no way to recover a forgotten password. Keep it safe.</p>
         <button type="button" onClick={downloadBackup} disabled={busy} className={primary}><Download className="w-3.5 h-3.5" /> Download full backup</button>
       </div>
+
+      {restore && (
+        <div className="space-y-2" data-testid="restore-points">
+          <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5"><History className="w-3.5 h-3.5" aria-hidden="true" /> Automatic restore points</h3>
+          <p className="text-xs text-slate-500">MeriDent saves a copy of your records once a day, inside your own private space, and keeps the last 3. Restoring brings back anything deleted by mistake. Records already here are kept as they are.</p>
+          {restore.points.length === 0 ? (
+            <p className="text-xs text-slate-600">No restore point yet. The first one is saved a minute or two after you sign in.</p>
+          ) : (
+            <ul className="divide-y divide-rule border border-rule rounded-lg">
+              {restore.points.map((p) => (
+                <li key={p.id} className="flex items-center justify-between gap-2 px-3 py-2 text-xs text-slate-700">
+                  <span>{describePoint(p)}</span>
+                  <button type="button" onClick={() => openRestorePoint(p)} disabled={restore.busy} className={btn}>Restore</button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {restore.error && <p role="alert" className="text-xs text-red-700">{restore.error}</p>}
+          <button type="button" onClick={() => restore.saveNow({ force: true })} disabled={restore.busy} className={btn}>{restore.busy ? "Please wait…" : "Save a restore point now"}</button>
+        </div>
+      )}
 
       <div className="space-y-2">
         <h3 className="text-xs font-bold text-slate-900">Spreadsheets</h3>
