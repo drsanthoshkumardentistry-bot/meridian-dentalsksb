@@ -85,6 +85,7 @@ import { backupNotification, markBackupDone, readLastBackup } from "./reliabilit
 import LockScreen from "./components/LockScreen";
 import SecurityCard from "./components/SecurityCard";
 import { hasLock as pinLockOn, readLock as readPinLock } from "./appLock";
+import FullscreenButton from "./components/FullscreenButton.jsx";
 import ConnectionBar from "./components/ConnectionBar.jsx";
 import useRestorePoints from "./useRestorePoints.js";
 import { AreaLine } from "./components/Sparkline.jsx";
@@ -2354,6 +2355,7 @@ export default function App() {
                 }
               }}
             />
+            <FullscreenButton />
             <NotificationBell
               items={buildNotifications({
                 inventory,

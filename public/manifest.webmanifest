@@ -1,0 +1,14 @@
+{
+  "name": "MeriDent dental practice management",
+  "short_name": "MeriDent",
+  "description": "Dental practice management for Indian clinics.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#eaf1fc",
+  "theme_color": "#1e3a8a",
+  "icons": [
+    { "src": "/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
