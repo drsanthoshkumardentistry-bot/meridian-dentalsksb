@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import { legalPageFromSearch } from './legal.js';
 import { seoPageForPath } from './seoPages.js';
+import { shouldAutoReload } from './recover.js';
 import { EARLY_ACCESS_PATH } from './earlyAccess.js';
 import './index.css';
 
@@ -16,6 +17,11 @@ const LegalPage = lazy(() => import('./components/LegalPage.jsx'));
 const PayPage = lazy(() => import('./components/PayPage.jsx'));
 const SeoPage = lazy(() => import('./components/SeoPage.jsx'));
 const EarlyAccessPage = lazy(() => import('./components/EarlyAccessPage.jsx'));
+
+// After an update, a tab left open can ask for a file that is gone. Reload once to pick up the new version.
+window.addEventListener('vite:preloadError', (event) => {
+  if (shouldAutoReload()) { event.preventDefault(); window.location.reload(); }
+});
 
 // A patient opening a treatment estimate link (?plan=<token>) sees only that page, never the clinic app.
 const params = new URLSearchParams(window.location.search);
