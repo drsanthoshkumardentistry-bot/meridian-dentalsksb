@@ -36,6 +36,7 @@ const counts = (data) => Object.fromEntries(COLLECTIONS.filter((k) => Array.isAr
 /** Everything the clinic holds. `profile` brings the branch list along so records land in the right branch. */
 export const buildBackup = ({ patients = [], appointments = [], invoices = [], inventory = [], employees = [], profile = {} } = {}, now = new Date()) => {
   const data = { patients, appointments, invoices, inventory, employees, branches: branchesOf(profile) };
+  if (Array.isArray(profile.expenses) && profile.expenses.length) data.expenses = profile.expenses;
   return { format: BACKUP_FORMAT, version: BACKUP_VERSION, kind: "clinic", exportedAt: now.toISOString(), source: { clinic: String(profile.name || "") }, counts: counts(data), data };
 };
 
@@ -122,6 +123,10 @@ export const validateBackup = (b) => {
   }
   if (total > MAX_RECORDS) return { ok: false, error: `This backup has more than ${MAX_RECORDS.toLocaleString("en-IN")} records. Contact us to move it in` };
   if ((b.data.patients || []).some((p) => typeof p.name !== "string" || !p.name.trim())) return { ok: false, error: "A patient in this backup has no name. The file may be damaged" };
+  if (b.data.expenses !== undefined) {
+    if (!Array.isArray(b.data.expenses) || b.data.expenses.length > 5000) return { ok: false, error: "The expenses in this backup are damaged" };
+    if (b.data.expenses.some((e) => !plain(e) || typeof e.id !== "string" || !ID_RE.test(e.id) || !Number.isFinite(e.amountP) || hasUnsafeKey(e))) return { ok: false, error: "An expense in this backup is damaged. The file may be damaged" };
+  }
   if (b.data.branches !== undefined && !Array.isArray(b.data.branches)) return { ok: false, error: "The branch list in this backup is damaged" };
   return { ok: true };
 };
@@ -160,7 +165,12 @@ export const mergeBackup = (current = {}, backup, { includeStaff = false } = {})
   }
   // Appointments and invoices whose patient is not here yet still import; they link by patientId once the patient exists.
   const summary = Object.entries(report).filter(([, r]) => r.added || r.skipped).map(([k, r]) => `${r.added} ${label[k]} added${r.skipped ? `, ${r.skipped} already here` : ""}`);
-  return { merged, report, addBranches, summary, nothingNew: Object.values(report).every((r) => r.added === 0) && addBranches.length === 0 };
+  // Expenses already here (same id) stay as they are, so importing twice changes nothing.
+  const haveExp = new Set((current.profile?.expenses || []).map((e) => e && e.id));
+  const freshExp = (Array.isArray(src.expenses) ? src.expenses : []).filter((e) => !haveExp.has(e.id));
+  if (freshExp.length) summary.push(`${freshExp.length} expenses added`);
+  const expenses = freshExp.length ? [...freshExp, ...(current.profile?.expenses || [])].slice(0, 5000) : null;
+  return { merged, report, addBranches, expenses, summary, nothingNew: Object.values(report).every((r) => r.added === 0) && addBranches.length === 0 && freshExp.length === 0 };
 };
 
 /* ------------------------------- Spreadsheets ------------------------------- */
