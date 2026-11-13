@@ -8,13 +8,13 @@ import { formatTime12 } from "../reminders.js";
  */
 export default function NowPanel({ next = null, alerts = [], onGo, onNewAppointment, canBook = true }) {
   return (
-    <aside aria-label="Now" data-testid="now-panel" className="hidden xl:flex w-72 shrink-0 flex-col gap-6 bg-gradient-to-b from-[#1f2937] to-[#0b1019] text-slate-200 p-5 overflow-y-auto">
+    <aside aria-label="Now" data-testid="now-panel" className="hidden xl:flex w-72 shrink-0 flex-col gap-6 bg-gradient-to-b from-[#1e3a8a] to-[#0f1f4d] text-slate-200 p-5 overflow-y-auto">
       <section>
         <h2 className="text-[11px] font-bold tracking-wider text-slate-400">NEXT PATIENT</h2>
         {next ? (
-          <button type="button" onClick={() => onGo("Appointments Diary")} className="mt-2 w-full text-left rounded-xl bg-gradient-to-br from-amber-500/25 to-amber-700/10 border border-amber-400/30 hover:border-amber-400/60 p-4 transition">
-            <div className="text-lg font-bold text-amber-100 leading-tight">{next.patientName || "Patient"}</div>
-            <div className="text-xs text-amber-300 mt-1 font-semibold">{formatTime12(next.time)}{next.procedure ? ` · ${next.procedure}` : ""}</div>
+          <button type="button" onClick={() => onGo("Appointments Diary")} className="mt-2 w-full text-left rounded-xl bg-gradient-to-br from-sky-400/25 to-blue-600/10 border border-sky-300/30 hover:border-amber-400/60 p-4 transition">
+            <div className="text-lg font-bold text-sky-100 leading-tight">{next.patientName || "Patient"}</div>
+            <div className="text-xs text-sky-300 mt-1 font-semibold">{formatTime12(next.time)}{next.procedure ? ` · ${next.procedure}` : ""}</div>
             {next.chair && <div className="text-[11px] text-slate-400 mt-0.5">{next.chair}</div>}
           </button>
         ) : (
@@ -51,14 +51,14 @@ export default function NowPanel({ next = null, alerts = [], onGo, onNewAppointm
 /** The same information as a compact card for phones and small laptops (hidden where the side panel shows). */
 export function NowStrip({ next = null, alerts = [], onGo, onNewAppointment, canBook = true }) {
   return (
-    <section aria-label="Now" data-testid="now-strip" className="xl:hidden rounded-2xl bg-gradient-to-br from-[#1f2937] to-[#0b1019] text-slate-200 p-4 space-y-3">
+    <section aria-label="Now" data-testid="now-strip" className="xl:hidden rounded-2xl bg-gradient-to-br from-[#1e3a8a] to-[#0f1f4d] text-slate-200 p-4 space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="text-[11px] font-bold tracking-wider text-slate-400">NEXT PATIENT</div>
           {next ? (
             <button type="button" onClick={() => onGo("Appointments Diary")} className="text-left mt-1">
-              <div className="text-lg font-bold text-amber-100 leading-tight truncate">{next.patientName || "Patient"}</div>
-              <div className="text-xs text-amber-300 font-semibold">{formatTime12(next.time)}{next.procedure ? ` · ${next.procedure}` : ""}</div>
+              <div className="text-lg font-bold text-sky-100 leading-tight truncate">{next.patientName || "Patient"}</div>
+              <div className="text-xs text-sky-300 font-semibold">{formatTime12(next.time)}{next.procedure ? ` · ${next.procedure}` : ""}</div>
             </button>
           ) : <p className="mt-1 text-xs text-slate-400">No visits coming up today.</p>}
         </div>

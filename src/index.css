@@ -264,7 +264,7 @@ input::placeholder, textarea::placeholder { color: #64748b; opacity: 1; }
 /* ---- Loading: fairy with sparkles, bouncing dots ---- */
 .loader-dot { width: 7px; height: 7px; border-radius: 9999px; background: #0ea5e9; animation: loader-bounce 0.9s ease-in-out infinite; }
 @keyframes loader-bounce { 0%, 80%, 100% { transform: translateY(0); opacity: 0.45; } 40% { transform: translateY(-5px); opacity: 1; } }
-.loader-spark { position: absolute; width: 8px; height: 8px; background: #fbbf24; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); animation: loader-twinkle 1.6s ease-in-out infinite; }
+.loader-spark { position: absolute; width: 8px; height: 8px; background: #7dd3fc; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); animation: loader-twinkle 1.6s ease-in-out infinite; }
 .loader-spark-a { top: 4px; right: 6px; }
 .loader-spark-b { top: 46px; left: 0; animation-delay: 0.5s; width: 6px; height: 6px; }
 .loader-spark-c { bottom: 8px; right: 0; animation-delay: 1s; width: 7px; height: 7px; }
@@ -272,19 +272,19 @@ input::placeholder, textarea::placeholder { color: #64748b; opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .loader-dot, .loader-spark { animation: none; opacity: 0.8; } }
 
 
-/* ---- Premium theme: soft blue backdrop with a faint grid, floating navy sidebar and white workspace ---- */
+/* ---- Clinical White & Blue theme: soft blue backdrop, royal-blue sidebar and white workspace ---- */
 .app-backdrop {
-  background-color: #e5e7eb;
-  background-image: linear-gradient(160deg, #ece9e2 0%, #e2e8f0 100%);
+  background-color: #eaf1fc;
+  background-image: linear-gradient(160deg, #f4f8ff 0%, #dbe7f8 100%);
 }
 .side-navy {
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 260 520' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='white' stroke-opacity='0.09' stroke-width='1.4'%3E%3Cpath d='M-20 380 C 60 330 120 470 280 400'/%3E%3Cpath d='M-20 410 C 70 360 130 500 280 430'/%3E%3Cpath d='M-20 440 C 80 390 140 530 280 460'/%3E%3Cpath d='M-20 120 C 80 70 160 170 280 90'/%3E%3Cpath d='M-20 150 C 90 100 170 200 280 120'/%3E%3C/g%3E%3C/svg%3E"),
-    radial-gradient(120% 50% at 100% 0%, rgba(251, 191, 36, 0.28) 0%, transparent 60%),
-    radial-gradient(90% 45% at 0% 100%, rgba(100, 116, 139, 0.45) 0%, transparent 70%),
-    linear-gradient(180deg, #1f2937 0%, #18212f 40%, #111827 72%, #0b1019 100%);
+    radial-gradient(120% 50% at 100% 0%, rgba(56, 189, 248, 0.32) 0%, transparent 60%),
+    radial-gradient(90% 45% at 0% 100%, rgba(37, 99, 235, 0.45) 0%, transparent 70%),
+    linear-gradient(180deg, #1e3a8a 0%, #19327a 40%, #142a68 72%, #0f1f4d 100%);
   background-size: 100% 100%;
-  box-shadow: 6px 0 30px -12px rgba(11, 16, 25, 0.5);
+  box-shadow: 6px 0 30px -12px rgba(15, 31, 77, 0.5);
 }
 .nav-item {
   position: relative;
@@ -295,8 +295,8 @@ input::placeholder, textarea::placeholder { color: #64748b; opacity: 1; }
 .nav-item:hover .nav-icon { transform: scale(1.18) rotate(-4deg); }
 .nav-item-active,
 .nav-item-active:hover {
-  background-image: linear-gradient(135deg, #f59e0b 0%, #d97706 60%, #b45309 100%);
-  box-shadow: 0 8px 18px -6px rgba(11, 16, 25, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  background-image: linear-gradient(135deg, #38bdf8 0%, #2563eb 60%, #1d4ed8 100%);
+  box-shadow: 0 8px 18px -6px rgba(15, 31, 77, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.28);
   transform: none;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -313,12 +313,12 @@ main .bg-white.rounded-xl.border { box-shadow: 0 1px 2px rgba(17, 24, 39, 0.05),
   .stat-card:hover { transform: translateY(-2px); }
 }
 .work-panel {
-  background-color: #e5e7eb;
+  background-color: #eaf1fc;
   background-image:
-    radial-gradient(55% 45% at 92% 0%, rgba(251, 191, 36, 0.28) 0%, transparent 70%),
-    radial-gradient(50% 45% at 6% 30%, rgba(148, 163, 184, 0.3) 0%, transparent 70%),
-    radial-gradient(55% 45% at 85% 95%, rgba(253, 224, 71, 0.2) 0%, transparent 70%),
-    linear-gradient(160deg, #e5e7eb 0%, #ece9e2 45%, #e2e8f0 100%);
+    radial-gradient(55% 45% at 92% 0%, rgba(56, 189, 248, 0.22) 0%, transparent 70%),
+    radial-gradient(50% 45% at 6% 30%, rgba(147, 197, 253, 0.3) 0%, transparent 70%),
+    radial-gradient(55% 45% at 85% 95%, rgba(191, 219, 254, 0.35) 0%, transparent 70%),
+    linear-gradient(160deg, #f4f8ff 0%, #eaf1fc 45%, #dbe7f8 100%);
   background-attachment: fixed;
 }
 main section.bg-white {
@@ -340,18 +340,6 @@ main section.bg-white {
 
 /* The app shell must never scroll itself. Focus or scrollIntoView on a field was shifting it up and leaving an empty band at the bottom. */
 .app-shell { overflow: clip; height: 100vh; height: 100dvh; }
-
-/* Graphite & Gold accent: buttons, links and highlights that were hard-coded blue */
-.bg-brand-600, .bg-\[\#1d4ed8\], .bg-blue-600 { background-color: #b45309 !important; }
-.hover\:bg-blue-700:hover, .hover\:bg-brand-700:hover, .hover\:bg-\[\#1e40af\]:hover { background-color: #92400e !important; }
-.bg-blue-700, .bg-brand-700 { background-color: #92400e !important; }
-.text-brand-600, .text-brand-700, .text-blue-600, .text-blue-700, .text-\[\#1d4ed8\] { color: #b45309 !important; }
-.text-blue-800, .text-brand-900 { color: #78350f !important; }
-.bg-blue-50, .bg-brand-50 { background-color: #fffbeb !important; }
-.bg-blue-100, .bg-brand-100 { background-color: #fef3c7 !important; }
-.border-blue-200, .border-blue-100 { border-color: #fde68a !important; }
-.ring-blue-500, .focus\:ring-blue-500:focus { --tw-ring-color: #d97706 !important; }
-.focus\:border-blue-500:focus { border-color: #d97706 !important; }
 
 /* Slim icon rail on desktop: labels appear when the pointer or keyboard focus is on the sidebar */
 @media (min-width: 768px) {
