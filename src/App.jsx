@@ -81,6 +81,8 @@ import NowPanel, { NowStrip } from "./components/NowPanel.jsx";
 import NotificationBell from "./components/NotificationBell.jsx";
 import AccountMenu from "./components/AccountMenu.jsx";
 import { buildNotifications } from "./notifications.js";
+import { backupNotification, markBackupDone, readLastBackup } from "./reliability.js";
+import ConnectionBar from "./components/ConnectionBar.jsx";
 import { AreaLine } from "./components/Sparkline.jsx";
 import { StatCard, ActionTile } from "./components/DashCards.jsx";
 import PerioChart from "./components/PerioChart.jsx";
@@ -822,6 +824,7 @@ export default function App() {
 
   // Navigation State
   // Remember the open screen across a refresh (this tab only); a fresh sign-in starts on the Dashboard.
+  const [, setBackupTick] = useState(0);
   const [activeNav, setActiveNav] = useState(() => {
     try { const v = window.sessionStorage.getItem("merident_nav"); return !v ? "Dashboard" : v === "Today" ? "Appointments Diary" : v; } catch (e) { return "Dashboard"; }
   });
@@ -2332,6 +2335,9 @@ export default function App() {
                 appointments,
                 showStock: navFor(role, [{ label: "Stock Maintenance" }]).length > 0,
                 showAppointments: navFor(role, [{ label: "Appointments Diary" }]).length > 0,
+                backup: !allowedBranchIds && (role === "owner" || role === "manager")
+                  ? backupNotification(readLastBackup(CACHE_ID, window.localStorage), new Date(), { hasData: allPatients.length + allInvoices.length > 0 })
+                  : null,
               })}
               onOpen={(to) => setActiveNav(to)}
             />
@@ -2344,6 +2350,7 @@ export default function App() {
             />
           </div>
         </header>
+        <ConnectionBar />
 
         <main className="p-4 sm:p-6 md:p-8 pb-28 max-w-7xl mx-auto w-full">
           
@@ -3693,7 +3700,7 @@ export default function App() {
               {!allowedBranchIds && (role === "owner" || role === "manager") && <DataPortability
                 data={{ patients: allPatients, appointments: allAppointments, invoices: allInvoices, inventory, employees, profile: practiceProfile }}
                 newId={newId}
-                onDownloadFile={downloadFile}
+                onDownloadFile={(text, name, type, bom) => { downloadFile(text, name, type, bom); if (/backup/i.test(name)) { markBackupDone(CACHE_ID, new Date(), window.localStorage); setBackupTick((n) => n + 1); } }}
                 onAudit={logAudit}
                 onImported={(r) => {
                   if (r.patients) setPatients(r.patients);
