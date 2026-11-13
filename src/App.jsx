@@ -82,6 +82,9 @@ import NotificationBell from "./components/NotificationBell.jsx";
 import AccountMenu from "./components/AccountMenu.jsx";
 import { buildNotifications } from "./notifications.js";
 import { backupNotification, markBackupDone, readLastBackup } from "./reliability.js";
+import LockScreen from "./components/LockScreen";
+import SecurityCard from "./components/SecurityCard";
+import { hasLock as pinLockOn, readLock as readPinLock } from "./appLock";
 import ConnectionBar from "./components/ConnectionBar.jsx";
 import useRestorePoints from "./useRestorePoints.js";
 import { AreaLine } from "./components/Sparkline.jsx";
@@ -804,6 +807,21 @@ export default function App() {
       setVerifyBusy(false);
     }
   };
+
+  // PIN lock: locked when the app opens with a PIN set, after the chosen idle time, or on "Lock now".
+  const [pinLocked, setPinLocked] = useState(false);
+  const [, setPinTick] = useState(0);
+  const lockUid = authUser?.uid;
+  useEffect(() => { if (lockUid && pinLockOn(lockUid)) setPinLocked(true); }, [lockUid]);
+  useEffect(() => {
+    if (!lockUid || pinLocked || !pinLockOn(lockUid)) return undefined;
+    const ms = ((readPinLock(lockUid) || {}).idleMinutes || 5) * 60000;
+    let t = setTimeout(() => setPinLocked(true), ms);
+    const bump = () => { clearTimeout(t); t = setTimeout(() => setPinLocked(true), ms); };
+    const evs = ["pointerdown", "keydown", "scroll"];
+    evs.forEach((e) => window.addEventListener(e, bump, { passive: true }));
+    return () => { clearTimeout(t); evs.forEach((e) => window.removeEventListener(e, bump)); };
+  }, [lockUid, pinLocked, setPinTick]);
 
   const handleLogout = async (notice) => {
     try {
@@ -2358,6 +2376,7 @@ export default function App() {
           </div>
         </header>
         <ConnectionBar />
+        {pinLocked && lockUid && <LockScreen uid={lockUid} onUnlock={() => setPinLocked(false)} onSignOut={(n) => { setPinLocked(false); handleLogout(n); }} />}
 
         <main className="p-4 sm:p-6 md:p-8 pb-28 max-w-7xl 2xl:max-w-[96rem] mx-auto w-full">
           
@@ -3617,6 +3636,8 @@ export default function App() {
                 <h1 className="text-xl font-bold text-slate-900">Settings</h1>
                 <p className="text-xs text-slate-500">Chairs, medicines, fees, message texts, drop-down lists and switches for this clinic. Clinic details, branches and logins stay in Practice Profile.</p>
               </div>
+
+              <SecurityCard uid={authUser?.uid} onLockNow={() => setPinLocked(true)} onChange={() => setPinTick((n) => n + 1)} />
 
               {(role === "owner" || role === "manager") && (
                 <div className="space-y-2">
