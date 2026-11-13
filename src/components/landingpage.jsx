@@ -538,6 +538,13 @@ export default function LandingPage({
               <span>Questions? Call +91 90432 05927</span>
             </a>
             <a
+              href="mailto:santhoshkumar@meridiandentalos.com"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-brand-700"
+            >
+              <PhoneCall className="w-4 h-4 text-brand-600" />
+              <span>or email santhoshkumar@meridiandentalos.com</span>
+            </a>
+            <a
               href="tel:+918098318039"
               className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-brand-700"
             >
