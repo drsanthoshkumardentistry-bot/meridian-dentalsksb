@@ -295,7 +295,7 @@ function SampleBill() {
         <span className="font-bold text-ink">Total</span>
         <span className="font-display font-extrabold text-lg text-brand-600">₹7,360</span>
       </div>
-      <div className="mt-2 flex items-center justify-between gap-3 rounded-md bg-mist px-2.5 py-1.5 text-brand-700">
+      <div className="mt-2 flex items-center justify-between gap-3 rounded-md bg-stone-100 px-2.5 py-1.5 text-brand-700">
         <span>Advance ₹5,000 paid</span>
         <span className="font-bold whitespace-nowrap">Balance ₹2,360</span>
       </div>
@@ -396,7 +396,7 @@ export default function LandingPage({
         <div className="relative max-w-6xl mx-auto px-5 pt-14 pb-20 lg:pt-28 lg:pb-32 grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-14 lg:gap-16 items-center">
           <div className="space-y-6">
             <p className="inline-flex items-center gap-2 text-sm font-semibold text-amber-800 bg-white/80 border border-amber-200 shadow-sm px-3.5 py-1 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-aqua-500" aria-hidden="true" />
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" aria-hidden="true" />
               Built by dental students in India. Free during early access.
             </p>
 
@@ -462,7 +462,7 @@ export default function LandingPage({
                 </button>
               ) : (
                 <form onSubmit={submitEmail} noValidate className="bg-white/90 border border-white rounded-2xl shadow-[0_20px_50px_-24px_rgba(17,24,39,.5)] p-5 space-y-3">
-                  <div className="grid grid-cols-2 gap-1 rounded-lg bg-mist p-1 text-sm font-bold">
+                  <div className="grid grid-cols-2 gap-1 rounded-lg bg-stone-100 p-1 text-sm font-bold">
                     <button
                       type="button"
                       onClick={() => { setMode("signin"); setLocalError(""); }}
@@ -648,21 +648,21 @@ export default function LandingPage({
       <section className="max-w-6xl mx-auto px-5 pb-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
           <div className="flex gap-3.5">
-            <Lock className="w-5 h-5 mt-0.5 shrink-0 text-aqua-700" aria-hidden="true" />
+            <Lock className="w-5 h-5 mt-0.5 shrink-0 text-amber-700" aria-hidden="true" />
             <div>
               <h3 className="font-bold">Private workspace</h3>
               <p className="mt-1 text-sm text-slate-600 leading-relaxed">Each clinic's records are stored under its own sign-in and are not shared with other clinics. Only a verified email can open a workspace.</p>
             </div>
           </div>
           <div className="flex gap-3.5">
-            <Cloud className="w-5 h-5 mt-0.5 shrink-0 text-aqua-700" aria-hidden="true" />
+            <Cloud className="w-5 h-5 mt-0.5 shrink-0 text-amber-700" aria-hidden="true" />
             <div>
               <h3 className="font-bold">Cloud backup</h3>
               <p className="mt-1 text-sm text-slate-600 leading-relaxed">Your data is saved to the cloud and available on any device where you sign in.</p>
             </div>
           </div>
           <div className="flex gap-3.5">
-            <ShieldCheck className="w-5 h-5 mt-0.5 shrink-0 text-aqua-700" aria-hidden="true" />
+            <ShieldCheck className="w-5 h-5 mt-0.5 shrink-0 text-amber-700" aria-hidden="true" />
             <div>
               <h3 className="font-bold">Your data, your control</h3>
               <p className="mt-1 text-sm text-slate-600 leading-relaxed">Patients can opt out of WhatsApp messages, and you can download a full copy of your clinic's records any time, or ask us to delete them.</p>
