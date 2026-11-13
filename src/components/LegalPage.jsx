@@ -26,7 +26,7 @@ export default function LegalPage({ page }) {
         ))}
         <section className="mt-10 rounded-xl border border-rule bg-enamel p-5">
           <h2 className="text-lg font-bold text-ink">{page === "pricing" ? "Talk to us" : "Contact and complaints"}</h2>
-          <p className="mt-2 text-slate-700">{CONTACT.name}. Message on WhatsApp: <a className="text-brand-700 underline" href={`https://wa.me/${CONTACT.whatsapp}`}>{CONTACT.display}</a>.</p>
+          <p className="mt-2 text-slate-700">{CONTACT.name}. Message on WhatsApp: <a className="text-brand-700 underline" href={`https://wa.me/${CONTACT.whatsapp}`}>{CONTACT.display}</a>. Email: <a className="text-brand-700 underline" href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>.</p>
           <p className="mt-1 text-slate-700">{CONTACT_CO.name}. Message on WhatsApp: <a className="text-brand-700 underline" href={`https://wa.me/${CONTACT_CO.whatsapp}`}>{CONTACT_CO.display}</a>.</p>
         </section>
       </main>

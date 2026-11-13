@@ -3,7 +3,7 @@
  * Plain data so a test can check the facts and the page can render it. Have a lawyer review before relying on it.
  */
 export const LEGAL_UPDATED = "11 November 2026";
-export const CONTACT = { name: "Santhoshkumar S, Founder and Managing Director", whatsapp: "919043205927", display: "+91 90432 05927" };
+export const CONTACT = { name: "Santhoshkumar S, Founder and Managing Director", whatsapp: "919043205927", display: "+91 90432 05927", email: "santhoshkumar@meridiandentalos.com" };
 export const CONTACT_CO = { name: "Sivasabari G, Co-founder", whatsapp: "918098318039", display: "+91 80983 18039" };
 
 export const PRIVACY = {
