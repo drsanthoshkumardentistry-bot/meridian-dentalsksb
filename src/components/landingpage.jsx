@@ -35,10 +35,12 @@ import {
   GraduationCap,
   Flag,
   LayoutDashboard,
-  Network
+  Network,
+  PlayCircle
 } from "lucide-react";
 
 const WHATSAPP_NUMBER = "919043205927";
+const VIDEO_LINK = "https://youtu.be/V6_z6LEbqNU";
 const DEMO_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
   "Hi, I'd like a demo of MeriDent for my dental clinic."
 )}`;
@@ -429,6 +431,16 @@ export default function LandingPage({
                 <span>Ask for a demo on WhatsApp</span>
               </a>
             </div>
+
+            <a
+              href={VIDEO_LINK}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex w-fit items-center gap-2 text-brand-700 hover:text-brand-800 text-[15px] font-semibold"
+            >
+              <PlayCircle className="w-5 h-5" />
+              <span>Watch the 9-minute demo</span>
+            </a>
 
             <label className="flex items-start gap-2 max-w-lg text-sm text-slate-600 cursor-pointer">
               <input type="checkbox" checked={specialist} onChange={(e) => pickSpecialist(e.target.checked)} className="mt-1" />
