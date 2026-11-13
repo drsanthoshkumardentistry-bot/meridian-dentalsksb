@@ -5,6 +5,7 @@
  * File: src/App.jsx
  * ============================================================================== */
 
+import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from "react";
 import { profileGaps } from "./profileGaps.js";
 import { todaySummary } from "./today.js";
 import { memberDiscountRupees, membershipInvoice, leadPatientPrefill, setLeadStatus, activeMembershipFor } from "./growth.js";
@@ -114,6 +115,10 @@ import { planToInvoiceItems, markPlanBilled, plannedTeeth, planTotals } from "./
 import ConsentForms from "./components/ConsentForms.jsx";
 import { consentHtml } from "./consent.js";
 import BranchCompare from "./components/BranchCompare.jsx";
+import ClaimModal from "./components/ClaimModal.jsx";
+import ExpensesCard from "./components/ExpensesCard.jsx";
+import { buildExpense, addExpense, removeExpense, expensesCsv } from "./expenses.js";
+import { claimsSummary } from "./claims.js";
 import { languageOf } from "./messageLanguage.js";
 import SetupChecklist from "./components/SetupChecklist.jsx";
 import { setupProgress } from "./setup.js";
@@ -142,7 +147,6 @@ import { createShare, fetchShare, deleteShare } from "./planShare.js";
 import { publishPortal, deletePortal } from "./portalStore.js";
 import { buildPortalDoc, newPortalToken } from "./portal.js";
 import PortalShare from "./components/PortalShare.jsx";
-import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from "react";
 import {
   Menu,
   X,
@@ -1513,6 +1517,20 @@ export default function App() {
   };
 
   // --- Reports ---
+  const [claimInvoice, setClaimInvoice] = useState(null);
+  const handleAddExpense = (form) => {
+    const built = buildExpense(form, newId("EXP"));
+    if (!built.ok) return built.error;
+    const added = addExpense(practiceProfile.expenses, built.expense);
+    if (!added.ok) return added.error;
+    setPracticeProfile((p) => ({ ...p, expenses: added.list }));
+    logAudit("expense.add", built.expense.category);
+    return "";
+  };
+  const handleRemoveExpense = (id) => {
+    setPracticeProfile((p) => ({ ...p, expenses: removeExpense(p.expenses, id) }));
+    logAudit("expense.delete", id);
+  };
   const [reportMonth, setReportMonth] = useState(currentMonthKey());
   const reportInvoices = invoices;
   const reportCollections = collectionsForMonth(reportInvoices, reportMonth);
@@ -3102,6 +3120,15 @@ export default function App() {
                 </div>
               )}
 
+              {(() => {
+                const cs = claimsSummary(invoices);
+                return cs.open + cs.rejected > 0 ? (
+                  <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-xs text-blue-900" data-testid="claims-strip">
+                    <b>Insurance claims:</b> {cs.open} waiting for the insurer (₹{formatINR(cs.openP)}){cs.rejected ? `, ${cs.rejected} rejected` : ""}. Use Claim on an invoice to update it.
+                  </div>
+                ) : null;
+              })()}
+
               {invoices.length === 0 ? (
                 <div className="bg-white rounded-xl border border-rule p-12 text-center space-y-3">
                   <IndianRupee className="w-10 h-10 text-blue-600 mx-auto" />
@@ -3152,6 +3179,9 @@ export default function App() {
                             <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
                               {paymentStatus(inv)}
                             </span>
+                            {inv.claim ? (
+                              <div className="text-[10px] font-semibold text-slate-600 mt-1">Claim: {inv.claim.insurer} · {inv.claim.status}</div>
+                            ) : null}
                             {isOverdue(inv) ? (
                               <div className="text-[10px] font-bold text-rose-600 mt-1">Overdue by {daysOverdue(inv)} {daysOverdue(inv) === 1 ? "day" : "days"}</div>
                             ) : balancePaise(inv) > 0 && inv.dueDate ? (
@@ -3170,6 +3200,15 @@ export default function App() {
                             >
                               <QrCode className="w-3.5 h-3.5" /> {balancePaise(inv) > 0 ? "Collect" : "Payments"}
                             </button>
+                            {canWrite(role, "invoices") && (balancePaise(inv) > 0 || inv.claim) && (
+                              <button
+                                onClick={() => setClaimInvoice(inv)}
+                                className="px-3 py-1.5 bg-white hover:bg-blue-50 border border-rule text-slate-800 rounded-lg text-xs font-semibold"
+                                aria-label={`Insurance claim for ${inv.id}`}
+                              >
+                                Claim
+                              </button>
+                            )}
                             <button
                               onClick={() => sendInvoiceToPatient(inv)}
                               className="px-3 py-1.5 bg-white hover:bg-emerald-50 border border-rule text-slate-800 rounded-lg text-xs font-semibold"
@@ -3283,6 +3322,16 @@ export default function App() {
                   </div>
                 ))}
               </div>
+
+              <ExpensesCard
+                expenses={practiceProfile.expenses}
+                invoices={reportInvoices}
+                ym={reportMonth}
+                canEdit={canWrite(role, "profile")}
+                onAdd={handleAddExpense}
+                onRemove={handleRemoveExpense}
+                onDownload={() => downloadCsv(expensesCsv(practiceProfile.expenses, reportMonth), `expenses-${reportMonth}.csv`)}
+              />
 
               <DentistEarnings
                 report={dentistCmp}
@@ -3764,7 +3813,7 @@ export default function App() {
                   if (r.invoices) setInvoices(r.invoices);
                   if (r.inventory) setInventory(r.inventory);
                   if (r.employees) setEmployees(r.employees);
-                  if (r.addBranches && r.addBranches.length) setPracticeProfile({ ...practiceProfile, branches: [...allBranches, ...r.addBranches] });
+                  if ((r.addBranches && r.addBranches.length) || r.expenses) setPracticeProfile({ ...practiceProfile, ...(r.addBranches && r.addBranches.length ? { branches: [...allBranches, ...r.addBranches] } : {}), ...(r.expenses ? { expenses: r.expenses } : {}) });
                   showToast("Import complete");
                 }}
               />}
@@ -6251,6 +6300,19 @@ export default function App() {
       )}
 
       {/* --- COLLECT PAYMENT / UPI QR MODAL --- */}
+      {claimInvoice && (
+        <ClaimModal
+          key={claimInvoice.id}
+          invoice={allInvoices.find((i) => i.id === claimInvoice.id) || claimInvoice}
+          onClose={() => setClaimInvoice(null)}
+          onSave={(next) => {
+            setInvoices((prev) => prev.map((i) => (i.id === next.id ? next : i)));
+            logAudit("invoice.claim", next.id, `${next.claim.insurer}, ${next.claim.status}`);
+            showToast(next.claim.status === "Settled" ? `Claim settled. Payment added to ${next.id}` : `Claim saved on ${next.id}`);
+            setClaimInvoice(null);
+          }}
+        />
+      )}
       {qrInvoice && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
           <div className="bg-white rounded-xl border border-rule w-full max-w-sm p-6 text-center space-y-4 shadow-xl max-h-[92vh] overflow-y-auto">

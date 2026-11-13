@@ -105,7 +105,7 @@ export default function DataPortability({ data, newId, onDownloadFile, onImporte
   const confirm = () => {
     if (plan.kind === "backup") {
       const { m } = plan;
-      onImported({ ...m.merged, addBranches: m.addBranches });
+      onImported({ ...m.merged, addBranches: m.addBranches, expenses: m.expenses });
       onAudit("data.import", "Backup file", m.summary.join("; "));
     } else {
       const { patients } = plan.result;
