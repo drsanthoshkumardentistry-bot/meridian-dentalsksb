@@ -27,14 +27,14 @@ export default function NotificationBell({ items = [], onOpen }) {
         <div role="menu" aria-label="Notifications" className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] max-h-[70vh] overflow-y-auto rounded-xl bg-white border border-slate-200 shadow-2xl z-50">
           <div className="px-4 py-3 border-b border-slate-100 text-sm font-bold text-slate-900">Notifications</div>
           {items.length === 0 ? (
-            <p className="px-4 py-6 text-xs text-slate-500 text-center">You are all caught up. No low stock and no visits coming up.</p>
+            <p className="px-4 py-6 text-xs text-slate-500 text-center">You are all caught up. Nothing needs your attention.</p>
           ) : (
             <ul>
               {items.map((n) => (
                 <li key={n.id}>
                   <button type="button" role="menuitem" onClick={() => { setOpen(false); onOpen(n.to); }} className="w-full text-left flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50 text-xs text-slate-800">
                     <span className={`mt-1 w-2 h-2 rounded-full shrink-0 ${DOT[n.tone] || DOT.blue}`} aria-hidden="true" />
-                    <span className="flex-1">{n.text}<span className="block text-[10px] text-slate-400 mt-0.5">{n.kind === "stock" ? "Stock" : "Appointments"}</span></span>
+                    <span className="flex-1">{n.text}<span className="block text-[10px] text-slate-400 mt-0.5">{n.kind === "stock" ? "Stock" : n.kind === "backup" ? "Backup" : "Appointments"}</span></span>
                   </button>
                 </li>
               ))}

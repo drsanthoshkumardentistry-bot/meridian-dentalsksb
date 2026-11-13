@@ -7,7 +7,7 @@ const hhmm = (d) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinu
 const tomorrowKey = (now) => dateKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1));
 
 /** Returns [{ id, kind: "stock" | "appointment", tone: "red" | "amber" | "blue", text, to }] most urgent first. */
-export const buildNotifications = ({ inventory = [], appointments = [], now = new Date(), showStock = true, showAppointments = true } = {}) => {
+export const buildNotifications = ({ inventory = [], appointments = [], now = new Date(), showStock = true, showAppointments = true, backup = null } = {}) => {
   inventory = (Array.isArray(inventory) ? inventory : []).filter(Boolean);
   appointments = (Array.isArray(appointments) ? appointments : []).filter(Boolean);
   const out = [];
@@ -33,5 +33,6 @@ export const buildNotifications = ({ inventory = [], appointments = [], now = ne
     stock.sort((a, b) => a.rank - b.rank);
     out.unshift(...stock.map(({ rank, ...n }) => n));
   }
+  if (backup) out.push(backup);
   return out;
 };
