@@ -8,7 +8,7 @@ import { formatTime12 } from "../reminders.js";
  */
 export default function NowPanel({ next = null, alerts = [], onGo, onNewAppointment, canBook = true }) {
   return (
-    <aside aria-label="Now" data-testid="now-panel" className="hidden xl:flex w-72 shrink-0 flex-col gap-6 bg-gradient-to-b from-[#1e3a8a] to-[#0f1f4d] text-slate-200 p-5 overflow-y-auto">
+    <aside aria-label="Now" data-testid="now-panel" className="hidden xl:flex w-72 shrink-0 flex-col gap-6 bg-gradient-to-b from-[#1e3a8a] to-[#0f1f4d] text-slate-200 p-5 pb-24 overflow-y-auto">
       <section>
         <h2 className="text-[11px] font-bold tracking-wider text-slate-400">NEXT PATIENT</h2>
         {next ? (
