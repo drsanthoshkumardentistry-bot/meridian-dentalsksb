@@ -591,7 +591,7 @@ export default function LandingPage({
         <ul className="max-w-6xl mx-auto px-5 py-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-slate-700">
           <li className="flex items-start gap-2.5"><GraduationCap className="w-5 h-5 text-brand-600 shrink-0 mt-0.5" aria-hidden="true" /><span><strong className="text-ink">Built by dental students.</strong> Made by people who sit in the dental chair every day.</span></li>
           <li className="flex items-start gap-2.5"><Flag className="w-5 h-5 text-brand-600 shrink-0 mt-0.5" aria-hidden="true" /><span><strong className="text-ink">Made in India, for India.</strong> GST invoices, UPI, WhatsApp and ₹ throughout.</span></li>
-          <li className="flex items-start gap-2.5"><ShieldCheck className="w-5 h-5 text-brand-600 shrink-0 mt-0.5" aria-hidden="true" /><span><strong className="text-ink">Registered Indian startup.</strong> StartupTN and MSME Udyam registered.</span></li>
+          <li className="flex items-start gap-2.5"><ShieldCheck className="w-5 h-5 text-brand-600 shrink-0 mt-0.5" aria-hidden="true" /><span><strong className="text-ink">Registered in India.</strong> On the StartupTN portal and registered with MSME Udyam.</span></li>
           <li className="flex items-start gap-2.5"><Lock className="w-5 h-5 text-brand-600 shrink-0 mt-0.5" aria-hidden="true" /><span><strong className="text-ink">Your clinic's data stays yours.</strong> Each clinic's records are kept separate.</span></li>
         </ul>
       </section>
