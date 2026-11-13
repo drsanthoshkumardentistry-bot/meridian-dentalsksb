@@ -194,6 +194,7 @@ import * as FirebaseModule from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, doc, setDoc, onSnapshot, deleteDoc } from "firebase/firestore";
 import LandingPage from "./components/landingpage";
+import LoginPage, { isLoginPath } from "./components/LoginPage.jsx";
 import { resolveConnectOnly, setConnectOnly, setSignInChoice } from "./connectOnly.js";
 import { AppLoading, VerifyEmailScreen, IdleWarning } from "./components/AuthScreens";
 import { friendlyAuthError, usesPasswordLogin } from "./authErrors";
@@ -2072,13 +2073,16 @@ export default function App() {
     );
   };
 
+  if (authUser && isLoginPath(window.location.pathname)) window.history.replaceState(null, "", "/");
+
   if (authLoading) {
     return <AppLoading />;
   }
 
   if (!authUser) {
+    const Entry = isLoginPath(window.location.pathname) ? LoginPage : LandingPage;
     return (
-      <LandingPage
+      <Entry
         onLoginClick={handleGoogleLogin}
         onEmailSignIn={handleEmailSignIn}
         onEmailSignUp={handleEmailSignUp}
