@@ -48,7 +48,7 @@ export default function SeoPage({ page }) {
                 <MessageCircle className="w-4 h-4 text-blue-700" aria-hidden="true" />Ask for a demo on WhatsApp
               </a>
             </div>
-            <p className="mt-3 text-sm text-slate-600">Free during early access. No credit card needed.</p>
+            <p className="mt-3 text-sm text-slate-600">Free during early access. No credit card needed. <a href="/free-early-access" className="underline">See what you get</a></p>
           </div>
         </section>
 
