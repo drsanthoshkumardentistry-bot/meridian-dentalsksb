@@ -1925,6 +1925,18 @@ export default function App() {
     return () => { off = true; };
   }, [hydratedFor, CLINIC_ID]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const handleDownloadRxPdf = async () => {
+    if (!activePatient) return;
+    if (!(activePatient.prescriptions || []).length) { showToast("Add a medicine first"); return; }
+    try {
+      const { downloadPrescriptionPdf } = await import("./prescriptionPdf.js");
+      await downloadPrescriptionPdf(activePatient, practiceProfile);
+      showToast("Prescription PDF downloaded");
+    } catch (e) {
+      showToast("Could not make the PDF. Try again.");
+    }
+  };
+
   const handleDownloadPdf = async (inv, receipt = false) => {
     try {
       const { downloadInvoicePdf } = await import("./invoicePdf.js");
@@ -5061,6 +5073,14 @@ export default function App() {
                     <div className="text-xs font-bold uppercase text-slate-800 tracking-wider">
                       Prescriptions Slip
                     </div>
+                    <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={handleDownloadRxPdf}
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-card transition-all bg-blue-700 hover:bg-blue-800 text-white"
+                    >
+                      <Download className="w-3.5 h-3.5" /> Print / PDF
+                    </button>
                     <button
                       type="button"
                       onClick={dispatchPatientWhatsApp}
@@ -5068,6 +5088,7 @@ export default function App() {
                     >
                       <Send className="w-3.5 h-3.5" /> Dispatch WhatsApp Prescription
                     </button>
+                    </div>
                   </div>
 
                   <div>
