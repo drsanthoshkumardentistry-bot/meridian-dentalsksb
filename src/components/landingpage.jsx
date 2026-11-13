@@ -5,6 +5,7 @@
  * upcoming features are clearly marked as "coming next".
  * ============================================================================== */
 
+import InstallApp from "./InstallApp.jsx";
 import React, { useState } from "react";
 import { isValidEmailAddress } from "../authErrors";
 import { setSignInChoice, signInChoice } from "../connectOnly";
@@ -42,7 +43,6 @@ import {
 
 const WHATSAPP_NUMBER = "919043205927";
 const VIDEO_LINK = "https://youtu.be/V6_z6LEbqNU";
-const APK_LINK = "https://github.com/drsanthoshkumardentistry-bot/meridian-dentalsksb/releases/download/android-latest/MeriDent.apk";
 const DEMO_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
   "Hi, I'd like a demo of MeriDent for my dental clinic."
 )}`;
@@ -434,24 +434,24 @@ export default function LandingPage({
               </a>
             </div>
 
-            <a
-              href={VIDEO_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex w-fit items-center gap-2 text-brand-700 hover:text-brand-800 text-[15px] font-semibold"
-            >
-              <PlayCircle className="w-5 h-5" />
-              <span>Watch the 9-minute demo</span>
-            </a>
-
-            <a
-              href={APK_LINK}
-              rel="noopener noreferrer"
-              className="inline-flex w-fit items-center gap-2 text-brand-700 hover:text-brand-800 text-[15px] font-semibold"
-            >
-              <Download className="w-5 h-5" />
-              <span>Download the Android app</span>
-            </a>
+            <div className="flex flex-wrap items-center gap-x-7 gap-y-3">
+              <a
+                href={VIDEO_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-brand-700 hover:text-brand-800 text-[15px] font-semibold"
+              >
+                <PlayCircle className="w-5 h-5" aria-hidden="true" />
+                <span>Watch the 9-minute demo</span>
+              </a>
+              <a
+                href="#app"
+                className="inline-flex items-center gap-2 text-brand-700 hover:text-brand-800 text-[15px] font-semibold"
+              >
+                <Download className="w-5 h-5" aria-hidden="true" />
+                <span>Get the app</span>
+              </a>
+            </div>
 
             <label className="flex items-start gap-2 max-w-lg text-sm text-slate-600 cursor-pointer">
               <input type="checkbox" checked={specialist} onChange={(e) => pickSpecialist(e.target.checked)} className="mt-1" />
@@ -701,6 +701,8 @@ export default function LandingPage({
           </div>
         </div>
       </section>
+
+      <InstallApp />
 
       {/* FAQ */}
       <section id="faq" className="bg-white/50 backdrop-blur border-y border-white/70">

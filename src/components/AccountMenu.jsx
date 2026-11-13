@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Hospital, Settings, LogOut } from "lucide-react";
+import { Hospital, Settings, LogOut, Download } from "lucide-react";
+import { useInstallPrompt } from "../installApp.js";
 import UserAvatar from "./UserAvatar.jsx";
 
 /** Avatar button that opens a small menu: Practice Profile, Settings, and a red Log out. */
 export default function AccountMenu({ user, canProfile = true, canSettings = true, onGo, onLogout }) {
   const [open, setOpen] = useState(false);
+  const { canPrompt, install } = useInstallPrompt();
   const ref = useRef(null);
   useEffect(() => {
     if (!open) return undefined;
@@ -29,6 +31,7 @@ export default function AccountMenu({ user, canProfile = true, canSettings = tru
           </div>
           {canProfile && <button type="button" role="menuitem" onClick={() => { setOpen(false); onGo("Practice Profile"); }} className={`${item} text-slate-700`}><Hospital className="w-4 h-4" /> Practice Profile</button>}
           {canSettings && <button type="button" role="menuitem" onClick={() => { setOpen(false); onGo("Settings"); }} className={`${item} text-slate-700`}><Settings className="w-4 h-4" /> Settings</button>}
+          {canPrompt && <button type="button" role="menuitem" onClick={() => { setOpen(false); install(); }} className={`${item} text-slate-700`}><Download className="w-4 h-4" /> Install app</button>}
           <button type="button" role="menuitem" onClick={() => { setOpen(false); onLogout(); }} className={`${item} text-red-600 hover:bg-red-50 border-t border-slate-100`}><LogOut className="w-4 h-4" /> Log out</button>
         </div>
       )}

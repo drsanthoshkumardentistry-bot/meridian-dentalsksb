@@ -1,6 +1,6 @@
 import React from "react";
-import { describe, it, expect, afterEach } from "vitest";
-import { render, screen, within, cleanup } from "@testing-library/react";
+import { describe, it, expect, afterEach, vi } from "vitest";
+import { render, screen, within, cleanup, fireEvent, act, waitFor } from "@testing-library/react";
 import LandingPage from "../src/components/landingpage.jsx";
 
 afterEach(() => cleanup());
@@ -69,10 +69,33 @@ describe("landing page content", () => {
 });
 
 describe("landing page app download", () => {
-  it("links to the Android app file and says there is no iPhone app", () => {
+  it("has an install section with the Android file and says there is no iPhone app", () => {
     render(<LandingPage firebaseConfigured onLoginClick={() => {}} />);
-    const link = screen.getByText("Download the Android app").closest("a");
-    expect(link.getAttribute("href")).toMatch(/releases\/download\/android-latest\/MeriDent\.apk$/);
-    expect(document.getElementById("faq").textContent).toMatch(/no iPhone app yet/);
+    const section = document.getElementById("app");
+    expect(section).toBeTruthy();
+    expect(within(section).getByText("Install app")).toBeTruthy();
+    const apk = within(section).getByText("Download for Android (APK)").closest("a");
+    expect(apk.getAttribute("href")).toMatch(/releases\/download\/android-latest\/MeriDent\.apk$/);
+    expect(section.textContent).toMatch(/no iPhone app yet/);
+    expect(screen.getByText("Get the app").closest("a").getAttribute("href")).toBe("#app");
+  });
+
+  it("shows how to add the app when the browser gives no install prompt", () => {
+    render(<LandingPage firebaseConfigured onLoginClick={() => {}} />);
+    fireEvent.click(within(document.getElementById("app")).getByText("Install app"));
+    expect(screen.getByRole("status").textContent).toMatch(/install icon|Add to Home|Install app/i);
+  });
+
+  it("uses the browser install prompt when one is offered, and hides once installed", async () => {
+    render(<LandingPage firebaseConfigured onLoginClick={() => {}} />);
+    const prompt = vi.fn(async () => {});
+    const evt = new Event("beforeinstallprompt", { cancelable: true });
+    evt.prompt = prompt;
+    evt.userChoice = Promise.resolve({ outcome: "accepted" });
+    act(() => { window.dispatchEvent(evt); });
+    fireEvent.click(within(document.getElementById("app")).getByText("Install app"));
+    await waitFor(() => expect(prompt).toHaveBeenCalledTimes(1));
+    act(() => { window.dispatchEvent(new Event("appinstalled")); });
+    await waitFor(() => expect(document.getElementById("app")).toBeNull());
   });
 });
