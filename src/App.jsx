@@ -4050,19 +4050,19 @@ export default function App() {
                 </button>
               </div>
 
-              {role === "owner" && <SetupChecklist
-                progress={setupProgress({ profile: practiceProfile, patients: allPatients, appointments: allAppointments, invoices: allInvoices })}
-                dismissed={Boolean(practiceProfile.setupHidden)}
-                onGo={(to) => setActiveNav(to)}
-                onDismiss={() => setPracticeProfile({ ...practiceProfile, setupHidden: true })}
-              />}
-
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" data-testid="stat-cards">
                 <StatCard title="Patients" value={patients.length} note="Registered patient records" icon={<UsersRound className="w-5 h-5" />} tone="blue" bars={dashboardPatientSeries.map((d) => d.value)} />
                 <StatCard title="Visits Today" value={diarySum.today} note={diarySum.tomorrow ? `${diarySum.tomorrow} tomorrow` : "Active bookings today"} icon={<CalendarDays className="w-5 h-5" />} tone="mint" bars={dashboardVisitSeries} />
                 <StatCard title="Collected this month" value={`₹${formatINR(billing.collectedP)}`} note={`₹${formatINR(billing.billedP)} billed this month`} icon={<IndianRupee className="w-5 h-5" />} tone="violet" bars={dashboardRevenueSeries.map((d) => d.value)} />
                 <StatCard title="Outstanding" value={`₹${formatINR(billing.outstandingP)}`} note={billing.overdueCount ? `${billing.overdueCount} overdue, ₹${formatINR(billing.overdueP)}` : "Unpaid balance across invoices"} icon={<Wallet className="w-5 h-5" />} tone={billing.overdueCount ? "rose" : "peach"} />
               </div>
+
+              {role === "owner" && <SetupChecklist
+                progress={setupProgress({ profile: practiceProfile, patients: allPatients, appointments: allAppointments, invoices: allInvoices })}
+                dismissed={Boolean(practiceProfile.setupHidden)}
+                onGo={(to) => setActiveNav(to)}
+                onDismiss={() => setPracticeProfile({ ...practiceProfile, setupHidden: true })}
+              />}
 
               <section className="bg-white rounded-2xl border border-rule p-4 sm:p-5 shadow-card" data-testid="trend-chart" aria-label="Last 30 days">
                 <div className="flex flex-wrap items-end justify-between gap-3 mb-2">

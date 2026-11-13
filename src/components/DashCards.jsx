@@ -23,7 +23,7 @@ export function StatCard({ title, value, note, icon, tone = "blue", bars }) {
         <div className="text-xl sm:text-2xl font-bold text-slate-900 break-words tabular">{value}</div>
         <div className="text-[11px] sm:text-xs text-slate-600/80 mt-1 leading-snug">{note}</div>
       </div>
-      {bars && <MiniBars data={bars} color={t.bar} />}
+      {bars ? <MiniBars data={bars} color={t.bar} /> : <div className="h-9" aria-hidden="true" />}
     </div>
   );
 }
