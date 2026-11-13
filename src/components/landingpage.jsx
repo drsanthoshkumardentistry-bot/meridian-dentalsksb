@@ -36,11 +36,13 @@ import {
   Flag,
   LayoutDashboard,
   Network,
-  PlayCircle
+  PlayCircle,
+  Download
 } from "lucide-react";
 
 const WHATSAPP_NUMBER = "919043205927";
 const VIDEO_LINK = "https://youtu.be/V6_z6LEbqNU";
+const APK_LINK = "https://github.com/drsanthoshkumardentistry-bot/meridian-dentalsksb/releases/download/android-latest/MeriDent.apk";
 const DEMO_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
   "Hi, I'd like a demo of MeriDent for my dental clinic."
 )}`;
@@ -141,7 +143,7 @@ const FAQS = [
   },
   {
     q: "Will it work on my phone?",
-    a: "Yes. MeriDent runs in your phone or laptop browser. There is nothing to install."
+    a: "Yes. MeriDent runs in your phone or laptop browser, so there is nothing you have to install. To keep it on your home screen, use your browser's \"Add to Home screen\" or \"Install app\" option. Android users can also download the app file from this page. It is not on the Play Store yet, so Android will ask you to allow the install. There is no iPhone app yet; on an iPhone, use Share, then Add to Home Screen."
   },
   {
     q: "Does MeriDent handle insurance claims?",
@@ -440,6 +442,15 @@ export default function LandingPage({
             >
               <PlayCircle className="w-5 h-5" />
               <span>Watch the 9-minute demo</span>
+            </a>
+
+            <a
+              href={APK_LINK}
+              rel="noopener noreferrer"
+              className="inline-flex w-fit items-center gap-2 text-brand-700 hover:text-brand-800 text-[15px] font-semibold"
+            >
+              <Download className="w-5 h-5" />
+              <span>Download the Android app</span>
             </a>
 
             <label className="flex items-start gap-2 max-w-lg text-sm text-slate-600 cursor-pointer">

@@ -67,3 +67,12 @@ describe("landing page content", () => {
     expect(screen.getByText("Use email and password instead")).toBeTruthy();
   });
 });
+
+describe("landing page app download", () => {
+  it("links to the Android app file and says there is no iPhone app", () => {
+    render(<LandingPage firebaseConfigured onLoginClick={() => {}} />);
+    const link = screen.getByText("Download the Android app").closest("a");
+    expect(link.getAttribute("href")).toMatch(/releases\/download\/android-latest\/MeriDent\.apk$/);
+    expect(document.getElementById("faq").textContent).toMatch(/no iPhone app yet/);
+  });
+});
