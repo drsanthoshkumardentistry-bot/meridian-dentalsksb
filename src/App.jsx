@@ -23,7 +23,11 @@ import { canRead, canWrite, navFor, NAV_BY_ROLE, firstScreen, branchScope, ROLE_
 import { isActiveMember, isPendingInvite, buildInvite, inviteMessage } from "./team.js";
 import { watchMyMembership, watchTeam, createInvite, acceptInvite, updateMember, removeMember } from "./teamStore.js";
 import BranchesCard from "./components/BranchesCard.jsx";
-import DataPortability from "./components/DataPortability.jsx";
+const LazyDataPortability = lazy(() => import("./components/DataPortability.jsx"));
+const Connect = (props) => <Suspense fallback={<TabLoading />}><LazyConnect {...props} /></Suspense>;
+const Growth = (props) => <Suspense fallback={<TabLoading />}><LazyGrowth {...props} /></Suspense>;
+const OpgViewer = (props) => <Suspense fallback={<TabLoading />}><LazyOpgViewer {...props} /></Suspense>;
+const DataPortability = (props) => <Suspense fallback={<TabLoading />}><LazyDataPortability {...props} /></Suspense>;
 import { buildPatientBackup, backupFileName } from "./portability.js";
 import { recordSheetHtml } from "./recordSheet.js";
 import { branchesOf, filterByBranch, writeBranchId, tagBranch, scopeToBranches, recordsOfPatient } from "./branches.js";
@@ -75,7 +79,7 @@ import { publishBookingPage, watchBookingRequests, markBookingRequest } from "./
 import { patientSummary } from "./patientSummary.js";
 import { buildVisit, addVisit, removeVisit } from "./visits.js";
 import { shiftDay, dayGrid, hourMarks } from "./dayView.js";
-import OpgViewer from "./components/OpgViewer.jsx";
+const LazyOpgViewer = lazy(() => import("./components/OpgViewer.jsx"));
 import ExtraRadiographs from "./components/ExtraRadiographs.jsx";
 import NowPanel, { NowStrip } from "./components/NowPanel.jsx";
 import NotificationBell from "./components/NotificationBell.jsx";
@@ -97,9 +101,10 @@ import CertificatePanel from "./components/CertificatePanel.jsx";
 import InstalmentPlan from "./components/InstalmentPlan.jsx";
 import { withInstalments, syncDueDate } from "./instalments.js";
 import TodayDesk from "./components/TodayDesk.jsx";
-import Growth from "./components/Growth.jsx";
+const LazyGrowth = lazy(() => import("./components/Growth.jsx"));
 import PrePostOp from "./components/PrePostOp.jsx";
-import Connect from "./components/Connect.jsx";
+const TabLoading = () => <div className="p-8 text-sm text-slate-500" role="status">Loading…</div>;
+const LazyConnect = lazy(() => import("./components/Connect.jsx"));
 import { bindApi } from "./connect/api.js";
 import { geocodeAddress } from "./connect/geo.js";
 import Odontogram from "./components/Odontogram.jsx";
@@ -136,7 +141,7 @@ import { createShare, fetchShare, deleteShare } from "./planShare.js";
 import { publishPortal, deletePortal } from "./portalStore.js";
 import { buildPortalDoc, newPortalToken } from "./portal.js";
 import PortalShare from "./components/PortalShare.jsx";
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from "react";
 import {
   Menu,
   X,
