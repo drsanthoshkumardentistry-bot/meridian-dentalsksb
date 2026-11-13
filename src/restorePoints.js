@@ -27,7 +27,9 @@ export const looksComplete = (counts = {}, points = []) => {
   return (Number(counts.patients) || 0) >= Math.floor(had * 0.8);
 };
 
-export const chunkText = (text, size = CHUNK_CHARS) => {
+export const chunkText = (rawText, rawSize = CHUNK_CHARS) => {
+  const text = typeof rawText === "string" ? rawText : "";
+  const size = Number.isFinite(rawSize) && rawSize >= 1 ? Math.floor(rawSize) : CHUNK_CHARS; // a size of 0 or less would loop forever
   const out = [];
   for (let i = 0; i < text.length; i += size) out.push(text.slice(i, i + size));
   return out.length ? out : [""];
