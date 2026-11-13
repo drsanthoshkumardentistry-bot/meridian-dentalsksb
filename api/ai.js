@@ -69,7 +69,7 @@ export default async function handler(req, res) {
             method: "POST",
             headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
             body: payload,
-            signal: AbortSignal.timeout(Math.max(3000, Math.min(14000, deadline - Date.now()))),
+            signal: AbortSignal.timeout(Math.max(3000, Math.min(9000, deadline - Date.now()))),
           });
         } catch (e) { console.error("meridee gemini", model, String(e && e.name)); return null; }
       };
