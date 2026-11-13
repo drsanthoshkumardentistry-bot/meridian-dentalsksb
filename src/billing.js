@@ -41,14 +41,16 @@ export const allocateProportionally = (total, weights) => {
  * The discount is shared across items in proportion to their amounts, then GST is worked out per item,
  * so a bill can mix therapeutic (exempt) and cosmetic (18%) work correctly.
  */
+export const MAX_AMOUNT_P = 1000000000; // Rs 1 crore per line: a typo like an extra run of zeros cannot break the totals
+
 export const computeLineItemTotals = ({ items = [], discount = 0 }) => {
   const base = items.map((it) => ({
     description: String(it.description || "").trim(),
     taxCategory: it.taxCategory || "therapeutic",
-    amountP: Math.max(0, toPaise(it.amount)),
+    amountP: Math.min(MAX_AMOUNT_P, Math.max(0, toPaise(it.amount))),
   }));
   const subtotalP = base.reduce((s, l) => s + l.amountP, 0);
-  const discountP = Math.min(subtotalP, Math.max(0, toPaise(discount)));
+  const discountP = Math.min(subtotalP, Math.min(MAX_AMOUNT_P * 20, Math.max(0, toPaise(discount))));
   const shares = allocateProportionally(discountP, base.map((l) => l.amountP));
   const lines = base.map((l, i) => {
     const taxableP = l.amountP - shares[i];
@@ -141,7 +143,11 @@ export const normalizeInvoice = (inv) => {
   };
 };
 
-export const paidPaise = (inv) => (Array.isArray(inv?.payments) ? inv.payments : []).reduce((s, p) => s + ((p && Number(p.amountP)) || 0), 0);
+// Only real positive amounts count, so a damaged or imported payment line can never inflate the balance.
+export const paidPaise = (inv) => (Array.isArray(inv?.payments) ? inv.payments : []).reduce((s, p) => {
+  const a = p && Number(p.amountP);
+  return s + (Number.isFinite(a) && a > 0 ? a : 0);
+}, 0);
 export const balancePaise = (inv) => Math.max(0, (Number(inv?.totalP) || 0) - paidPaise(inv));
 
 export const paymentStatus = (inv) => {
