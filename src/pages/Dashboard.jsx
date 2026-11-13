@@ -9,6 +9,7 @@ import { PORTIONS, completion } from '../data/portions.js'
 import { PYQ_STATS } from '../data/pyqSubjects.js'
 import MerideeAvatar from '../components/MerideeAvatar.jsx'
 import { cloudEnabled } from '../lib/supabase.js'
+import { SUPPORT_EMAIL, supportMailto } from '../lib/config.js'
 
 export default function Dashboard() {
   const { content, progress, profile, user, track, setTrack, toast } = useApp()
@@ -131,6 +132,8 @@ export default function Dashboard() {
         </Card>
       )}
       {content.source === 'local' && cloudEnabled && <p className="text-center text-xs text-slate-400"><Badge>Offline content</Badge> Couldn't reach the server – showing built-in content.</p>}
+
+      <p className="pt-2 text-center text-xs text-slate-400">Questions or corrections? <a href={supportMailto('MeriDent Prep feedback')} className="font-semibold text-clinic-600 hover:underline">{SUPPORT_EMAIL}</a></p>
 
       <Modal open={switching} onClose={() => setSwitching(false)} title="Switch preparation track">
         <TrackPicker value={track.key} onPick={(k) => setTrack(k).then(() => { setSwitching(false); toast(`${TRACKS[k].label} selected`, 'success') })} />

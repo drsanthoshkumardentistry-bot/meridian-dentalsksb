@@ -75,3 +75,6 @@ python3 tools/pyq/parse.py /tmp/pyq /tmp/pyq.json && python3 tools/pyq/emit.py /
 npm test
 ```
 Question ids are a hash of the normalised question, so saved progress survives re-runs.
+
+## Contact
+Support and feedback: santhoshkumar@meridiandentalos.com

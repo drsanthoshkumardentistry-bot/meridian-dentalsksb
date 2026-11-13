@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Bookmark, BookmarkCheck, CheckCircle2, ChevronLeft, ChevronRight, ScrollText, Star, Timer, XCircle } from 'lucide-react'
 import { useApp } from '../state/AppContext.jsx'
+import { supportMailto } from '../lib/config.js'
 import { Badge, Button, Card, Empty, Modal, PageHeader, Ring, Segmented, cx, fmtTime, shuffle } from '../components/ui.jsx'
 
 export default function Mcq({ subject: deepSubject = null }) {
@@ -91,7 +92,8 @@ function Practice({ title, ids, onExit }) {
         </div>
         <p className="mb-4 text-lg font-semibold leading-snug">{q.question}</p>
         <div className="space-y-2">{q.options.map((o, k) => <Option key={k} k={k} text={o} disabled={done} state={done ? (k === q.answer ? 'right' : k === picked ? 'wrong' : '') : ''} onClick={() => { setPicked(k); answerMcq(q.id, k === q.answer) }} />)}</div>
-        {done && <div className="mt-4 animate-fade-in rounded-xl border-l-4 border-clinic-500 bg-slate-50 p-3.5 text-sm dark:bg-slate-800/60"><p className="mb-1 flex items-center gap-1.5 font-bold">{picked === q.answer ? <><CheckCircle2 className="h-4 w-4 text-emerald-600" />Correct!</> : <><XCircle className="h-4 w-4 text-rose-600" />Answer: {'ABCD'[q.answer]}</>}</p>{q.explanation}</div>}
+        {done && <div className="mt-4 animate-fade-in rounded-xl border-l-4 border-clinic-500 bg-slate-50 p-3.5 text-sm dark:bg-slate-800/60"><p className="mb-1 flex items-center gap-1.5 font-bold">{picked === q.answer ? <><CheckCircle2 className="h-4 w-4 text-emerald-600" />Correct!</> : <><XCircle className="h-4 w-4 text-rose-600" />Answer: {'ABCD'[q.answer]}</>}</p>{q.explanation}
+          <a href={supportMailto(`Report an error: MCQ #${q.id}`, `Question #${q.id} (${q.subject}): ${q.question}\n\nWhat's wrong:\n`)} className="mt-2 block text-xs font-semibold text-slate-400 hover:text-clinic-600">Report an error in this question</a></div>}
         <div className="mt-4 flex gap-2"><Button variant="secondary" disabled={i === 0} onClick={() => go(-1)}><ChevronLeft className="h-4 w-4" />Prev</Button><Button className="flex-1" onClick={() => go(1)}>{i === ids.length - 1 ? 'Finish' : 'Next'}<ChevronRight className="h-4 w-4" /></Button></div>
       </Card>
     </div>

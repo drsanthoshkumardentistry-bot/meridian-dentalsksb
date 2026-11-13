@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { LogOut, Mail } from 'lucide-react'
+import { LifeBuoy, LogOut, Mail } from 'lucide-react'
+import { SUPPORT_EMAIL, supportMailto } from '../lib/config.js'
 import { useApp } from '../state/AppContext.jsx'
 import { supabase, cloudEnabled } from '../lib/supabase.js'
 import { Button, Card, Modal, PageHeader, Segmented } from '../components/ui.jsx'
@@ -86,6 +87,14 @@ export function Profile() {
         {!user && cloudEnabled && <Button variant="secondary" onClick={() => navigate('auth')}>Sign in to sync</Button>}
         {!user && <Button variant="ghost" onClick={() => setConfirm(true)}>Reset local progress</Button>}
       </div>
+      <Card className="mt-4 flex items-start gap-3 p-4">
+        <LifeBuoy className="mt-0.5 h-5 w-5 shrink-0 text-clinic-600" />
+        <div className="min-w-0 text-sm">
+          <p className="font-bold">Contact & feedback</p>
+          <p className="text-slate-500">Found a wrong answer, a bug, or want a topic added? Write to us.</p>
+          <a href={supportMailto('MeriDent Prep feedback')} className="mt-1 inline-block break-all font-semibold text-clinic-600 hover:underline">{SUPPORT_EMAIL}</a>
+        </div>
+      </Card>
       <Modal open={confirm} onClose={() => setConfirm(false)} title="Reset progress on this device?">
         <p className="mb-4 text-sm text-slate-500">Clears flashcard boxes, spotter attempts, viva history and MCQ answers stored on this device.</p>
         <div className="flex gap-2"><Button variant="secondary" className="flex-1" onClick={() => setConfirm(false)}>Cancel</Button><Button variant="danger" className="flex-1" onClick={() => { resetProgress(); try { localStorage.removeItem('ma-progress-v1') } catch { /* ignore */ } setConfirm(false); toast('Progress reset') }}>Reset</Button></div>

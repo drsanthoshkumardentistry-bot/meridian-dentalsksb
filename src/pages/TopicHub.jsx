@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { ChevronDown, Layers3, Search } from 'lucide-react'
 import MerideeAvatar from '../components/MerideeAvatar.jsx'
 import { HubSwitch } from './Portions.jsx'
+import { supportMailto } from '../lib/config.js'
 import { useApp } from '../state/AppContext.jsx'
 import { Badge, Button, Card, Empty, Icon, PageHeader, PriorityBadge, Segmented, cx } from '../components/ui.jsx'
 import { navigate } from '../state/router.js'
@@ -144,6 +145,7 @@ export function TopicDetail({ slug }) {
         <div className="flex-1"><p className="font-bold">Ready to be grilled?</p><p className="text-sm text-slate-500">Meridee will open with this case and probe your weak answers.</p></div>
         <Button icon="Sparkles" onClick={() => navigate(`viva-session/topic/${topic.id}`)}>Start viva</Button>
       </Card>
+      <a href={supportMailto(`Report an error: topic ${topic.slug}`, `Topic: ${topic.title}\n\nWhat's wrong:\n`)} className="mt-4 block text-center text-xs font-semibold text-slate-400 hover:text-clinic-600">Report an error in this topic</a>
     </div>
   )
 }
