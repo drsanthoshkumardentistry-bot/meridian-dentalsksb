@@ -106,6 +106,7 @@ import PrePostOp from "./components/PrePostOp.jsx";
 const TabLoading = () => <div className="p-8 text-sm text-slate-500" role="status">Loading…</div>;
 const LazyConnect = lazy(() => import("./components/Connect.jsx"));
 import { bindApi } from "./connect/api.js";
+import { findDuplicates, duplicateWarning, duplicateKey } from "./duplicates.js";
 import { geocodeAddress } from "./connect/geo.js";
 import Odontogram from "./components/Odontogram.jsx";
 import TreatmentPlans from "./components/TreatmentPlans.jsx";
@@ -1164,6 +1165,7 @@ export default function App() {
   };
 
   // Add Patient Action
+  const dupAckRef = useRef("");
   const handleCreatePatient = (e) => {
     e.preventDefault();
     const problem = validatePatientForm(newPatientForm);
@@ -1171,6 +1173,12 @@ export default function App() {
       showToast(problem);
       return;
     }
+    const dupKey = duplicateKey(newPatientForm);
+    if (dupAckRef.current !== dupKey) {
+      const warn = duplicateWarning(findDuplicates(allPatients, newPatientForm));
+      if (warn) { dupAckRef.current = dupKey; showToast(warn); return; }
+    }
+    dupAckRef.current = "";
     const { consentTreatment, consentWhatsapp, ...formFields } = newPatientForm;
     const created = {
       id: newId("P"),
