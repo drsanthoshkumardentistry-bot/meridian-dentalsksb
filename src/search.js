@@ -24,8 +24,10 @@ export const globalSearch = ({ patients = [], appointments = [], invoices = [] }
   const qNational = qd.length > 5 && qd.startsWith("91") ? qd.slice(2) : qd; // "+91 90000" finds 90000...
   const phoneHit = (phone) => qd.length >= 3 && (digits(phone).includes(qd) || digits(phone).includes(qNational));
 
+  // A damaged or empty record in the saved data must never break the search box.
   const rank = (items, fn) =>
-    items
+    (Array.isArray(items) ? items : [])
+      .filter((x) => x && typeof x === "object")
       .map((item) => ({ item, s: fn(item) }))
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)

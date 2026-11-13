@@ -23,7 +23,7 @@ const MESSAGES = {
 
 export function friendlyAuthError(error, fallback = "Something went wrong. Please try again.") {
   const code = error && error.code ? String(error.code) : "";
-  if (code && MESSAGES[code]) return MESSAGES[code];
+  if (code && Object.prototype.hasOwnProperty.call(MESSAGES, code)) return MESSAGES[code];
   if (!code && error && typeof error.message === "string" && error.message) return error.message;
   return fallback;
 }
