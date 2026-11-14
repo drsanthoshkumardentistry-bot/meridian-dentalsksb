@@ -1,0 +1,75 @@
+name: Stress test (billion cases)
+
+# Manual only. Splits ~1 billion generated cases across parallel jobs and adds them up.
+# Each shard runs three suites (bug, error, random) of `cases` each, with its own seed.
+on:
+  workflow_dispatch:
+    inputs:
+      shards:
+        description: "Number of parallel shards"
+        default: "50"
+      cases:
+        description: "Cases per suite in each shard (3 suites per shard)"
+        default: "6700000"
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+    steps:
+      - id: m
+        run: |
+          n=${{ inputs.shards }}
+          echo "matrix=$(seq 1 $n | jq -cs '{shard: .}')" >> "$GITHUB_OUTPUT"
+
+  run:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Run shard ${{ matrix.shard }}
+        run: |
+          mode=mixed; if [ $(( ${{ matrix.shard }} % 2 )) -eq 0 ]; then mode=wide; fi
+          npx vite-node scripts/stress.mjs $(( 10000 + ${{ matrix.shard }} )) ${{ inputs.cases }} $mode > shard.json
+          cat shard.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: shard-${{ matrix.shard }}
+          path: shard.json
+
+  total:
+    needs: run
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: shard-*
+          merge-multiple: false
+      - name: Add up
+        run: |
+          node -e '
+          const fs=require("fs");let cases=0,fails=0,files=0;const bad=[];
+          for(const d of fs.readdirSync(".").filter(x=>x.startsWith("shard-"))){
+            const j=JSON.parse(fs.readFileSync(d+"/shard.json","utf8"));files++;
+            for(const s of ["bug","error","random"]){cases+=j[s].cases;fails+=j[s].failures;if(j[s].failures)bad.push({shard:d,suite:s,distinct:j[s].distinct})}
+          }
+          const msg=`shards finished: ${files}\ntotal cases: ${cases.toLocaleString("en-US")}\ntotal failures: ${fails}`;
+          console.log(msg);fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,"```\n"+msg+"\n```\n"+(bad.length?JSON.stringify(bad,null,1).slice(0,4000):""));
+          if(fails>0){console.log(JSON.stringify(bad,null,1));process.exit(1)}
+          '
