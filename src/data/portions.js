@@ -65,7 +65,7 @@ const BDS = [
   subject('dental-materials', 'Dental Materials', 2, 'Dental Materials', [
     'Structure and properties of dental materials', 'Gypsum products', 'Impression materials: hydrocolloids',
     'Impression materials: elastomers, compound and ZOE', 'Denture base resins', 'Dental waxes', 'Investments and casting procedures',
-    'Dental cements: zinc phosphate, ZOE, polycarboxylate', 'Glass ionomer cements', ['Dental amalgam', { topic: 'dental-amalgam' }],
+    'Dental cements: zinc phosphate, ZOE, polycarboxylate', ['Glass ionomer cements', { topic: 'glass-ionomer-cement' }], ['Dental amalgam', { topic: 'dental-amalgam' }],
     'Composite resins and bonding agents', 'Direct filling gold', 'Dental casting alloys', 'Dental ceramics',
     ['Biomaterials: calcium silicates and MTA', { topic: 'mta' }], 'Implant materials',
   ]),
@@ -78,7 +78,7 @@ const BDS = [
   ]),
   // ---------------- 3rd year ----------------
   subject('medicine', 'General Medicine', 3, 'General Medicine', [
-    'Infectious diseases: typhoid, tuberculosis, HIV', 'Cardiovascular: IHD, hypertension, rheumatic heart disease, infective endocarditis',
+    'Infectious diseases: typhoid, tuberculosis, HIV', ['Cardiovascular: IHD, hypertension, rheumatic heart disease, infective endocarditis', { topic: 'infective-endocarditis' }],
     'Respiratory: asthma, COPD, pneumonia', 'Haematology: anaemia and bleeding disorders', ['Endocrine: diabetes mellitus and thyroid disease', { topic: 'diabetes-dental' }],
     'Gastrointestinal and liver disease: jaundice, hepatitis', 'Renal disease', 'Neurology: epilepsy, facial palsy, trigeminal neuralgia',
     'Nutrition and vitamin deficiencies', ['Medical emergencies: syncope, anaphylaxis, CPR', { topic: 'adc-anaphylaxis' }],
@@ -102,14 +102,14 @@ const BDS = [
   subject('oral-medicine', 'Oral Medicine & Radiology', 4, 'Oral Medicine & Radiology', [
     'Case history and clinical examination', ['Red and white lesions; leukoplakia', { topic: 'leukoplakia' }],
     ['Oral submucous fibrosis', { topic: 'osmf' }], ['Lichen planus', { topic: 'oral-lichen-planus' }], ['Vesiculobullous lesions', { topic: 'pemphigus-vulgaris' }],
-    'Ulcerative lesions and recurrent aphthae', 'Pigmented lesions', ['Orofacial pain and TMJ disorders', { topic: 'trigeminal-neuralgia' }], 'Salivary gland disorders',
+    ['Ulcerative lesions and recurrent aphthae', { topic: 'recurrent-aphthous-stomatitis' }], 'Pigmented lesions', ['Orofacial pain and TMJ disorders', { topic: 'trigeminal-neuralgia' }], 'Salivary gland disorders',
     'Oral manifestations of systemic disease', 'Medically compromised patients', 'Radiation physics and biology', 'Radiation protection',
     'Intraoral radiographic techniques', 'Panoramic and extraoral radiography; CBCT', ['Radiographic interpretation of cysts and tumours', { topic: 'dentigerous-cyst' }],
   ]),
   subject('pedodontics', 'Paediatric & Preventive Dentistry', 4, 'Pedodontics', [
     ['Child psychology and behaviour management', { topic: 'behaviour-management' }], 'Growth and development', 'Dental caries in children and early childhood caries',
-    ['Fluorides', { topic: 'fluorides' }], 'Pit and fissure sealants', ['Pulp therapy in primary teeth', { topic: 'pulpotomy-primary' }],
-    ['Traumatic injuries to teeth', { topic: 'adc-avulsion' }], ['Space maintainers', { topic: 'space-maintainers' }], 'Oral habits', 'Children with special healthcare needs',
+    ['Fluorides', { topic: 'fluorides' }], ['Pit and fissure sealants', { topic: 'pit-fissure-sealants' }], ['Pulp therapy in primary teeth', { topic: 'pulpotomy-primary' }],
+    ['Traumatic injuries to teeth', { topic: 'adc-avulsion' }], ['Space maintainers', { topic: 'space-maintainers' }], ['Oral habits', { topic: 'oral-habits' }], 'Children with special healthcare needs',
     'Paediatric restorative dentistry and stainless steel crowns', 'Local anaesthesia and sedation in children',
   ]),
   subject('orthodontics', 'Orthodontics & Dentofacial Orthopaedics', 4, 'Orthodontics', [
@@ -121,15 +121,15 @@ const BDS = [
   subject('periodontics', 'Periodontology', 4, 'Periodontics', [
     'Anatomy of the periodontium', 'Classification of periodontal diseases (2017)', 'Dental plaque and calculus',
     'Host response and risk factors', ['Gingival diseases and gingival enlargement', { topic: 'gingival-enlargement' }],
-    'Periodontal pocket and bone loss', ['Periodontitis: staging and grading', { topic: 'periodontitis-staging-grading' }], 'Necrotising periodontal diseases',
+    'Periodontal pocket and bone loss', ['Periodontitis: staging and grading', { topic: 'periodontitis-staging-grading' }], ['Necrotising periodontal diseases', { topic: 'necrotising-periodontal' }],
     'Periodontal–systemic interrelationships', 'Clinical diagnosis and indices', 'Scaling, root planing and instruments',
     'Chemical plaque control', 'Periodontal flap surgery', 'Mucogingival and regenerative surgery', 'Furcation and perio-endo lesions',
-    'Dental implants and peri-implantitis', 'Supportive periodontal therapy',
+    ['Dental implants and peri-implantitis', { topic: 'peri-implantitis' }], 'Supportive periodontal therapy',
   ]),
   subject('prosthodontics', 'Prosthodontics & Crown and Bridge', 4, 'Prosthodontics', [
     'Edentulous anatomy and diagnosis', ['Complete denture impressions', { topic: 'complete-denture-impressions' }], ['Jaw relations', { topic: 'jaw-relations' }], 'Selection and arrangement of teeth',
     'Try-in, insertion and post-insertion problems', ['Classification of partially edentulous arches', { topic: 'kennedy-classification' }],
-    'RPD components and design', 'Fixed partial dentures: abutments and tooth preparation', 'Pontics and connectors',
+    ['RPD components and design', { topic: 'rpd-components' }], 'Fixed partial dentures: abutments and tooth preparation', 'Pontics and connectors',
     'Impressions and gingival retraction', 'Overdentures and immediate dentures', 'Maxillofacial prosthodontics',
     'Implant prosthodontics', 'Occlusion and articulators',
   ]),
@@ -141,12 +141,12 @@ const BDS = [
     'Bleaching and aesthetic dentistry', 'Endodontic surgery',
   ]),
   subject('oral-surgery', 'Oral & Maxillofacial Surgery', 4, 'Oral Surgery', [
-    'Asepsis and sterilisation', ['Local anaesthesia in oral surgery', { topic: 'local-anaesthetics', mcq: 'Pharmacology' }],
+    ['Asepsis and sterilisation', { topic: 'sterilisation' }], ['Local anaesthesia in oral surgery', { topic: 'local-anaesthetics', mcq: 'Pharmacology' }],
     'Principles of exodontia', ['Impacted teeth', { topic: 'impacted-third-molar' }], ['Complications of extraction', { topic: 'dry-socket' }],
     ['Medical emergencies in dental practice', { topic: 'adc-anaphylaxis' }], ['Odontogenic infections and fascial spaces', { topic: 'ludwigs-angina' }],
     'Cysts of the jaws: management', 'Benign and malignant jaw tumours', ['Mandibular fractures', { topic: 'mandibular-fractures' }],
-    ['Midface (Le Fort) fractures', { topic: 'le-fort-fractures' }], 'Zygomatic complex fractures', 'TMJ disorders and ankylosis',
-    'Pre-prosthetic surgery', 'Orthognathic surgery: basics', 'Maxillary sinus and oro-antral communication', 'Implantology: basics',
+    ['Midface (Le Fort) fractures', { topic: 'le-fort-fractures' }], ['Zygomatic complex fractures', { topic: 'zygomatic-fractures' }], ['TMJ disorders and ankylosis', { topic: 'tmj-ankylosis' }],
+    'Pre-prosthetic surgery', 'Orthognathic surgery: basics', ['Maxillary sinus and oro-antral communication', { topic: 'oro-antral-communication' }], 'Implantology: basics',
   ]),
   subject('public-health', 'Public Health Dentistry', 4, 'Public Health Dentistry', [
     'Concepts of health and disease', 'Epidemiology and study designs', 'Biostatistics', ['Indices: DMFT, CPI, Dean\'s fluorosis index', { topic: 'oral-health-indices' }],

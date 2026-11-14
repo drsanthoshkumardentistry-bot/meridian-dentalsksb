@@ -1599,5 +1599,485 @@ export const MCQS = [
   "is_pyq": false,
   "exam": "NEET MDS",
   "is_important": true
+ },
+ {
+  "id": 101,
+  "subject": "Biochemistry",
+  "question": "Scurvy results from impaired hydroxylation of proline and lysine in collagen because of deficiency of:",
+  "options": [
+   "Vitamin A",
+   "Vitamin C",
+   "Vitamin D",
+   "Vitamin K"
+  ],
+  "answer": 1,
+  "explanation": "Ascorbic acid is a cofactor for prolyl and lysyl hydroxylases; deficiency gives weak collagen, bleeding swollen gums and poor healing.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 102,
+  "subject": "Biochemistry",
+  "question": "Vitamin K is required for the gamma-carboxylation of which clotting factors?",
+  "options": [
+   "I, V, VIII, XIII",
+   "II, VII, IX, X",
+   "III, IV, XI, XII",
+   "VIII and IX only"
+  ],
+  "answer": 1,
+  "explanation": "Factors II, VII, IX and X (and proteins C and S) need vitamin K; warfarin blocks vitamin K epoxide reductase.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 103,
+  "subject": "Biochemistry",
+  "question": "The rate-limiting enzyme of cholesterol synthesis is:",
+  "options": [
+   "HMG-CoA synthase",
+   "HMG-CoA reductase",
+   "Acetyl-CoA carboxylase",
+   "Lipoprotein lipase"
+  ],
+  "answer": 1,
+  "explanation": "HMG-CoA reductase is the rate-limiting step and the target of statins.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 104,
+  "subject": "Physiology",
+  "question": "The normal pH of resting whole saliva is approximately:",
+  "options": [
+   "4.5–5.0",
+   "6.2–7.4",
+   "7.8–8.2",
+   "5.5 exactly"
+  ],
+  "answer": 1,
+  "explanation": "Resting saliva is slightly acidic to neutral (about 6.2–7.4); flow stimulation raises bicarbonate and pH.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 105,
+  "subject": "Physiology",
+  "question": "The critical pH below which enamel demineralises is about:",
+  "options": [
+   "4.5",
+   "5.5",
+   "6.5",
+   "7.0"
+  ],
+  "answer": 1,
+  "explanation": "Hydroxyapatite dissolves below about pH 5.5; fluorapatite resists to about 4.5.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 106,
+  "subject": "Physiology",
+  "question": "Pain is carried rapidly as \"first pain\" by which fibres?",
+  "options": [
+   "C fibres",
+   "A-delta fibres",
+   "A-beta fibres",
+   "B fibres"
+  ],
+  "answer": 1,
+  "explanation": "Myelinated A-delta fibres carry sharp, well-localised first pain; unmyelinated C fibres carry dull, burning second pain.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 107,
+  "subject": "Anatomy",
+  "question": "The only muscle that opens the mouth among the muscles of mastication is the:",
+  "options": [
+   "Masseter",
+   "Temporalis",
+   "Lateral pterygoid",
+   "Medial pterygoid"
+  ],
+  "answer": 2,
+  "explanation": "The lateral pterygoid depresses and protrudes the mandible; the others elevate it.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 108,
+  "subject": "Anatomy",
+  "question": "The nerve injured most often during surgical removal of a lower third molar, causing loss of taste to the anterior tongue, is the:",
+  "options": [
+   "Inferior alveolar nerve",
+   "Lingual nerve",
+   "Hypoglossal nerve",
+   "Mylohyoid nerve"
+  ],
+  "answer": 1,
+  "explanation": "The lingual nerve carries general sensation and, via chorda tympani fibres, taste from the anterior two-thirds of the tongue.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 109,
+  "subject": "Anatomy",
+  "question": "The parotid duct opens opposite the:",
+  "options": [
+   "Upper first premolar",
+   "Upper second molar",
+   "Lower first molar",
+   "Lower central incisor"
+  ],
+  "answer": 1,
+  "explanation": "Stensen's duct pierces the buccinator and opens on a papilla opposite the maxillary second molar crown.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 110,
+  "subject": "Dental Anatomy",
+  "question": "The permanent tooth that most often has two roots, buccal and palatal, is the:",
+  "options": [
+   "Maxillary second premolar",
+   "Maxillary first premolar",
+   "Mandibular first premolar",
+   "Maxillary canine"
+  ],
+  "answer": 1,
+  "explanation": "The maxillary first premolar is usually bifurcated (buccal and palatal roots).",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 111,
+  "subject": "Dental Anatomy",
+  "question": "The first permanent tooth to erupt in the oral cavity is usually the:",
+  "options": [
+   "Maxillary central incisor",
+   "Mandibular first molar",
+   "Mandibular central incisor",
+   "Maxillary first molar"
+  ],
+  "answer": 1,
+  "explanation": "Mandibular first molars erupt around 6 years, often just before the lower central incisors.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 112,
+  "subject": "Oral Pathology",
+  "question": "A \"soap-bubble\" multilocular radiolucency in the posterior mandible of a 35-year-old is most typical of:",
+  "options": [
+   "Radicular cyst",
+   "Ameloblastoma",
+   "Stafne bone cavity",
+   "Periapical granuloma"
+  ],
+  "answer": 1,
+  "explanation": "Conventional ameloblastoma classically shows soap-bubble or honeycomb multilocularity with root resorption.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 113,
+  "subject": "Oral Pathology",
+  "question": "Hutchinson's incisors and mulberry molars are features of:",
+  "options": [
+   "Congenital syphilis",
+   "Ectodermal dysplasia",
+   "Fluorosis",
+   "Amelogenesis imperfecta"
+  ],
+  "answer": 0,
+  "explanation": "Congenital syphilis (Treponema pallidum) affects developing incisors (notched, screwdriver-shaped) and first molars (mulberry).",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 114,
+  "subject": "Oral Medicine & Radiology",
+  "question": "The radiographic \"sunray\" appearance of the jaw is classically associated with:",
+  "options": [
+   "Osteosarcoma",
+   "Fibrous dysplasia",
+   "Paget's disease",
+   "Cherubism"
+  ],
+  "answer": 0,
+  "explanation": "Osteosarcoma produces sunray (sunburst) spicules and symmetric widening of the PDL space (Garrington sign).",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 115,
+  "subject": "Oral Medicine & Radiology",
+  "question": "In the SLOB rule for tube-shift localisation, an object that moves in the same direction as the X-ray tube lies:",
+  "options": [
+   "Buccally",
+   "Lingually (palatally)",
+   "In the same plane as the reference",
+   "Within the sinus"
+  ],
+  "answer": 1,
+  "explanation": "Same Lingual, Opposite Buccal (Clark's rule).",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 116,
+  "subject": "Oral Medicine & Radiology",
+  "question": "The thyroid collar is particularly important when taking which radiograph?",
+  "options": [
+   "Panoramic",
+   "Maxillary occlusal",
+   "Lateral cephalogram",
+   "Bitewing"
+  ],
+  "answer": 1,
+  "explanation": "Thyroid shielding is advised for intraoral views, especially maxillary occlusals, where the gland is in the primary beam path; it may interfere with panoramics.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 117,
+  "subject": "Oral Medicine & Radiology",
+  "question": "Wickham's striae are characteristic of:",
+  "options": [
+   "Leukoplakia",
+   "Lichen planus",
+   "Candidiasis",
+   "Lupus erythematosus"
+  ],
+  "answer": 1,
+  "explanation": "Fine white lace-like striae on reticular lesions are diagnostic of lichen planus.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 118,
+  "subject": "Orthodontics",
+  "question": "The Frankfort–mandibular plane angle (FMA) in Tweed's triangle averages about:",
+  "options": [
+   "15°",
+   "25°",
+   "35°",
+   "45°"
+  ],
+  "answer": 1,
+  "explanation": "Tweed's norms: FMA 25°, IMPA 90° and FMIA 65°.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 119,
+  "subject": "Orthodontics",
+  "question": "An ANB angle of 6° indicates a skeletal:",
+  "options": [
+   "Class I relationship",
+   "Class II relationship",
+   "Class III relationship",
+   "Open bite"
+  ],
+  "answer": 1,
+  "explanation": "Normal ANB is about 2° (0–4°); greater than 4° suggests skeletal Class II, negative values suggest Class III.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 120,
+  "subject": "Orthodontics",
+  "question": "The \"leeway space\" in the mandible on each side is about:",
+  "options": [
+   "0.9 mm",
+   "1.7 mm",
+   "3.4 mm",
+   "5 mm"
+  ],
+  "answer": 1,
+  "explanation": "Nance: about 1.7 mm per side in the mandible and 0.9 mm in the maxilla.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 121,
+  "subject": "Pedodontics",
+  "question": "The pulpotomy medicament now preferred over formocresol in primary molars is:",
+  "options": [
+   "Calcium hydroxide",
+   "MTA",
+   "Zinc oxide eugenol",
+   "Glutaraldehyde"
+  ],
+  "answer": 1,
+  "explanation": "MTA (and Biodentine) give the best success rates; formocresol is falling out of use due to toxicity concerns.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 122,
+  "subject": "Pedodontics",
+  "question": "Frankl's behaviour rating scale \"rating 4\" denotes a child who is:",
+  "options": [
+   "Definitely negative",
+   "Negative",
+   "Positive",
+   "Definitely positive"
+  ],
+  "answer": 3,
+  "explanation": "Frankl ratings: 1 definitely negative, 2 negative, 3 positive, 4 definitely positive.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 123,
+  "subject": "Prosthodontics",
+  "question": "The posterior palatal seal is placed:",
+  "options": [
+   "Along the anterior vibrating line only",
+   "Between the anterior and posterior vibrating lines",
+   "Over the rugae",
+   "Over the incisive papilla"
+  ],
+  "answer": 1,
+  "explanation": "The posterior palatal seal area lies between the anterior and posterior vibrating lines at the junction of the hard and soft palate.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 124,
+  "subject": "Prosthodontics",
+  "question": "The ideal crown-to-root ratio for a fixed partial denture abutment is:",
+  "options": [
+   "2:1",
+   "1:1",
+   "2:3",
+   "3:1"
+  ],
+  "answer": 2,
+  "explanation": "A 2:3 ratio is ideal; 1:1 is the minimum acceptable (Ante's law concerns root surface area).",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 125,
+  "subject": "Conservative & Endo",
+  "question": "The most common cause of endodontic failure is:",
+  "options": [
+   "Overfilling",
+   "Inadequate cleaning and missed canals/persistent intracanal infection",
+   "Use of sodium hypochlorite",
+   "Single-visit treatment"
+  ],
+  "answer": 1,
+  "explanation": "Persistent bacteria from inadequate debridement, missed canals or coronal leakage is the main cause; Enterococcus faecalis is often found in failed cases.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 126,
+  "subject": "Conservative & Endo",
+  "question": "Ferrule effect requires a minimum vertical height of sound tooth structure of about:",
+  "options": [
+   "0.5 mm",
+   "1.5–2 mm",
+   "4 mm",
+   "6 mm"
+  ],
+  "answer": 1,
+  "explanation": "A 1.5–2 mm ferrule above the finish line greatly improves fracture resistance of post-core-crown teeth.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 127,
+  "subject": "Oral Surgery",
+  "question": "The maximum recommended dose of lignocaine with adrenaline is:",
+  "options": [
+   "3 mg/kg",
+   "4.4 mg/kg",
+   "7 mg/kg",
+   "10 mg/kg"
+  ],
+  "answer": 2,
+  "explanation": "Lignocaine alone about 4.4 mg/kg (max 300 mg); with adrenaline about 7 mg/kg (max 500 mg).",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 128,
+  "subject": "Oral Surgery",
+  "question": "Winter's lines are used to assess:",
+  "options": [
+   "Mandibular fractures",
+   "The difficulty of impacted mandibular third molars",
+   "Maxillary sinus size",
+   "TMJ dislocation"
+  ],
+  "answer": 1,
+  "explanation": "The white, amber and red lines on radiographs estimate depth and bone removal for impacted lower third molars.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 129,
+  "subject": "Public Health Dentistry",
+  "question": "The optimum fluoride concentration in drinking water in a tropical country such as India is about:",
+  "options": [
+   "0.1 ppm",
+   "0.5–0.8 ppm",
+   "1.5–2 ppm",
+   "4 ppm"
+  ],
+  "answer": 1,
+  "explanation": "In hot climates people drink more water, so lower levels (about 0.5–0.8 ppm, BIS limit ≤ 1 ppm) are optimal.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 130,
+  "subject": "Public Health Dentistry",
+  "question": "A study that follows exposed and unexposed groups forward in time to compare incidence is a:",
+  "options": [
+   "Case-control study",
+   "Cohort study",
+   "Cross-sectional survey",
+   "Ecological study"
+  ],
+  "answer": 1,
+  "explanation": "Cohort studies measure incidence and relative risk; case-control studies start from disease and estimate odds ratios.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
  }
 ]
