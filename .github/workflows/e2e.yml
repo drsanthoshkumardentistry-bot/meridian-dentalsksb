@@ -13,13 +13,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
       - run: npm ci
       - run: npm run build
-      - run: npx --yes playwright@1.49.1 install --with-deps chromium
+      - run: npm i --no-save playwright@1.49.1 wait-on@8
+      - run: npx playwright install --with-deps chromium
       - name: Serve the build and run the smoke test
         run: |
           npx vite preview --port 4173 &
           npx wait-on http://localhost:4173 --timeout 60000
-          NODE_PATH=$(npm root -g) npx --yes -p playwright@1.49.1 node e2e/smoke.cjs
+          node e2e/smoke.cjs
