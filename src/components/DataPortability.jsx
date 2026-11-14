@@ -122,7 +122,7 @@ export default function DataPortability({ data, newId, onDownloadFile, onImporte
   };
 
   return (
-    <section className="rounded-xl border border-rule p-4 space-y-4" aria-label="Download and transfer data" data-testid="data-portability">
+    <section id="data-backup" className="rounded-xl border border-rule p-4 space-y-4 scroll-mt-4" aria-label="Download and transfer data" data-testid="data-portability">
       <div>
         <h2 className="text-sm font-bold text-slate-900">Download and transfer your data</h2>
         <p className="text-xs text-slate-500">Your records belong to you. Take a full copy any time, move to another clinic or system, or bring records in.</p>

@@ -30,6 +30,7 @@ const Growth = (props) => <Suspense fallback={<TabLoading />}><LazyGrowth {...pr
 const OpgViewer = (props) => <Suspense fallback={<TabLoading />}><LazyOpgViewer {...props} /></Suspense>;
 const DataPortability = (props) => <Suspense fallback={<TabLoading />}><LazyDataPortability {...props} /></Suspense>;
 import { buildPatientBackup, backupFileName } from "./portability.js";
+import { scrollToWhenReady } from "./scrollToWhenReady.js";
 import { recordSheetHtml } from "./recordSheet.js";
 import { branchesOf, filterByBranch, writeBranchId, tagBranch, scopeToBranches, recordsOfPatient } from "./branches.js";
 import QueuePanel from "./components/QueuePanel.jsx";
@@ -2524,7 +2525,7 @@ export default function App() {
                   ? backupNotification(readLastBackup(CACHE_ID, window.localStorage), new Date(), { hasData: allPatients.length + allInvoices.length > 0 })
                   : null,
               })}
-              onOpen={(to) => setActiveNav(to)}
+              onOpen={(to, n) => { setActiveNav(to); if (n && n.kind === "backup") scrollToWhenReady("data-backup"); }}
             />
             <AccountMenu
               user={authUser}

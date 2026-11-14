@@ -37,7 +37,7 @@ describe("menus", () => {
     render(<NotificationBell items={[{ id: "1", kind: "stock", tone: "red", text: "Gloves is out of stock", to: "Stock Maintenance" }]} onOpen={onOpen} />);
     fireEvent.click(screen.getByRole("button", { name: "Notifications, 1" }));
     fireEvent.click(screen.getByText("Gloves is out of stock"));
-    expect(onOpen).toHaveBeenCalledWith("Stock Maintenance");
+    expect(onOpen).toHaveBeenCalledWith("Stock Maintenance", expect.anything());
   });
   it("account menu has a red Log out", () => {
     const onLogout = vi.fn();
