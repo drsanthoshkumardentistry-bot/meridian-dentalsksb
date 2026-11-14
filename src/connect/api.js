@@ -428,5 +428,7 @@ export const bindApi = (db, uid) => ({
     saveVisit: (v) => docLogApi.saveVisit(db, uid, v),
     saveVisits: (vs) => docLogApi.saveVisits(db, uid, vs),
     deleteVisit: (id) => docLogApi.deleteVisit(db, uid, id),
+    getProfile: () => docLogApi.getProfile(db, uid),
+    saveProfile: (p) => docLogApi.saveProfile(db, uid, p),
   },
 });

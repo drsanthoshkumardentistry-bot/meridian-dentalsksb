@@ -1064,6 +1064,14 @@ export default function App() {
     return watchBookingRequests(db, CLINIC_ID, setBookingRequests, () => {});
   }, [hydratedFor, CLINIC_ID, role]);
 
+  // Tell the clinic the moment a new online request arrives (not for the ones already waiting at sign-in).
+  const seenBookingsRef = useRef(null);
+  useEffect(() => {
+    const n = bookingRequests.filter((r) => r.status === "new").length;
+    if (seenBookingsRef.current !== null && n > seenBookingsRef.current) showToast(`New online appointment request (${n} waiting). Open the bell to confirm.`);
+    seenBookingsRef.current = n;
+  }, [bookingRequests]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
     localStorage.setItem(`merident_${CACHE_ID}_profile`, JSON.stringify(practiceProfile));
@@ -2429,6 +2437,7 @@ export default function App() {
               items={buildNotifications({
                 inventory,
                 appointments,
+                bookings: bookingRequests.filter((r) => r.status === "new").length,
                 showStock: navFor(role, [{ label: "Stock Maintenance" }]).length > 0,
                 showAppointments: navFor(role, [{ label: "Appointments Diary" }]).length > 0,
                 backup: !allowedBranchIds && (role === "owner" || role === "manager")
@@ -4134,10 +4143,10 @@ export default function App() {
               </div>
 
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" data-testid="stat-cards">
-                <StatCard title="Patients" value={patients.length} note="Registered patient records" icon={<UsersRound className="w-5 h-5" />} tone="blue" bars={dashboardPatientSeries.map((d) => d.value)} />
-                <StatCard title="Visits Today" value={diarySum.today} note={diarySum.tomorrow ? `${diarySum.tomorrow} tomorrow` : "Active bookings today"} icon={<CalendarDays className="w-5 h-5" />} tone="mint" bars={dashboardVisitSeries} />
-                <StatCard title="Collected this month" value={`₹${formatINR(billing.collectedP)}`} note={`₹${formatINR(billing.billedP)} billed this month`} icon={<IndianRupee className="w-5 h-5" />} tone="violet" bars={dashboardRevenueSeries.map((d) => d.value)} />
-                <StatCard title="Outstanding" value={`₹${formatINR(billing.outstandingP)}`} note={billing.overdueCount ? `${billing.overdueCount} overdue, ₹${formatINR(billing.overdueP)}` : "Unpaid balance across invoices"} icon={<Wallet className="w-5 h-5" />} tone={billing.overdueCount ? "rose" : "peach"} />
+                <StatCard title="Patients" value={patients.length} note="Registered patient records" icon={<UsersRound className="w-5 h-5" />} tone="blue" bars={dashboardPatientSeries.map((d) => d.value)} onOpen={navFor(role, [{ label: "Patients & Odontogram" }]).length > 0 ? () => setActiveNav("Patients & Odontogram") : undefined} openLabel="open patients" />
+                <StatCard title="Visits Today" value={diarySum.today} note={diarySum.tomorrow ? `${diarySum.tomorrow} tomorrow` : "Active bookings today"} icon={<CalendarDays className="w-5 h-5" />} tone="mint" bars={dashboardVisitSeries} onOpen={navFor(role, [{ label: "Appointments Diary" }]).length > 0 ? () => setActiveNav("Appointments Diary") : undefined} openLabel="open appointments" />
+                <StatCard title="Collected this month" value={`₹${formatINR(billing.collectedP)}`} note={`₹${formatINR(billing.billedP)} billed this month`} icon={<IndianRupee className="w-5 h-5" />} tone="violet" bars={dashboardRevenueSeries.map((d) => d.value)} onOpen={navFor(role, [{ label: "Billing & Invoices" }]).length > 0 ? () => setActiveNav("Billing & Invoices") : undefined} openLabel="open billing" />
+                <StatCard title="Outstanding" value={`₹${formatINR(billing.outstandingP)}`} note={billing.overdueCount ? `${billing.overdueCount} overdue, ₹${formatINR(billing.overdueP)}` : "Unpaid balance across invoices"} icon={<Wallet className="w-5 h-5" />} tone={billing.overdueCount ? "rose" : "peach"} onOpen={navFor(role, [{ label: "Billing & Invoices" }]).length > 0 ? () => setActiveNav("Billing & Invoices") : undefined} openLabel="open billing" />
               </div>
 
               {role === "owner" && <SetupChecklist

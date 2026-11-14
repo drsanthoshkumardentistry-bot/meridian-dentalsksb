@@ -7,10 +7,11 @@ const hhmm = (d) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinu
 const tomorrowKey = (now) => dateKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1));
 
 /** Returns [{ id, kind: "stock" | "appointment", tone: "red" | "amber" | "blue", text, to }] most urgent first. */
-export const buildNotifications = ({ inventory = [], appointments = [], now = new Date(), showStock = true, showAppointments = true, backup = null } = {}) => {
+export const buildNotifications = ({ inventory = [], appointments = [], now = new Date(), showStock = true, showAppointments = true, backup = null, bookings = 0 } = {}) => {
   inventory = (Array.isArray(inventory) ? inventory : []).filter(Boolean);
   appointments = (Array.isArray(appointments) ? appointments : []).filter(Boolean);
   const out = [];
+  if (showAppointments && bookings > 0) out.push({ id: "online-bookings", kind: "booking", tone: "red", text: `${bookings} new online ${bookings === 1 ? "appointment request" : "appointment requests"} to confirm`, to: "Appointments Diary" });
   if (showAppointments) {
     const today = dateKey(now);
     const clock = hhmm(now);

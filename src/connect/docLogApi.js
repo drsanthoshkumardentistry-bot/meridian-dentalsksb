@@ -1,5 +1,5 @@
 // Firestore access for MeriDent DocLog. Everything lives under the doctor's own uid and only that doctor can read it.
-import { collection, doc, getDocs, setDoc, deleteDoc, query, orderBy, limit, writeBatch } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, setDoc, deleteDoc, query, orderBy, limit, writeBatch } from "firebase/firestore";
 import { MAX_VISITS_LOADED } from "../docLog.js";
 
 const ROOT = "connectDocLog";
@@ -24,3 +24,10 @@ export const saveVisits = async (db, uid, visits) => {
   visits.forEach((v) => batch.set(doc(db, ROOT, uid, "visits", v.id), strip(v)));
   await batch.commit();
 };
+
+/** The doctor's own DocLog profile (speciality, name, qualification). One document. */
+export const getProfile = async (db, uid) => {
+  const snap = await getDoc(doc(db, ROOT, uid, "profile", "me"));
+  return snap.exists() ? snap.data() : null;
+};
+export const saveProfile = (db, uid, profile) => setDoc(doc(db, ROOT, uid, "profile", "me"), strip(profile));

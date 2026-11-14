@@ -4,7 +4,7 @@ import { formatINR } from "../billing.js";
 import { monthLabel } from "../reports.js";
 import { dateKey } from "../reminders.js";
 import {
-  TREATMENTS, CASE_STATUSES, PAY_MODES, MAX_CLINICS, buildClinic, buildVisit, pendingP, paymentState, summary, duesByClinic, comingUp,
+  treatmentsFor, specialtyOptions, buildProfile, CASE_STATUSES, PAY_MODES, MAX_CLINICS, buildClinic, buildVisit, pendingP, paymentState, summary, duesByClinic, comingUp,
   visitNumber, filterVisits, monthsPresent, allocatePayment, docLogCsv, statusLabel, modeLabel, sortVisits,
 } from "../docLog.js";
 
@@ -98,7 +98,7 @@ function ClinicsDialog({ clinics, onSave, onDelete, onClose }) {
   );
 }
 
-function VisitDialog({ clinics, initial, visits, onSave, onClose, onClinics }) {
+function VisitDialog({ clinics, initial, visits, profile, onSave, onClose, onClinics }) {
   const today = dateKey();
   const last = sortVisits(visits)[0];
   const [form, setForm] = useState(() => ({
@@ -145,7 +145,7 @@ function VisitDialog({ clinics, initial, visits, onSave, onClose, onClinics }) {
         <div>
           <span className={lbl}>Treatment</span>
           <div className="flex flex-wrap gap-1.5" role="group" aria-label="Treatment">
-            {TREATMENTS.map((t) => (
+            {(() => { const base = treatmentsFor(profile && profile.specialty); return form.treatment && !base.includes(form.treatment) ? [form.treatment, ...base] : base; })().map((t) => (
               <button key={t} type="button" aria-pressed={form.treatment === t} onClick={() => setForm({ ...form, treatment: form.treatment === t ? "" : t })}
                 className={`px-3 py-1.5 rounded-full border text-xs font-semibold ${form.treatment === t ? "bg-blue-50 border-blue-400 text-blue-800" : "border-slate-300 text-slate-700"}`}>{t}</button>
             ))}
@@ -192,6 +192,40 @@ function VisitDialog({ clinics, initial, visits, onSave, onClose, onClinics }) {
   );
 }
 
+function ProfileDialog({ profile, onSave, onClose }) {
+  const [form, setForm] = useState({ name: "", qualification: "", specialty: "", ...(profile || {}) });
+  const [error, setError] = useState("");
+  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  const submit = async (e) => {
+    e.preventDefault();
+    const r = buildProfile(form);
+    if (r.error) return setError(r.error);
+    setError("");
+    await onSave(r.profile);
+  };
+  const lbl = "block text-[11px] font-semibold text-slate-600 mb-1";
+  return (
+    <Modal title="My profile" onClose={onClose}>
+      <form onSubmit={submit} className="space-y-3">
+        <p className="text-xs text-slate-500">Your speciality sets the treatment buttons you see when you add a visit. Only you can see this profile.</p>
+        <div>
+          <label htmlFor="dp-spec" className={lbl}>Speciality</label>
+          <select id="dp-spec" className={field} value={form.specialty} onChange={set("specialty")}>
+            <option value="">Choose your speciality</option>
+            {specialtyOptions.map(([k, name]) => <option key={k} value={k}>{name}</option>)}
+          </select>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div><label htmlFor="dp-name" className={lbl}>Your name (optional)</label><input id="dp-name" className={field} value={form.name} onChange={set("name")} maxLength={80} /></div>
+          <div><label htmlFor="dp-qual" className={lbl}>Qualification (optional)</label><input id="dp-qual" className={field} value={form.qualification} onChange={set("qualification")} maxLength={60} placeholder="e.g. MDS" /></div>
+        </div>
+        {error && <p role="alert" className="text-xs text-rose-700 font-semibold">{error}</p>}
+        <button type="submit" className={`${primary} w-full justify-center`}>Save profile</button>
+      </form>
+    </Modal>
+  );
+}
+
 function ReceiveDialog({ due, onSave, onClose }) {
   const [amount, setAmount] = useState(String(due.pendingP / 100));
   const [mode, setMode] = useState("upi");
@@ -222,20 +256,20 @@ export default function DocLog({ api, showToast }) {
   const dl = api && api.docLog;
   const today = dateKey();
   const thisMonth = today.slice(0, 7);
-  const [state, setState] = useState({ status: "loading", clinics: [], visits: [] });
+  const [state, setState] = useState({ status: "loading", clinics: [], visits: [], profile: null });
   const [dialog, setDialog] = useState(null); // { kind: "visit"|"clinics"|"receive", ... }
   const [ym, setYm] = useState(thisMonth);
   const [clinicFilter, setClinicFilter] = useState("");
   const [status, setStatus] = useState("all");
   const [q, setQ] = useState("");
   const [confirmDel, setConfirmDel] = useState("");
-  const { clinics, visits } = state;
+  const { clinics, visits, profile } = state;
 
   const load = useCallback(async () => {
     if (!dl) return;
     try {
-      const [c, v] = await Promise.all([dl.listClinics(), dl.listVisits()]);
-      setState({ status: "ready", clinics: c, visits: v });
+      const [c, v, p] = await Promise.all([dl.listClinics(), dl.listVisits(), dl.getProfile ? dl.getProfile().catch(() => null) : null]);
+      setState({ status: "ready", clinics: c, visits: v, profile: p });
     } catch { setState((s) => ({ ...s, status: "error" })); }
   }, [dl]);
   useEffect(() => { load(); }, [load]);
@@ -247,6 +281,10 @@ export default function DocLog({ api, showToast }) {
   };
   const deleteClinic = async (id) => {
     try { await dl.deleteClinic(id); setState((s) => ({ ...s, clinics: s.clinics.filter((x) => x.id !== id) })); showToast && showToast("Clinic removed. Its earlier visits are kept."); }
+    catch { fail(); }
+  };
+  const saveProfile = async (p) => {
+    try { await dl.saveProfile(p); setState((s) => ({ ...s, profile: p })); setDialog(null); showToast && showToast("Profile saved"); }
     catch { fail(); }
   };
   const saveVisit = async (v) => {
@@ -293,8 +331,12 @@ export default function DocLog({ api, showToast }) {
         <div>
           <h2 className="font-display font-bold text-2xl text-ink tracking-tight">MeriDent DocLog</h2>
           <p className="text-sm text-slate-500 mt-1">Your private log of clinic visits, treatments and payments. Only you can see it.</p>
+          {profile && profile.specialty
+            ? <p className="text-xs font-semibold text-blue-800 mt-1" data-testid="doclog-profile">{[profile.name, profile.qualification, specialtyOptions.find(([k]) => k === profile.specialty)?.[1]].filter(Boolean).join(", ")}</p>
+            : <button type="button" onClick={() => setDialog({ kind: "profile" })} className="mt-2 text-xs font-semibold text-blue-700 hover:underline" data-testid="doclog-set-profile">Choose your speciality to see the right treatment buttons</button>}
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={() => setDialog({ kind: "profile" })} className={`${btn} border border-rule bg-white text-slate-700 inline-flex items-center gap-1.5`}>My profile</button>
           <button type="button" onClick={() => setDialog({ kind: "clinics" })} className={`${btn} border border-rule bg-white text-slate-700 inline-flex items-center gap-1.5`}><Building2 className="w-3.5 h-3.5" /> My clinics</button>
           <button type="button" disabled={!visits.length} onClick={() => download(docLogCsv(visits, ym), `doclog-${ym || "all"}.csv`)} className={`${btn} border border-rule bg-white text-slate-700 disabled:opacity-50 inline-flex items-center gap-1.5`}><Download className="w-3.5 h-3.5" /> Download spreadsheet</button>
           <button type="button" onClick={startVisit} className={primary}><Plus className="w-4 h-4" /> Add visit</button>
@@ -406,8 +448,9 @@ export default function DocLog({ api, showToast }) {
       )}
       <p className="text-xs text-slate-500 flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> Stored in your own account in the cloud. Clinics and other doctors cannot see it. Use initials if you prefer not to store patient names.</p>
 
+      {dialog && dialog.kind === "profile" && <ProfileDialog profile={profile} onSave={saveProfile} onClose={() => setDialog(null)} />}
       {dialog && dialog.kind === "clinics" && <ClinicsDialog clinics={clinics} onSave={saveClinic} onDelete={deleteClinic} onClose={() => setDialog(null)} />}
-      {dialog && dialog.kind === "visit" && <VisitDialog clinics={clinics} visits={visits} initial={dialog.initial} onSave={saveVisit} onClose={() => setDialog(null)} onClinics={() => setDialog({ kind: "clinics" })} />}
+      {dialog && dialog.kind === "visit" && <VisitDialog clinics={clinics} visits={visits} profile={profile} initial={dialog.initial} onSave={saveVisit} onClose={() => setDialog(null)} onClinics={() => setDialog({ kind: "clinics" })} />}
       {dialog && dialog.kind === "receive" && <ReceiveDialog due={dialog.due} onSave={(p, m) => receive(dialog.due, p, m)} onClose={() => setDialog(null)} />}
     </div>
   );

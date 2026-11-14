@@ -523,6 +523,13 @@ service cloud.firestore {
         && dlMoney(request.resource.data, 'defaultFeeP')
         && request.resource.data.sharePct is number && request.resource.data.sharePct >= 0 && request.resource.data.sharePct <= 100;
     }
+    match /connectDocLog/{uid}/profile/{docId} {
+      allow read, delete: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn() && request.auth.uid == uid && docId == 'me'
+        && request.resource.data.keys().hasOnly(['name', 'qualification', 'specialty'])
+        && dlStr(request.resource.data, 'name', 80) && dlStr(request.resource.data, 'qualification', 60)
+        && request.resource.data.specialty is string && request.resource.data.specialty.size() > 0 && request.resource.data.specialty.size() <= 30;
+    }
     match /connectDocLog/{uid}/visits/{visitId} {
       allow read, delete: if signedIn() && request.auth.uid == uid;
       allow create, update: if signedIn() && request.auth.uid == uid
