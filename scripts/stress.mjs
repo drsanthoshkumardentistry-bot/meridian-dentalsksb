@@ -10,6 +10,8 @@ import * as rem from "../src/reminders.js";
 import * as port from "../src/portability.js";
 import * as gallery from "../src/gallery.js";
 import * as extra from "../src/extraoral.js";
+import * as dl from "../src/docLog.js";
+import * as cal from "../src/calendar.js";
 import { buildNotifications } from "../src/notifications.js";
 import { recordSheetHtml } from "../src/recordSheet.js";
 
@@ -113,6 +115,25 @@ const PROPS2 = {
   stockBoundaries() { const q = pick([0, 1, 5, 6, 100000]); const m = 5; const st = stock.stockState({ quantity: q, minThreshold: m }, NOW); ok("bug", st.out === (q === 0) && st.low === (q > 0 && q <= m), "stock boundaries: out at 0, low up to the reorder level", () => `${q}/${m} ${JSON.stringify(st)}`);
     const dd = int(-3, 40); const st2 = stock.stockState({ quantity: 10, minThreshold: 1, expiry: dayKey(dd) }, NOW); ok("bug", st2.expired === (dd < 0) && st2.expiringSoon === (dd >= 0 && dd <= 30), "stock boundaries: expiry flags at 0 and 30 days", () => `${dd} ${JSON.stringify(st2)}`); },
 };
+const PROPS3 = {
+  docLogVisit() { const clinics = [{ id: "C1", name: "Clinic", place: "Town" }]; const fee = pick([0, int(0, 99999), String(int(0, 9999999) / 100), "", "abc", -5, 1e12]); const rec = pick([0, int(0, 99999), "", "x", -1, fee]);
+    const r = dl.buildVisit({ clinicId: pick(["C1", "C1", "nope", ""]), date: pick([dayKey(int(-400, 400)), "", "2026-13-40", "x"]), treatment: pick(dl.treatmentsFor(pick(["general", "endodontics", "zzz", ""])).concat([word(), ""])), status: pick(["planned", "inprogress", "completed", "bogus"]), fee, received: rec, age: pick(["", int(0, 130), "x", -1]), patient: word(), note: word(), nextVisit: pick(["", dayKey(int(-400, 400))]) }, "V1", clinics, NOW);
+    if (r.visit) { const v = r.visit; ok("bug", Number.isInteger(v.feeP) && Number.isInteger(v.receivedP) && v.feeP >= 0 && v.receivedP >= 0 && v.receivedP <= v.feeP, "doclog: money is whole paise and never over-received", () => JSON.stringify(v)); ok("bug", dl.pendingP(v) === v.feeP - v.receivedP, "doclog: pending = fee - received", () => JSON.stringify(v)); ok("bug", v.feeP <= 1e9 * 100 || v.feeP <= 1e9, "doclog: fee within the cap", () => JSON.stringify(v)); }
+    else ok("bug", typeof r.error === "string" && r.error.length > 0, "doclog: a rejected visit says why", () => JSON.stringify(r)); },
+  docLogPay() { const vs = Array.from({ length: int(0, 8) }, (_, i) => ({ id: `V${i}`, clinicId: pick(["C1", "C2"]), date: dayKey(-int(0, 90)), feeP: int(0, 500000), receivedP: 0, treatment: "RCT", status: "completed", clinicName: "c", clinicPlace: "p" })).map((v) => ({ ...v, receivedP: int(0, v.feeP) }));
+    const amt = pick([0, int(1, 2000000), -5, 1.5]); const before = vs.filter((v) => v.clinicId === "C1").reduce((a, v) => a + (v.feeP - v.receivedP), 0); const r = dl.allocatePayment(vs, "C1", amt, "cash", NOW);
+    const applied = (r.changed || []).reduce((a, v) => a + (v.receivedP - (vs.find((x) => x.id === v.id) || {}).receivedP), 0);
+    ok("bug", (r.changed || []).every((v) => v.receivedP <= v.feeP && v.clinicId === "C1"), "doclog payment: never over-receives and only touches that clinic", () => JSON.stringify({ vs, amt, r }));
+    if (Number.isInteger(amt) && amt > 0) ok("bug", applied + r.leftoverP === amt && applied <= before, "doclog payment: applied + leftover equals the amount", () => JSON.stringify({ vs, amt, r })); },
+  docLogSummary() { const vs = Array.from({ length: int(0, 30) }, (_, i) => { const feeP = int(0, 400000); return { id: `V${i}`, clinicId: pick(["C1", "C2"]), clinicName: "c", clinicPlace: "p", date: dayKey(int(-70, 70)), feeP, receivedP: int(0, feeP), treatment: "RCT", status: pick(["planned", "inprogress", "completed"]), patient: word() }; });
+    const ym = dayKey(int(-30, 30)).slice(0, 7); const t = dl.summary(vs, ym); ok("bug", t.pendingP === t.earnedP - t.receivedP && t.pendingP >= 0, "doclog summary: pending = earned - received", () => JSON.stringify(t)); ok("bug", dl.docLogCsv(vs, ym).split("\n").length >= 1, "doclog: csv builds", () => ym); },
+  calendarGrid() { const y = int(1990, 2090), m = int(0, 11); const appts = Array.from({ length: int(0, 40) }, () => ({ date: dayKey(int(-60, 60)), status: pick(STATUSES) })); const w = cal.monthGrid(appts, y, m, NOW);
+    ok("bug", w.every((r) => r.length === 7) && w.length >= 4 && w.length <= 6, "calendar: whole weeks of 7, 4 to 6 rows", () => `${y}-${m} ${w.length}`); ok("bug", w.flat().filter((c) => c.inMonth).length === new Date(y, m + 1, 0).getDate(), "calendar: every day of the month appears once", () => `${y}-${m}`);
+    ok("bug", w[0][0].date <= w[0][6].date && w.flat().every((c, i, a) => i === 0 || c.date > a[i - 1].date), "calendar: days run in order", () => `${y}-${m}`); const nm = cal.shiftMonth({ year: y, month: m }, int(-30, 30)); ok("bug", nm.month >= 0 && nm.month <= 11, "calendar: shifted month is valid", () => JSON.stringify(nm)); },
+  bookingBell() { const n = int(0, 5); const out = buildNotifications({ bookings: n, now: NOW, appointments: [] }); ok("bug", (n > 0) === out.some((x) => x.kind === "booking"), "bell: online requests show exactly when there are some", () => String(n)); },
+};
+Object.assign(PROPS, PROPS3);
+Object.assign(PROPS2, PROPS3);
 const ALL = MIXED ? { ...PROPS, ...PROPS2 } : WIDE ? PROPS2 : PROPS;
 const propNames = Object.keys(ALL);
 for (let i = 0; i < NB; i++) { const name = pick(propNames); counts.bug["#" + name] = (counts.bug["#" + name] || 0) + 1; try { ALL[name](); } catch (e) { fail("bug", `${name}: threw`, e && e.stack ? e.stack.split("\n").slice(0, 2).join(" | ") : e); } }
@@ -135,6 +156,7 @@ const TARGETS = [
   ["buildImageDoc", () => gallery.buildImageDoc({ patientId: H(), kind: H(), data: H(), takenOn: H(), caption: H(), tooth: H() }, "I", NOW), true], ["sortImages", () => gallery.sortImages([{ takenOn: H(), createdAt: H() }, H()]), false],
   ["extraoral.saveExam", () => extra.saveExam({ extraOralExams: H() }, H()), false], ["extraoral.findings", () => extra.findings(H()), false],
   ["buildNotifications", () => buildNotifications({ inventory: [H()], appointments: [H()], now: NOW }), false], ["recordSheetHtml", () => recordSheetHtml(H(), { appointments: [H()], invoices: [H()] }, H(), NOW), false],
+  ["docLog.buildVisit", () => dl.buildVisit({ clinicId: H(), date: H(), treatment: H(), fee: H(), received: H(), age: H(), status: H(), patient: H(), nextVisit: H() }, H(), [{ id: H(), name: H() }], NOW), true], ["docLog.buildClinic", () => dl.buildClinic({ name: H(), place: H(), defaultFee: H(), sharePct: H(), phone: H() }, "C"), true], ["docLog.buildProfile", () => dl.buildProfile(H()), false], ["docLog.summary", () => dl.summary([H(), { date: H(), feeP: H(), receivedP: H() }], H()), false], ["docLog.allocatePayment", () => dl.allocatePayment([H(), { id: "x", clinicId: "C", feeP: H(), receivedP: H() }], H(), H(), H(), NOW), false], ["docLog.filterVisits", () => dl.filterVisits([H()], { ym: H(), q: H(), status: H() }), false], ["calendar.monthGrid", () => cal.monthGrid([H()], H(), H(), NOW), false], ["calendar.countsByDate", () => cal.countsByDate(H()), false], ["buildNotifications(bookings)", () => buildNotifications({ bookings: H(), now: NOW }), false],
   ["navFor/canWrite/firstScreen", () => { roles.navFor(H(), [{ label: H() }]); roles.canWrite(H(), H()); roles.canRead(H(), H()); roles.firstScreen(H()); }, true],
 ];
 for (let i = 0; i < NE; i++) { const [name, fn, must] = pick(TARGETS); counts.error["#" + name] = (counts.error["#" + name] || 0) + 1; try { fn(); } catch (e) { fail("error", `${must ? "MUST-NOT-THROW " : "internal "}${name}`, e && e.message ? e.message : e); } }
