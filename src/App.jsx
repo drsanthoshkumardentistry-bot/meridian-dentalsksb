@@ -209,7 +209,10 @@ import {
 // Safe dynamic import from ./firebase
 import * as FirebaseModule from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import * as FirestoreModule from "firebase/firestore";
 import { collection, doc, setDoc, onSnapshot, deleteDoc } from "firebase/firestore";
+import { writeDocMerged } from "./cloudWrite.js";
+import { sameJson } from "./syncMerge.js";
 import LandingPage from "./components/landingpage";
 import LoginPage, { isLoginPath } from "./components/LoginPage.jsx";
 import { resolveConnectOnly, setConnectOnly, setSignInChoice } from "./connectOnly.js";
@@ -299,6 +302,21 @@ const stableStringify = (value) =>
 const cloudDocId = (id) => String(id).replace(/\//g, "_");
 
 const cleanForCloud = (value) => JSON.parse(JSON.stringify(value));
+
+// runTransaction lets two devices saving the same patient merge instead of overwriting each other.
+const getRunTransaction = () => { try { return FirestoreModule.runTransaction; } catch { return undefined; } };
+const parseSynced = (v) => { if (typeof v !== "string" || v.startsWith("__sync_")) return undefined; try { return JSON.parse(v); } catch { return undefined; } };
+
+// The device copy of the clinic's data. Storage can be full (big X-ray images), blocked or switched off; that must
+// never crash a screen, because the cloud copy and the Firestore cache still hold the data.
+let cacheWarned = false;
+const saveLocal = (key, value) => {
+  try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+  catch {
+    if (!cacheWarned) { cacheWarned = true; try { window.dispatchEvent(new Event("merident-cache-full")); } catch { /* no window */ } }
+    return false;
+  }
+};
 
 const SYNC_FAILED = "__sync_failed__";
 const SYNC_DELETING = "__sync_deleting__";
@@ -393,12 +411,20 @@ function useCloudCollection({ clinicId, ready, name, items, setItems, sortFn, on
         const clean = cleanForCloud(item);
         const json = stableStringify(clean);
         if (synced.current.get(id) === json) return;
+        const base = parseSynced(synced.current.get(id));
         synced.current.set(id, json);
-        setDoc(doc(db, "clinics", clinicId, name, cloudDocId(id)), clean).catch((error) => {
-          synced.current.set(id, SYNC_FAILED);
-          if (onErrorRef.current) onErrorRef.current(error);
-          setTimeout(() => setRetryTick((t) => t + 1), 10000);
-        });
+        writeDocMerged({ db, ref: doc(db, "clinics", clinicId, name, cloudDocId(id)), clean, base, runTransaction: getRunTransaction(), setDoc })
+          .then((merged) => {
+            if (sameJson(merged, clean)) return;
+            // Another device changed the same record: show the merged copy here too (unless it was edited again meanwhile).
+            synced.current.set(id, stableStringify(merged));
+            setItemsRef.current((list) => list.map((it) => (it && String(it.id) === id && stableStringify(cleanForCloud(it)) === json ? merged : it)));
+          })
+          .catch((error) => {
+            synced.current.set(id, SYNC_FAILED);
+            if (onErrorRef.current) onErrorRef.current(error);
+            setTimeout(() => setRetryTick((t) => t + 1), 10000);
+          });
       });
 
       Array.from(synced.current.entries()).forEach(([id, value]) => {
@@ -968,45 +994,63 @@ export default function App() {
   });
 
   // Save changes to localStorage
+  const patientsCachePending = useRef(null);
+  const showToastRef = useRef(() => {});
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
-    localStorage.setItem(`merident_${CACHE_ID}_patients`, JSON.stringify(allPatients));
+    // The patient list can hold large X-ray images, so it is written after a short pause instead of on every keystroke.
+    const key = `merident_${CACHE_ID}_patients`;
+    patientsCachePending.current = { key, value: allPatients };
+    const t = setTimeout(() => { const p = patientsCachePending.current; patientsCachePending.current = null; if (p) saveLocal(p.key, p.value); }, 300);
+    return () => clearTimeout(t);
   }, [allPatients, hydratedFor, CLINIC_ID]);
+
+  useEffect(() => { // do not lose the last change when the tab closes or the person signs out
+    const flush = () => { const p = patientsCachePending.current; patientsCachePending.current = null; if (p) saveLocal(p.key, p.value); };
+    window.addEventListener("pagehide", flush);
+    return () => { window.removeEventListener("pagehide", flush); flush(); };
+  }, []);
+
+  useEffect(() => {
+    const warn = () => showToastRef.current("This device is out of space for an offline copy. Your data is safe in the cloud. Clear browser storage to turn it back on.");
+    window.addEventListener("merident-cache-full", warn);
+    return () => window.removeEventListener("merident-cache-full", warn);
+  }, []);
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
-    localStorage.setItem(`merident_${CACHE_ID}_appointments`, JSON.stringify(allAppointments));
+    saveLocal(`merident_${CACHE_ID}_appointments`, allAppointments);
   }, [allAppointments, hydratedFor, CLINIC_ID]);
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
-    localStorage.setItem(`merident_${CACHE_ID}_invoices`, JSON.stringify(allInvoices));
+    saveLocal(`merident_${CACHE_ID}_invoices`, allInvoices);
   }, [allInvoices, hydratedFor, CLINIC_ID]);
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
-    localStorage.setItem(`merident_${CACHE_ID}_inventory`, JSON.stringify(inventory));
+    saveLocal(`merident_${CACHE_ID}_inventory`, inventory);
   }, [inventory, hydratedFor, CLINIC_ID]);
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
-    localStorage.setItem(`merident_${CACHE_ID}_employees`, JSON.stringify(employees));
+    saveLocal(`merident_${CACHE_ID}_employees`, employees);
   }, [employees, hydratedFor, CLINIC_ID]);
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
-    localStorage.setItem(`merident_${CACHE_ID}_branch`, JSON.stringify(shownBranch));
+    saveLocal(`merident_${CACHE_ID}_branch`, shownBranch);
   }, [shownBranch, hydratedFor, CLINIC_ID]);
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
-    localStorage.setItem(`merident_${CACHE_ID}_queue`, JSON.stringify(allQueue));
+    saveLocal(`merident_${CACHE_ID}_queue`, allQueue);
   }, [allQueue, hydratedFor, CLINIC_ID]);
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
-    localStorage.setItem(`merident_${CACHE_ID}_leads`, JSON.stringify(leads));
-    localStorage.setItem(`merident_${CACHE_ID}_memberships`, JSON.stringify(memberships));
+    saveLocal(`merident_${CACHE_ID}_leads`, leads);
+    saveLocal(`merident_${CACHE_ID}_memberships`, memberships);
   }, [leads, memberships, hydratedFor, CLINIC_ID]);
 
   // Activity log: one line per important change, written by whoever made it
@@ -1075,13 +1119,14 @@ export default function App() {
 
   useEffect(() => {
     if (!CLINIC_ID || hydratedFor !== CLINIC_ID) return;
-    localStorage.setItem(`merident_${CACHE_ID}_profile`, JSON.stringify(practiceProfile));
+    saveLocal(`merident_${CACHE_ID}_profile`, practiceProfile);
   }, [practiceProfile, hydratedFor, CLINIC_ID]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
+  showToastRef.current = showToast;
 
   // --- MODAL STATES ---
   const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);

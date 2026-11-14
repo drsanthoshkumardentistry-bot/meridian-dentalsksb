@@ -122,6 +122,6 @@ h1{color:#1d4ed8;font-size:20px;margin:0}h2{font-size:17px;margin:16px 0 4px}.mu
 <h2>${esc(c.title)}</h2>
 <div>Patient: <b>${esc(patient.name || "")}</b>${c.teeth ? ` · Teeth: ${esc(c.teeth)}` : ""}</div>
 <div class="text">${esc(c.text)}</div>
-<div class="sig"><div class="box"><img src="${esc(c.signature)}" alt="Signature"><br>Signed by ${esc(signerLine(c))}</div>
+<div class="sig"><div class="box"><img src="${esc(/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(String(c.signature || "")) ? c.signature : "")}" alt="Signature"><br>Signed by ${esc(signerLine(c))}</div>
 <div class="box">Date and time: ${esc(new Date(c.signedAt).toLocaleString("en-IN"))}<br>Dentist: ${esc(c.doctor || "-")}${c.witness ? `<br>Witness: ${esc(c.witness)}` : ""}</div></div>
 <script>window.onload=function(){window.print()}</script></body></html>`;

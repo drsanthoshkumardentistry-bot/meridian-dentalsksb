@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useCallback, useMemo, useRef } from "react";
 import { CARIES_CLASSES, SURFACES, DEPTHS, surfaceName, cariesText } from "../caries.js";
 import { toothInfo, groupFindings, STATUS_COLORS, archLayout, codesOf, primaryCode, normalizeConditions } from "../odontogram.js";
 
@@ -7,7 +7,7 @@ const PERMANENT_LOWER = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36,
 const DECIDUOUS_UPPER = [55, 54, 53, 52, 51, 61, 62, 63, 64, 65];
 const DECIDUOUS_LOWER = [85, 84, 83, 82, 81, 71, 72, 73, 74, 75];
 
-function Tooth({ t, codes, labelOf, onTap, planned, activeLabel }) {
+function ToothImpl({ t, codes, labelOf, onTap, planned, activeLabel }) {
   const info = toothInfo(t.num);
   const code = primaryCode(codes);
   const colors = STATUS_COLORS[code || "HLT"] || STATUS_COLORS.HLT;
@@ -100,6 +100,9 @@ function Tooth({ t, codes, labelOf, onTap, planned, activeLabel }) {
   );
 }
 
+// Only a tooth whose own findings changed is drawn again, so a 32-tooth chart stays smooth on a low-spec tablet.
+const Tooth = React.memo(ToothImpl, (a, b) => a.t === b.t && a.planned === b.planned && a.activeLabel === b.activeLabel && a.codes.join("|") === b.codes.join("|") && a.labelOf === b.labelOf && a.onTap === b.onTap);
+
 export default function Odontogram({
   conditions: rawConditions = {},
   palette,
@@ -115,7 +118,10 @@ export default function Odontogram({
   plannedTeeth = new Set()
 }) {
   const conditions = useMemo(() => normalizeConditions(rawConditions), [rawConditions]);
-  const labelOf = (code) => palette.find((p) => p.id === code)?.label || code;
+  const labelOf = useCallback((code) => palette.find((p) => p.id === code)?.label || code, [palette]);
+  const tapRef = useRef(onTap);
+  tapRef.current = onTap;
+  const stableTap = useCallback((num) => tapRef.current(num), []); // the latest tap handler, without redrawing every tooth
   const active = palette.find((p) => p.id === activeStatus) || palette[0];
 
   const upper = useMemo(
@@ -189,7 +195,7 @@ export default function Odontogram({
           <text x="10" y="212" fontSize="11" fill="#6b7fa8">Patient's right</text>
           <text x="590" y="212" textAnchor="end" fontSize="11" fill="#6b7fa8">Patient's left</text>
           {[...upper, ...lower].map((t) => (
-            <Tooth key={t.num} t={t} codes={conditions[t.num] || []} labelOf={labelOf} activeLabel={active.label} onTap={onTap} planned={plannedTeeth.has(t.num)} />
+            <Tooth key={t.num} t={t} codes={conditions[t.num] || []} labelOf={labelOf} activeLabel={active.label} onTap={stableTap} planned={plannedTeeth.has(t.num)} />
           ))}
         </svg>
       </div>
