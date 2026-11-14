@@ -229,12 +229,12 @@ insert into public.mcq_questions (id, subject, question, options, answer, explan
 (1022, 'Public health', 'Which brief intervention model is recommended for smoking cessation in Australian primary care, including dental practice?', array['Ask, Advise, Help','Refer every smoker to a cardiologist','Only advise patients who ask','Prescribe nicotine replacement to all smokers without assessment']::text[], 0, 'Ask about smoking, Advise to quit, Help by offering referral to Quitline (13 7848) and discussing pharmacotherapy. It takes a few minutes and is effective.', false, false, 'ADC')
 on conflict (id) do update set subject = excluded.subject, question = excluded.question, options = excluded.options, answer = excluded.answer, explanation = excluded.explanation, is_pyq = excluded.is_pyq, is_important = excluded.is_important, exam = excluded.exam;
 
-select setval(pg_get_serial_sequence('public.subjects', 'id'), (select max(id) from public.subjects));
+select setval(pg_get_serial_sequence('public.subjects', 'id'), greatest((select max(id) from public.subjects), (select last_value from public.subjects_id_seq)));
 
-select setval(pg_get_serial_sequence('public.topics', 'id'), (select max(id) from public.topics));
+select setval(pg_get_serial_sequence('public.topics', 'id'), greatest((select max(id) from public.topics), (select last_value from public.topics_id_seq)));
 
-select setval(pg_get_serial_sequence('public.flashcards', 'id'), (select max(id) from public.flashcards));
+select setval(pg_get_serial_sequence('public.spotters', 'id'), greatest((select max(id) from public.spotters), (select last_value from public.spotters_id_seq)));
 
-select setval(pg_get_serial_sequence('public.spotters', 'id'), (select max(id) from public.spotters));
+select setval(pg_get_serial_sequence('public.flashcards', 'id'), greatest(100000, (select max(id) from public.flashcards), (select last_value from public.flashcards_id_seq)));
 
 commit;
