@@ -11,10 +11,13 @@ export const STAT_TONES = {
   rose: { card: "from-rose-50 to-pink-100/70 border-rose-100", bubble: "bg-rose-500 text-white shadow-rose-300/60", bar: "#e11d48" },
 };
 
-export function StatCard({ title, value, note, icon, tone = "blue", bars }) {
+export function StatCard({ title, value, note, icon, tone = "blue", bars, onOpen, openLabel }) {
   const t = STAT_TONES[tone] || STAT_TONES.blue;
+  const cls = `stat-card rounded-2xl border bg-gradient-to-br ${t.card} p-4 sm:p-5 lg:p-4 flex flex-col justify-between gap-3 lg:gap-2 min-h-[9rem] lg:min-h-[8rem] shadow-card`;
+  const press = onOpen ? " w-full text-left cursor-pointer transition active:scale-[0.98] hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600" : "";
+  const Tag = onOpen ? "button" : "div";
   return (
-    <div className={`stat-card rounded-2xl border bg-gradient-to-br ${t.card} p-4 sm:p-5 lg:p-4 flex flex-col justify-between gap-3 lg:gap-2 min-h-[9rem] lg:min-h-[8rem] shadow-card`}>
+    <Tag className={cls + press} {...(onOpen ? { type: "button", onClick: onOpen, "aria-label": `${title}: ${openLabel || "open"}` } : {})}>
       <div className="flex items-center gap-3">
         <div className={`w-11 h-11 lg:w-10 lg:h-10 shrink-0 rounded-full flex items-center justify-center shadow-lg ${t.bubble}`}>{icon}</div>
         <div className="text-[13px] font-semibold text-slate-600 leading-tight">{title}</div>
@@ -24,7 +27,7 @@ export function StatCard({ title, value, note, icon, tone = "blue", bars }) {
         <div className="text-[11px] sm:text-xs text-slate-600/80 mt-1 leading-snug">{note}</div>
       </div>
       {bars ? <MiniBars data={bars} color={t.bar} /> : <div className="h-9" aria-hidden="true" />}
-    </div>
+    </Tag>
   );
 }
 
