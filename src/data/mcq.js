@@ -3039,5 +3039,485 @@ export const MCQS = [
   "is_pyq": false,
   "exam": "NEET MDS",
   "is_important": true
+ },
+ {
+  "id": 191,
+  "subject": "Prosthodontics",
+  "question": "Hanau's formula for lateral condylar guidance is:",
+  "options": [
+   "L = H/8 + 12",
+   "L = H/12 + 8",
+   "L = 2H + 8",
+   "L = H/4 + 10"
+  ],
+  "answer": 0,
+  "explanation": "L = H/8 + 12, where H is the horizontal condylar guidance from the protrusive record.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 192,
+  "subject": "Prosthodontics",
+  "question": "In an arcon articulator the condylar elements are attached to the:",
+  "options": [
+   "Upper member",
+   "Lower member",
+   "Incisal pin",
+   "Face-bow"
+  ],
+  "answer": 1,
+  "explanation": "ARcon = ARticulator + CONdyle; condyles on the lower member as in the skull (e.g. Whip-Mix). Hanau H2 is non-arcon.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 193,
+  "subject": "Prosthodontics",
+  "question": "Clicking of teeth during speech with new complete dentures suggests:",
+  "options": [
+   "Reduced vertical dimension",
+   "Increased vertical dimension of occlusion",
+   "Underextended flanges",
+   "Insufficient post-dam"
+  ],
+  "answer": 1,
+  "explanation": "Excess VDO removes the freeway space, so teeth contact during speech.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 194,
+  "subject": "Prosthodontics",
+  "question": "Ante's law relates to:",
+  "options": [
+   "Crown–root ratio",
+   "Root surface area of abutments versus teeth replaced",
+   "Span length and deflection",
+   "Pontic design"
+  ],
+  "answer": 1,
+  "explanation": "Abutment root surface area should be equal to or greater than that of the teeth being replaced.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 195,
+  "subject": "Prosthodontics",
+  "question": "If the span of a pontic is doubled, its deflection increases:",
+  "options": [
+   "2 times",
+   "4 times",
+   "8 times",
+   "16 times"
+  ],
+  "answer": 2,
+  "explanation": "Deflection varies with the cube of the span length.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 196,
+  "subject": "Prosthodontics",
+  "question": "The preferred teeth for overdenture abutments are the:",
+  "options": [
+   "Incisors",
+   "Canines",
+   "Second molars",
+   "Third molars"
+  ],
+  "answer": 1,
+  "explanation": "Canines have long roots and strategic positions; premolars are next choice.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 197,
+  "subject": "Prosthodontics",
+  "question": "Racemic epinephrine retraction cord is contraindicated in a patient with:",
+  "options": [
+   "Diabetes",
+   "Hyperthyroidism or cardiovascular disease",
+   "Asthma",
+   "Anaemia"
+  ],
+  "answer": 1,
+  "explanation": "Systemic absorption of adrenaline from the sulcus can cause tachycardia and hypertension.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 198,
+  "subject": "General Surgery",
+  "question": "According to the Parkland formula, a 50 kg patient with 30% burns needs in the first 24 hours:",
+  "options": [
+   "3 L",
+   "6 L",
+   "9 L",
+   "12 L"
+  ],
+  "answer": 1,
+  "explanation": "4 × 50 × 30 = 6000 mL; half (3 L) in the first 8 hours from the time of the burn.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 199,
+  "subject": "General Surgery",
+  "question": "A burn that is white, leathery and painless is:",
+  "options": [
+   "Superficial",
+   "Superficial partial thickness",
+   "Full thickness",
+   "Epidermal"
+  ],
+  "answer": 2,
+  "explanation": "Full-thickness burns destroy nerve endings, so they are painless; they need excision and grafting.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 200,
+  "subject": "General Surgery",
+  "question": "Tracheostomy is usually performed through the:",
+  "options": [
+   "First tracheal ring",
+   "Second to fourth tracheal rings",
+   "Cricothyroid membrane",
+   "Thyrohyoid membrane"
+  ],
+  "answer": 1,
+  "explanation": "Cutting the first ring risks subglottic stenosis; the cricothyroid membrane is used for cricothyroidotomy.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 201,
+  "subject": "General Surgery",
+  "question": "Supraomohyoid neck dissection removes lymph node levels:",
+  "options": [
+   "I–III",
+   "II–IV",
+   "I–V",
+   "VI only"
+  ],
+  "answer": 0,
+  "explanation": "Selective dissection of levels I–III for oral cavity cancer with a clinically N0 neck.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 202,
+  "subject": "General Surgery",
+  "question": "A chylous fistula after neck dissection is most likely on the:",
+  "options": [
+   "Right side",
+   "Left side",
+   "Both sides equally",
+   "Midline only"
+  ],
+  "answer": 1,
+  "explanation": "The thoracic duct enters the venous system at the left jugulosubclavian junction.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 203,
+  "subject": "General Surgery",
+  "question": "Radical neck dissection sacrifices all of the following EXCEPT:",
+  "options": [
+   "Spinal accessory nerve",
+   "Internal jugular vein",
+   "Sternocleidomastoid",
+   "Vagus nerve"
+  ],
+  "answer": 3,
+  "explanation": "The vagus, hypoglossal and phrenic nerves and carotid arteries are preserved.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 204,
+  "subject": "Pedodontics",
+  "question": "In early childhood caries, the teeth usually spared are the:",
+  "options": [
+   "Maxillary incisors",
+   "Maxillary first molars",
+   "Mandibular incisors",
+   "Maxillary canines"
+  ],
+  "answer": 2,
+  "explanation": "The tongue covers the lower incisors during sucking and saliva from nearby ducts protects them.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 205,
+  "subject": "Pedodontics",
+  "question": "Fluoride toothpaste amount recommended for a child under 3 years:",
+  "options": [
+   "Pea-sized",
+   "Smear (rice-grain size)",
+   "Full brush length",
+   "None"
+  ],
+  "answer": 1,
+  "explanation": "A smear under 3 years and a pea-sized amount from 3 to 6 years.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 206,
+  "subject": "Pedodontics",
+  "question": "Stainless steel crowns for primary molars were introduced by:",
+  "options": [
+   "Hall",
+   "Humphrey",
+   "Black",
+   "Frankl"
+  ],
+  "answer": 1,
+  "explanation": "Humphrey (1950); the Hall technique (Norna Hall) is a later no-preparation method.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 207,
+  "subject": "Pedodontics",
+  "question": "The luting cement of choice for stainless steel crowns is:",
+  "options": [
+   "Zinc phosphate",
+   "Glass ionomer cement",
+   "Zinc oxide eugenol",
+   "Calcium hydroxide"
+  ],
+  "answer": 1,
+  "explanation": "GIC bonds chemically, releases fluoride and is easy to clean up.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 208,
+  "subject": "Pedodontics",
+  "question": "Silver diamine fluoride is used in children mainly to:",
+  "options": [
+   "Whiten teeth",
+   "Arrest carious lesions",
+   "Desensitise erupting teeth",
+   "Seal fissures"
+  ],
+  "answer": 1,
+  "explanation": "38% SDF arrests cavitated caries but stains the lesion black.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 209,
+  "subject": "Conservative & Endo",
+  "question": "Lingering pain to cold for more than 30 seconds indicates:",
+  "options": [
+   "Normal pulp",
+   "Reversible pulpitis",
+   "Irreversible pulpitis",
+   "Pulp necrosis"
+  ],
+  "answer": 2,
+  "explanation": "Reversible pulpitis pain stops within seconds of removing the stimulus.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 210,
+  "subject": "Conservative & Endo",
+  "question": "The most reliable test of pulp sensibility in routine practice is:",
+  "options": [
+   "Heat test with gutta-percha",
+   "Cold test (refrigerant spray)",
+   "Test cavity",
+   "Transillumination"
+  ],
+  "answer": 1,
+  "explanation": "Cold testing (e.g. tetrafluoroethane) is most reliable; the test cavity is a last resort.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 211,
+  "subject": "Conservative & Endo",
+  "question": "Chronic hyperplastic pulpitis (pulp polyp) occurs typically in:",
+  "options": [
+   "Elderly patients with narrow canals",
+   "Young patients with large open carious cavities",
+   "Teeth with full crowns",
+   "Non-vital teeth"
+  ],
+  "answer": 1,
+  "explanation": "A well-vascularised young pulp proliferates through a large open cavity.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 212,
+  "subject": "Conservative & Endo",
+  "question": "A diffuse periapical radiopacity at the apex of a carious tooth is:",
+  "options": [
+   "Condensing osteitis",
+   "Periapical granuloma",
+   "Periapical cyst",
+   "Cementoblastoma"
+  ],
+  "answer": 0,
+  "explanation": "Condensing osteitis is a bony reaction to low-grade, long-standing pulpal inflammation.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 213,
+  "subject": "Oral Pathology",
+  "question": "Wedge-shaped cervical lesions attributed to occlusal flexural stress are called:",
+  "options": [
+   "Abrasion",
+   "Erosion",
+   "Abfraction",
+   "Attrition"
+  ],
+  "answer": 2,
+  "explanation": "Grippo coined abfraction; lesions are often sharp and may be subgingival.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 214,
+  "subject": "Oral Pathology",
+  "question": "Erosion from gastro-oesophageal reflux typically affects the:",
+  "options": [
+   "Labial surfaces of lower incisors",
+   "Palatal surfaces of maxillary anterior teeth",
+   "Buccal surfaces of molars",
+   "Occlusal surfaces only"
+  ],
+  "answer": 1,
+  "explanation": "Intrinsic acid bathes the palatal surfaces; extrinsic dietary acid tends to affect labial surfaces.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 215,
+  "subject": "Oral Pathology",
+  "question": "\"Pink tooth of Mummery\" is seen in:",
+  "options": [
+   "External resorption",
+   "Internal resorption",
+   "Pulp necrosis",
+   "Fluorosis"
+  ],
+  "answer": 1,
+  "explanation": "Internal resorption enlarges the pulp chamber so vascular pulp shows through the thinned crown.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 216,
+  "subject": "Anatomy",
+  "question": "The thoracic duct drains into the:",
+  "options": [
+   "Right lymphatic duct",
+   "Left jugulosubclavian venous junction",
+   "Superior vena cava directly",
+   "Azygos vein"
+  ],
+  "answer": 1,
+  "explanation": "This is why chyle leaks are a risk in left-sided neck dissection.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": false
+ },
+ {
+  "id": 217,
+  "subject": "Dental Materials",
+  "question": "Ferric sulphate is used in dentistry as a:",
+  "options": [
+   "Impression material",
+   "Haemostatic agent",
+   "Luting cement",
+   "Bleaching agent"
+  ],
+  "answer": 1,
+  "explanation": "It is used for gingival retraction and in primary molar pulpotomy; it stains tissue.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 218,
+  "subject": "Oral Surgery",
+  "question": "The emergency surgical airway in a \"can't intubate, can't oxygenate\" situation is:",
+  "options": [
+   "Tracheostomy through the isthmus",
+   "Cricothyroidotomy",
+   "Nasal intubation",
+   "Laryngeal mask only"
+  ],
+  "answer": 1,
+  "explanation": "Cricothyroidotomy is quick and has few major vessels in its path.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 219,
+  "subject": "Orthodontics",
+  "question": "Tongue thrusting is most commonly associated with:",
+  "options": [
+   "Deep bite",
+   "Anterior open bite",
+   "Class III with crossbite only",
+   "Crowding of lower incisors"
+  ],
+  "answer": 1,
+  "explanation": "The tongue sits between the incisors at rest or during swallowing.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": false
+ },
+ {
+  "id": 220,
+  "subject": "Periodontics",
+  "question": "The gingival col is absent when:",
+  "options": [
+   "Teeth are in contact",
+   "There is a diastema (no contact point)",
+   "The patient is young",
+   "The gingiva is inflamed"
+  ],
+  "answer": 1,
+  "explanation": "The col is the concave area under the contact point; with a diastema the gingiva is keratinised and flat.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": false
  }
 ]

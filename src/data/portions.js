@@ -70,7 +70,7 @@ const BDS = [
     ['Biomaterials: calcium silicates and MTA', { topic: 'mta' }], 'Implant materials',
   ]),
   subject('preclinical', 'Pre-clinical Prosthodontics & Conservative Dentistry', 2, null, [
-    'Primary and secondary impressions (laboratory steps)', 'Record bases and occlusal rims', 'Articulators and face-bow',
+    'Primary and secondary impressions (laboratory steps)', 'Record bases and occlusal rims', ['Articulators and face-bow', { topic: 'articulators' }],
     'Arrangement of artificial teeth', 'Processing, finishing and polishing dentures',
     ['G.V. Black classification and principles of cavity preparation', { mcq: 'Conservative & Endo' }],
     ['Class I and II amalgam preparations', { mcq: 'Conservative & Endo' }], ['Class III and V preparations', { mcq: 'Conservative & Endo' }],
@@ -84,9 +84,9 @@ const BDS = [
     'Nutrition and vitamin deficiencies', ['Medical emergencies: syncope, anaphylaxis, CPR', { topic: 'adc-anaphylaxis' }],
   ]),
   subject('surgery', 'General Surgery', 3, 'General Surgery', [
-    ['Wound healing and surgical infections', { topic: 'wound-healing' }], ['Shock and haemorrhage', { topic: 'shock' }], 'Fluids, electrolytes and blood transfusion', 'Burns',
+    ['Wound healing and surgical infections', { topic: 'wound-healing' }], ['Shock and haemorrhage', { topic: 'shock' }], 'Fluids, electrolytes and blood transfusion', ['Burns', { topic: 'burns' }],
     'Cysts and tumours: benign and malignant', 'Neck swellings and lymph nodes', 'Thyroid swellings', 'Salivary gland swellings',
-    'Oral cancer and neck dissection (overview)', 'Trauma and ATLS principles', 'Sterilisation and asepsis in surgery', 'Tracheostomy',
+    ['Oral cancer and neck dissection (overview)', { topic: 'neck-dissection' }], 'Trauma and ATLS principles', 'Sterilisation and asepsis in surgery', ['Tracheostomy', { topic: 'tracheostomy' }],
   ]),
   subject('oral-pathology', 'Oral Pathology & Oral Microbiology', 3, 'Oral Pathology', [
     ['Developmental disturbances of teeth', { topic: 'tooth-anomalies' }], 'Developmental disturbances of oral and paraoral structures',
@@ -95,7 +95,7 @@ const BDS = [
     ['Odontogenic tumours', { topic: 'ameloblastoma' }], 'Benign tumours of epithelial and connective tissue origin',
     ['Oral squamous cell carcinoma and other malignancies', { topic: 'oral-squamous-cell-carcinoma' }], ['Salivary gland tumours', { topic: 'pleomorphic-adenoma' }], ['Fibro-osseous lesions and bone diseases', { topic: 'fibrous-dysplasia' }],
     ['Bacterial, viral and fungal infections', { topic: 'oral-candidiasis' }], ['Dental caries', { topic: 'dental-caries' }], 'Diseases of the pulp and periapical tissues',
-    'Regressive changes: attrition, abrasion, erosion, resorption', 'Physical and chemical injuries', 'Diseases of skin with oral manifestations',
+    ['Regressive changes: attrition, abrasion, erosion, resorption', { topic: 'tooth-wear' }], 'Physical and chemical injuries', 'Diseases of skin with oral manifestations',
     ['Forensic odontology', { topic: 'forensic-odontology' }],
   ]),
   // ---------------- Final year ----------------
@@ -107,10 +107,10 @@ const BDS = [
     'Intraoral radiographic techniques', 'Panoramic and extraoral radiography; CBCT', ['Radiographic interpretation of cysts and tumours', { topic: 'dentigerous-cyst' }],
   ]),
   subject('pedodontics', 'Paediatric & Preventive Dentistry', 4, 'Pedodontics', [
-    ['Child psychology and behaviour management', { topic: 'behaviour-management' }], 'Growth and development', 'Dental caries in children and early childhood caries',
+    ['Child psychology and behaviour management', { topic: 'behaviour-management' }], 'Growth and development', ['Dental caries in children and early childhood caries', { topic: 'early-childhood-caries' }],
     ['Fluorides', { topic: 'fluorides' }], ['Pit and fissure sealants', { topic: 'pit-fissure-sealants' }], ['Pulp therapy in primary teeth', { topic: 'pulpotomy-primary' }],
     ['Traumatic injuries to teeth', { topic: 'adc-avulsion' }], ['Space maintainers', { topic: 'space-maintainers' }], ['Oral habits', { topic: 'oral-habits' }], 'Children with special healthcare needs',
-    'Paediatric restorative dentistry and stainless steel crowns', 'Local anaesthesia and sedation in children',
+    ['Paediatric restorative dentistry and stainless steel crowns', { topic: 'stainless-steel-crowns' }], 'Local anaesthesia and sedation in children',
   ]),
   subject('orthodontics', 'Orthodontics & Dentofacial Orthopaedics', 4, 'Orthodontics', [
     'Growth and development of the craniofacial complex', 'Development of dentition and occlusion', ['Classification of malocclusion', { topic: 'angle-classification' }],
@@ -128,15 +128,15 @@ const BDS = [
   ]),
   subject('prosthodontics', 'Prosthodontics & Crown and Bridge', 4, 'Prosthodontics', [
     'Edentulous anatomy and diagnosis', ['Complete denture impressions', { topic: 'complete-denture-impressions' }], ['Jaw relations', { topic: 'jaw-relations' }], 'Selection and arrangement of teeth',
-    'Try-in, insertion and post-insertion problems', ['Classification of partially edentulous arches', { topic: 'kennedy-classification' }],
-    ['RPD components and design', { topic: 'rpd-components' }], 'Fixed partial dentures: abutments and tooth preparation', 'Pontics and connectors',
-    'Impressions and gingival retraction', 'Overdentures and immediate dentures', 'Maxillofacial prosthodontics',
-    'Implant prosthodontics', 'Occlusion and articulators',
+    ['Try-in, insertion and post-insertion problems', { topic: 'denture-complaints' }], ['Classification of partially edentulous arches', { topic: 'kennedy-classification' }],
+    ['RPD components and design', { topic: 'rpd-components' }], ['Fixed partial dentures: abutments and tooth preparation', { topic: 'fpd-abutments' }], 'Pontics and connectors',
+    ['Impressions and gingival retraction', { topic: 'gingival-retraction' }], ['Overdentures and immediate dentures', { topic: 'overdentures' }], 'Maxillofacial prosthodontics',
+    'Implant prosthodontics', ['Occlusion and articulators', { topic: 'articulators' }],
   ]),
   subject('conservative', 'Conservative Dentistry & Endodontics', 4, 'Conservative & Endo', [
     ['Dental caries and caries risk assessment', { topic: 'dental-caries' }], ['Principles of cavity design', { topic: 'cavity-design' }], 'Amalgam restorations', 'Composite restorations and adhesion',
     'Glass ionomer restorations', 'Pulp protection: liners and bases', 'Cast restorations: inlays and onlays',
-    'Pulp and periapical diseases', 'Endodontic access and instruments', ['Cleaning and shaping', { topic: 'root-canal-irrigants' }], ['Obturation', { topic: 'obturation' }],
+    ['Pulp and periapical diseases', { topic: 'pulp-periapical-diseases' }], 'Endodontic access and instruments', ['Cleaning and shaping', { topic: 'root-canal-irrigants' }], ['Obturation', { topic: 'obturation' }],
     ['Vital pulp therapy and MTA', { topic: 'mta' }], ['Endodontic emergencies', { topic: 'endodontic-emergencies' }], 'Traumatic injuries: endodontic management',
     'Bleaching and aesthetic dentistry', 'Endodontic surgery',
   ]),
