@@ -111,13 +111,15 @@ export const pendingP = (v) => Math.max(0, (v.feeP || 0) - (v.receivedP || 0));
 export const paymentState = (v) => (!(v.feeP > 0) ? "free" : pendingP(v) === 0 ? "paid" : (v.receivedP || 0) > 0 ? "part" : "pending");
 
 const byDateDesc = (a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : String(b.createdAt).localeCompare(String(a.createdAt)));
-export const sortVisits = (visits) => [...(visits || [])].sort(byDateDesc);
+/** Visits as a clean list: anything that is not a list, and any empty or non-object entry, is dropped. */
+const list = (x) => (Array.isArray(x) ? x : []).filter((v) => v && typeof v === "object");
+export const sortVisits = (visits) => [...list(visits)].sort(byDateDesc);
 export const monthOf = (date) => String(date).slice(0, 7);
-export const monthsPresent = (visits, currentYm) => [...new Set([currentYm, ...(visits || []).map((v) => monthOf(v.date))])].sort().reverse();
+export const monthsPresent = (visits, currentYm) => [...new Set([currentYm, ...list(visits).map((v) => monthOf(v.date))])].sort().reverse();
 
 /** Totals for one month (ym = "2026-11") or for everything (ym = ""). */
 export function summary(visits, ym) {
-  const rows = (visits || []).filter((v) => !ym || monthOf(v.date) === ym);
+  const rows = list(visits).filter((v) => !ym || monthOf(v.date) === ym);
   const earnedP = rows.reduce((s, v) => s + (v.feeP || 0), 0);
   const receivedP = rows.reduce((s, v) => s + (v.receivedP || 0), 0);
   return {
@@ -156,7 +158,7 @@ export function comingUp(visits, today, limit = 6) {
 /** "Visit 3" for a patient's third visit of the same treatment at that clinic, up to and including this one. */
 export function visitNumber(visits, v) {
   if (!v.patient) return 1;
-  return (visits || []).filter((o) => samePatient(o, v) && o.treatment === v.treatment && (o.date < v.date || (o.date === v.date && String(o.createdAt) <= String(v.createdAt)))).length || 1;
+  return list(visits).filter((o) => samePatient(o, v) && o.treatment === v.treatment && (o.date < v.date || (o.date === v.date && String(o.createdAt) <= String(v.createdAt)))).length || 1;
 }
 
 export function filterVisits(visits, { ym = "", clinicId = "", status = "all", q = "" } = {}) {
@@ -179,7 +181,7 @@ export function filterVisits(visits, { ym = "", clinicId = "", status = "all", q
 export function allocatePayment(visits, clinicId, amountP, mode, now = new Date()) {
   let left = Math.max(0, Math.round(amountP || 0));
   const changed = [];
-  const open = (visits || []).filter((v) => v.clinicId === clinicId && pendingP(v) > 0).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : String(a.createdAt).localeCompare(String(b.createdAt))));
+  const open = list(visits).filter((v) => v.clinicId === clinicId && pendingP(v) > 0).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : String(a.createdAt).localeCompare(String(b.createdAt))));
   for (const v of open) {
     if (left <= 0) break;
     const take = Math.min(left, pendingP(v));

@@ -7,7 +7,7 @@ export const MONTH_NAMES = ["January", "February", "March", "April", "May", "Jun
 /** Visits per yyyy-mm-dd. */
 export const countsByDate = (appointments = []) => {
   const out = {};
-  for (const a of appointments) if (a && a.date && !cancelled(a)) out[a.date] = (out[a.date] || 0) + 1;
+  for (const a of Array.isArray(appointments) ? appointments : []) if (a && a.date && !cancelled(a)) out[a.date] = (out[a.date] || 0) + 1;
   return out;
 };
 
