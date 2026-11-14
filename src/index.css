@@ -341,13 +341,13 @@ main section.bg-white {
 /* The app shell must never scroll itself. Focus or scrollIntoView on a field was shifting it up and leaving an empty band at the bottom. */
 .app-shell { overflow: clip; height: 100vh; height: 100dvh; }
 
-/* Slim icon rail on desktop: labels appear when the pointer or keyboard focus is on the sidebar */
+/* Slim icon rail on desktop: it widens and shows labels only when opened with the menu button, and closes when you click outside it */
 @media (min-width: 768px) {
   .rail .rail-label { opacity: 0; white-space: nowrap; transition: opacity 0.2s ease; pointer-events: none; }
-  .rail:hover .rail-label, .rail:focus-within .rail-label { opacity: 1; pointer-events: auto; }
+  .rail.rail-open .rail-label { opacity: 1; pointer-events: auto; }
   .rail .nav-icon svg { width: 1.25rem; height: 1.25rem; }
   .rail .nav-item { padding-left: 0.95rem; }
-  .rail:not(:hover):not(:focus-within) .nav-item { transform: none; }
+  .rail:not(.rail-open) .nav-item { transform: none; }
 }
 @media (prefers-reduced-motion: reduce) { .rail { transition: none; } }
 
