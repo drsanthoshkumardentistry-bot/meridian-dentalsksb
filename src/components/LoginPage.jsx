@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { ArrowRight, CalendarDays, Eye, EyeOff, IndianRupee, ScanSearch } from "lucide-react";
 import { isValidEmailAddress } from "../authErrors";
 import { setSignInChoice, signInChoice } from "../connectOnly";
+import { docSignInChoice, setDocSignInChoice } from "../docLogOnly";
 
 export const LOGIN_PATH = "/login";
 export const isLoginPath = (pathname = "") => pathname.replace(/\/+$/, "") === LOGIN_PATH;
@@ -31,7 +32,9 @@ export default function LoginPage({
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState("");
   const [specialist, setSpecialist] = useState(() => signInChoice() === true);
-  const pickSpecialist = (on) => { setSpecialist(on); setSignInChoice(on); };
+  const [docOnly, setDocOnly] = useState(() => docSignInChoice() === true);
+  const pickSpecialist = (on) => { setSpecialist(on); setSignInChoice(on); if (on) { setDocOnly(false); setDocSignInChoice(false); } };
+  const pickDocOnly = (on) => { setDocOnly(on); setDocSignInChoice(on); if (on) { setSpecialist(false); setSignInChoice(false); } };
 
   useEffect(() => {
     const before = document.title;
@@ -158,6 +161,10 @@ export default function LoginPage({
           <label className="flex items-start gap-2 text-sm text-slate-600 cursor-pointer">
             <input type="checkbox" checked={specialist} onChange={(e) => pickSpecialist(e.target.checked)} className="mt-1" />
             <span><strong className="text-slate-900">I am a specialist and only want MeriDent Connect.</strong> No clinic software.</span>
+          </label>
+          <label className="flex items-start gap-2 text-sm text-slate-600 cursor-pointer">
+            <input type="checkbox" checked={docOnly} onChange={(e) => pickDocOnly(e.target.checked)} className="mt-1" />
+            <span><strong className="text-slate-900">I visit clinics as a consultant and only want MeriDent DocLog.</strong> No clinic software.</span>
           </label>
         </div>
 

@@ -5,6 +5,7 @@ import {
 } from "firebase/firestore";
 import { searchBounds, withinRadius } from "./geo.js";
 import { CONSENT_TEXT, CONSENT_VERSION } from "./rules.js";
+import * as docLogApi from "./docLogApi.js";
 
 const DENTISTS = "connectDentists";
 const DIRECTORY = "connectDirectory";
@@ -419,4 +420,13 @@ export const bindApi = (db, uid) => ({
   deleteMessage: (chatId, messageId) => deleteMessage(db, chatId, messageId),
   blockedSet: () => blockedSet(db, uid),
   setBlocked: (otherId, on) => setBlocked(db, uid, otherId, on),
+  docLog: {
+    listClinics: () => docLogApi.listClinics(db, uid),
+    saveClinic: (c) => docLogApi.saveClinic(db, uid, c),
+    deleteClinic: (id) => docLogApi.deleteClinic(db, uid, id),
+    listVisits: () => docLogApi.listVisits(db, uid),
+    saveVisit: (v) => docLogApi.saveVisit(db, uid, v),
+    saveVisits: (vs) => docLogApi.saveVisits(db, uid, vs),
+    deleteVisit: (id) => docLogApi.deleteVisit(db, uid, id),
+  },
 });
