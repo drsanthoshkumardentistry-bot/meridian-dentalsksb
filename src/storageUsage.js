@@ -7,11 +7,14 @@ export const CLINIC_WARN_BYTES = 300 * 1024 * 1024; // warn one clinic well befo
 /** Size of a base64 picture string in bytes. */
 export const dataUrlBytes = (s) => (typeof s === "string" && s.length > 0 ? Math.round(s.length * 0.75) : 0);
 
-/** OPG pictures live inside patient records, so we can measure them exactly. */
+/** Size of one patient's OPG: still inside the record (older uploads), or kept in its own document (size noted on the record). */
+const opgBytesOf = (p) => dataUrlBytes(p.opgImage) || (p.hasOpg ? Math.max(0, Number(p.opgBytes) || 0) : 0);
+
+/** OPG pictures are measured exactly, wherever they are kept. */
 export const opgUsage = (patients = []) => {
   const list = Array.isArray(patients) ? patients.filter((p) => p && typeof p === "object") : [];
-  const withOpg = list.filter((p) => dataUrlBytes(p.opgImage) > 0);
-  return { count: withOpg.length, bytes: withOpg.reduce((n, p) => n + dataUrlBytes(p.opgImage), 0) };
+  const withOpg = list.filter((p) => opgBytesOf(p) > 0);
+  return { count: withOpg.length, bytes: withOpg.reduce((n, p) => n + opgBytesOf(p), 0) };
 };
 
 /** Gallery pictures are capped in size, so the biggest they can be is count times the cap. */

@@ -133,6 +133,14 @@ service cloud.firestore {
                             && request.resource.data.data.matches('^data:image/jpeg;base64,.+');
       allow delete: if memberHasRole(clinicId, ['manager', 'dentist']);
     }
+    // OPG radiographs: one document per patient, kept apart from the patient record. Clinical material, so receptionists cannot open them.
+    match /clinics/{clinicId}/opgScans/{d} {
+      allow read, delete: if memberHasRole(clinicId, ['manager', 'dentist']);
+      allow create, update: if memberHasRole(clinicId, ['manager', 'dentist'])
+                            && request.resource.data.keys().hasOnly(['id', 'patientId', 'data', 'bytes', 'uploadedAt'])
+                            && request.resource.data.data is string && request.resource.data.data.size() <= 950000
+                            && request.resource.data.data.matches('^data:image/jpeg;base64,.+');
+    }
     match /clinics/{clinicId}/leads/{d}        { allow read, write: if memberHasRole(clinicId, ['manager', 'receptionist']); }
     match /clinics/{clinicId}/memberships/{d}  { allow read, write: if memberHasRole(clinicId, ['manager', 'receptionist']); }
     match /clinics/{clinicId}/employees/{d}    { allow read, write: if memberHasRole(clinicId, ['manager']); }

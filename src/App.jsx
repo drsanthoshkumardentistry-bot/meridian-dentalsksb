@@ -212,6 +212,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import * as FirestoreModule from "firebase/firestore";
 import { collection, doc, setDoc, onSnapshot, deleteDoc } from "firebase/firestore";
 import { writeDocMerged } from "./cloudWrite.js";
+import { getOpg, saveOpg, deleteOpg, legacyOpgPatients } from "./opgStore.js";
 import { sameJson } from "./syncMerge.js";
 import LandingPage from "./components/landingpage";
 import LoginPage, { isLoginPath } from "./components/LoginPage.jsx";
@@ -864,6 +865,7 @@ export default function App() {
 
   const handleLogout = async (notice) => {
     try {
+      { const pending = patientsCachePending.current; patientsCachePending.current = null; if (pending) saveLocal(pending.key, pending.value); } // keep the last change on this device
       await logoutUser();
       try { window.sessionStorage.removeItem("merident_nav"); } catch (e) { /* ignore */ }
       setActiveNav("Dashboard");
@@ -1485,9 +1487,14 @@ export default function App() {
     }
     try {
       const dataUrl = await compressImageToDataUrl(file);
+      let fields = { opgImage: dataUrl }; // no cloud (not signed in): keep it in the record as before
+      if (db && CLINIC_ID) {
+        fields = await saveOpg(db, CLINIC_ID, targetId, dataUrl);
+        setOpgScan({ patientId: targetId, image: dataUrl });
+      }
       setPatients((prev) =>
         prev.map((p) =>
-          p.id === targetId ? { ...p, opgImage: dataUrl, opgUploadedAt: new Date().toLocaleDateString("en-IN"), opgCalibration: null } : p
+          p.id === targetId ? { ...p, ...fields, opgUploadedAt: new Date().toLocaleDateString("en-IN"), opgCalibration: null } : p
         )
       );
       showToast("OPG radiograph uploaded & linked to patient");
@@ -1495,6 +1502,29 @@ export default function App() {
       showToast("Could not use this image. Try a smaller JPG or PNG.");
     }
   };
+
+  // The picture of the patient shown in the OPG studio. It is read from its own document when needed.
+  const [opgScan, setOpgScan] = useState({ patientId: null, image: "" });
+  const opgShownId = opgSelectedPatientId || (patients[0] && patients[0].id) || null;
+  useEffect(() => {
+    if (activeNav !== "OPG & Diagnosis Studio" || !opgShownId || !db || !CLINIC_ID || !cloudReady || !(role === "owner" || role === "manager" || role === "dentist")) return undefined;
+    let cancelled = false;
+    getOpg(db, CLINIC_ID, opgShownId).then((image) => { if (!cancelled) setOpgScan({ patientId: opgShownId, image }); }).catch(() => { if (!cancelled) setOpgScan({ patientId: opgShownId, image: "" }); });
+    return () => { cancelled = true; };
+  }, [activeNav, opgShownId, CLINIC_ID, cloudReady, role]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Move pictures saved inside patient records (older uploads) into their own documents, one at a time.
+  const opgMoving = useRef(new Set());
+  useEffect(() => {
+    if (!db || !CLINIC_ID || !cloudReady || hydratedFor !== CLINIC_ID || !(role === "owner" || role === "manager" || role === "dentist")) return;
+    const next = legacyOpgPatients(allPatients).find((p) => !opgMoving.current.has(String(p.id)));
+    if (!next) return;
+    opgMoving.current.add(String(next.id));
+    const image = next.opgImage;
+    saveOpg(db, CLINIC_ID, next.id, image)
+      .then((fields) => setPatients((prev) => prev.map((p) => (p.id === next.id && p.opgImage === image ? { ...p, ...fields } : p))))
+      .catch(() => { /* stays in the record; tried again next time the app opens */ });
+  }, [allPatients, CLINIC_ID, cloudReady, hydratedFor, role]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Appointment Booking Action
   const handleCreateAppointment = (e) => {
@@ -2105,7 +2135,8 @@ export default function App() {
     labelsOf(p).some((l) => l.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const currentOpgPatient = patients.find((p) => p.id === (opgSelectedPatientId || (patients[0] && patients[0].id))) || null;
+  const opgPatientRecord = patients.find((p) => p.id === (opgSelectedPatientId || (patients[0] && patients[0].id))) || null;
+  const currentOpgPatient = opgPatientRecord && opgScan.patientId === opgPatientRecord.id && opgScan.image && !opgPatientRecord.opgImage ? { ...opgPatientRecord, opgImage: opgScan.image } : opgPatientRecord;
 
   const dashboardDays = Array.from({ length: 7 }, (_, index) => {
     const date = new Date();
@@ -2679,9 +2710,13 @@ export default function App() {
                   onUpload={handleOpgFileChange}
                   onRemove={() =>
                     currentOpgPatient &&
-                    setPatients((prev) =>
-                      prev.map((p) => (p.id === currentOpgPatient.id ? { ...p, opgImage: "", opgUploadedAt: "", opgCalibration: null } : p))
-                    )
+                    (() => {
+                      if (db && CLINIC_ID) deleteOpg(db, CLINIC_ID, currentOpgPatient.id).catch(() => {});
+                      setOpgScan({ patientId: currentOpgPatient.id, image: "" });
+                      setPatients((prev) =>
+                        prev.map((p) => (p.id === currentOpgPatient.id ? { ...p, opgImage: "", hasOpg: false, opgBytes: 0, opgUploadedAt: "", opgCalibration: null } : p))
+                      );
+                    })()
                   }
                   onCalibrate={(cal) =>
                     currentOpgPatient &&
@@ -5497,6 +5532,7 @@ export default function App() {
                 onClick={() => {
                   if (confirm(`Delete chart for ${activePatient.name}?`)) {
                     setPatients((prev) => prev.filter((p) => p.id !== activePatient.id));
+                    if (db && CLINIC_ID && activePatient.hasOpg) deleteOpg(db, CLINIC_ID, activePatient.id).catch(() => {});
                     logAudit("patient.delete", activePatient.name);
                     setIsChartModalOpen(false);
                     showToast("Patient chart deleted");
