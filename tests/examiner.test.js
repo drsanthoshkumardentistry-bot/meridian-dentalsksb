@@ -92,3 +92,15 @@ describe('leitner', () => {
     expect(dueCards([{ id: 1 }, { id: 2 }], { 2: { box: 3, due_at: '2999-01-01' } })).toEqual([{ id: 1 }])
   })
 })
+
+describe('every viva step is answerable', () => {
+  it('an answer using each concept\'s first wording scores full coverage', () => {
+    for (const t of TOPICS) {
+      for (const st of t.viva) {
+        const answer = st.keywords.map((k) => k.split('|')[0]).join(', ')
+        const e = evaluateAnswer(answer, st)
+        expect(e.coverage, `${t.slug}: ${st.q} -> missed ${e.missedLabels}`).toBe(1)
+      }
+    }
+  })
+})
