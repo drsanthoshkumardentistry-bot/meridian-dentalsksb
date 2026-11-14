@@ -39,7 +39,8 @@ import {
   LayoutDashboard,
   Network,
   PlayCircle,
-  Download
+  Download,
+  Mail
 } from "lucide-react";
 
 const WHATSAPP_NUMBER = "919043205927";
@@ -571,11 +572,11 @@ export default function LandingPage({
               <span>Questions? Call +91 90432 05927</span>
             </a>
             <a
-              href="mailto:santhoshkumar@meridiandentalos.com"
+              href="mailto:meridentapp@gmail.com"
               className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-brand-700"
             >
-              <PhoneCall className="w-4 h-4 text-brand-600" />
-              <span>or email santhoshkumar@meridiandentalos.com</span>
+              <Mail className="w-4 h-4 text-brand-600" />
+              <span>or email meridentapp@gmail.com</span>
             </a>
             <a
               href="tel:+918098318039"

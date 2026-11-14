@@ -109,3 +109,15 @@ describe("landing page app download", () => {
     await waitFor(() => expect(document.getElementById("app")).toBeNull());
   });
 });
+
+describe("landing page contact email", () => {
+  it("lists only meridentapp@gmail.com", () => {
+    const { container } = render(<LandingPage firebaseConfigured onLoginClick={() => {}} />);
+    const emails = [];
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) emails.push(...(walker.currentNode.textContent.match(/[\w.+-]+@[\w-]+\.[\w.]*\w/g) || []));
+    expect([...new Set(emails)]).toEqual(["meridentapp@gmail.com"]);
+    const hrefs = [...container.querySelectorAll('a[href^="mailto:"]')].map((a) => a.getAttribute("href"));
+    expect(hrefs).toEqual(["mailto:meridentapp@gmail.com"]);
+  });
+});
