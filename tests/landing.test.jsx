@@ -128,3 +128,13 @@ describe("legal contact email", () => {
     expect(CONTACT.email).toBe("meridentapp@gmail.com");
   });
 });
+
+describe("award line", () => {
+  it("states only that we applied, not that we won", () => {
+    const { container } = render(<LandingPage firebaseConfigured onLoginClick={() => {}} />);
+    const t = container.textContent;
+    expect(t).toMatch(/Applicant, National Startup Awards 6\.0/);
+    expect(t).toMatch(/Result awaited/);
+    expect(t).not.toMatch(/winner|award[- ]winning|won the/i);
+  });
+});
