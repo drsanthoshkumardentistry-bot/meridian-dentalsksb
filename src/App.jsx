@@ -42,7 +42,7 @@ import DmyDateInput from "./components/DmyDateInput.jsx";
 import BulkMessage from "./components/BulkMessage.jsx";
 import ReferralPanel from "./components/ReferralPanel.jsx";
 import { sendLoginAlert } from "./loginAlert.js";
-import { alertText, regularMedicines, SYSTEMIC_CONDITIONS } from "./medicalAlert.js";
+import { alertText, regularMedicines, SYSTEM_GROUPS, tickedInGroup } from "./medicalAlert.js";
 import { addReferral, setReferralStatus, removeReferral, referralSlipHtml, openReferrals, urgencyOf } from "./referrals.js";
 import { patientsInRange, presetRange, rangeText, DATE_MODES } from "./patientDates.js";
 import PatientSummary from "./components/PatientSummary.jsx";
@@ -5009,18 +5009,31 @@ export default function App() {
                   <span className="text-xs font-bold uppercase text-slate-500 tracking-wider block">
                     SYSTEMIC CONDITIONS & MEDICAL SCREENING
                   </span>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {SYSTEMIC_CONDITIONS.map((item) => (
-                      <label key={item.id} className="p-3 rounded-xl border border-rule bg-enamel/50 flex items-center gap-2 cursor-pointer hover:bg-enamel">
-                        <input
-                          type="checkbox"
-                          checked={Boolean((activePatient.systemic || {})[item.id])}
-                          onChange={(e) => updateActivePatient({ systemic: { ...(activePatient.systemic || {}), [item.id]: e.target.checked } })}
-                          className="rounded text-blue-600 focus:ring-0"
-                        />
-                        <span className="font-semibold text-slate-700">{item.label}</span>
-                      </label>
-                    ))}
+                  <div className="space-y-4" data-testid="systems-list">
+                    {SYSTEM_GROUPS.map((group) => {
+                      const ticked = tickedInGroup(activePatient, group);
+                      return (
+                        <section key={group.id} aria-label={group.title}>
+                          <h4 className="text-[11px] font-bold text-slate-700 mb-1.5 flex items-center gap-2">
+                            {group.title}
+                            {ticked > 0 && <span className="px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-bold">{ticked}</span>}
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                            {group.items.map((item) => (
+                              <label key={item.id} className="p-3 rounded-xl border border-rule bg-enamel/50 flex items-center gap-2 cursor-pointer hover:bg-enamel">
+                                <input
+                                  type="checkbox"
+                                  checked={Boolean((activePatient.systemic || {})[item.id])}
+                                  onChange={(e) => updateActivePatient({ systemic: { ...(activePatient.systemic || {}), [item.id]: e.target.checked } })}
+                                  className="rounded text-blue-600 focus:ring-0"
+                                />
+                                <span className="font-semibold text-slate-700">{item.label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </section>
+                      );
+                    })}
                   </div>
 
                   <div className="pt-2 border-t border-slate-100">
