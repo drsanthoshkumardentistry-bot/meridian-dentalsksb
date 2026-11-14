@@ -6,7 +6,7 @@ import { FairySvg } from "./ToothFairy.jsx";
 
 export function AppLoading({ message = "Checking your MeriDent session…" }) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-6 text-slate-700">
+    <div data-loading="1" className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-6 text-slate-700">
       <div className="text-center">
         <div className="relative mx-auto mb-3 h-28 w-28" aria-hidden="true">
           <FairySvg className="h-28 w-28" />

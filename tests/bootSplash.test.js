@@ -20,6 +20,14 @@ function boot(opts = {}) {
 afterEach(() => { vi.useRealTimers(); });
 
 describe("animated opening screen", () => {
+  it("starts at the native splash size and colour so the two read as one movement", () => {
+    expect(html).toMatch(/background:#eaf0fb/);
+    expect(html).toMatch(/width:calc\(var\(--u\)\*66\.7\)/);
+    expect(html).toMatch(/@keyframes bootShrink\{from\{transform:translate\(-50%,-50%\) scale\(1\)\}/);
+  });
+  it("waits for the session-check screen too, so it never shows through the fade", () => {
+    expect(readFileSync("src/components/AuthScreens.jsx", "utf8")).toMatch(/data-loading="1"[^>]*min-h-screen/);
+  });
   it("has the markup and honours reduced motion", () => {
     expect(html).toMatch(/id="boot"/);
     expect(html).toMatch(/prefers-reduced-motion:reduce/);
@@ -34,13 +42,13 @@ describe("animated opening screen", () => {
     boot({ standalone: true, seen: true });
     expect(document.documentElement.className).not.toMatch(/is-app/);
   });
-  it("stays at least ~1.7 s on the first open, leaves once the app has drawn, and is removed", () => {
+  it("stays at least ~2 s on the first open, leaves once the app has drawn, and is removed", () => {
     vi.useFakeTimers();
     boot({ standalone: true });
     document.getElementById("root").innerHTML = "<div>Dashboard</div>";
     vi.advanceTimersByTime(1000);
     expect(document.getElementById("boot").className).not.toMatch(/out/);
-    vi.advanceTimersByTime(900);
+    vi.advanceTimersByTime(1300);
     expect(document.getElementById("boot").className).toMatch(/out/);
     vi.advanceTimersByTime(700);
     expect(document.getElementById("boot")).toBeNull();
@@ -63,7 +71,7 @@ describe("animated opening screen", () => {
     boot({ standalone: true, returning: true });
     expect(document.getElementById("boot").className).toMatch(/quick/);
     document.getElementById("root").innerHTML = "<div>Dashboard</div>";
-    vi.advanceTimersByTime(1300);
+    vi.advanceTimersByTime(1700);
     expect(document.getElementById("boot").className).toMatch(/out/);
   });
   it("says so when offline and when the connection is slow", () => {
