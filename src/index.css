@@ -355,3 +355,18 @@ main section.bg-white {
 @media (min-width: 1024px) and (max-height: 800px) { .stat-card { min-height: 6.75rem; } }
 @media (min-width: 1700px) { html { font-size: 17px; } }
 @media (min-width: 2200px) { html { font-size: 19px; } }
+
+/* Loading placeholder (src/main.jsx) */
+.md-skel { min-height: 100vh; padding: 1rem; background: #f4f7fd; display: flex; flex-direction: column; gap: 14px; font-family: system-ui, sans-serif; }
+.md-skel-bar, .md-skel-grid span, .md-skel-rows span { border-radius: 14px; background: linear-gradient(100deg, #e3eaf8 30%, #f3f6fd 50%, #e3eaf8 70%); background-size: 250% 100%; animation: mdShimmer 1.4s ease-in-out infinite; }
+.md-skel-bar { height: 52px; }
+.md-skel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.md-skel-grid span { height: 96px; }
+.md-skel-rows { display: flex; flex-direction: column; gap: 10px; }
+.md-skel-rows span { height: 56px; }
+.md-skel-note { margin: 0; text-align: center; font-size: 13px; color: #51659a; }
+.md-skel-slow { opacity: 0; animation: mdShow .4s ease 4s forwards; }
+.md-skel-off { color: #b45309; font-weight: 600; }
+@keyframes mdShimmer { to { background-position: -150% 0; } }
+@keyframes mdShow { to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .md-skel-bar, .md-skel-grid span, .md-skel-rows span { animation: none; } }
