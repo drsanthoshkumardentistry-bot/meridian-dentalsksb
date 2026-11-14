@@ -54,9 +54,65 @@
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR", "description": "Free during early access" }
       }
     </script>
+
+    <!-- Animated opening screen, shown only inside the installed app (Android app or home-screen install). -->
+    <style>
+      #boot{display:none;position:fixed;inset:0;z-index:2147483647;background:#eaf0fb;place-items:center;align-content:center;justify-items:center;gap:22px;transition:opacity .45s ease,visibility .45s ease}
+      html.is-app #boot{display:grid}
+      #boot.out{opacity:0;visibility:hidden}
+      #boot .mark{position:relative;width:min(44vw,190px);aspect-ratio:1;border-radius:22%;animation:bootPop .9s cubic-bezier(.2,.9,.25,1.15) both}
+      #boot .mark img{width:100%;height:100%;display:block;border-radius:22%;box-shadow:0 18px 40px rgba(30,58,138,.28)}
+      #boot .mark::before{content:"";position:absolute;inset:-14%;border-radius:32%;border:2px solid rgba(37,99,235,.35);animation:bootRing 1.8s ease-out .5s infinite}
+      #boot .mark::after{content:"";position:absolute;inset:0;border-radius:22%;overflow:hidden;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);background-size:250% 100%;background-position:160% 0;animation:bootShine 1.2s ease .7s 1 both;mix-blend-mode:soft-light}
+      #boot .name{font:800 26px/1 "Bricolage Grotesque",system-ui,sans-serif;color:#1e3a8a;letter-spacing:.01em;animation:bootUp .6s ease .55s both}
+      #boot .molars{display:flex;gap:18px;margin-top:4px;animation:bootUp .5s ease .8s both}
+      #boot .m{overflow:visible;transform-origin:50% 100%;animation:bootDance .7s ease-in-out 1s infinite}
+      #boot .m2{animation-delay:1.35s;animation-direction:alternate-reverse}
+      @keyframes bootDance{0%{transform:translateY(0) rotate(-9deg)}25%{transform:translateY(-14px) rotate(0)}50%{transform:translateY(0) rotate(9deg)}75%{transform:translateY(-14px) rotate(0)}100%{transform:translateY(0) rotate(-9deg)}}
+      @keyframes bootPop{0%{opacity:0;transform:scale(.7) rotate(-6deg)}60%{opacity:1;transform:scale(1.06) rotate(0)}100%{opacity:1;transform:scale(1)}}
+      @keyframes bootRing{0%{opacity:.7;transform:scale(.92)}100%{opacity:0;transform:scale(1.25)}}
+      @keyframes bootShine{to{background-position:-60% 0}}
+      @keyframes bootUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+      @media (prefers-reduced-motion:reduce){#boot *,#boot *::before,#boot *::after{animation:none!important}}
+    </style>
+    <script>
+      (function () {
+        try {
+          var d = document.documentElement;
+          var app = (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) ||
+            (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+          var seen = false;
+          try { seen = sessionStorage.getItem('merident-boot') === '1'; } catch (e) {}
+          if (!app || seen) return;
+          try { sessionStorage.setItem('merident-boot', '1'); } catch (e) {}
+          d.className += ' is-app';
+          var t0 = Date.now();
+          function hide() {
+            var b = document.getElementById('boot');
+            if (b) { b.className += ' out'; setTimeout(function () { if (b.parentNode) b.parentNode.removeChild(b); d.className = d.className.replace(' is-app', ''); }, 600); }
+          }
+          function ready() {
+            var r = document.getElementById('root');
+            return r && r.firstChild && (r.textContent || '').indexOf('Loading MeriDent') !== 0;
+          }
+          var iv = setInterval(function () {
+            var spent = Date.now() - t0;
+            if ((spent > 1900 && ready()) || spent > 5000) { clearInterval(iv); hide(); }
+          }, 150);
+        } catch (e) {}
+      })();
+    </script>
   </head>
 
   <body>
+    <div id="boot" aria-hidden="true">
+      <div class="mark"><img src="/logo.png" alt="" width="190" height="190" /></div>
+      <div class="name">MeriDent</div>
+      <div class="molars">
+        <svg class="m m1" viewBox="0 0 60 70" width="54" height="63"><path d="M10 22c0-10 8-14 14-12 4 1 8 1 12 0 6-2 14 2 14 12 0 8-3 12-4 22-1 9-2 17-6 17-5 0-4-12-9-12s-4 12-9 12c-4 0-5-8-6-17-1-10-6-14-6-22z" fill="#fff" stroke="#1e3a8a" stroke-width="3" stroke-linejoin="round"/><circle cx="23" cy="30" r="2.6" fill="#1e3a8a"/><circle cx="38" cy="30" r="2.6" fill="#1e3a8a"/><path d="M25 38q6 6 12 0" fill="none" stroke="#1e3a8a" stroke-width="2.6" stroke-linecap="round"/><circle cx="17" cy="37" r="3" fill="#fca5a5" opacity=".7"/><circle cx="44" cy="37" r="3" fill="#fca5a5" opacity=".7"/></svg>
+        <svg class="m m2" viewBox="0 0 60 70" width="54" height="63"><path d="M10 22c0-10 8-14 14-12 4 1 8 1 12 0 6-2 14 2 14 12 0 8-3 12-4 22-1 9-2 17-6 17-5 0-4-12-9-12s-4 12-9 12c-4 0-5-8-6-17-1-10-6-14-6-22z" fill="#fff" stroke="#2563eb" stroke-width="3" stroke-linejoin="round"/><circle cx="23" cy="30" r="2.6" fill="#2563eb"/><circle cx="38" cy="30" r="2.6" fill="#2563eb"/><path d="M25 37q6 8 12 0z" fill="#2563eb"/><circle cx="17" cy="37" r="3" fill="#fca5a5" opacity=".7"/><circle cx="44" cy="37" r="3" fill="#fca5a5" opacity=".7"/></svg>
+      </div>
+    </div>
     <div id="root"></div>
     <noscript>
       <p style="font-family: system-ui, sans-serif; max-width: 32rem; margin: 4rem auto; padding: 0 1rem; color: #0b1b3a">
