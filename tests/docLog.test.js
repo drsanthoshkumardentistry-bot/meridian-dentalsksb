@@ -38,6 +38,9 @@ describe("DocLog: visits", () => {
     expect(mk({ received: "1000", payMode: "upi" }).payMode).toBe("upi");
     expect(mk({ received: "1000", payMode: "bitcoin" }).payMode).toBe("cash");
     expect(mk({ received: "", payMode: "upi" }).payMode).toBe("");
+    expect(mk({ received: "1000", payMode: "other", payOther: "  Cheque " }).payMode).toBe("Cheque");
+    expect(mk({ received: "1000", payMode: "other", payOther: "A very long made up mode" }).payMode.length).toBeLessThanOrEqual(10);
+    expect(mk({ received: "1000", payMode: "other", payOther: "" }).payMode).toBe("other");
   });
   it("names the payment state", () => {
     expect(paymentState(mk({ fee: "0" }))).toBe("free");
@@ -132,5 +135,14 @@ describe("DocLog speciality profile", () => {
     expect(buildProfile({ specialty: "" }).error).toBeTruthy();
     expect(buildProfile({ specialty: "nope" }).error).toBeTruthy();
     expect(buildProfile({ specialty: "endodontics", name: "  Dr  A ", qualification: "MDS" }).profile).toEqual({ name: "Dr A", qualification: "MDS", specialty: "endodontics" });
+  });
+});
+
+describe("modeLabel with a typed mode", () => {
+  it("shows a known mode by name and a typed mode as typed", async () => {
+    const { modeLabel } = await import("../src/docLog.js");
+    expect(modeLabel("upi")).toBe("UPI");
+    expect(modeLabel("Cheque")).toBe("Cheque");
+    expect(modeLabel("")).toBe("");
   });
 });

@@ -101,10 +101,18 @@ function ClinicsDialog({ clinics, onSave, onDelete, onClose }) {
 function VisitDialog({ clinics, initial, visits, profile, onSave, onClose, onClinics }) {
   const today = dateKey();
   const last = sortVisits(visits)[0];
-  const [form, setForm] = useState(() => ({
-    clinicId: (last && clinics.some((c) => c.id === last.clinicId) ? last.clinicId : clinics[0]?.id) || "", date: today, patient: "", age: "", phone: "", treatment: "", tooth: "", done: "",
-    status: "completed", nextVisit: "", fee: "", received: "", payMode: "cash", note: "", ...(initial || {}),
-  }));
+  const base = treatmentsFor(profile && profile.specialty);
+  const [form, setForm] = useState(() => {
+    const f = {
+      clinicId: (last && clinics.some((c) => c.id === last.clinicId) ? last.clinicId : clinics[0]?.id) || "", date: today, patient: "", age: "", phone: "", treatment: "", tooth: "", done: "",
+      status: "completed", nextVisit: "", fee: "", received: "", payMode: "cash", payOther: "", note: "", ...(initial || {}),
+    };
+    // a payment mode the doctor typed earlier comes back as "Other" with the text filled in
+    if (f.payMode && !PAY_MODES.some(([k]) => k === f.payMode)) { f.payOther = f.payMode; f.payMode = "other"; }
+    return f;
+  });
+  // "Other" under Treatment opens a box to type the treatment; a treatment typed earlier opens it too
+  const [otherT, setOtherT] = useState(() => { const t = (initial && initial.treatment) || ""; return Boolean(t) && (!base.includes(t) || t === "Other"); });
   const [error, setError] = useState("");
   const [feeTouched, setFeeTouched] = useState(Boolean(initial && initial.fee !== undefined && initial.fee !== ""));
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
@@ -145,11 +153,22 @@ function VisitDialog({ clinics, initial, visits, profile, onSave, onClose, onCli
         <div>
           <span className={lbl}>Treatment</span>
           <div className="flex flex-wrap gap-1.5" role="group" aria-label="Treatment">
-            {(() => { const base = treatmentsFor(profile && profile.specialty); return form.treatment && !base.includes(form.treatment) ? [form.treatment, ...base] : base; })().map((t) => (
-              <button key={t} type="button" aria-pressed={form.treatment === t} onClick={() => setForm({ ...form, treatment: form.treatment === t ? "" : t })}
-                className={`px-3 py-1.5 rounded-full border text-xs font-semibold ${form.treatment === t ? "bg-blue-50 border-blue-400 text-blue-800" : "border-slate-300 text-slate-700"}`}>{t}</button>
-            ))}
+            {base.map((t) => {
+              const isOther = t === "Other";
+              const on = isOther ? otherT : (!otherT && form.treatment === t);
+              return (
+                <button key={t} type="button" aria-pressed={on}
+                  onClick={() => {
+                    if (isOther) { setOtherT(!otherT); setForm({ ...form, treatment: "" }); }
+                    else { setOtherT(false); setForm({ ...form, treatment: form.treatment === t ? "" : t }); }
+                  }}
+                  className={`px-3 py-1.5 rounded-full border text-xs font-semibold ${on ? "bg-blue-50 border-blue-400 text-blue-800" : "border-slate-300 text-slate-700"}`}>{t}</button>
+              );
+            })}
           </div>
+          {otherT && (
+            <input id="dl-treat-other" aria-label="Type the treatment" autoFocus className={`${field} mt-2`} maxLength={40} value={form.treatment} onChange={set("treatment")} placeholder="Type the treatment, e.g. Frenectomy" />
+          )}
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div><label htmlFor="dl-tooth" className={lbl}>Tooth (optional)</label><input id="dl-tooth" className={field} value={form.tooth} onChange={set("tooth")} maxLength={20} /></div>
@@ -177,6 +196,9 @@ function VisitDialog({ clinics, initial, visits, profile, onSave, onClose, onCli
             <select aria-label="Payment mode" className="px-2 py-1 border border-slate-300 rounded-full text-xs" value={form.payMode} onChange={set("payMode")}>
               {PAY_MODES.map(([id, text]) => <option key={id} value={id}>{text}</option>)}
             </select>
+          )}
+          {recNum > 0 && form.payMode === "other" && (
+            <input aria-label="Type the payment mode" className="px-3 py-1 border border-slate-300 rounded-full text-xs w-40" maxLength={10} value={form.payOther} onChange={set("payOther")} placeholder="e.g. Cheque" />
           )}
         </div>
         {feeNum > 0 && (
