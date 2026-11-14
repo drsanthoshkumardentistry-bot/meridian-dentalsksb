@@ -82,7 +82,7 @@ import { buildVisit, addVisit, removeVisit } from "./visits.js";
 import { shiftDay, dayGrid, hourMarks } from "./dayView.js";
 const LazyOpgViewer = lazy(() => import("./components/OpgViewer.jsx"));
 import ExtraRadiographs from "./components/ExtraRadiographs.jsx";
-import NowPanel, { NowStrip } from "./components/NowPanel.jsx";
+import { NowStrip } from "./components/NowPanel.jsx";
 import NotificationBell from "./components/NotificationBell.jsx";
 import AccountMenu from "./components/AccountMenu.jsx";
 import { buildNotifications } from "./notifications.js";
@@ -4277,16 +4277,6 @@ export default function App() {
 
         </main>
       </div>
-
-      {!connectOnly && (
-        <NowPanel
-          next={nowNext}
-          alerts={nowAlerts}
-          onGo={(to) => setActiveNav(to)}
-          canBook={canWrite(role, "appointments")}
-          onNewAppointment={openNewAppointment}
-        />
-      )}
 
       {/* ======================================================== */}
       {/* ADD STAFF MODAL                                          */}
