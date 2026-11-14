@@ -9,6 +9,7 @@ import InstallApp from "./InstallApp.jsx";
 import React, { useState } from "react";
 import { isValidEmailAddress } from "../authErrors";
 import { setSignInChoice, signInChoice } from "../connectOnly";
+import { docSignInChoice, setDocSignInChoice } from "../docLogOnly";
 import Hero3D from "./Hero3D.jsx";
 import {
   ArrowRight,
@@ -106,6 +107,7 @@ const FEATURE_GROUPS = [
     tone: "sky",
     items: [
       { icon: MessagesSquare, title: "MeriDent Connect", text: "A professional network for dentists verified by our team. Discuss cases, ask peers, mark the best answer, save posts, follow colleagues, add events to your calendar, and send a consult request to a nearby specialist. Patient names are never shared." },
+      { icon: ClipboardList, title: "MeriDent DocLog", text: "For doctors who visit other clinics as a consultant. Log each visit, the treatment, the next visit and the payment, and see which clinic still owes you money. It is private to you and replaces the paper diary." },
       { icon: Bell, title: "WhatsApp reminders & recall", text: "See who to remind for tomorrow, who owes a balance, and who is due for a 6-month check-up. One tap opens WhatsApp with the message ready. Patients can opt out." },
       { icon: WifiOff, title: "Works with weak internet", text: "Keep working when the connection drops. Your changes save on the device and sync to the cloud when you are back online." }
     ]
@@ -328,7 +330,9 @@ export default function LandingPage({
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState("");
   const [specialist, setSpecialist] = useState(() => signInChoice() === true);
-  const pickSpecialist = (on) => { setSpecialist(on); setSignInChoice(on); };
+  const [docOnly, setDocOnly] = useState(() => docSignInChoice() === true);
+  const pickSpecialist = (on) => { setSpecialist(on); setSignInChoice(on); if (on) { setDocOnly(false); setDocSignInChoice(false); } };
+  const pickDocOnly = (on) => { setDocOnly(on); setDocSignInChoice(on); if (on) { setSpecialist(false); setSignInChoice(false); } };
 
   const submitEmail = (event) => {
     event.preventDefault();
@@ -456,6 +460,11 @@ export default function LandingPage({
             <label className="flex items-start gap-2 max-w-lg text-sm text-slate-600 cursor-pointer">
               <input type="checkbox" checked={specialist} onChange={(e) => pickSpecialist(e.target.checked)} className="mt-1" />
               <span><strong className="text-ink">I am a specialist and only want MeriDent Connect.</strong> You get the dentist network and are told when a dentist sends you a request. No clinic software.</span>
+            </label>
+
+            <label className="flex items-start gap-2 max-w-lg text-sm text-slate-600 cursor-pointer">
+              <input type="checkbox" checked={docOnly} onChange={(e) => pickDocOnly(e.target.checked)} className="mt-1" />
+              <span><strong className="text-ink">I visit clinics as a consultant and only want MeriDent DocLog.</strong> A private log of your visits, treatments and payments. No clinic software.</span>
             </label>
 
             {!firebaseConfigured && (

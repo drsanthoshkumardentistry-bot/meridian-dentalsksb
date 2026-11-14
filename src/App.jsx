@@ -196,6 +196,7 @@ import {
   CalendarDays,
   ScanSearch,
   MessagesSquare,
+  ClipboardList,
   UserCog,
   Hospital,
   Wallet,
@@ -211,6 +212,8 @@ import { collection, doc, setDoc, onSnapshot, deleteDoc } from "firebase/firesto
 import LandingPage from "./components/landingpage";
 import LoginPage, { isLoginPath } from "./components/LoginPage.jsx";
 import { resolveConnectOnly, setConnectOnly, setSignInChoice } from "./connectOnly.js";
+import { resolveDocLogOnly, setDocLogOnly, setDocSignInChoice } from "./docLogOnly.js";
+import DocLog from "./components/DocLog.jsx";
 import { AppLoading, VerifyEmailScreen, IdleWarning } from "./components/AuthScreens";
 import { friendlyAuthError, usesPasswordLogin } from "./authErrors";
 import {
@@ -1033,6 +1036,15 @@ export default function App() {
   }, [authUser, CLINIC_ID, activeMember]);
   useEffect(() => { if (connectOnly && activeNav !== "MeriDent Connect") setActiveNav("MeriDent Connect"); }, [connectOnly, activeNav]);
   const leaveConnectOnly = () => { setConnectOnly(authUser.uid, false); setSignInChoice(false); setConnectOnlyState(false); setActiveNav("Dashboard"); };
+  // DocLog-only mode: a visiting doctor who joined only for MeriDent DocLog sees just that screen.
+  const [docLogOnlyOn, setDocLogOnlyState] = useState(false);
+  useEffect(() => {
+    if (!authUser || !CLINIC_ID || activeMember) { setDocLogOnlyState(false); return; }
+    setDocLogOnlyState(resolveDocLogOnly(authUser.uid));
+  }, [authUser, CLINIC_ID, activeMember]);
+  const docLogOnly = docLogOnlyOn && !connectOnly;
+  useEffect(() => { if (docLogOnly && activeNav !== "MeriDent DocLog") setActiveNav("MeriDent DocLog"); }, [docLogOnly, activeNav]);
+  const leaveDocLogOnly = () => { setDocLogOnly(authUser.uid, false); setDocSignInChoice(false); setDocLogOnlyState(false); setActiveNav("Dashboard"); };
 
   // Keep a team member on a screen their role allows
   useEffect(() => {
@@ -2290,7 +2302,7 @@ export default function App() {
           </div>
 
           <nav className="p-3 space-y-1">
-            {navFor(role, [
+            {(docLogOnly ? [{ label: "MeriDent DocLog", icon: <ClipboardList className="w-4 h-4" /> }] : navFor(role, [
               { label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
               { label: "Appointments Diary", icon: <CalendarDays className="w-4 h-4" /> },
               { label: "Patients & Odontogram", icon: <Users className="w-4 h-4" /> },
@@ -2303,7 +2315,7 @@ export default function App() {
               { label: "Employee Roles & Roster", icon: <UserCog className="w-4 h-4" /> },
               { label: "Practice Profile", icon: <Hospital className="w-4 h-4" /> },
               { label: "Settings", icon: <Settings className="w-4 h-4" /> },
-            ]).filter((item) => !connectOnly || item.label === "MeriDent Connect").map((item) => {
+            ])).filter((item) => !connectOnly || item.label === "MeriDent Connect").map((item) => {
               const isActive = activeNav === item.label;
               return (
                 <button
@@ -2321,6 +2333,9 @@ export default function App() {
                 </button>
               );
             })}
+            {docLogOnly && (
+              <button type="button" onClick={leaveDocLogOnly} className="w-full text-left px-3.5 py-2 text-xs text-blue-200/80 hover:text-white">I also run a clinic: show the clinic software</button>
+            )}
             {connectOnly && (
               <button type="button" onClick={leaveConnectOnly} className="w-full text-left px-3.5 py-2 text-xs text-blue-200/80 hover:text-white">I also run a clinic: show the clinic software</button>
             )}
@@ -3246,6 +3261,8 @@ export default function App() {
           )}
 
           {/* MERIDENT CONNECT */}
+          {activeNav === "MeriDent DocLog" && docLogOnly && <DocLog api={connectApi} showToast={showToast} />}
+
           {activeNav === "MeriDent Connect" && (
             <Connect
               api={connectApi}

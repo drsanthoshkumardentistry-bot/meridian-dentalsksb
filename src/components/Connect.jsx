@@ -2,6 +2,7 @@ import { isOwnerEmail } from "../connect/owner.js";
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import ConnectMessages from "./ConnectMessages.jsx";
 import ConnectAccess from "./ConnectAccess.jsx";
+import DocLog from "./DocLog.jsx";
 import { countUnread, lastSeen, markSeen } from "../connect/unread.js";
 import { tabTitle } from "../connectOnly.js";
 import { MapPin, Phone, MessageCircle, ShieldCheck, Search } from "lucide-react";
@@ -557,7 +558,7 @@ export default function Connect({ api, defaults = {}, geocode, showToast, uid, e
   if (status === "error") return <p role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">Could not open MeriDent Connect. Check your connection and reload.</p>;
 
   const tabs = verified
-    ? [["network", "Network"], ["find", "Find specialists"], ["messages", `Messages${unread ? ` (${unread})` : ""}`], ["inbox", `Requests received${newCount ? ` (${newCount})` : ""}`], ["sent", "Requests sent"], ["listing", "My listing"]]
+    ? [["network", "Network"], ["find", "Find specialists"], ["messages", `Messages${unread ? ` (${unread})` : ""}`], ["inbox", `Requests received${newCount ? ` (${newCount})` : ""}`], ["sent", "Requests sent"], ["listing", "My listing"], ["doclog", "MeriDent DocLog"]]
     : [];
   if (admin) tabs.push(["admin", "Verify dentists"], ["reports", "Reports"], ["access", "Access list"]);
 
@@ -580,6 +581,7 @@ export default function Connect({ api, defaults = {}, geocode, showToast, uid, e
   else if (tab === "inbox") body = <ConsultList api={api} side="received" items={received} reload={loadConsults} showToast={showToast} />;
   else if (tab === "sent") body = <ConsultList api={api} side="sent" items={sent} reload={loadConsults} showToast={showToast} />;
   else if (tab === "listing") body = <Listing api={api} me={me} reloadMe={loadMe} showToast={showToast} />;
+  else if (tab === "doclog") body = <DocLog api={api} showToast={showToast} />;
   else if (tab === "access" && admin) body = <ConnectAccess api={api} myEmail={email} showToast={showToast} />;
   else if (tab === "admin") body = <AdminQueue api={api} showToast={showToast} />;
   else if (tab === "reports") body = <ReportsQueue api={api} showToast={showToast} />;

@@ -510,6 +510,37 @@ service cloud.firestore {
       allow update: if false;
     }
 
+    // MeriDent DocLog: a doctor's private visit log. Only that signed-in doctor can read or write it.
+    function dlStr(d, k, max) { return !(k in d) || (d[k] is string && d[k].size() <= max); }
+    function dlMoney(d, k) { return k in d && d[k] is int && d[k] >= 0 && d[k] <= 1000000000; }
+    match /connectDocLog/{uid}/clinics/{clinicId} {
+      allow read, delete: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name', 'place', 'contact', 'phone', 'defaultFeeP', 'sharePct', 'note'])
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80
+        && dlStr(request.resource.data, 'place', 80) && dlStr(request.resource.data, 'contact', 80)
+        && dlStr(request.resource.data, 'phone', 15) && dlStr(request.resource.data, 'note', 200)
+        && dlMoney(request.resource.data, 'defaultFeeP')
+        && request.resource.data.sharePct is number && request.resource.data.sharePct >= 0 && request.resource.data.sharePct <= 100;
+    }
+    match /connectDocLog/{uid}/visits/{visitId} {
+      allow read, delete: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['clinicId', 'clinicName', 'clinicPlace', 'date', 'patient', 'age', 'phone', 'treatment', 'tooth', 'done', 'status', 'nextVisit', 'feeP', 'receivedP', 'payMode', 'note', 'createdAt', 'updatedAt'])
+        && request.resource.data.clinicId is string && request.resource.data.clinicId.size() > 0 && request.resource.data.clinicId.size() <= 80
+        && dlStr(request.resource.data, 'clinicName', 80) && dlStr(request.resource.data, 'clinicPlace', 80)
+        && request.resource.data.date is string && request.resource.data.date.size() == 10
+        && dlStr(request.resource.data, 'patient', 80) && dlStr(request.resource.data, 'phone', 15)
+        && request.resource.data.treatment is string && request.resource.data.treatment.size() > 0 && request.resource.data.treatment.size() <= 40
+        && dlStr(request.resource.data, 'tooth', 20) && dlStr(request.resource.data, 'done', 120)
+        && request.resource.data.status in ['planned', 'inprogress', 'completed']
+        && dlStr(request.resource.data, 'nextVisit', 10) && dlStr(request.resource.data, 'payMode', 10) && dlStr(request.resource.data, 'note', 300)
+        && dlStr(request.resource.data, 'createdAt', 40) && dlStr(request.resource.data, 'updatedAt', 40)
+        && (!('age' in request.resource.data) || request.resource.data.age == '' || (request.resource.data.age is int && request.resource.data.age >= 0 && request.resource.data.age <= 120))
+        && dlMoney(request.resource.data, 'feeP') && dlMoney(request.resource.data, 'receivedP')
+        && request.resource.data.receivedP <= request.resource.data.feeP;
+    }
+
     // Append-only audit log. Staff can read it; nobody can change or delete an entry.
     match /connectAudit/{entryId} {
       allow create: if isVerified() && request.resource.data.actorId == request.auth.uid;
