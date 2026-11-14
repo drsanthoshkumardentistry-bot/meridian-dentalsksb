@@ -1,0 +1,37 @@
+name: Flaky test hunt
+
+on:
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: "How many times to run the whole suite (in parallel)"
+        default: "20"
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+    steps:
+      - id: m
+        run: echo "matrix=$(node -e 'console.log(JSON.stringify(Array.from({length:Number(process.argv[1])},(_, i)=>i+1)))' "${{ inputs.runs }}")" >> "$GITHUB_OUTPUT"
+  run:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        n: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Run the suite
+        run: npx vitest run --reporter=default --reporter=json --outputFile=result.json
+      - name: Name any failing tests
+        if: failure()
+        run: node -e 'const r=require("./result.json");for(const f of r.testResults)for(const t of f.assertionResults)if(t.status==="failed")console.log("FAILED:",f.name.split("/").slice(-2).join("/"),"|",t.fullName)'
