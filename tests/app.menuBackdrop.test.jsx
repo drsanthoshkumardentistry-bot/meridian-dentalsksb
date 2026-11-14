@@ -29,8 +29,23 @@ describe("phone menu", () => {
     expect(screen.queryByTestId("menu-backdrop")).toBeNull();
     fireEvent.click(screen.getByLabelText("Open menu"));
     const backdrop = screen.getByTestId("menu-backdrop");
-    expect(backdrop.className).toMatch(/md:hidden/);
+    expect(document.querySelector("aside.rail").className).toMatch(/rail-open/);
     fireEvent.click(backdrop);
+    expect(screen.queryByTestId("menu-backdrop")).toBeNull();
+    expect(document.querySelector("aside.rail").className).not.toMatch(/rail-open/);
+  });
+
+  it("does not open on hover or focus, only from the menu button, and Escape closes it", async () => {
+    render(<App />);
+    await screen.findAllByText("Patients & Odontogram");
+    const rail = document.querySelector("aside.rail");
+    expect(rail.className).not.toMatch(/hover:w-64|focus-within:w-64/);
+    fireEvent.mouseEnter(rail);
+    fireEvent.focus(screen.getAllByText("Dashboard")[0]);
+    expect(screen.queryByTestId("menu-backdrop")).toBeNull();
+    fireEvent.click(screen.getByLabelText("Open menu"));
+    expect(screen.getByTestId("menu-backdrop")).toBeTruthy();
+    fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByTestId("menu-backdrop")).toBeNull();
   });
 });

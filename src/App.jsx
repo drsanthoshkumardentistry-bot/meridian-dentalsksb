@@ -860,6 +860,12 @@ export default function App() {
     try { window.sessionStorage.setItem("merident_nav", activeNav); } catch (e) { /* storage unavailable */ }
   }, [activeNav]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  useEffect(() => {
+    if (!sidebarOpen) return undefined;
+    const onKey = (e) => { if (e.key === "Escape") setSidebarOpen(false); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [sidebarOpen]);
   const [searchQuery, setSearchQuery] = useState(""); // filters the Patients list only
   const [toastMessage, setToastMessage] = useState(null);
 
@@ -2245,14 +2251,14 @@ export default function App() {
       {sidebarOpen && (
         <div
           data-testid="menu-backdrop"
-          className="fixed inset-0 z-40 bg-slate-900/40 md:hidden"
+          className="fixed inset-0 z-40 bg-slate-900/40"
           onClick={() => setSidebarOpen(false)}
           aria-hidden="true"
         />
       )}
       <aside
-        className={`rail group/rail fixed inset-y-0 left-0 z-50 w-64 side-navy text-white flex flex-col justify-between overflow-y-auto overflow-x-hidden side-scroll shadow-2xl transition-[transform,width] duration-300 md:translate-x-0 md:w-[76px] md:hover:w-64 md:focus-within:w-64 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        className={`rail group/rail fixed inset-y-0 left-0 z-50 w-64 side-navy text-white flex flex-col justify-between overflow-y-auto overflow-x-hidden side-scroll shadow-2xl transition-[transform,width] duration-300 md:translate-x-0 ${
+          sidebarOpen ? "translate-x-0 rail-open md:w-64" : "-translate-x-full md:w-[76px]"
         }`}
       >
         <div>
@@ -2363,7 +2369,7 @@ export default function App() {
           <div className="flex items-center gap-3 sm:gap-4 min-w-0 shrink">
             <button
               onClick={() => setSidebarOpen(true)}
-              aria-label="Open menu" className="md:hidden shrink-0 -ml-1 p-1.5 text-slate-600 hover:text-slate-900"
+              aria-label="Open menu" aria-expanded={sidebarOpen} className="shrink-0 -ml-1 p-1.5 text-slate-600 hover:text-slate-900"
             >
               <Menu className="w-6 h-6" />
             </button>
