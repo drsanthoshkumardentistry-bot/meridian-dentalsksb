@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Trash2, X } from "lucide-react";
-import { IMAGE_KINDS, MAX_IMAGES_PER_PATIENT, buildImageDoc, canAddMore, sortImages, suggestPair } from "../gallery.js";
+import { Camera, FileCheck2, Trash2, X } from "lucide-react";
+import { IMAGE_KINDS, NOC_KIND, MAX_IMAGES_PER_PATIENT, buildImageDoc, canAddMore, nocImages, sortImages, suggestPair } from "../gallery.js";
 import { formatDateLong, dateKey } from "../reminders.js";
 import DmyDateInput from "./DmyDateInput.jsx";
 
@@ -25,7 +25,10 @@ export default function PatientGallery({ patient, api, compress, canWrite = true
   const suggested = useMemo(() => suggestPair(images), [images]);
   const before = images.find((i) => i.id === (pairIds.before || suggested.before?.id));
   const after = images.find((i) => i.id === (pairIds.after || suggested.after?.id));
+  const nocs = useMemo(() => nocImages(images), [images]);
+  const isNoc = form.kind === NOC_KIND;
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  const startNoc = () => { setForm({ ...form, kind: NOC_KIND }); setTimeout(() => fileRef.current && fileRef.current.click(), 0); };
 
   const onFile = async (e) => {
     const file = e.target.files && e.target.files[0];
@@ -74,17 +77,20 @@ export default function PatientGallery({ patient, api, compress, canWrite = true
               <input id="gal-tooth" value={form.tooth} onChange={set("tooth")} maxLength={20} placeholder="e.g. 26" className={`${field} w-24`} />
             </div>
             <div className="flex-1 min-w-[140px]">
-              <label htmlFor="gal-caption" className="block text-[11px] font-semibold text-slate-600 mb-1">Note (optional)</label>
-              <input id="gal-caption" value={form.caption} onChange={set("caption")} maxLength={80} placeholder="e.g. Before crown prep" className={`${field} w-full`} />
+              <label htmlFor="gal-caption" className="block text-[11px] font-semibold text-slate-600 mb-1">{isNoc ? "Physician and what it clears" : "Note (optional)"}</label>
+              <input id="gal-caption" value={form.caption} onChange={set("caption")} maxLength={80} placeholder={isNoc ? "e.g. Dr Rao, cardiologist, fit for extraction" : "e.g. Before crown prep"} className={`${field} w-full`} />
             </div>
             <div>
-              <label htmlFor="gal-date" className="block text-[11px] font-semibold text-slate-600 mb-1">Taken on</label>
+              <label htmlFor="gal-date" className="block text-[11px] font-semibold text-slate-600 mb-1">{isNoc ? "Certificate dated" : "Taken on"}</label>
               <DmyDateInput id="gal-date" ariaLabel="Taken on (dd/mm/yyyy)" max={dateKey()} value={form.takenOn} onChange={(v) => setForm({ ...form, takenOn: v })} className={`${field} w-32`} />
             </div>
           </div>
           <input ref={fileRef} type="file" accept="image/*" aria-label="Choose a photo" onChange={onFile} className="hidden" />
           <button type="button" disabled={busy} onClick={() => fileRef.current && fileRef.current.click()} className="px-3 py-2 rounded-lg bg-[#1d4ed8] hover:bg-blue-700 disabled:opacity-60 text-white font-semibold inline-flex items-center gap-1.5">
-            <Camera className="w-3.5 h-3.5" /> {busy ? "Saving…" : "Take or choose a photo"}
+            <Camera className="w-3.5 h-3.5" /> {busy ? "Saving…" : isNoc ? "Take or choose a photo of the NOC" : "Take or choose a photo"}
+          </button>
+          <button type="button" disabled={busy} onClick={startNoc} className="ml-2 px-3 py-2 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 disabled:opacity-60 text-emerald-900 font-semibold inline-flex items-center gap-1.5">
+            <FileCheck2 className="w-3.5 h-3.5" /> Add physician NOC
           </button>
           <span className="ml-2 text-slate-500">{images.length} of {MAX_IMAGES_PER_PATIENT} used</span>
         </div>
@@ -92,7 +98,23 @@ export default function PatientGallery({ patient, api, compress, canWrite = true
 
       {state.status === "loading" && <p role="status" className="text-xs text-slate-500">Loading pictures…</p>}
       {state.status === "error" && <p role="alert" className="text-xs text-amber-900 rounded-lg border border-amber-300 bg-amber-50 p-3">Could not load pictures. Check your connection and reload.</p>}
-      {state.status === "ready" && images.length === 0 && <p className="rounded-xl border border-dashed border-rule p-6 text-center text-xs text-slate-500">No pictures yet. Add a before photo or an X-ray above.</p>}
+      {state.status === "ready" && images.length === 0 && <p className="rounded-xl border border-dashed border-rule p-6 text-center text-xs text-slate-500">No pictures yet. Add a before photo, an X-ray or a physician NOC above.</p>}
+
+      {nocs.length > 0 && (
+        <section aria-label="Physician NOC" data-testid="noc-section" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 space-y-2">
+          <div className="text-xs font-bold text-emerald-900 inline-flex items-center gap-1.5"><FileCheck2 className="w-3.5 h-3.5" /> Physician NOC on file ({nocs.length})</div>
+          <ul className="flex flex-wrap gap-2">
+            {nocs.map((i) => (
+              <li key={i.id}>
+                <button type="button" onClick={() => setOpen(i)} className="flex items-center gap-2 text-left rounded-lg border border-emerald-200 bg-white hover:border-emerald-400 p-1.5 pr-3">
+                  <img src={i.data} alt={label(i)} className="w-12 h-12 object-cover rounded" loading="lazy" />
+                  <span className="text-[11px]"><span className="block font-semibold text-slate-800">{i.caption || "Physician NOC"}</span><span className="block text-slate-500">{formatDateLong(i.takenOn)}</span></span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {images.length > 0 && (
         <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2" aria-label="Pictures">

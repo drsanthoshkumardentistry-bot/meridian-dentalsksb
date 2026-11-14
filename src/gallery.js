@@ -2,7 +2,8 @@
 // area at clinics/{clinicId}/patientImages/{id}, so no extra storage service is needed.
 import { dateKey } from "./reminders.js";
 
-export const IMAGE_KINDS = ["Before", "After", "Pre-op", "Post-op", "OPG", "IOPA", "CBCT", "X-ray", "Intraoral", "Face", "Other"];
+export const IMAGE_KINDS = ["Before", "After", "Pre-op", "Post-op", "OPG", "IOPA", "CBCT", "X-ray", "Intraoral", "Face", "Physician NOC", "Other"];
+export const NOC_KIND = "Physician NOC";
 export const MAX_IMAGES_PER_PATIENT = 30;
 export const MAX_DATA_CHARS = 190000; // a Firestore document holds up to 1 MB; this leaves plenty of room
 
@@ -45,3 +46,6 @@ export const prePostPair = (images = [], tooth = "") => {
 };
 export const prePostTeeth = (images = []) =>
   [...new Set(images.filter((i) => i && (i.kind === "Pre-op" || i.kind === "Post-op") && String(i.tooth || "").trim()).map((i) => String(i.tooth).trim()))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+/** Physician NOC (no objection or medical clearance) certificates for one patient, newest first. */
+export const nocImages = (images = []) => sortImages(images).filter((i) => i.kind === NOC_KIND);
