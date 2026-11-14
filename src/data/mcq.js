@@ -3519,5 +3519,485 @@ export const MCQS = [
   "is_pyq": false,
   "exam": "NEET MDS",
   "is_important": false
+ },
+ {
+  "id": 221,
+  "subject": "Physiology",
+  "question": "Calcitonin is secreted by the:",
+  "options": [
+   "Chief cells of the parathyroid",
+   "Parafollicular C cells of the thyroid",
+   "Follicular cells of the thyroid",
+   "Adrenal medulla"
+  ],
+  "answer": 1,
+  "explanation": "C cells (neural crest origin) secrete calcitonin, which lowers serum calcium by inhibiting osteoclasts.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 222,
+  "subject": "Physiology",
+  "question": "Chvostek's sign indicates:",
+  "options": [
+   "Hypercalcaemia",
+   "Hypocalcaemia",
+   "Hyperkalaemia",
+   "Hyponatraemia"
+  ],
+  "answer": 1,
+  "explanation": "Tapping the facial nerve causes facial twitching due to neuromuscular irritability in hypocalcaemia.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 223,
+  "subject": "Physiology",
+  "question": "The final saliva is hypotonic because the ducts:",
+  "options": [
+   "Secrete water",
+   "Reabsorb Na⁺ and Cl⁻ more than water",
+   "Secrete sodium",
+   "Add mucin"
+  ],
+  "answer": 1,
+  "explanation": "Striated ducts reabsorb NaCl while being relatively impermeable to water, and secrete K⁺ and HCO₃⁻.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 224,
+  "subject": "Physiology",
+  "question": "The gate control theory of pain was proposed by:",
+  "options": [
+   "Sherrington",
+   "Melzack and Wall",
+   "Head and Holmes",
+   "Brännström"
+  ],
+  "answer": 1,
+  "explanation": "Melzack and Wall (1965): large-fibre input closes the gate in the substantia gelatinosa.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 225,
+  "subject": "Physiology",
+  "question": "Sharp, well-localised \"first pain\" is carried by:",
+  "options": [
+   "C fibres",
+   "A-delta fibres",
+   "A-alpha fibres",
+   "B fibres"
+  ],
+  "answer": 1,
+  "explanation": "Thin myelinated A-delta fibres conduct fast sharp pain; C fibres carry slow dull pain.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 226,
+  "subject": "Biochemistry",
+  "question": "Pellagra is due to deficiency of:",
+  "options": [
+   "Thiamine",
+   "Riboflavin",
+   "Niacin",
+   "Pyridoxine"
+  ],
+  "answer": 2,
+  "explanation": "Niacin (B3) deficiency – dermatitis, diarrhoea, dementia; red, raw, swollen tongue.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 227,
+  "subject": "Biochemistry",
+  "question": "A magenta-coloured tongue is characteristic of deficiency of:",
+  "options": [
+   "Vitamin B12",
+   "Riboflavin",
+   "Vitamin C",
+   "Folic acid"
+  ],
+  "answer": 1,
+  "explanation": "Riboflavin (B2) deficiency causes magenta glossitis, angular cheilitis and cheilosis.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 228,
+  "subject": "Biochemistry",
+  "question": "Which of these vitamins is NOT fat-soluble?",
+  "options": [
+   "Vitamin A",
+   "Vitamin D",
+   "Vitamin C",
+   "Vitamin K"
+  ],
+  "answer": 2,
+  "explanation": "A, D, E and K are fat-soluble; B complex and C are water-soluble.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 229,
+  "subject": "Microbiology",
+  "question": "The red complex of Socransky includes all EXCEPT:",
+  "options": [
+   "Porphyromonas gingivalis",
+   "Tannerella forsythia",
+   "Treponema denticola",
+   "Fusobacterium nucleatum"
+  ],
+  "answer": 3,
+  "explanation": "Fusobacterium is in the orange (bridging) complex.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 230,
+  "subject": "Microbiology",
+  "question": "The bridging organism between early and late plaque colonisers is:",
+  "options": [
+   "Streptococcus sanguinis",
+   "Fusobacterium nucleatum",
+   "Actinomyces viscosus",
+   "Veillonella"
+  ],
+  "answer": 1,
+  "explanation": "F. nucleatum co-aggregates with both early Gram-positive and late Gram-negative species.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 231,
+  "subject": "Microbiology",
+  "question": "The hepatitis B marker indicating immunity after vaccination is:",
+  "options": [
+   "HBsAg",
+   "Anti-HBs",
+   "HBeAg",
+   "Anti-HBc IgM"
+  ],
+  "answer": 1,
+  "explanation": "Anti-HBs ≥ 10 mIU/mL indicates protection; HBsAg indicates infection.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 232,
+  "subject": "Microbiology",
+  "question": "The approximate risk of HIV transmission after a needlestick from an HIV-positive source is:",
+  "options": [
+   "0.03%",
+   "0.3%",
+   "3%",
+   "30%"
+  ],
+  "answer": 1,
+  "explanation": "About 0.3%; HCV about 1.8%; HBV (HBeAg-positive) up to 30%.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 233,
+  "subject": "Microbiology",
+  "question": "Oral hairy leukoplakia is caused by:",
+  "options": [
+   "Candida albicans",
+   "Epstein–Barr virus",
+   "Human papillomavirus",
+   "Cytomegalovirus"
+  ],
+  "answer": 1,
+  "explanation": "EBV replication in the lateral tongue epithelium; strongly associated with HIV infection.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 234,
+  "subject": "Microbiology",
+  "question": "The biological indicator used to test an autoclave is spores of:",
+  "options": [
+   "Bacillus atrophaeus",
+   "Geobacillus stearothermophilus",
+   "Clostridium tetani",
+   "Staphylococcus aureus"
+  ],
+  "answer": 1,
+  "explanation": "G. stearothermophilus is heat-resistant; B. atrophaeus is used for dry heat and ethylene oxide.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 235,
+  "subject": "Pathology",
+  "question": "Contact dermatitis to methyl methacrylate monomer is a:",
+  "options": [
+   "Type I hypersensitivity",
+   "Type II hypersensitivity",
+   "Type III hypersensitivity",
+   "Type IV hypersensitivity"
+  ],
+  "answer": 3,
+  "explanation": "Delayed, T-cell mediated reaction appearing 24–72 hours after contact.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 236,
+  "subject": "Pathology",
+  "question": "Pemphigus vulgaris is an example of:",
+  "options": [
+   "Type I hypersensitivity",
+   "Type II hypersensitivity",
+   "Type III hypersensitivity",
+   "Type IV hypersensitivity"
+  ],
+  "answer": 1,
+  "explanation": "IgG autoantibodies against desmoglein 3 on keratinocytes – antibody-mediated (type II).",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 237,
+  "subject": "Pathology",
+  "question": "Sarcomas typically spread by the:",
+  "options": [
+   "Lymphatic route",
+   "Haematogenous route",
+   "Transcoelomic route",
+   "Perineural route"
+  ],
+  "answer": 1,
+  "explanation": "Sarcomas spread via blood (often to lungs); carcinomas usually spread via lymphatics first.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 238,
+  "subject": "Pathology",
+  "question": "The gene known as the \"guardian of the genome\" is:",
+  "options": [
+   "RB",
+   "TP53",
+   "RAS",
+   "MYC"
+  ],
+  "answer": 1,
+  "explanation": "p53 arrests the cell cycle for DNA repair or triggers apoptosis; it is mutated in many oral cancers.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 239,
+  "subject": "Pathology",
+  "question": "Which is a malignant tumour despite the \"-oma\" suffix?",
+  "options": [
+   "Lipoma",
+   "Melanoma",
+   "Fibroma",
+   "Papilloma"
+  ],
+  "answer": 1,
+  "explanation": "Melanoma, lymphoma and seminoma are malignant.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 240,
+  "subject": "Pharmacology",
+  "question": "Clostridioides difficile colitis is most associated with:",
+  "options": [
+   "Amoxicillin",
+   "Clindamycin",
+   "Metronidazole",
+   "Doxycycline"
+  ],
+  "answer": 1,
+  "explanation": "Clindamycin carries a high risk of C. difficile infection; oral vancomycin or fidaxomicin treats it.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 241,
+  "subject": "Pharmacology",
+  "question": "The most potent glucocorticoid among these is:",
+  "options": [
+   "Hydrocortisone",
+   "Prednisolone",
+   "Triamcinolone",
+   "Dexamethasone"
+  ],
+  "answer": 3,
+  "explanation": "Dexamethasone is about 25–30 times hydrocortisone, with no mineralocorticoid effect.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 242,
+  "subject": "Pharmacology",
+  "question": "Corticosteroids inhibit phospholipase A2 by inducing:",
+  "options": [
+   "Cyclo-oxygenase",
+   "Lipocortin (annexin)",
+   "Bradykinin",
+   "Thromboxane"
+  ],
+  "answer": 1,
+  "explanation": "Annexin A1 inhibits phospholipase A2, reducing arachidonic acid release.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 243,
+  "subject": "Pharmacology",
+  "question": "Clopidogrel acts by blocking the:",
+  "options": [
+   "COX-1 enzyme",
+   "P2Y12 ADP receptor on platelets",
+   "Glycoprotein IIb/IIIa receptor",
+   "Vitamin K epoxide reductase"
+  ],
+  "answer": 1,
+  "explanation": "Clopidogrel, prasugrel and ticagrelor are P2Y12 inhibitors.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 244,
+  "subject": "Pharmacology",
+  "question": "The specific reversal agent for dabigatran is:",
+  "options": [
+   "Protamine",
+   "Vitamin K",
+   "Idarucizumab",
+   "Andexanet alfa"
+  ],
+  "answer": 2,
+  "explanation": "Idarucizumab reverses dabigatran; andexanet alfa reverses factor Xa inhibitors; protamine reverses heparin.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 245,
+  "subject": "Pharmacology",
+  "question": "For a patient on warfarin needing a simple extraction, guidance (SDCEP) suggests proceeding if the INR is:",
+  "options": [
+   "Below 2",
+   "Below 4",
+   "Below 6",
+   "Any value"
+  ],
+  "answer": 1,
+  "explanation": "Check INR within 24 hours (72 hours if stable); treat with local measures if INR < 4.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 246,
+  "subject": "Public Health Dentistry",
+  "question": "A case-control study yields which measure of association?",
+  "options": [
+   "Relative risk",
+   "Odds ratio",
+   "Incidence rate",
+   "Attributable risk"
+  ],
+  "answer": 1,
+  "explanation": "Because sampling is by disease status, incidence cannot be calculated; odds ratio estimates risk.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 247,
+  "subject": "Public Health Dentistry",
+  "question": "The only essential Bradford Hill criterion for causation is:",
+  "options": [
+   "Strength",
+   "Specificity",
+   "Temporality",
+   "Analogy"
+  ],
+  "answer": 2,
+  "explanation": "The cause must precede the effect.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 248,
+  "subject": "Public Health Dentistry",
+  "question": "In a normal distribution, the proportion of values within ±2 SD of the mean is about:",
+  "options": [
+   "68%",
+   "95%",
+   "99.7%",
+   "50%"
+  ],
+  "answer": 1,
+  "explanation": "±1 SD ≈ 68%, ±2 SD ≈ 95%, ±3 SD ≈ 99.7%.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 249,
+  "subject": "Public Health Dentistry",
+  "question": "A type I error in hypothesis testing is:",
+  "options": [
+   "Accepting a false null hypothesis",
+   "Rejecting a true null hypothesis",
+   "Using the wrong test",
+   "A small sample size"
+  ],
+  "answer": 1,
+  "explanation": "Type I (α) is a false positive; type II (β) is failing to reject a false null.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 250,
+  "subject": "Public Health Dentistry",
+  "question": "The test to compare proportions between two categorical variables is:",
+  "options": [
+   "Unpaired t-test",
+   "Chi-square test",
+   "ANOVA",
+   "Pearson correlation"
+  ],
+  "answer": 1,
+  "explanation": "Chi-square (or Fisher's exact test for small expected counts).",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
  }
 ]
