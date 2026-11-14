@@ -33,11 +33,22 @@ const payPage = params.get('pay') === '1';
 const seoPage = seoPageForPath(window.location.pathname);
 const earlyAccess = window.location.pathname.replace(/\/+$/, '') === EARLY_ACCESS_PATH;
 
+// Shimmering dashboard-shaped placeholder instead of bare text. After ~4 s it says the connection is slow,
+// and it says so straight away when the device is offline.
 const Loading = () => (
-  <div role="status" aria-live="polite" style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', fontFamily: 'system-ui, sans-serif', color: '#475569' }}>
-    Loading MeriDent…
+  <div role="status" aria-live="polite" aria-label="Loading MeriDent" data-loading="1" className="md-skel">
+    <div className="md-skel-bar" />
+    <div className="md-skel-grid">
+      <span /><span /><span /><span />
+    </div>
+    <div className="md-skel-rows"><span /><span /><span /></div>
+    <p className="md-skel-note md-skel-slow">Slow connection, still loading your clinic…</p>
+    {typeof navigator !== 'undefined' && navigator.onLine === false && (
+      <p className="md-skel-note md-skel-off">You are offline. Opening your saved data when it is available.</p>
+    )}
   </div>
 );
+
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
