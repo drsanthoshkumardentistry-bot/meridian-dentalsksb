@@ -20,7 +20,7 @@ function subject(key, name, year, mcq, chapters, group = null) {
 const BDS = [
   // ---------------- 1st year ----------------
   subject('anatomy', 'General Human Anatomy (incl. Embryology & Histology)', 1, 'Anatomy', [
-    'Osteology of the skull', 'Mandible and temporomandibular joint', 'Scalp, face and facial nerve',
+    'Osteology of the skull', 'Mandible and temporomandibular joint', ['Scalp, face and facial nerve', { topic: 'facial-nerve' }],
     'Parotid region and salivary glands', 'Temporal and infratemporal fossae; muscles of mastication',
     'Pterygopalatine fossa and maxillary nerve', 'Mandibular nerve and otic ganglion', 'Submandibular region and lingual nerve',
     'Oral cavity, palate and tongue', 'Pharynx and larynx', 'Nose and paranasal sinuses', 'Triangles of the neck and cervical fascia',
@@ -29,7 +29,7 @@ const BDS = [
     'Thorax, abdomen and limbs (general overview)',
   ]),
   subject('physio-biochem', 'General Human Physiology & Biochemistry', 1, 'Physiology', [
-    'Blood and haemostasis', 'Nerve and muscle physiology', 'Cardiovascular system', 'Respiratory system',
+    ['Blood and haemostasis', { topic: 'haemostasis' }], 'Nerve and muscle physiology', 'Cardiovascular system', 'Respiratory system',
     'Gastrointestinal physiology and saliva', 'Renal physiology and body fluids', 'Endocrine system: pituitary, thyroid, parathyroid, calcium',
     'Central nervous system and physiology of pain', 'Special senses: taste', 'Reproductive physiology (overview)',
     ['Carbohydrate metabolism', { mcq: 'Biochemistry' }], ['Lipid metabolism', { mcq: 'Biochemistry' }],
@@ -38,8 +38,8 @@ const BDS = [
     ['Acid–base balance', { mcq: 'Biochemistry' }], ['Clinical biochemistry and liver function tests', { mcq: 'Biochemistry' }],
   ]),
   subject('dental-anatomy', 'Dental Anatomy, Embryology & Oral Histology', 1, 'Dental Anatomy', [
-    'Development of teeth (odontogenesis)', 'Enamel', 'Dentine', 'Dental pulp', 'Cementum', 'Periodontal ligament', 'Alveolar bone',
-    'Oral mucous membrane', 'Salivary glands: histology', 'Eruption and shedding of teeth', 'Temporomandibular joint: histology',
+    ['Development of teeth (odontogenesis)', { topic: 'tooth-development' }], ['Enamel', { topic: 'enamel' }], ['Dentine', { topic: 'dentine' }], 'Dental pulp', 'Cementum', ['Periodontal ligament', { topic: 'periodontal-ligament' }], 'Alveolar bone',
+    ['Oral mucous membrane', { topic: 'oral-mucosa' }], 'Salivary glands: histology', 'Eruption and shedding of teeth', 'Temporomandibular joint: histology',
     'Maxillary sinus', 'Chronology of the human dentition', 'Permanent incisors and canines', 'Permanent premolars', 'Permanent molars',
     'Deciduous teeth', 'Occlusion: basic concepts',
   ]),
@@ -63,10 +63,10 @@ const BDS = [
     'Drug interactions and adverse reactions',
   ]),
   subject('dental-materials', 'Dental Materials', 2, 'Dental Materials', [
-    'Structure and properties of dental materials', 'Gypsum products', 'Impression materials: hydrocolloids',
-    'Impression materials: elastomers, compound and ZOE', 'Denture base resins', 'Dental waxes', 'Investments and casting procedures',
+    'Structure and properties of dental materials', ['Gypsum products', { topic: 'gypsum-products' }], 'Impression materials: hydrocolloids',
+    ['Impression materials: elastomers, compound and ZOE', { topic: 'elastomeric-impressions' }], 'Denture base resins', 'Dental waxes', 'Investments and casting procedures',
     'Dental cements: zinc phosphate, ZOE, polycarboxylate', ['Glass ionomer cements', { topic: 'glass-ionomer-cement' }], ['Dental amalgam', { topic: 'dental-amalgam' }],
-    'Composite resins and bonding agents', 'Direct filling gold', 'Dental casting alloys', 'Dental ceramics',
+    ['Composite resins and bonding agents', { topic: 'composite-resins' }], 'Direct filling gold', 'Dental casting alloys', ['Dental ceramics', { topic: 'dental-ceramics' }],
     ['Biomaterials: calcium silicates and MTA', { topic: 'mta' }], 'Implant materials',
   ]),
   subject('preclinical', 'Pre-clinical Prosthodontics & Conservative Dentistry', 2, null, [
@@ -137,7 +137,7 @@ const BDS = [
     ['Dental caries and caries risk assessment', { topic: 'dental-caries' }], 'Principles of cavity design', 'Amalgam restorations', 'Composite restorations and adhesion',
     'Glass ionomer restorations', 'Pulp protection: liners and bases', 'Cast restorations: inlays and onlays',
     'Pulp and periapical diseases', 'Endodontic access and instruments', ['Cleaning and shaping', { topic: 'root-canal-irrigants' }], ['Obturation', { topic: 'obturation' }],
-    ['Vital pulp therapy and MTA', { topic: 'mta' }], 'Endodontic emergencies', 'Traumatic injuries: endodontic management',
+    ['Vital pulp therapy and MTA', { topic: 'mta' }], ['Endodontic emergencies', { topic: 'endodontic-emergencies' }], 'Traumatic injuries: endodontic management',
     'Bleaching and aesthetic dentistry', 'Endodontic surgery',
   ]),
   subject('oral-surgery', 'Oral & Maxillofacial Surgery', 4, 'Oral Surgery', [

@@ -2079,5 +2079,485 @@ export const MCQS = [
   "is_pyq": false,
   "exam": "NEET MDS",
   "is_important": true
+ },
+ {
+  "id": 131,
+  "subject": "Dental Anatomy",
+  "question": "Enamel spindles are formed by:",
+  "options": [
+   "Ameloblast processes",
+   "Odontoblast processes crossing the DEJ",
+   "Hypomineralised rod sheaths",
+   "Cracks filled with organic material"
+  ],
+  "answer": 1,
+  "explanation": "Spindles are odontoblastic processes trapped in enamel before it mineralised.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 132,
+  "subject": "Dental Anatomy",
+  "question": "Perikymata are the surface manifestations of:",
+  "options": [
+   "Hunter–Schreger bands",
+   "Striae of Retzius",
+   "Enamel lamellae",
+   "Cross-striations"
+  ],
+  "answer": 1,
+  "explanation": "Striae of Retzius reach the enamel surface as shallow grooves called perikymata.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 133,
+  "subject": "Dental Anatomy",
+  "question": "Tomes' granular layer is found in:",
+  "options": [
+   "Coronal dentine beneath enamel",
+   "Root dentine beneath cementum",
+   "Pulp horns",
+   "Enamel near the DEJ"
+  ],
+  "answer": 1,
+  "explanation": "It is a granular, hypomineralised zone in root dentine adjacent to cementum.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 134,
+  "subject": "Dental Anatomy",
+  "question": "The epithelial rests of Malassez are derived from:",
+  "options": [
+   "Dental lamina",
+   "Hertwig's epithelial root sheath",
+   "Reduced enamel epithelium",
+   "Stellate reticulum"
+  ],
+  "answer": 1,
+  "explanation": "HERS fragments after root formation and persists in the PDL as the rests of Malassez – the source of radicular cysts.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 135,
+  "subject": "Dental Anatomy",
+  "question": "The most numerous principal fibres of the periodontal ligament are the:",
+  "options": [
+   "Horizontal",
+   "Oblique",
+   "Apical",
+   "Alveolar crest"
+  ],
+  "answer": 1,
+  "explanation": "Oblique fibres resist vertical masticatory forces.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 136,
+  "subject": "Dental Anatomy",
+  "question": "Cellular cementum is found mainly in the:",
+  "options": [
+   "Cervical third of the root",
+   "Apical third and furcation areas",
+   "Crown",
+   "Middle third only"
+  ],
+  "answer": 1,
+  "explanation": "Acellular (primary) cementum covers the cervical root; cellular (secondary) cementum is thicker apically and at furcations.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 137,
+  "subject": "Anatomy",
+  "question": "The facial nerve leaves the skull through the:",
+  "options": [
+   "Foramen ovale",
+   "Stylomastoid foramen",
+   "Jugular foramen",
+   "Foramen rotundum"
+  ],
+  "answer": 1,
+  "explanation": "After the facial canal it exits via the stylomastoid foramen and enters the parotid gland.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 138,
+  "subject": "Anatomy",
+  "question": "The mandibular nerve leaves the skull through the:",
+  "options": [
+   "Foramen rotundum",
+   "Foramen ovale",
+   "Foramen spinosum",
+   "Superior orbital fissure"
+  ],
+  "answer": 1,
+  "explanation": "V3 passes through foramen ovale; V2 through foramen rotundum; V1 through the superior orbital fissure.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 139,
+  "subject": "Anatomy",
+  "question": "Motor supply to the tongue muscles (except palatoglossus) is from the:",
+  "options": [
+   "Glossopharyngeal nerve",
+   "Hypoglossal nerve",
+   "Lingual nerve",
+   "Vagus nerve"
+  ],
+  "answer": 1,
+  "explanation": "Hypoglossal (XII) supplies all intrinsic and extrinsic tongue muscles except palatoglossus (vagus via pharyngeal plexus).",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 140,
+  "subject": "Anatomy",
+  "question": "The first pharyngeal (branchial) arch gives rise to the:",
+  "options": [
+   "Muscles of facial expression",
+   "Muscles of mastication",
+   "Stylopharyngeus",
+   "Laryngeal muscles"
+  ],
+  "answer": 1,
+  "explanation": "First arch: mastication muscles, mylohyoid, anterior digastric, tensor tympani and veli palatini, Meckel's cartilage; nerve V3. Second arch: facial expression, nerve VII.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 141,
+  "subject": "Physiology",
+  "question": "Haemophilia A is due to deficiency of factor:",
+  "options": [
+   "VII",
+   "VIII",
+   "IX",
+   "XI"
+  ],
+  "answer": 1,
+  "explanation": "Haemophilia A – factor VIII; haemophilia B (Christmas disease) – factor IX; both X-linked recessive.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 142,
+  "subject": "Physiology",
+  "question": "The prothrombin time (PT) mainly tests the:",
+  "options": [
+   "Intrinsic pathway",
+   "Extrinsic and common pathways",
+   "Platelet function",
+   "Fibrinolysis"
+  ],
+  "answer": 1,
+  "explanation": "PT/INR tests factors VII, X, V, II and fibrinogen; it is used to monitor warfarin.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 143,
+  "subject": "Physiology",
+  "question": "Parathyroid hormone raises serum calcium by all of the following EXCEPT:",
+  "options": [
+   "Increasing bone resorption",
+   "Increasing renal calcium reabsorption",
+   "Stimulating renal 1-α-hydroxylase",
+   "Increasing renal phosphate reabsorption"
+  ],
+  "answer": 3,
+  "explanation": "PTH increases phosphate excretion (phosphaturic) while retaining calcium.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 144,
+  "subject": "Physiology",
+  "question": "The main salivary gland producing resting (unstimulated) saliva is the:",
+  "options": [
+   "Parotid",
+   "Submandibular",
+   "Sublingual",
+   "Minor glands"
+  ],
+  "answer": 1,
+  "explanation": "Submandibular glands give about 65–70% of resting saliva; the parotid dominates stimulated flow.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 145,
+  "subject": "Biochemistry",
+  "question": "The main organic component of dentine is:",
+  "options": [
+   "Type II collagen",
+   "Type I collagen",
+   "Amelogenin",
+   "Keratin"
+  ],
+  "answer": 1,
+  "explanation": "Dentine organic matrix is about 90% type I collagen; amelogenin is an enamel protein.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 146,
+  "subject": "Biochemistry",
+  "question": "Fluoride inhibits which glycolytic enzyme in oral bacteria?",
+  "options": [
+   "Hexokinase",
+   "Enolase",
+   "Pyruvate kinase",
+   "Aldolase"
+  ],
+  "answer": 1,
+  "explanation": "Fluoride inhibits enolase, reducing bacterial acid production; it is also why fluoride tubes are used for blood glucose samples.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 147,
+  "subject": "Dental Materials",
+  "question": "Type IV gypsum (die stone) differs from type III mainly by having:",
+  "options": [
+   "A higher water/powder ratio",
+   "Higher strength and lower setting expansion",
+   "β-hemihydrate particles",
+   "Greater porosity"
+  ],
+  "answer": 1,
+  "explanation": "Die stone has the lowest W/P ratio (about 0.22–0.24), highest strength and low expansion.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 148,
+  "subject": "Dental Materials",
+  "question": "Setting of addition silicone impression material is inhibited by:",
+  "options": [
+   "Water",
+   "Sulphur compounds in latex gloves",
+   "Alcohol",
+   "Zinc oxide"
+  ],
+  "answer": 1,
+  "explanation": "Sulphur poisons the platinum (chloroplatinic acid) catalyst.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 149,
+  "subject": "Dental Materials",
+  "question": "The most hydrophilic elastomeric impression material is:",
+  "options": [
+   "Polysulphide",
+   "Polyether",
+   "Condensation silicone",
+   "Addition silicone without surfactant"
+  ],
+  "answer": 1,
+  "explanation": "Polyether is inherently hydrophilic; it also absorbs water, so it should not be stored wet.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 150,
+  "subject": "Dental Materials",
+  "question": "The C-factor of a Class I cavity is:",
+  "options": [
+   "1",
+   "2",
+   "3",
+   "5"
+  ],
+  "answer": 3,
+  "explanation": "Five bonded walls to one unbonded surface gives C = 5 – the highest shrinkage stress.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 151,
+  "subject": "Dental Materials",
+  "question": "Transformation toughening is a strengthening mechanism of:",
+  "options": [
+   "Feldspathic porcelain",
+   "Zirconia",
+   "Lithium disilicate",
+   "Leucite glass-ceramic"
+  ],
+  "answer": 1,
+  "explanation": "Stress at a crack tip changes tetragonal zirconia to monoclinic with volume expansion, closing the crack.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 152,
+  "subject": "Dental Materials",
+  "question": "Silica-based ceramics are etched before bonding with:",
+  "options": [
+   "37% phosphoric acid",
+   "Hydrofluoric acid",
+   "Polyacrylic acid",
+   "EDTA"
+  ],
+  "answer": 1,
+  "explanation": "HF (about 5–9.5%) creates micro-retention; silane then bonds resin to the ceramic.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 153,
+  "subject": "Conservative & Endo",
+  "question": "The bacterium most often isolated from failed, root-filled teeth is:",
+  "options": [
+   "Streptococcus mutans",
+   "Enterococcus faecalis",
+   "Porphyromonas gingivalis",
+   "Lactobacillus casei"
+  ],
+  "answer": 1,
+  "explanation": "E. faecalis survives high pH and starvation, resisting calcium hydroxide.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 154,
+  "subject": "Conservative & Endo",
+  "question": "The working length is ideally established at:",
+  "options": [
+   "The radiographic apex",
+   "The apical constriction (minor diameter)",
+   "3 mm short of the apex",
+   "The CEJ"
+  ],
+  "answer": 1,
+  "explanation": "The minor diameter, about 0.5–1 mm from the radiographic apex, is the ideal end point – confirmed by apex locator and radiograph.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 155,
+  "subject": "Oral Surgery",
+  "question": "Transient facial palsy after an inferior alveolar nerve block is due to:",
+  "options": [
+   "Needle trauma to the lingual nerve",
+   "Anaesthetic deposited into the parotid capsule",
+   "Intravascular injection",
+   "Allergy to the anaesthetic"
+  ],
+  "answer": 1,
+  "explanation": "Injecting too far posteriorly into the parotid anaesthetises facial nerve branches; reassure and protect the eye.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 156,
+  "subject": "Oral Surgery",
+  "question": "The tranexamic acid mouthwash used after extractions in haemophilia acts by:",
+  "options": [
+   "Activating platelets",
+   "Inhibiting fibrinolysis",
+   "Replacing factor VIII",
+   "Constricting vessels"
+  ],
+  "answer": 1,
+  "explanation": "Tranexamic acid blocks plasminogen activation, protecting the clot from salivary fibrinolysis.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 157,
+  "subject": "Oral Medicine & Radiology",
+  "question": "Recurrent aphthous ulcers characteristically occur on:",
+  "options": [
+   "Hard palate and attached gingiva",
+   "Non-keratinised mucosa such as labial and buccal mucosa",
+   "Dorsum of tongue only",
+   "Vermilion border"
+  ],
+  "answer": 1,
+  "explanation": "Aphthae favour non-keratinised mucosa; recurrent intraoral herpes favours keratinised mucosa.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 158,
+  "subject": "Periodontics",
+  "question": "Socransky's fusospirochaetal complex is classically linked to:",
+  "options": [
+   "Chronic gingivitis",
+   "Necrotising ulcerative gingivitis",
+   "Gingival enlargement",
+   "Desquamative gingivitis"
+  ],
+  "answer": 1,
+  "explanation": "Fusobacterium and spirochaetes (Treponema) with Prevotella intermedia are associated with NUG.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 159,
+  "subject": "Pedodontics",
+  "question": "Fissure types most prone to caries (Nagano classification) are:",
+  "options": [
+   "V and U",
+   "I and IK",
+   "U only",
+   "V only"
+  ],
+  "answer": 1,
+  "explanation": "Narrow, deep I and IK fissures trap plaque and are hardest to clean.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 160,
+  "subject": "General Medicine",
+  "question": "In a patient with a prosthetic heart valve, the AHA-recommended adult oral prophylaxis before tooth extraction is:",
+  "options": [
+   "Amoxicillin 500 mg",
+   "Amoxicillin 2 g 30–60 min before",
+   "Metronidazole 400 mg",
+   "Clindamycin 600 mg (first choice)"
+  ],
+  "answer": 1,
+  "explanation": "Amoxicillin 2 g orally 30–60 minutes before; azithromycin/clarithromycin 500 mg or doxycycline 100 mg if penicillin-allergic.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
  }
 ]
