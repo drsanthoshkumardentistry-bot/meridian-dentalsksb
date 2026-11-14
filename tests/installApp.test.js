@@ -14,3 +14,14 @@ describe("install helpers", () => {
     expect(manualSteps("ios")).toMatch(/Share/);
   });
 });
+
+import { installPlan, APK_URL } from "../src/installApp.js";
+describe("Install app button", () => {
+  it("uses the prompt when there is one, downloads the APK on Android, else shows steps", () => {
+    expect(installPlan(true, "android")).toBe("prompt");
+    expect(installPlan(false, "android")).toBe("download");
+    expect(installPlan(false, "ios")).toBe("steps");
+    expect(installPlan(false, "desktop")).toBe("steps");
+    expect(APK_URL).toMatch(/MeriDent\.apk$/);
+  });
+});

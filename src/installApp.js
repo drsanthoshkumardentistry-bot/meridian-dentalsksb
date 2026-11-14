@@ -52,3 +52,19 @@ export function useInstallPrompt() {
   };
   return { canPrompt: !!deferred, install, installed };
 }
+
+/** Starts the Android app download. */
+export function startApkDownload() {
+  const a = document.createElement("a");
+  a.href = APK_URL;
+  a.rel = "noopener noreferrer";
+  a.download = "MeriDent.apk";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+/** What the Install app button does: use the browser's install prompt, else download the APK on Android, else show steps. */
+export const installPlan = (canPrompt, platform) => (canPrompt ? "prompt" : platform === "android" ? "download" : "steps");
+
+export const APK_HELP = "Your download has started. When it finishes, open the MeriDent file to install it. If Android asks, allow installs from this browser.";
