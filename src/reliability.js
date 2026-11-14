@@ -23,7 +23,7 @@ export const backupNotification = (lastIso, now = new Date(), { hasData = true }
   const age = backupAgeDays(lastIso, now);
   if (age !== null && age < BACKUP_REMIND_DAYS) return null;
   const text = age === null
-    ? "No backup downloaded from this device yet. Save one to Settings, Data backup."
-    : `Last backup was ${age} days ago. Save a fresh one in Settings.`;
+    ? "No backup downloaded from this device yet. Tap to open Settings and save one."
+    : `Last backup was ${age} days ago. Tap to open Settings and save a fresh one.`;
   return { id: "backup", kind: "backup", tone: age === null || age >= 30 ? "red" : "amber", text, to: "Settings" };
 };

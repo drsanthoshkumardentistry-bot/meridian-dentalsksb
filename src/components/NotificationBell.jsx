@@ -32,7 +32,7 @@ export default function NotificationBell({ items = [], onOpen }) {
             <ul>
               {items.map((n) => (
                 <li key={n.id}>
-                  <button type="button" role="menuitem" onClick={() => { setOpen(false); onOpen(n.to); }} className="w-full text-left flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50 text-xs text-slate-800">
+                  <button type="button" role="menuitem" onClick={() => { setOpen(false); onOpen(n.to, n); }} className="w-full text-left flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50 text-xs text-slate-800">
                     <span className={`mt-1 w-2 h-2 rounded-full shrink-0 ${DOT[n.tone] || DOT.blue}`} aria-hidden="true" />
                     <span className="flex-1">{n.text}<span className="block text-[10px] text-slate-400 mt-0.5">{n.kind === "stock" ? "Stock" : n.kind === "backup" ? "Backup" : n.kind === "booking" ? "Online booking" : "Appointments"}</span></span>
                   </button>
