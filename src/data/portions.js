@@ -56,7 +56,7 @@ const BDS = [
   ]),
   subject('pharmacology', 'General & Dental Pharmacology & Therapeutics', 2, 'Pharmacology', [
     'General pharmacology: pharmacokinetics and pharmacodynamics', 'Autonomic nervous system drugs',
-    ['Local anaesthetics', { topic: 'local-anaesthetics' }], 'General anaesthetics and conscious sedation', 'NSAIDs and analgesics', 'Opioids',
+    ['Local anaesthetics', { topic: 'local-anaesthetics' }], 'General anaesthetics and conscious sedation', ['NSAIDs and analgesics', { topic: 'nsaids' }], 'Opioids',
     'Antimicrobials: principles of use', 'Penicillins, cephalosporins and macrolides', 'Antifungals and antivirals',
     'Haemostatics and anticoagulants', 'Corticosteroids', 'Cardiovascular drugs: antihypertensives, antianginals',
     'Drugs for diabetes and thyroid disease', 'Antiseptics, obtundents and mouthwashes', 'Drugs for emergencies in dental practice',
@@ -77,14 +77,14 @@ const BDS = [
     'Hand instruments and sharpening',
   ]),
   // ---------------- 3rd year ----------------
-  subject('medicine', 'General Medicine', 3, null, [
+  subject('medicine', 'General Medicine', 3, 'General Medicine', [
     'Infectious diseases: typhoid, tuberculosis, HIV', 'Cardiovascular: IHD, hypertension, rheumatic heart disease, infective endocarditis',
-    'Respiratory: asthma, COPD, pneumonia', 'Haematology: anaemia and bleeding disorders', 'Endocrine: diabetes mellitus and thyroid disease',
+    'Respiratory: asthma, COPD, pneumonia', 'Haematology: anaemia and bleeding disorders', ['Endocrine: diabetes mellitus and thyroid disease', { topic: 'diabetes-dental' }],
     'Gastrointestinal and liver disease: jaundice, hepatitis', 'Renal disease', 'Neurology: epilepsy, facial palsy, trigeminal neuralgia',
     'Nutrition and vitamin deficiencies', ['Medical emergencies: syncope, anaphylaxis, CPR', { topic: 'adc-anaphylaxis' }],
   ]),
-  subject('surgery', 'General Surgery', 3, null, [
-    'Wound healing and surgical infections', 'Shock and haemorrhage', 'Fluids, electrolytes and blood transfusion', 'Burns',
+  subject('surgery', 'General Surgery', 3, 'General Surgery', [
+    ['Wound healing and surgical infections', { topic: 'wound-healing' }], ['Shock and haemorrhage', { topic: 'shock' }], 'Fluids, electrolytes and blood transfusion', 'Burns',
     'Cysts and tumours: benign and malignant', 'Neck swellings and lymph nodes', 'Thyroid swellings', 'Salivary gland swellings',
     'Oral cancer and neck dissection (overview)', 'Trauma and ATLS principles', 'Sterilisation and asepsis in surgery', 'Tracheostomy',
   ]),
@@ -93,7 +93,7 @@ const BDS = [
     ['Odontogenic cysts: inflammatory (radicular cyst)', { topic: 'radicular-cyst' }],
     ['Odontogenic cysts: developmental (OKC, dentigerous)', { topic: 'odontogenic-keratocyst' }],
     ['Odontogenic tumours', { topic: 'ameloblastoma' }], 'Benign tumours of epithelial and connective tissue origin',
-    ['Oral squamous cell carcinoma and other malignancies', { topic: 'oral-squamous-cell-carcinoma' }], ['Salivary gland tumours', { topic: 'pleomorphic-adenoma' }], 'Fibro-osseous lesions and bone diseases',
+    ['Oral squamous cell carcinoma and other malignancies', { topic: 'oral-squamous-cell-carcinoma' }], ['Salivary gland tumours', { topic: 'pleomorphic-adenoma' }], ['Fibro-osseous lesions and bone diseases', { topic: 'fibrous-dysplasia' }],
     'Bacterial, viral and fungal infections', ['Dental caries', { topic: 'dental-caries' }], 'Diseases of the pulp and periapical tissues',
     'Regressive changes: attrition, abrasion, erosion, resorption', 'Physical and chemical injuries', 'Diseases of skin with oral manifestations',
     'Forensic odontology',
@@ -104,19 +104,19 @@ const BDS = [
     ['Oral submucous fibrosis', { topic: 'osmf' }], ['Lichen planus', { topic: 'oral-lichen-planus' }], ['Vesiculobullous lesions', { topic: 'pemphigus-vulgaris' }],
     'Ulcerative lesions and recurrent aphthae', 'Pigmented lesions', ['Orofacial pain and TMJ disorders', { topic: 'trigeminal-neuralgia' }], 'Salivary gland disorders',
     'Oral manifestations of systemic disease', 'Medically compromised patients', 'Radiation physics and biology', 'Radiation protection',
-    'Intraoral radiographic techniques', 'Panoramic and extraoral radiography; CBCT', 'Radiographic interpretation of cysts and tumours',
+    'Intraoral radiographic techniques', 'Panoramic and extraoral radiography; CBCT', ['Radiographic interpretation of cysts and tumours', { topic: 'dentigerous-cyst' }],
   ]),
   subject('pedodontics', 'Paediatric & Preventive Dentistry', 4, 'Pedodontics', [
     ['Child psychology and behaviour management', { topic: 'behaviour-management' }], 'Growth and development', 'Dental caries in children and early childhood caries',
     ['Fluorides', { topic: 'fluorides' }], 'Pit and fissure sealants', ['Pulp therapy in primary teeth', { topic: 'pulpotomy-primary' }],
-    ['Traumatic injuries to teeth', { topic: 'adc-avulsion' }], 'Space maintainers', 'Oral habits', 'Children with special healthcare needs',
+    ['Traumatic injuries to teeth', { topic: 'adc-avulsion' }], ['Space maintainers', { topic: 'space-maintainers' }], 'Oral habits', 'Children with special healthcare needs',
     'Paediatric restorative dentistry and stainless steel crowns', 'Local anaesthesia and sedation in children',
   ]),
   subject('orthodontics', 'Orthodontics & Dentofacial Orthopaedics', 4, 'Orthodontics', [
     'Growth and development of the craniofacial complex', 'Development of dentition and occlusion', ['Classification of malocclusion', { topic: 'angle-classification' }],
     'Aetiology of malocclusion', 'Cephalometrics', 'Diagnosis and treatment planning', 'Biology of tooth movement', 'Removable appliances',
-    'Fixed appliances: basics', 'Functional appliances', 'Orthopaedic appliances: headgear, chin cup, RME',
-    'Preventive and interceptive orthodontics', 'Retention and relapse', 'Cleft lip and palate',
+    'Fixed appliances: basics', ['Functional appliances', { topic: 'functional-appliances' }], 'Orthopaedic appliances: headgear, chin cup, RME',
+    'Preventive and interceptive orthodontics', 'Retention and relapse', ['Cleft lip and palate', { topic: 'cleft-lip-palate' }],
   ]),
   subject('periodontics', 'Periodontology', 4, 'Periodontics', [
     'Anatomy of the periodontium', 'Classification of periodontal diseases (2017)', 'Dental plaque and calculus',
@@ -127,7 +127,7 @@ const BDS = [
     'Dental implants and peri-implantitis', 'Supportive periodontal therapy',
   ]),
   subject('prosthodontics', 'Prosthodontics & Crown and Bridge', 4, 'Prosthodontics', [
-    'Edentulous anatomy and diagnosis', 'Complete denture impressions', ['Jaw relations', { topic: 'jaw-relations' }], 'Selection and arrangement of teeth',
+    'Edentulous anatomy and diagnosis', ['Complete denture impressions', { topic: 'complete-denture-impressions' }], ['Jaw relations', { topic: 'jaw-relations' }], 'Selection and arrangement of teeth',
     'Try-in, insertion and post-insertion problems', ['Classification of partially edentulous arches', { topic: 'kennedy-classification' }],
     'RPD components and design', 'Fixed partial dentures: abutments and tooth preparation', 'Pontics and connectors',
     'Impressions and gingival retraction', 'Overdentures and immediate dentures', 'Maxillofacial prosthodontics',
@@ -136,20 +136,20 @@ const BDS = [
   subject('conservative', 'Conservative Dentistry & Endodontics', 4, 'Conservative & Endo', [
     ['Dental caries and caries risk assessment', { topic: 'dental-caries' }], 'Principles of cavity design', 'Amalgam restorations', 'Composite restorations and adhesion',
     'Glass ionomer restorations', 'Pulp protection: liners and bases', 'Cast restorations: inlays and onlays',
-    'Pulp and periapical diseases', 'Endodontic access and instruments', ['Cleaning and shaping', { topic: 'root-canal-irrigants' }], 'Obturation',
+    'Pulp and periapical diseases', 'Endodontic access and instruments', ['Cleaning and shaping', { topic: 'root-canal-irrigants' }], ['Obturation', { topic: 'obturation' }],
     ['Vital pulp therapy and MTA', { topic: 'mta' }], 'Endodontic emergencies', 'Traumatic injuries: endodontic management',
     'Bleaching and aesthetic dentistry', 'Endodontic surgery',
   ]),
   subject('oral-surgery', 'Oral & Maxillofacial Surgery', 4, 'Oral Surgery', [
     'Asepsis and sterilisation', ['Local anaesthesia in oral surgery', { topic: 'local-anaesthetics', mcq: 'Pharmacology' }],
-    'Principles of exodontia', ['Impacted teeth', { topic: 'impacted-third-molar' }], 'Complications of extraction',
+    'Principles of exodontia', ['Impacted teeth', { topic: 'impacted-third-molar' }], ['Complications of extraction', { topic: 'dry-socket' }],
     ['Medical emergencies in dental practice', { topic: 'adc-anaphylaxis' }], ['Odontogenic infections and fascial spaces', { topic: 'ludwigs-angina' }],
     'Cysts of the jaws: management', 'Benign and malignant jaw tumours', ['Mandibular fractures', { topic: 'mandibular-fractures' }],
     ['Midface (Le Fort) fractures', { topic: 'le-fort-fractures' }], 'Zygomatic complex fractures', 'TMJ disorders and ankylosis',
     'Pre-prosthetic surgery', 'Orthognathic surgery: basics', 'Maxillary sinus and oro-antral communication', 'Implantology: basics',
   ]),
   subject('public-health', 'Public Health Dentistry', 4, 'Public Health Dentistry', [
-    'Concepts of health and disease', 'Epidemiology and study designs', 'Biostatistics', 'Indices: DMFT, CPI, Dean\'s fluorosis index',
+    'Concepts of health and disease', 'Epidemiology and study designs', 'Biostatistics', ['Indices: DMFT, CPI, Dean\'s fluorosis index', { topic: 'oral-health-indices' }],
     ['Fluorides and water fluoridation', { topic: 'fluorides' }], 'Preventive dentistry and oral health education', 'Dental public health programmes in India',
     'Health care delivery and dental manpower', 'Ethics and jurisprudence', 'Research methodology',
     'Oral health surveys (WHO methods)', 'Nutrition and oral health',

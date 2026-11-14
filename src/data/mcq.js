@@ -1119,5 +1119,485 @@ export const MCQS = [
   "is_pyq": false,
   "exam": "NEET MDS",
   "is_important": true
+ },
+ {
+  "id": 71,
+  "subject": "General Medicine",
+  "question": "The first-line drug to terminate status epilepticus is:",
+  "options": [
+   "Phenytoin",
+   "IV lorazepam",
+   "Sodium valproate",
+   "Carbamazepine"
+  ],
+  "answer": 1,
+  "explanation": "A benzodiazepine (IV lorazepam, or buccal/IM midazolam) is first-line; phenytoin/fosphenytoin or valproate follow if seizures continue.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 72,
+  "subject": "General Medicine",
+  "question": "The organism most often responsible for infective endocarditis following dental procedures is:",
+  "options": [
+   "Staphylococcus aureus",
+   "Viridans streptococci",
+   "Enterococcus faecalis",
+   "Candida albicans"
+  ],
+  "answer": 1,
+  "explanation": "Viridans group streptococci from the oral cavity cause most endocarditis linked to dental bacteraemia.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 73,
+  "subject": "General Medicine",
+  "question": "HbA1c reflects average blood glucose over the previous:",
+  "options": [
+   "1 week",
+   "2–3 weeks",
+   "2–3 months",
+   "1 year"
+  ],
+  "answer": 2,
+  "explanation": "Glycated haemoglobin reflects glycaemia over the red-cell lifespan, roughly 2–3 months.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 74,
+  "subject": "General Medicine",
+  "question": "Bell's palsy is a:",
+  "options": [
+   "Upper motor neuron lesion of the facial nerve",
+   "Lower motor neuron lesion of the facial nerve",
+   "Lesion of the trigeminal nerve",
+   "Lesion of the hypoglossal nerve"
+  ],
+  "answer": 1,
+  "explanation": "Bell's palsy is an idiopathic LMN facial palsy, so the forehead is also paralysed (unlike UMN lesions, which spare it).",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 75,
+  "subject": "General Medicine",
+  "question": "Koilonychia (spoon-shaped nails) is characteristic of:",
+  "options": [
+   "Vitamin B12 deficiency",
+   "Iron deficiency anaemia",
+   "Thalassaemia",
+   "Aplastic anaemia"
+  ],
+  "answer": 1,
+  "explanation": "Koilonychia is a classic sign of chronic iron deficiency.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 76,
+  "subject": "General Medicine",
+  "question": "The usual target INR for a patient on warfarin for atrial fibrillation is:",
+  "options": [
+   "1.0–1.5",
+   "2.0–3.0",
+   "3.5–4.5",
+   "5.0–6.0"
+  ],
+  "answer": 1,
+  "explanation": "Most indications, including AF and venous thromboembolism, target an INR of 2–3; mechanical valves may need higher.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 77,
+  "subject": "General Medicine",
+  "question": "An adrenal (Addisonian) crisis in the dental chair is treated with:",
+  "options": [
+   "IV hydrocortisone",
+   "IM adrenaline",
+   "Oral glucose only",
+   "IV atropine"
+  ],
+  "answer": 0,
+  "explanation": "Give IV hydrocortisone (e.g. 100 mg), fluids and urgent transfer; steroid-dependent patients may need cover for stressful procedures.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 78,
+  "subject": "General Medicine",
+  "question": "The most common cause of community-acquired pneumonia is:",
+  "options": [
+   "Klebsiella pneumoniae",
+   "Streptococcus pneumoniae",
+   "Pseudomonas aeruginosa",
+   "Mycoplasma pneumoniae"
+  ],
+  "answer": 1,
+  "explanation": "Streptococcus pneumoniae (pneumococcus) is the commonest cause.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": false
+ },
+ {
+  "id": 79,
+  "subject": "General Surgery",
+  "question": "In an adult, by the \"rule of nines\", one entire upper limb represents what percentage of body surface area?",
+  "options": [
+   "4.5%",
+   "9%",
+   "18%",
+   "1%"
+  ],
+  "answer": 1,
+  "explanation": "Each upper limb 9%, each lower limb 18%, head and neck 9%, front and back of trunk 18% each, perineum 1%.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 80,
+  "subject": "General Surgery",
+  "question": "The lowest possible Glasgow Coma Scale score is:",
+  "options": [
+   "0",
+   "1",
+   "3",
+   "5"
+  ],
+  "answer": 2,
+  "explanation": "GCS ranges from 3 (no eye, verbal or motor response) to 15.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 81,
+  "subject": "General Surgery",
+  "question": "The most common type of thyroid carcinoma is:",
+  "options": [
+   "Follicular",
+   "Papillary",
+   "Medullary",
+   "Anaplastic"
+  ],
+  "answer": 1,
+  "explanation": "Papillary carcinoma is the commonest and has the best prognosis; it spreads mainly via lymphatics.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 82,
+  "subject": "General Surgery",
+  "question": "Warthin's tumour occurs almost exclusively in the:",
+  "options": [
+   "Submandibular gland",
+   "Parotid gland",
+   "Sublingual gland",
+   "Minor salivary glands of the palate"
+  ],
+  "answer": 1,
+  "explanation": "Warthin's tumour (papillary cystadenoma lymphomatosum) is almost always parotid, commonly in older male smokers, and can be bilateral.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 83,
+  "subject": "General Surgery",
+  "question": "ATLS class III haemorrhage corresponds to a blood loss of about:",
+  "options": [
+   "Up to 15%",
+   "15–30%",
+   "30–40%",
+   "More than 40%"
+  ],
+  "answer": 2,
+  "explanation": "Class III (30–40%, about 1.5–2 L in an adult) is when hypotension usually appears.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 84,
+  "subject": "General Surgery",
+  "question": "Virchow's node is an enlarged lymph node in the:",
+  "options": [
+   "Right supraclavicular fossa",
+   "Left supraclavicular fossa",
+   "Submandibular region",
+   "Axilla"
+  ],
+  "answer": 1,
+  "explanation": "A left supraclavicular node (Troisier's sign) suggests abdominal malignancy, classically gastric cancer.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": false
+ },
+ {
+  "id": 85,
+  "subject": "General Surgery",
+  "question": "A keloid differs from a hypertrophic scar because a keloid:",
+  "options": [
+   "Stays within the wound margins",
+   "Extends beyond the original wound margins",
+   "Never recurs after excision",
+   "Only occurs in the elderly"
+  ],
+  "answer": 1,
+  "explanation": "Keloids grow beyond the wound margins and often recur after excision; hypertrophic scars stay within the margins and may regress.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 86,
+  "subject": "Pathology",
+  "question": "Caseous necrosis is characteristic of:",
+  "options": [
+   "Myocardial infarction",
+   "Tuberculosis",
+   "Acute pancreatitis",
+   "Gangrene of the foot"
+  ],
+  "answer": 1,
+  "explanation": "Caseous (\"cheese-like\") necrosis is typical of tuberculous granulomas.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 87,
+  "subject": "Pathology",
+  "question": "The Philadelphia chromosome, t(9;22), is characteristic of:",
+  "options": [
+   "Chronic myeloid leukaemia",
+   "Acute lymphoblastic leukaemia only",
+   "Hodgkin lymphoma",
+   "Multiple myeloma"
+  ],
+  "answer": 0,
+  "explanation": "The BCR-ABL fusion from t(9;22) defines CML (it also occurs in a subset of ALL).",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 88,
+  "subject": "Pathology",
+  "question": "The predominant cell in acute inflammation during the first 24 hours is the:",
+  "options": [
+   "Lymphocyte",
+   "Neutrophil",
+   "Plasma cell",
+   "Macrophage"
+  ],
+  "answer": 1,
+  "explanation": "Neutrophils dominate early (6–24 h) and are replaced by monocytes/macrophages after 24–48 hours.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 89,
+  "subject": "Microbiology",
+  "question": "Germ tube formation in serum within 2–3 hours identifies:",
+  "options": [
+   "Candida albicans",
+   "Cryptococcus neoformans",
+   "Aspergillus niger",
+   "Candida glabrata"
+  ],
+  "answer": 0,
+  "explanation": "A positive germ tube test is a rapid presumptive identification of Candida albicans.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 90,
+  "subject": "Microbiology",
+  "question": "Endotoxin of Gram-negative bacteria is chemically a:",
+  "options": [
+   "Peptidoglycan",
+   "Lipopolysaccharide",
+   "Teichoic acid",
+   "Mycolic acid"
+  ],
+  "answer": 1,
+  "explanation": "Endotoxin is the lipopolysaccharide (lipid A) of the Gram-negative outer membrane.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 91,
+  "subject": "Microbiology",
+  "question": "HIV belongs to which family?",
+  "options": [
+   "Herpesviridae",
+   "Retroviridae",
+   "Picornaviridae",
+   "Hepadnaviridae"
+  ],
+  "answer": 1,
+  "explanation": "HIV is a retrovirus (lentivirus) that uses reverse transcriptase to copy its RNA into DNA.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 92,
+  "subject": "Pharmacology",
+  "question": "Gray baby syndrome is caused by:",
+  "options": [
+   "Tetracycline",
+   "Chloramphenicol",
+   "Gentamicin",
+   "Amoxicillin"
+  ],
+  "answer": 1,
+  "explanation": "Neonates cannot glucuronidate chloramphenicol, leading to circulatory collapse with ashen-grey skin.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 93,
+  "subject": "Pharmacology",
+  "question": "Alcohol taken with metronidazole can cause:",
+  "options": [
+   "Serotonin syndrome",
+   "A disulfiram-like reaction",
+   "Malignant hyperthermia",
+   "Hypertensive crisis"
+  ],
+  "answer": 1,
+  "explanation": "Metronidazole inhibits aldehyde dehydrogenase, causing flushing, nausea and palpitations with alcohol; advise avoiding alcohol during and 48 hours after the course.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 94,
+  "subject": "Pharmacology",
+  "question": "Intrinsic tooth discolouration in children is caused by:",
+  "options": [
+   "Amoxicillin",
+   "Tetracycline",
+   "Metronidazole",
+   "Erythromycin"
+  ],
+  "answer": 1,
+  "explanation": "Tetracyclines chelate calcium in developing teeth; avoid in pregnancy and in children under about 8 years.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 95,
+  "subject": "Dental Materials",
+  "question": "The retarder in alginate impression material is:",
+  "options": [
+   "Calcium sulphate",
+   "Trisodium phosphate",
+   "Diatomaceous earth",
+   "Potassium titanium fluoride"
+  ],
+  "answer": 1,
+  "explanation": "Trisodium phosphate reacts first with calcium sulphate, delaying gel formation (working time).",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 96,
+  "subject": "Dental Materials",
+  "question": "Syneresis of a hydrocolloid impression refers to:",
+  "options": [
+   "Absorption of water",
+   "Loss of water by exudation onto the surface",
+   "Polymerisation shrinkage",
+   "Thermal expansion"
+  ],
+  "answer": 1,
+  "explanation": "Syneresis is exudation of fluid; imbibition is absorption of water. Both distort the impression – pour promptly.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 97,
+  "subject": "Dental Materials",
+  "question": "Camphorquinone in light-cured composites is a:",
+  "options": [
+   "Filler",
+   "Photoinitiator activated by blue light",
+   "Inhibitor",
+   "Coupling agent"
+  ],
+  "answer": 1,
+  "explanation": "Camphorquinone absorbs blue light (peak around 470 nm) and, with an amine, starts free-radical polymerisation.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 98,
+  "subject": "Periodontics",
+  "question": "Which organism belongs to Socransky's red complex?",
+  "options": [
+   "Streptococcus sanguinis",
+   "Porphyromonas gingivalis",
+   "Actinomyces naeslundii",
+   "Veillonella parvula"
+  ],
+  "answer": 1,
+  "explanation": "The red complex is P. gingivalis, Tannerella forsythia and Treponema denticola – strongly associated with deep pockets.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 99,
+  "subject": "Periodontics",
+  "question": "The usual concentration of chlorhexidine mouthwash is:",
+  "options": [
+   "0.2%",
+   "2%",
+   "5%",
+   "0.002%"
+  ],
+  "answer": 0,
+  "explanation": "Chlorhexidine gluconate mouthwash is used at 0.12–0.2%; 2% is used as an endodontic irrigant.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 100,
+  "subject": "Periodontics",
+  "question": "The width of attached gingiva is measured from the mucogingival junction to:",
+  "options": [
+   "The gingival margin",
+   "The projection of the base of the sulcus or pocket on the external surface",
+   "The alveolar crest",
+   "The cemento-enamel junction"
+  ],
+  "answer": 1,
+  "explanation": "Attached gingiva = total gingival width (margin to MGJ) minus the sulcus/pocket depth.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
  }
 ]

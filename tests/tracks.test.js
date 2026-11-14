@@ -11,7 +11,7 @@ describe('question banks', () => {
     const adc = content.mcqs.filter((q) => q.exam === 'ADC')
     const neet = content.mcqs.filter((q) => q.exam === 'NEET MDS')
     expect(adc.length).toBeGreaterThanOrEqual(20)
-    expect(neet.filter((q) => q.id < 5001).length).toBe(70)
+    expect(neet.filter((q) => q.id < 1001).length).toBe(100)
     expect(new Set(content.mcqs.map((q) => q.id)).size).toBe(content.mcqs.length)
     for (const q of content.mcqs) {
       expect(q.options.length, q.id).toBe(4)
