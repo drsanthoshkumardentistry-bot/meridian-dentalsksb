@@ -86,6 +86,16 @@ describe("landing page app download", () => {
     expect(screen.getByRole("status").textContent).toMatch(/install icon|Add to Home|Install app/i);
   });
 
+  it("on Android with no install prompt, Install app starts the APK download", () => {
+    const ua = vi.spyOn(window.navigator, "userAgent", "get").mockReturnValue("Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/120");
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    render(<LandingPage firebaseConfigured onLoginClick={() => {}} />);
+    fireEvent.click(within(document.getElementById("app")).getByText("Install app"));
+    expect(click).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("status").textContent).toMatch(/download has started/i);
+    ua.mockRestore(); click.mockRestore();
+  });
+
   it("uses the browser install prompt when one is offered, and hides once installed", async () => {
     render(<LandingPage firebaseConfigured onLoginClick={() => {}} />);
     const prompt = vi.fn(async () => {});

@@ -1,17 +1,19 @@
 import React, { useState } from "react";
 import { Download, Smartphone, CheckCircle2 } from "lucide-react";
-import { APK_URL, detectPlatform, manualSteps, useInstallPrompt } from "../installApp.js";
+import { APK_URL, APK_HELP, detectPlatform, installPlan, manualSteps, startApkDownload, useInstallPrompt } from "../installApp.js";
 
 /** Landing-page section that lets a visitor install MeriDent as an app. Hidden once it is installed. */
 export default function InstallApp() {
   const { canPrompt, install, installed } = useInstallPrompt();
-  const [showSteps, setShowSteps] = useState(false);
+  const [note, setNote] = useState("");
   const platform = detectPlatform();
   if (installed) return null;
 
   const onInstall = async () => {
-    if (canPrompt) await install();
-    else setShowSteps(true);
+    const plan = installPlan(canPrompt, platform);
+    if (plan === "prompt") await install();
+    else if (plan === "download") { startApkDownload(); setNote(APK_HELP); }
+    else { setNote(manualSteps(platform)); }
   };
 
   return (
@@ -42,10 +44,10 @@ export default function InstallApp() {
               <span>Download for Android (APK)</span>
             </a>
           )}
-          {showSteps && (
+          {note && (
             <p role="status" className="flex items-start gap-2 rounded-xl bg-blue-50 border border-blue-100 p-3 text-sm text-blue-900">
               <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
-              <span>{manualSteps(platform)}</span>
+              <span>{note}</span>
             </p>
           )}
           <p className="text-xs text-slate-500 leading-relaxed">
