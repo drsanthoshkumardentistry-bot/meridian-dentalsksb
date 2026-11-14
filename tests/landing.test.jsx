@@ -121,3 +121,10 @@ describe("landing page contact email", () => {
     expect(hrefs).toEqual(["mailto:meridentapp@gmail.com"]);
   });
 });
+
+describe("legal contact email", () => {
+  it("uses meridentapp@gmail.com", async () => {
+    const { CONTACT } = await import("../src/legal.js");
+    expect(CONTACT.email).toBe("meridentapp@gmail.com");
+  });
+});

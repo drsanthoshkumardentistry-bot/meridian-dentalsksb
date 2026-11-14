@@ -146,3 +146,53 @@ describe("MeriDent DocLog screen", () => {
     expect(screen.getByText(/needs you to be signed in/)).toBeTruthy();
   });
 });
+
+describe("DocLog: type your own under Other", () => {
+  const openAdd = async () => {
+    const m = mount({ clinics: [clinic] });
+    fireEvent.click(await screen.findByText("Add visit"));
+    return { m, dlg: await screen.findByRole("dialog", { name: "Add visit" }) };
+  };
+
+  it("Other under Treatment opens a box and saves what was typed", async () => {
+    const { m, dlg } = await openAdd();
+    expect(within(dlg).queryByLabelText("Type the treatment")).toBeNull();
+    fireEvent.click(within(dlg).getByText("Other"));
+    const box = within(dlg).getByLabelText("Type the treatment");
+    type(box, "Frenectomy");
+    fireEvent.click(within(dlg).getByText("Save visit"));
+    await waitFor(() => expect(m.dl.saveVisit).toHaveBeenCalledTimes(1));
+    expect(m.dl.saveVisit.mock.calls[0][0].treatment).toBe("Frenectomy");
+  });
+
+  it("leaving the Other box empty asks for the treatment, and choosing another button closes the box", async () => {
+    const { dlg } = await openAdd();
+    fireEvent.click(within(dlg).getByText("Other"));
+    fireEvent.click(within(dlg).getByText("Save visit"));
+    expect(await within(dlg).findByText("Choose the treatment.")).toBeTruthy();
+    fireEvent.click(within(dlg).getByText("RCT"));
+    expect(within(dlg).queryByLabelText("Type the treatment")).toBeNull();
+  });
+
+  it("a treatment typed earlier opens the box with the text when the visit is edited", async () => {
+    const m = mount({ clinics: [clinic], visits: [visit({ treatment: "Frenectomy" })] });
+    fireEvent.click(await screen.findByLabelText(/Edit visit|Edit/));
+    const dlg = await screen.findByRole("dialog", { name: "Edit visit" });
+    expect(within(dlg).getByLabelText("Type the treatment").value).toBe("Frenectomy");
+    expect(within(dlg).getByText("Other").getAttribute("aria-pressed")).toBe("true");
+    expect(m.dl.saveVisit).not.toHaveBeenCalled();
+  });
+
+  it("Other under Payment mode opens a box and saves the typed mode", async () => {
+    const { m, dlg } = await openAdd();
+    fireEvent.click(within(dlg).getByText("RCT"));
+    type(within(dlg).getByLabelText("Patient (name or initials)"), "Asha");
+    fireEvent.click(within(dlg).getByText("Full amount"));
+    type(within(dlg).getByLabelText("Payment mode"), "other");
+    type(within(dlg).getByLabelText("Type the payment mode"), "Cheque");
+    fireEvent.click(within(dlg).getByText("Save visit"));
+    await waitFor(() => expect(m.dl.saveVisit).toHaveBeenCalledTimes(1));
+    expect(m.dl.saveVisit.mock.calls[0][0].payMode).toBe("Cheque");
+  });
+});
+

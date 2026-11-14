@@ -50,7 +50,8 @@ export const daysBetween = (from, to) => dayNumber(to) - dayNumber(from);
 const paise = (v) => Math.max(0, Math.round(typeof v === "number" ? v : toPaise(v || 0)));
 const label = (list, id) => (list.find(([k]) => k === id) || [])[1] || "";
 export const statusLabel = (id) => label(CASE_STATUSES, id);
-export const modeLabel = (id) => label(PAY_MODES, id);
+/** Payment mode text: a known mode shows its name; a mode the doctor typed under "Other" shows as typed. */
+export const modeLabel = (id) => label(PAY_MODES, id) || String(id || "").slice(0, 10);
 
 /** Checks a clinic form. Returns { error } or { clinic }. */
 export function buildClinic(form, id) {
@@ -94,7 +95,11 @@ export function buildVisit(form, id, clinics, now = new Date()) {
     if (!Number.isInteger(n) || n < 0 || n > 120) return { error: "Enter an age between 0 and 120, or leave it empty." };
     age = n;
   }
-  const mode = received > 0 ? (PAY_MODES.some(([k]) => k === form.payMode) ? form.payMode : "cash") : "";
+  let mode = "";
+  if (received > 0) {
+    if (form.payMode === "other") mode = clean(form.payOther, 10) || "other";
+    else mode = PAY_MODES.some(([k]) => k === form.payMode) ? form.payMode : "cash";
+  }
   return {
     visit: {
       id, clinicId: clinic.id, clinicName: clinic.name, clinicPlace: clinic.place || "", date: form.date,
