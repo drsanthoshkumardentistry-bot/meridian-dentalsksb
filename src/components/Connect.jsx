@@ -1,3 +1,4 @@
+import StorageCheck from "./StorageCheck";
 import { isOwnerEmail } from "../connect/owner.js";
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import ConnectMessages from "./ConnectMessages.jsx";
@@ -606,6 +607,7 @@ export default function Connect({ api, defaults = {}, geocode, showToast, uid, e
         <button type="button" onClick={() => { try { Notification.requestPermission().then(() => setAlertTick((n) => n + 1)); } catch { /* ignore */ } }}
           className={`${btn} border border-rule text-slate-700`}>Turn on alerts for new requests</button>
       )}
+      {admin && <StorageCheck />}
       {body}
       {!verified && (
         <details className="text-xs text-slate-500 max-w-2xl">
