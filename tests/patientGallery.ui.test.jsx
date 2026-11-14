@@ -53,4 +53,25 @@ describe("PatientGallery", () => {
     await waitFor(() => expect(props.showToast).toHaveBeenCalledWith(expect.stringMatching(/Up to 30/)));
     expect(api.add).not.toHaveBeenCalled();
   });
+
+  it("saves a physician NOC with the physician's name and lists it in its own section", async () => {
+    const noc = { id: "n", patientId: "P1", kind: "Physician NOC", caption: "Dr Rao, cardiologist, fit for extraction", tooth: "", takenOn: "2026-11-12", data: jpeg, createdAt: "2" };
+    const api = { list: vi.fn(async () => [...imgs, noc]), add: vi.fn(async () => {}), remove: vi.fn(async () => {}) };
+    render(<PatientGallery patient={{ id: "P1" }} api={api} compress={vi.fn(async () => jpeg)} showToast={vi.fn()} newId={() => "IMG-9"} />);
+    const section = await screen.findByTestId("noc-section");
+    expect(section.textContent).toMatch(/Physician NOC on file \(1\)/);
+    expect(section.textContent).toMatch(/Dr Rao, cardiologist/);
+    fireEvent.click(screen.getByText("Add physician NOC"));
+    expect(screen.getByLabelText("Shows").value).toBe("Physician NOC");
+    expect(screen.getByLabelText("Physician and what it clears")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Physician and what it clears"), { target: { value: "Dr Mehta, physician, fit for scaling" } });
+    fireEvent.change(screen.getByLabelText("Choose a photo"), { target: { files: [new File(["x"], "noc.jpg", { type: "image/jpeg" })] } });
+    await waitFor(() => expect(api.add).toHaveBeenCalled());
+    expect(api.add.mock.calls[0][0]).toMatchObject({ kind: "Physician NOC", caption: "Dr Mehta, physician, fit for scaling" });
+  });
+  it("shows no NOC section when the patient has none", async () => {
+    setup();
+    await waitFor(() => screen.getAllByAltText(/Before/));
+    expect(screen.queryByTestId("noc-section")).toBeNull();
+  });
 });

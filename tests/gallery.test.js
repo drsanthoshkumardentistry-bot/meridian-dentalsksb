@@ -36,3 +36,14 @@ describe("patient pictures", () => {
     expect(canAddMore(MAX_IMAGES_PER_PATIENT)).toBe(false);
   });
 });
+
+import { nocImages, IMAGE_KINDS as KINDS, NOC_KIND } from "../src/gallery.js";
+describe("physician NOC", () => {
+  it("is a picture kind and nocImages returns only NOCs, newest first", () => {
+    expect(KINDS).toContain(NOC_KIND);
+    const list = [{ id: "1", kind: "OPG", takenOn: "2026-01-01", createdAt: "1" }, { id: "2", kind: NOC_KIND, takenOn: "2026-02-01", createdAt: "1" }, { id: "3", kind: NOC_KIND, takenOn: "2026-03-01", createdAt: "1" }];
+    expect(nocImages(list).map((i) => i.id)).toEqual(["3", "2"]);
+    expect(nocImages([])).toEqual([]);
+    expect(nocImages(null)).toEqual([]);
+  });
+});
