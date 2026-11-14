@@ -33,6 +33,7 @@ import { buildPatientBackup, backupFileName } from "./portability.js";
 import { recordSheetHtml } from "./recordSheet.js";
 import { branchesOf, filterByBranch, writeBranchId, tagBranch, scopeToBranches, recordsOfPatient } from "./branches.js";
 import QueuePanel from "./components/QueuePanel.jsx";
+import ApptCalendar from "./components/ApptCalendar.jsx";
 import BookingRequests from "./components/BookingRequests.jsx";
 import Assessments from "./components/Assessments.jsx";
 import { draftVisitNote } from "./clinicalNote.js";
@@ -2432,6 +2433,9 @@ export default function App() {
                 }
               }}
             />
+            {navFor(role, [{ label: "Appointments Diary" }]).length > 0 && (
+              <ApptCalendar appointments={appointments} onPick={(d) => { setDayDate(d); setDiaryViewId("day"); setActiveNav("Appointments Diary"); }} />
+            )}
             <FullscreenButton />
             <NotificationBell
               items={buildNotifications({
