@@ -17,3 +17,10 @@ describe("storage usage", () => {
     expect(formatBytes(5 * 1024 * 1024)).toBe("5.0 MB");
   });
 });
+
+describe("OPGs kept in their own documents", () => {
+  it("counts them from the size noted on the patient record, and still counts older in-record pictures", () => {
+    const u = opgUsage([{ hasOpg: true, opgBytes: 500000 }, { opgImage: "x".repeat(400) }, { hasOpg: false, opgBytes: 999 }, { hasOpg: true }]);
+    expect(u).toEqual({ count: 2, bytes: 500300 });
+  });
+});
