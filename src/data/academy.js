@@ -2087,6 +2087,371 @@ export const TOPICS = [
       ['First step in a hypochlorite accident?', 'Stop and irrigate the canal gently with saline.'],
     ],
   },
+  // ---------------- Batch 6 ----------------
+  {
+    slug: 'cephalometrics', subject: 'orthodontics', title: 'Cephalometrics', priority: 'must_know', marks_hint: '10-mark essay',
+    tags: ['diagnosis', 'radiography'],
+    vignette: 'A 13-year-old\'s lateral cephalogram tracing shows SNA 82°, SNB 76°, an FMA of 32° and proclined upper incisors.',
+    content: {
+      definition: 'Cephalometrics is the measurement of the head from standardised lateral and frontal skull radiographs (cephalograms), introduced by Broadbent (USA) and Hofrath (Germany) in 1931, using a cephalostat to keep the head in a fixed, reproducible position.',
+      classification: [
+        'Landmarks: sella (S), nasion (N), point A (subspinale), point B (supramentale), pogonion, menton, gnathion, gonion, porion, orbitale, ANS, PNS, articulare',
+        'Planes: SN plane, Frankfort horizontal (porion–orbitale), mandibular plane, palatal plane, occlusal plane',
+        'Analyses: Downs (first), Steiner, Tweed (diagnostic triangle), Wits appraisal, McNamara, Ricketts, Burstone',
+      ],
+      clinical_features: [
+        'SNA 82° ± 2 (maxilla to cranial base); SNB 80° ± 2 (mandible); ANB 2° (0–4°): > 4° Class II, < 0° Class III',
+        'Wits: AO–BO on the occlusal plane – about 0 mm in females and −1 mm in males; avoids the effect of nasion position',
+        'Tweed: FMA 25°, IMPA 90°, FMIA 65°',
+        'Upper incisor to NA 4 mm / 22°; lower incisor to NB 4 mm / 25° (Steiner); interincisal angle about 130°',
+        'High FMA (> 30°) = vertical (long face) grower; low = horizontal grower',
+      ],
+      management: ['Uses: diagnosis and classification of skeletal and dental problems, treatment planning, growth prediction, evaluating treatment progress and results, research'],
+      viva_pearls: ['In this case ANB = 6°: skeletal Class II due to a retrognathic mandible (SNB 76°), with a vertical growth pattern (FMA 32°).'],
+    },
+    viva: [
+      { q: 'What is cephalometrics, and who introduced it?', keywords: ['broadbent', 'hofrath', '1931', 'cephalostat', 'standardi'], probe: 'How is the head kept in a fixed position?' },
+      { q: 'Name the important landmarks and planes.', keywords: ['sella', 'nasion', 'point a|subspinale', 'point b|supramentale', 'frankfort|mandibular plane'], probe: 'How is the Frankfort plane defined?' },
+      { q: 'What do SNA, SNB and ANB tell you?', keywords: ['82', '80', 'anb', 'class ii|class 2', 'maxilla|mandible'], probe: 'What does an ANB of 6° mean?' },
+      { q: 'Interpret this patient\'s values.', keywords: ['class ii|class 2', 'retrognathic|retrusive mandible', 'vertical|high angle|long face', 'fma|tweed', 'wits'], probe: 'Why use the Wits appraisal as well?' },
+    ],
+    flashcards: [
+      ['Normal ANB angle?', 'About 2° (0–4°); > 4° skeletal Class II, negative = Class III.'],
+      ['Tweed triangle norms?', 'FMA 25°, IMPA 90°, FMIA 65°.'],
+    ],
+  },
+  {
+    slug: 'biology-of-tooth-movement', subject: 'orthodontics', title: 'Biology of Tooth Movement', priority: 'must_know', marks_hint: '10-mark essay',
+    tags: ['orthodontic forces'],
+    vignette: 'During canine retraction with heavy forces, a patient complains of pain and the tooth stops moving for several weeks, then moves suddenly.',
+    content: {
+      definition: 'Orthodontic tooth movement results from remodelling of the PDL and alveolar bone in response to sustained force: resorption on the pressure side and deposition on the tension side.',
+      classification: [
+        'Theories: pressure–tension theory (Schwarz), bone-bending (piezoelectric) theory (Farrar), biological electricity theory',
+        'Types of movement: tipping (uncontrolled and controlled), bodily translation, root movement (torque), rotation, extrusion, intrusion',
+        'Optimal forces (approx.): tipping 35–60 g, bodily 70–120 g, root uprighting 50–100 g, rotation 35–60 g, extrusion 35–60 g, intrusion 10–20 g (lowest)',
+      ],
+      clinical_features: [
+        'Light, continuous force: PDL compressed but vital → frontal (direct) resorption by osteoclasts → smooth movement',
+        'Heavy force: PDL vessels occluded → hyalinisation (cell-free, glassy zone) → undermining (indirect) resorption from the marrow side after a lag phase → tooth moves suddenly; more pain and root resorption',
+        'Phases (Burstone): initial (displacement in the PDL), lag (hyalinisation), post-lag (movement)',
+        'Mediators: prostaglandins, RANKL/OPG, cytokines (IL-1, TNF-α)',
+      ],
+      management: ['Use light, continuous forces; reactivate at appropriate intervals', 'Avoid NSAIDs in large doses during treatment (they slow movement by blocking prostaglandins); paracetamol preferred'],
+      viva_pearls: ['Intrusion needs the lightest force because it concentrates force at the apex.'],
+    },
+    viva: [
+      { q: 'What are the theories of tooth movement?', keywords: ['pressure tension|pressure-tension|schwarz', 'bone bending|piezoelectric|farrar', 'bioelectric|biological electricity'], probe: 'Explain the pressure–tension theory.' },
+      { q: 'What happens with light versus heavy forces?', keywords: ['frontal|direct resorption', 'hyalin', 'undermining|indirect', 'lag', 'root resorption|pain'], probe: 'What is hyalinisation?' },
+      { q: 'What are the optimal forces for different movements?', keywords: ['tipping', 'bodily', 'intrusion', '10|20 g|grams', 'extrusion|rotation'], probe: 'Which movement needs the least force?' },
+      { q: 'Explain what happened in this patient.', keywords: ['heavy force', 'hyalin', 'lag phase|lag', 'undermining', 'light|continuous'], probe: 'How would you avoid it?' },
+    ],
+    flashcards: [
+      ['Orthodontic movement needing the lightest force?', 'Intrusion (about 10–20 g).'],
+      ['Resorption type seen after hyalinisation?', 'Undermining (indirect) resorption.'],
+    ],
+  },
+  {
+    slug: 'forensic-odontology', subject: 'oral-pathology', title: 'Forensic Odontology', priority: 'desirable', marks_hint: '5-mark short note',
+    tags: ['identification'],
+    vignette: 'After a bus fire, the police ask your department to help identify several badly burnt bodies and estimate the age of an unidentified teenager.',
+    content: {
+      definition: 'Forensic odontology is the branch of dentistry that handles, examines and presents dental evidence in the interest of justice: identification, age estimation, bite marks and abuse.',
+      classification: ['Comparative identification: post-mortem dental findings compared with ante-mortem records (charts, radiographs, casts)', 'Reconstructive (profiling): age, sex, ethnicity, habits when no records exist', 'Bite-mark analysis', 'Child abuse, neglect and elder abuse recognition', 'Mass disaster victim identification (DVI, Interpol forms)'],
+      clinical_features: [
+        'Teeth resist fire, decomposition and trauma, so they are valuable for identification',
+        'Age estimation in children: tooth development and eruption (Demirjian, Schour and Massler, Moorrees)',
+        'Age estimation in adults: Gustafson\'s six criteria (attrition, periodontosis, secondary dentine, cementum apposition, root resorption, root transparency); Kvaal (pulp/tooth ratio); root dentine translucency; aspartic acid racemisation',
+        'Sex determination: Barr bodies and Y chromatin in pulp cells, DNA from pulp; odontometric measurements (canines)',
+        'Others: cheiloscopy (lip prints, Suzuki and Tsuchihashi), rugoscopy (palatal rugae)',
+      ],
+      management: ['Dental records are legal documents – keep accurate charts and radiographs', 'Bite marks: photograph with scale (ABFO No. 2 ruler), swab for saliva DNA, take impressions'],
+      viva_pearls: ['Gustafson (1950) described the first scientific dental age-estimation method for adults.'],
+    },
+    viva: [
+      { q: 'What is forensic odontology, and why are teeth useful?', keywords: ['justice|legal|law', 'identification', 'resist|fire|decompos', 'records'], probe: 'Why do teeth survive fires?' },
+      { q: 'How is a body identified dentally?', keywords: ['ante mortem|ante-mortem|antemortem', 'post mortem|post-mortem|postmortem', 'comparative', 'reconstructive|profil', 'radiograph|records'], probe: 'What if there are no dental records?' },
+      { q: 'How would you estimate age?', keywords: ['eruption|development', 'demirjian|schour|massler', 'gustafson', 'kvaal|pulp', 'translucency|racemi'], probe: 'Name Gustafson\'s criteria.' },
+      { q: 'What other dental methods help identification?', keywords: ['cheiloscopy|lip print', 'rugoscopy|rugae', 'bite mark', 'dna|barr|sex'], probe: 'What is cheiloscopy?' },
+    ],
+    flashcards: [
+      ['Study of lip prints?', 'Cheiloscopy (Suzuki and Tsuchihashi classification).'],
+      ['First adult dental age-estimation method?', 'Gustafson\'s method (1950), six criteria.'],
+    ],
+  },
+  {
+    slug: 'cavity-design', subject: 'conservative', title: 'Principles of Cavity Preparation (G.V. Black)', priority: 'must_know', marks_hint: '10-mark essay',
+    tags: ['operative dentistry'],
+    vignette: 'A 25-year-old has proximal caries on the mesial surface of 36 with an intact marginal ridge broken down on the radiograph. You plan an amalgam restoration.',
+    content: {
+      definition: 'Cavity preparation is the mechanical alteration of a defective tooth to receive a restoration that restores form and function. G.V. Black, the "father of operative dentistry", set out classic classifications and principles; modern practice adds minimal intervention.',
+      classification: [
+        'G.V. Black classification: Class I – pits and fissures (occlusal, buccal/lingual pits, palatal of upper incisors); II – proximal surfaces of premolars and molars; III – proximal of incisors/canines without the incisal angle; IV – with the incisal angle; V – gingival third of facial or lingual surfaces; VI (Simon) – incisal edges and cusp tips',
+        'Mount and Hume (site and size): sites 1 (pit/fissure), 2 (contact area), 3 (cervical); sizes 0–4',
+      ],
+      clinical_features: [
+        'Black\'s steps – initial: outline form, resistance form, retention form, convenience form',
+        'Final: removal of remaining carious dentine, pulp protection, secondary resistance and retention, finishing of walls and margins, cleaning (toilet) of the cavity',
+        '"Extension for prevention" (Black) – now replaced by "prevention of extension" / minimally invasive preparation',
+      ],
+      management: [
+        'Amalgam Class II: box with gingival seat, axial wall, buccal and lingual walls clearing contact; cavosurface angle 90° (butt joint) because amalgam is brittle in thin section; occlusal dovetail or retention grooves; rounded axiopulpal line angle',
+        'Isthmus about one-quarter to one-third of the intercuspal width',
+        'Depth: 1.5–2 mm (pulpal floor about 0.2 mm into dentine)',
+      ],
+      viva_pearls: ['Resistance form prevents the tooth and restoration from fracturing; retention form prevents displacement.'],
+    },
+    viva: [
+      { q: 'Give G.V. Black\'s classification of cavities.', keywords: ['class i|class 1|pit', 'class ii|class 2|proximal', 'class iii|class iv|incisal angle', 'class v|cervical|gingival third', 'class vi|simon'], probe: 'Who added Class VI?' },
+      { q: 'What are the steps of cavity preparation?', keywords: ['outline form', 'resistance form', 'retention form', 'convenience form', 'carious dentin|pulp protection|finishing'], probe: 'What is resistance form?' },
+      { q: 'What are the features of a Class II amalgam preparation?', keywords: ['gingival seat|box', 'axial', 'butt joint|90', 'dovetail|retention groove', 'isthmus|1.5|depth'], probe: 'Why a 90° cavosurface angle?' },
+      { q: 'How has cavity design changed since Black?', keywords: ['extension for prevention', 'minimal|minimally invasive', 'prevention of extension', 'mount|hume|site and size'], probe: 'What is the Mount and Hume classification?' },
+    ],
+    flashcards: [
+      ['Why is the cavosurface angle 90° for amalgam?', 'Amalgam is brittle in thin section – a butt joint prevents marginal fracture.'],
+      ['Class VI cavity (Simon)?', 'Incisal edges of anterior teeth and cusp tips of posterior teeth.'],
+    ],
+  },
+  {
+    slug: 'oral-candidiasis', subject: 'oral-pathology', title: 'Oral Candidiasis', priority: 'must_know', marks_hint: '5-mark short note',
+    tags: ['fungal infection'],
+    vignette: 'A 72-year-old denture wearer on inhaled steroids has a red, sore palate beneath his upper denture, cracks at the corners of the mouth, and white plaques on the buccal mucosa that wipe off leaving a raw surface.',
+    content: {
+      definition: 'Oral candidiasis is an opportunistic infection, usually by Candida albicans, which converts from commensal yeast to invasive hyphal form when local or systemic host defences fail.',
+      classification: [
+        'Acute: pseudomembranous (thrush – white plaques that wipe off), acute erythematous (antibiotic sore mouth)',
+        'Chronic: chronic erythematous (denture stomatitis), chronic hyperplastic (candidal leukoplakia – does not wipe off, potentially malignant), median rhomboid glossitis',
+        'Angular cheilitis (with Staphylococcus aureus)',
+        'Chronic mucocutaneous candidiasis syndromes',
+        'Newton\'s classification of denture stomatitis: type I – pinpoint hyperaemia; II – diffuse erythema; III – papillary hyperplasia',
+      ],
+      etiology: ['Local: dentures (especially worn at night), xerostomia, inhaled steroids, smoking, poor hygiene', 'Systemic: extremes of age, broad-spectrum antibiotics, diabetes, iron/folate/B12 deficiency, HIV, immunosuppression, chemotherapy'],
+      investigations: ['Smear with PAS or Gram stain (hyphae), KOH preparation, culture (Sabouraud agar), germ tube test; biopsy for hyperplastic type'],
+      management: ['Remove the cause: denture hygiene, remove dentures at night, soak in chlorhexidine or hypochlorite, rinse after steroid inhalers', 'Topical: nystatin suspension, miconazole gel (beware warfarin interaction), amphotericin lozenges', 'Systemic: fluconazole for resistant or immunocompromised cases', 'Angular cheilitis: miconazole (antifungal and anti-staphylococcal) cream'],
+      viva_pearls: ['HIV-positive patients with oral candidiasis: it is an early marker of immune suppression.'],
+    },
+    viva: [
+      { q: 'What causes oral candidiasis and what predisposes to it?', keywords: ['candida albicans|candida', 'opportunistic', 'denture', 'antibiotic|steroid', 'diabet|hiv|immun'], probe: 'Which inhaled drug predisposes to it?' },
+      { q: 'Classify oral candidiasis.', keywords: ['pseudomembranous|thrush', 'erythematous', 'hyperplastic', 'angular cheilitis', 'median rhomboid'], probe: 'Which type does not wipe off?' },
+      { q: 'How will you confirm the diagnosis?', keywords: ['smear|cytology', 'pas|periodic acid', 'koh|potassium hydroxide', 'culture|sabouraud', 'biopsy'], probe: 'What stain shows hyphae?' },
+      { q: 'How will you treat this patient?', keywords: ['denture hygiene|remove denture|night', 'nystatin', 'miconazole', 'fluconazole', 'rinse|inhaler'], probe: 'What drug interaction matters with miconazole?' },
+    ],
+    flashcards: [
+      ['Newton type III denture stomatitis?', 'Papillary hyperplasia of the palate.'],
+      ['Antifungal that interacts dangerously with warfarin?', 'Miconazole (also fluconazole) – raises INR.'],
+    ],
+  },
+  {
+    slug: 'salivary-gland-disorders', subject: 'oral-medicine', title: 'Xerostomia & Sialolithiasis', priority: 'must_know', marks_hint: '10-mark essay',
+    tags: ['salivary glands'],
+    vignette: 'A 45-year-old has painful swelling under the left side of the jaw every time she eats, which settles after an hour. A second patient, a 60-year-old woman, has dry mouth, dry eyes and rampant cervical caries.',
+    content: {
+      definition: 'Sialolithiasis is the formation of calcified stones in a salivary duct or gland. Xerostomia is the subjective feeling of oral dryness, usually from salivary hypofunction (unstimulated flow < 0.1 mL/min).',
+      etiology: [
+        'Sialoliths: most in the submandibular gland (about 80–90%) – its saliva is more alkaline, mucous and calcium-rich, and Wharton\'s duct is long and runs uphill',
+        'Xerostomia: drugs (antidepressants, antihistamines, antihypertensives, anticholinergics – commonest), Sjögren\'s syndrome, head and neck radiotherapy, diabetes, dehydration, anxiety, ageing (indirectly)',
+      ],
+      clinical_features: [
+        'Sialolith: "mealtime syndrome" – pain and swelling on eating; palpable stone in the floor of the mouth; may get secondary sialadenitis with pus',
+        'Xerostomia: dry, sticky mucosa, difficulty speaking and swallowing, burning, altered taste, candidiasis, cervical caries, denture retention problems',
+        'Sjögren\'s syndrome: primary (dry eyes and mouth) or secondary (with RA or SLE); anti-Ro (SSA), anti-La (SSB); labial gland biopsy (focal lymphocytic sialadenitis); risk of MALT lymphoma',
+      ],
+      investigations: ['Sialolith: lower occlusal radiograph (submandibular stones are usually radiopaque; parotid stones are often radiolucent), ultrasound, sialography, sialendoscopy', 'Xerostomia: sialometry, Schirmer test, serology, labial gland biopsy'],
+      management: ['Sialolith: sialogogues, massage and hydration; intraoral removal for distal duct stones; sialendoscopy; excision of the gland for intraglandular or recurrent stones', 'Xerostomia: treat cause/review drugs, sips of water, saliva substitutes, sugar-free gum, pilocarpine or cevimeline, high-fluoride toothpaste and fluoride varnish, antifungals as needed'],
+      viva_pearls: ['Sialography is contraindicated in acute sialadenitis.'],
+    },
+    viva: [
+      { q: 'Why are most salivary stones in the submandibular gland?', keywords: ['submandibular', 'alkaline', 'mucous|viscous', 'calcium', 'uphill|long duct|wharton'], probe: 'What about the duct makes stones likely?' },
+      { q: 'How does a sialolith present and how will you investigate it?', keywords: ['meal|eating', 'swelling|pain', 'occlusal radiograph|radiograph', 'ultrasound|sialograph', 'sialendoscop'], probe: 'Which radiograph would you take?' },
+      { q: 'What causes xerostomia?', keywords: ['drug|medication', 'sjogren|sjögren', 'radiotherapy|radiation', 'diabet', 'dehydrat|anxiety'], probe: 'What is the commonest cause?' },
+      { q: 'How will you manage the second patient?', keywords: ['saliva substitute', 'pilocarpine|cevimeline', 'fluoride', 'anti ro|anti-ro|ssa|biopsy|schirmer', 'lymphoma|refer'], probe: 'Which antibodies would you check?' },
+    ],
+    flashcards: [
+      ['Gland most affected by sialolithiasis?', 'Submandibular gland (about 80–90%).'],
+      ['Antibodies typical of Sjögren\'s syndrome?', 'Anti-Ro (SSA) and anti-La (SSB).'],
+    ],
+  },
+  {
+    slug: 'radiation-protection', subject: 'oral-medicine', title: 'Radiation Protection in Dentistry', priority: 'must_know', marks_hint: '5-mark short note',
+    tags: ['radiology', 'safety'],
+    vignette: 'A pregnant patient asks whether her dental radiograph is safe, and your new clinic assistant asks where she should stand during exposures.',
+    content: {
+      definition: 'Radiation protection aims to prevent deterministic effects and keep the risk of stochastic effects (cancer, genetic) as low as reasonably achievable (ALARA, now also ALADA – as low as diagnostically acceptable).',
+      classification: ['Principles (ICRP): justification, optimisation, dose limitation', 'Effects: deterministic (threshold, severity rises with dose – e.g. erythema, cataract) vs stochastic (no threshold, probability rises with dose – cancer, genetic effects)'],
+      clinical_features: [
+        'Patient protection: selection criteria (only justified radiographs), fastest image receptor (F-speed film or digital), rectangular collimation (reduces dose by up to about 60%), long source-to-skin distance (long cone, paralleling), filtration (aluminium – removes low-energy rays), thyroid collar, correct exposure and processing to avoid retakes',
+        'Operator protection: stand at least 2 m (6 feet) away, at 90–135° to the primary beam, or behind a protective barrier; never hold the film; personal dosimeters (TLD badges)',
+        'Dose limits (ICRP): occupational 20 mSv per year (averaged over 5 years); public 1 mSv per year',
+      ],
+      management: ['Pregnancy: dental radiographs give negligible dose to the fetus with good technique; take only those that are clinically necessary; a lead apron is reassuring but not essential with modern equipment', 'Inverse square law: doubling the distance cuts intensity to one quarter'],
+      viva_pearls: ['Rectangular collimation is the single most effective dose-reducing measure for intraoral radiographs.'],
+    },
+    viva: [
+      { q: 'What are the principles of radiation protection?', keywords: ['alara|alada', 'justification', 'optimi', 'dose limit'], probe: 'What does ALARA stand for?' },
+      { q: 'How do deterministic and stochastic effects differ?', keywords: ['deterministic', 'stochastic', 'threshold', 'cancer|genetic', 'probability|severity'], probe: 'Which has no threshold?' },
+      { q: 'How do you reduce the patient\'s dose?', keywords: ['collimat|rectangular', 'fast film|f speed|f-speed|digital', 'filtrat|aluminium', 'thyroid collar', 'long cone|selection criteria|retake'], probe: 'What does filtration do?' },
+      { q: 'How should the operator protect herself?', keywords: ['2 m|6 feet|distance', '90|135|angle', 'barrier', 'dosimeter|tld|badge', 'never hold'], probe: 'Where exactly should she stand?' },
+    ],
+    flashcards: [
+      ['Occupational dose limit (ICRP)?', '20 mSv per year (averaged over 5 years).'],
+      ['Most effective way to cut intraoral radiograph dose?', 'Rectangular collimation.'],
+    ],
+  },
+  {
+    slug: 'tooth-anomalies', subject: 'oral-pathology', title: 'Developmental Anomalies of Teeth', priority: 'must_know', marks_hint: '10-mark essay',
+    tags: ['developmental'],
+    vignette: 'A 9-year-old has an extra tooth between the upper central incisors that has delayed their eruption, and his upper lateral incisors are peg-shaped with a deep pit on the palatal surface.',
+    content: {
+      definition: 'Developmental disturbances of teeth are abnormalities of number, size, shape, structure, eruption or colour that arise during odontogenesis from genetic or environmental causes.',
+      classification: [
+        'Number: anodontia, hypodontia/oligodontia (third molars, lower second premolars, upper laterals most often missing), hyperdontia (mesiodens – commonest supernumerary, distomolar, paramolar)',
+        'Size: microdontia (peg laterals), macrodontia',
+        'Shape: gemination (one tooth germ tries to divide – normal tooth count), fusion (two germs join – one fewer tooth), concrescence (joined by cementum only), dilaceration, taurodontism, dens invaginatus (dens in dente), dens evaginatus, talon cusp, enamel pearls',
+        'Structure: amelogenesis imperfecta (hypoplastic, hypomaturation, hypocalcified), dentinogenesis imperfecta (opalescent teeth, obliterated pulps, with osteogenesis imperfecta in type I), dentin dysplasia, regional odontodysplasia ("ghost teeth"), enamel hypoplasia (Turner\'s tooth, fluorosis)',
+        'Eruption: natal and neonatal teeth, impaction, ankylosis (infraocclusion)',
+      ],
+      clinical_features: ['Gemination vs fusion: count the teeth – gemination keeps the normal number; fusion reduces it by one', 'Dens invaginatus is common in upper laterals – the pit allows early pulp infection; seal it prophylactically'],
+      management: ['Mesiodens: remove to allow eruption of the incisors; orthodontic traction if needed', 'Peg laterals: composite build-up, veneers or crowns', 'Seal the palatal pit of dens invaginatus'],
+      viva_pearls: ['Turner\'s tooth = localised enamel hypoplasia of a permanent tooth from infection or trauma to its primary predecessor.'],
+    },
+    viva: [
+      { q: 'Classify developmental anomalies of teeth.', keywords: ['number', 'size', 'shape', 'structure', 'eruption|colour'], probe: 'Give an example of each.' },
+      { q: 'How do gemination, fusion and concrescence differ?', keywords: ['gemination', 'fusion', 'concrescence', 'cementum', 'count|number of teeth'], probe: 'How will counting the teeth help?' },
+      { q: 'Describe amelogenesis and dentinogenesis imperfecta.', keywords: ['amelogenesis', 'hypoplastic|hypomaturation|hypocalcif', 'dentinogenesis', 'opalescent', 'osteogenesis imperfecta|pulp obliterat'], probe: 'Which systemic disease goes with dentinogenesis imperfecta?' },
+      { q: 'How will you manage this child?', keywords: ['mesiodens', 'extract|remove', 'dens invaginatus|pit', 'seal', 'composite|veneer|build up'], probe: 'Why seal the palatal pit?' },
+    ],
+    flashcards: [
+      ['Commonest supernumerary tooth?', 'Mesiodens (between the upper central incisors).'],
+      ['Teeth joined by cementum only?', 'Concrescence.'],
+    ],
+  },
+  {
+    slug: 'anaemia', subject: 'general-medicine', title: 'Anaemia: Dental Relevance', priority: 'must_know', marks_hint: '10-mark essay',
+    tags: ['haematology', 'medically compromised'],
+    vignette: 'A 24-year-old woman has a smooth, sore red tongue, angular cheilitis, recurrent mouth ulcers, tiredness and spoon-shaped nails. Her haemoglobin is 8.5 g/dL.',
+    content: {
+      definition: 'Anaemia is a reduction in haemoglobin concentration below the normal for age and sex (WHO: < 13 g/dL in men, < 12 g/dL in non-pregnant women), reducing the oxygen-carrying capacity of blood.',
+      classification: [
+        'Microcytic hypochromic (low MCV): iron deficiency (commonest), thalassaemia, sideroblastic, anaemia of chronic disease (sometimes)',
+        'Normocytic: acute blood loss, chronic disease, haemolytic, aplastic, renal failure',
+        'Macrocytic (high MCV): vitamin B12 deficiency (pernicious anaemia), folate deficiency, alcohol, liver disease',
+        'Haemolytic: sickle cell disease, thalassaemia, G6PD deficiency, hereditary spherocytosis',
+      ],
+      clinical_features: [
+        'General: fatigue, pallor, breathlessness, palpitations, koilonychia (iron)',
+        'Oral: atrophic glossitis (depapillated smooth red tongue), angular cheilitis, recurrent aphthae, candidiasis, burning mouth, pallor of mucosa',
+        'B12: Hunter\'s (Moeller\'s) glossitis, neuropathy, paraesthesia',
+        'Plummer–Vinson syndrome: iron deficiency, dysphagia (oesophageal web), glossitis – potentially malignant (post-cricoid cancer)',
+        'Thalassaemia major: "chipmunk" facies, maxillary expansion, "hair-on-end" skull radiograph; sickle cell: "step-ladder" trabeculae, bone infarcts',
+      ],
+      investigations: ['Full blood count, MCV, peripheral smear, serum ferritin (low in iron deficiency), B12 and folate, haemoglobin electrophoresis'],
+      management: ['Refer to the physician to find and treat the cause (e.g. menorrhagia, GI blood loss, diet)', 'Dental: avoid elective GA if Hb < 10 g/dL; delayed healing and infection risk; in sickle cell avoid hypoxia, dehydration, cold, long stressful sessions'],
+      viva_pearls: ['This patient most likely has iron-deficiency anaemia (koilonychia, glossitis, angular cheilitis).'],
+    },
+    viva: [
+      { q: 'Define and classify anaemia.', keywords: ['haemoglobin|hemoglobin', 'microcytic', 'normocytic', 'macrocytic', 'haemolytic|hemolytic'], probe: 'What is the WHO cut-off for women?' },
+      { q: 'What are the oral manifestations of anaemia?', keywords: ['glossitis|depapillat', 'angular cheilitis', 'aphth|ulcer', 'candid', 'pallor|burning'], probe: 'What does the tongue look like?' },
+      { q: 'What is Plummer–Vinson syndrome?', keywords: ['iron', 'dysphagia', 'web', 'glossitis', 'malignan|carcinoma'], probe: 'Why is it important?' },
+      { q: 'How will you investigate and manage this patient?', keywords: ['full blood count|cbc|fbc', 'ferritin', 'mcv|smear', 'physician|refer', 'iron|cause'], probe: 'What would ferritin show?' },
+    ],
+    flashcards: [
+      ['Triad of Plummer–Vinson syndrome?', 'Iron-deficiency anaemia, dysphagia (oesophageal web), glossitis.'],
+      ['Radiographic skull sign in thalassaemia major?', '"Hair-on-end" appearance.'],
+    ],
+  },
+  {
+    slug: 'furcation-involvement', subject: 'periodontics', title: 'Furcation Involvement', priority: 'must_know', marks_hint: '10-mark essay',
+    tags: ['periodontal therapy'],
+    vignette: 'A 48-year-old with periodontitis has 46 with a Nabers probe passing from buccal to lingual beneath the furcation, which is covered by gingiva.',
+    content: {
+      definition: 'Furcation involvement is the invasion of the bifurcation or trifurcation of multirooted teeth by periodontal disease, with bone loss in the inter-radicular area.',
+      classification: [
+        'Glickman: grade I – incipient, pocket into the flute but no bone loss in the furcation; II – cul-de-sac (probe enters but not through); III – through-and-through but covered by soft tissue; IV – through-and-through and clinically visible',
+        'Hamp: degree 1 – horizontal loss < 3 mm; 2 – > 3 mm but not through; 3 – through-and-through',
+        'Tarnow and Fletcher: vertical subclass A (0–3 mm), B (4–6 mm), C (≥ 7 mm)',
+      ],
+      etiology: ['Plaque-induced periodontitis; local factors: cervical enamel projections (Masters and Hoskins), enamel pearls, short root trunk, accessory canals (perio-endo), trauma from occlusion'],
+      investigations: ['Nabers probe (curved) for horizontal assessment; radiographs underestimate furcation bone loss', 'Mandibular molars: approach from buccal and lingual; maxillary molars: buccal, mesiopalatal and distopalatal'],
+      management: [
+        'Grade I: scaling, root planing, odontoplasty, furcationplasty',
+        'Grade II: regenerative therapy (GTR, bone grafts) – best in mandibular molars; or furcationplasty',
+        'Grade III/IV: tunnel preparation, root resection (amputation) or hemisection (mandibular molars) with endodontics, or extraction and implant',
+      ],
+      viva_pearls: ['This patient has Glickman grade III furcation involvement on 46.'],
+    },
+    viva: [
+      { q: 'What is furcation involvement?', keywords: ['furcation', 'multirooted|multi-rooted', 'bone loss', 'bifurcation|trifurcation|inter radicular|inter-radicular'], probe: 'Which teeth can be affected?' },
+      { q: 'Give Glickman\'s classification.', keywords: ['glickman', 'grade i|incipient', 'cul de sac|cul-de-sac', 'through and through|through-and-through', 'visible|soft tissue'], probe: 'How do grade III and IV differ?' },
+      { q: 'What local factors predispose to it, and how do you examine it?', keywords: ['enamel projection|cervical enamel', 'enamel pearl', 'root trunk', 'nabers', 'radiograph'], probe: 'Which probe do you use?' },
+      { q: 'How will you treat each grade, including this tooth?', keywords: ['scaling|root planing|odontoplasty', 'regenerat|gtr|graft', 'tunnel', 'hemisection|root resection|amputation', 'implant|extraction'], probe: 'What is hemisection?' },
+    ],
+    flashcards: [
+      ['Glickman grade III furcation?', 'Through-and-through bone loss, still covered by soft tissue.'],
+      ['Probe used to examine furcations?', 'Nabers probe.'],
+    ],
+  },
+  {
+    slug: 'periodontal-flap-surgery', subject: 'periodontics', title: 'Periodontal Flap Surgery', priority: 'must_know', marks_hint: '10-mark essay',
+    tags: ['periodontal surgery'],
+    vignette: 'After scaling and root planing, a 45-year-old still has 7 mm pockets with bleeding around 16 and 17 and angular bone loss on the radiograph.',
+    content: {
+      definition: 'A periodontal flap is a section of gingiva and/or mucosa surgically separated from the underlying tissues to give visibility and access to the bone and root surface.',
+      classification: [
+        'By bone exposure: full-thickness (mucoperiosteal) vs partial (split) thickness',
+        'By placement after surgery: undisplaced vs displaced (apically, coronally, laterally positioned)',
+        'By papilla management: conventional vs papilla preservation flap',
+        'Named flaps: modified Widman flap (Ramfjord and Nissle), undisplaced flap, apically displaced flap, palatal flap, distal molar surgery (wedge)',
+      ],
+      clinical_features: ['Indications: residual pockets ≥ 5 mm after initial therapy, access for root debridement, osseous defects needing resective or regenerative surgery, furcation treatment, crown lengthening', 'Contraindications: uncontrolled systemic disease, poor plaque control, smoking (relative)'],
+      management: [
+        'Incisions: internal bevel (inverse bevel, primary – removes the pocket lining), crevicular (secondary), interdental (tertiary); vertical releasing incisions when needed',
+        'Reflect, remove granulation tissue, debride roots; osseous recontouring or regeneration',
+        'Suture: interrupted, sling, continuous or mattress; periodontal dressing (e.g. Coe-Pak) if needed',
+        'Post-op: chlorhexidine, analgesics, review at 1 week; maintenance every 3 months',
+      ],
+      viva_pearls: ['Modified Widman flap aims for maximum healing with minimal recession – it does not aim to eliminate pockets by apical displacement.'],
+    },
+    viva: [
+      { q: 'Define a periodontal flap and give its indications.', keywords: ['separated|section of gingiva', 'access|visibility', 'residual pocket|5 mm', 'osseous|bone defect', 'crown lengthening|furcation'], probe: 'When would you plan surgery?' },
+      { q: 'Classify periodontal flaps.', keywords: ['full thickness|mucoperiosteal', 'partial thickness|split', 'displaced|apically|coronally', 'undisplaced', 'papilla preservation'], probe: 'What is a split-thickness flap?' },
+      { q: 'Describe the incisions used.', keywords: ['internal bevel|inverse bevel', 'crevicular', 'interdental', 'vertical|releasing'], probe: 'What does the internal bevel incision remove?' },
+      { q: 'What is the modified Widman flap?', keywords: ['ramfjord', 'nissle', 'internal bevel|inverse bevel', 'minimal recession|healing', 'not displaced|close adaptation'], probe: 'Who described it?' },
+    ],
+    flashcards: [
+      ['Who described the modified Widman flap?', 'Ramfjord and Nissle (1974).'],
+      ['Primary incision in flap surgery?', 'Internal (inverse) bevel incision.'],
+    ],
+  },
+  {
+    slug: 'principles-of-exodontia', subject: 'oral-surgery', title: 'Principles of Exodontia', priority: 'must_know', marks_hint: '10-mark essay',
+    tags: ['extraction'],
+    vignette: 'A 35-year-old needs extraction of a grossly carious 46. Write about the indications, contraindications and the principles of a forceps extraction.',
+    content: {
+      definition: 'Exodontia is the painless removal of a whole tooth or root with minimal trauma to the supporting tissues, so that the wound heals uneventfully and no prosthetic problem is created.',
+      clinical_features: [
+        'Indications: non-restorable caries, pulpal or periapical disease not treatable by endodontics, advanced periodontal disease, orthodontic reasons, malposed or impacted teeth, supernumerary teeth, teeth in fracture lines, before radiotherapy, prosthetic reasons',
+        'Local contraindications: acute pericoronitis (relative), tooth in a tumour (vascular malformation or malignancy), previous radiotherapy (osteoradionecrosis risk), antiresorptive therapy (MRONJ risk)',
+        'Systemic contraindications (relative): uncontrolled diabetes, bleeding disorders, recent MI (within about 6 months), uncontrolled hypertension, pregnancy (first and third trimester for elective work), leukaemia',
+      ],
+      management: [
+        'Mechanical principles: expansion of the socket, lever (elevators), wedge (forceps beaks driven apically), wheel-and-axle',
+        'Forceps: apply beaks along the long axis on root surface, apical pressure first, then luxation – buccal/lingual, rotation for conical single roots (upper central incisor, lower premolars), traction last',
+        'Positioning: maxillary teeth – chair so the occlusal plane is about 60° to the floor and mouth at operator\'s shoulder; mandibular – occlusal plane parallel to floor, mouth at elbow level',
+        'Post-extraction: compress the socket, check for root fragments, pressure pack, instructions (no rinsing for 24 hours, then warm saline)',
+      ],
+      viva_pearls: ['Lower first molar forceps (cowhorn) beaks engage the furcation – use buccolingual luxation, not rotation.'],
+    },
+    viva: [
+      { q: 'What are the indications for extraction?', keywords: ['caries|non restorable', 'periodontal', 'orthodontic', 'impacted|supernumerary', 'radiotherapy|fracture line'], probe: 'Why extract teeth before radiotherapy?' },
+      { q: 'What are the contraindications?', keywords: ['radiotherapy|osteoradionecrosis', 'bisphosphonate|antiresorptive|mronj', 'bleeding', 'myocardial infarction|mi', 'diabet|hypertension|pregnan'], probe: 'What is the risk after radiotherapy?' },
+      { q: 'Describe the mechanical principles.', keywords: ['expansion', 'lever', 'wedge', 'wheel and axle|wheel', 'elevator'], probe: 'How does an elevator act?' },
+      { q: 'How will you extract 46 with forceps?', keywords: ['cowhorn|forceps', 'apical pressure', 'buccal|lingual|luxat', 'traction', 'positioning|elbow'], probe: 'Why not rotate a lower molar?' },
+    ],
+    flashcards: [
+      ['Teeth that may be rotated during extraction?', 'Conical single-rooted teeth – upper central incisors and lower premolars.'],
+      ['Mechanical principles of exodontia?', 'Expansion, lever, wedge, wheel-and-axle.'],
+    ],
+  },
 ]
 
 // Spotters use schematic SVG illustrations from /public/spotters.

@@ -79,7 +79,7 @@ const BDS = [
   // ---------------- 3rd year ----------------
   subject('medicine', 'General Medicine', 3, 'General Medicine', [
     'Infectious diseases: typhoid, tuberculosis, HIV', ['Cardiovascular: IHD, hypertension, rheumatic heart disease, infective endocarditis', { topic: 'infective-endocarditis' }],
-    'Respiratory: asthma, COPD, pneumonia', 'Haematology: anaemia and bleeding disorders', ['Endocrine: diabetes mellitus and thyroid disease', { topic: 'diabetes-dental' }],
+    'Respiratory: asthma, COPD, pneumonia', ['Haematology: anaemia and bleeding disorders', { topic: 'anaemia' }], ['Endocrine: diabetes mellitus and thyroid disease', { topic: 'diabetes-dental' }],
     'Gastrointestinal and liver disease: jaundice, hepatitis', 'Renal disease', 'Neurology: epilepsy, facial palsy, trigeminal neuralgia',
     'Nutrition and vitamin deficiencies', ['Medical emergencies: syncope, anaphylaxis, CPR', { topic: 'adc-anaphylaxis' }],
   ]),
@@ -89,21 +89,21 @@ const BDS = [
     'Oral cancer and neck dissection (overview)', 'Trauma and ATLS principles', 'Sterilisation and asepsis in surgery', 'Tracheostomy',
   ]),
   subject('oral-pathology', 'Oral Pathology & Oral Microbiology', 3, 'Oral Pathology', [
-    'Developmental disturbances of teeth', 'Developmental disturbances of oral and paraoral structures',
+    ['Developmental disturbances of teeth', { topic: 'tooth-anomalies' }], 'Developmental disturbances of oral and paraoral structures',
     ['Odontogenic cysts: inflammatory (radicular cyst)', { topic: 'radicular-cyst' }],
     ['Odontogenic cysts: developmental (OKC, dentigerous)', { topic: 'odontogenic-keratocyst' }],
     ['Odontogenic tumours', { topic: 'ameloblastoma' }], 'Benign tumours of epithelial and connective tissue origin',
     ['Oral squamous cell carcinoma and other malignancies', { topic: 'oral-squamous-cell-carcinoma' }], ['Salivary gland tumours', { topic: 'pleomorphic-adenoma' }], ['Fibro-osseous lesions and bone diseases', { topic: 'fibrous-dysplasia' }],
-    'Bacterial, viral and fungal infections', ['Dental caries', { topic: 'dental-caries' }], 'Diseases of the pulp and periapical tissues',
+    ['Bacterial, viral and fungal infections', { topic: 'oral-candidiasis' }], ['Dental caries', { topic: 'dental-caries' }], 'Diseases of the pulp and periapical tissues',
     'Regressive changes: attrition, abrasion, erosion, resorption', 'Physical and chemical injuries', 'Diseases of skin with oral manifestations',
-    'Forensic odontology',
+    ['Forensic odontology', { topic: 'forensic-odontology' }],
   ]),
   // ---------------- Final year ----------------
   subject('oral-medicine', 'Oral Medicine & Radiology', 4, 'Oral Medicine & Radiology', [
     'Case history and clinical examination', ['Red and white lesions; leukoplakia', { topic: 'leukoplakia' }],
     ['Oral submucous fibrosis', { topic: 'osmf' }], ['Lichen planus', { topic: 'oral-lichen-planus' }], ['Vesiculobullous lesions', { topic: 'pemphigus-vulgaris' }],
-    ['Ulcerative lesions and recurrent aphthae', { topic: 'recurrent-aphthous-stomatitis' }], 'Pigmented lesions', ['Orofacial pain and TMJ disorders', { topic: 'trigeminal-neuralgia' }], 'Salivary gland disorders',
-    'Oral manifestations of systemic disease', 'Medically compromised patients', 'Radiation physics and biology', 'Radiation protection',
+    ['Ulcerative lesions and recurrent aphthae', { topic: 'recurrent-aphthous-stomatitis' }], 'Pigmented lesions', ['Orofacial pain and TMJ disorders', { topic: 'trigeminal-neuralgia' }], ['Salivary gland disorders', { topic: 'salivary-gland-disorders' }],
+    'Oral manifestations of systemic disease', 'Medically compromised patients', 'Radiation physics and biology', ['Radiation protection', { topic: 'radiation-protection' }],
     'Intraoral radiographic techniques', 'Panoramic and extraoral radiography; CBCT', ['Radiographic interpretation of cysts and tumours', { topic: 'dentigerous-cyst' }],
   ]),
   subject('pedodontics', 'Paediatric & Preventive Dentistry', 4, 'Pedodontics', [
@@ -114,7 +114,7 @@ const BDS = [
   ]),
   subject('orthodontics', 'Orthodontics & Dentofacial Orthopaedics', 4, 'Orthodontics', [
     'Growth and development of the craniofacial complex', 'Development of dentition and occlusion', ['Classification of malocclusion', { topic: 'angle-classification' }],
-    'Aetiology of malocclusion', 'Cephalometrics', 'Diagnosis and treatment planning', 'Biology of tooth movement', 'Removable appliances',
+    'Aetiology of malocclusion', ['Cephalometrics', { topic: 'cephalometrics' }], 'Diagnosis and treatment planning', ['Biology of tooth movement', { topic: 'biology-of-tooth-movement' }], 'Removable appliances',
     'Fixed appliances: basics', ['Functional appliances', { topic: 'functional-appliances' }], 'Orthopaedic appliances: headgear, chin cup, RME',
     'Preventive and interceptive orthodontics', 'Retention and relapse', ['Cleft lip and palate', { topic: 'cleft-lip-palate' }],
   ]),
@@ -123,7 +123,7 @@ const BDS = [
     'Host response and risk factors', ['Gingival diseases and gingival enlargement', { topic: 'gingival-enlargement' }],
     'Periodontal pocket and bone loss', ['Periodontitis: staging and grading', { topic: 'periodontitis-staging-grading' }], ['Necrotising periodontal diseases', { topic: 'necrotising-periodontal' }],
     'Periodontal–systemic interrelationships', 'Clinical diagnosis and indices', 'Scaling, root planing and instruments',
-    'Chemical plaque control', 'Periodontal flap surgery', 'Mucogingival and regenerative surgery', 'Furcation and perio-endo lesions',
+    'Chemical plaque control', ['Periodontal flap surgery', { topic: 'periodontal-flap-surgery' }], 'Mucogingival and regenerative surgery', ['Furcation and perio-endo lesions', { topic: 'furcation-involvement' }],
     ['Dental implants and peri-implantitis', { topic: 'peri-implantitis' }], 'Supportive periodontal therapy',
   ]),
   subject('prosthodontics', 'Prosthodontics & Crown and Bridge', 4, 'Prosthodontics', [
@@ -134,7 +134,7 @@ const BDS = [
     'Implant prosthodontics', 'Occlusion and articulators',
   ]),
   subject('conservative', 'Conservative Dentistry & Endodontics', 4, 'Conservative & Endo', [
-    ['Dental caries and caries risk assessment', { topic: 'dental-caries' }], 'Principles of cavity design', 'Amalgam restorations', 'Composite restorations and adhesion',
+    ['Dental caries and caries risk assessment', { topic: 'dental-caries' }], ['Principles of cavity design', { topic: 'cavity-design' }], 'Amalgam restorations', 'Composite restorations and adhesion',
     'Glass ionomer restorations', 'Pulp protection: liners and bases', 'Cast restorations: inlays and onlays',
     'Pulp and periapical diseases', 'Endodontic access and instruments', ['Cleaning and shaping', { topic: 'root-canal-irrigants' }], ['Obturation', { topic: 'obturation' }],
     ['Vital pulp therapy and MTA', { topic: 'mta' }], ['Endodontic emergencies', { topic: 'endodontic-emergencies' }], 'Traumatic injuries: endodontic management',
@@ -142,7 +142,7 @@ const BDS = [
   ]),
   subject('oral-surgery', 'Oral & Maxillofacial Surgery', 4, 'Oral Surgery', [
     ['Asepsis and sterilisation', { topic: 'sterilisation' }], ['Local anaesthesia in oral surgery', { topic: 'local-anaesthetics', mcq: 'Pharmacology' }],
-    'Principles of exodontia', ['Impacted teeth', { topic: 'impacted-third-molar' }], ['Complications of extraction', { topic: 'dry-socket' }],
+    ['Principles of exodontia', { topic: 'principles-of-exodontia' }], ['Impacted teeth', { topic: 'impacted-third-molar' }], ['Complications of extraction', { topic: 'dry-socket' }],
     ['Medical emergencies in dental practice', { topic: 'adc-anaphylaxis' }], ['Odontogenic infections and fascial spaces', { topic: 'ludwigs-angina' }],
     'Cysts of the jaws: management', 'Benign and malignant jaw tumours', ['Mandibular fractures', { topic: 'mandibular-fractures' }],
     ['Midface (Le Fort) fractures', { topic: 'le-fort-fractures' }], ['Zygomatic complex fractures', { topic: 'zygomatic-fractures' }], ['TMJ disorders and ankylosis', { topic: 'tmj-ankylosis' }],

@@ -2559,5 +2559,485 @@ export const MCQS = [
   "is_pyq": false,
   "exam": "NEET MDS",
   "is_important": true
+ },
+ {
+  "id": 161,
+  "subject": "Orthodontics",
+  "question": "Cephalometrics was introduced in 1931 by:",
+  "options": [
+   "Angle and Tweed",
+   "Broadbent and Hofrath",
+   "Downs and Steiner",
+   "Ricketts and McNamara"
+  ],
+  "answer": 1,
+  "explanation": "Broadbent (USA) and Hofrath (Germany) independently introduced standardised cephalometry in 1931.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 162,
+  "subject": "Orthodontics",
+  "question": "The first cephalometric analysis described was by:",
+  "options": [
+   "Steiner",
+   "Downs",
+   "Tweed",
+   "Ricketts"
+  ],
+  "answer": 1,
+  "explanation": "Downs (1948) analysis was the first; Steiner (1953) is the most widely used.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 163,
+  "subject": "Orthodontics",
+  "question": "Hyalinisation during orthodontic tooth movement results from:",
+  "options": [
+   "Light continuous forces",
+   "Heavy forces that occlude PDL blood vessels",
+   "Intermittent forces only",
+   "Tension on the PDL"
+  ],
+  "answer": 1,
+  "explanation": "Heavy forces cause local ischaemia and a cell-free hyalinised zone; movement resumes after undermining resorption.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 164,
+  "subject": "Orthodontics",
+  "question": "The orthodontic movement requiring the lightest force is:",
+  "options": [
+   "Tipping",
+   "Bodily movement",
+   "Intrusion",
+   "Root uprighting"
+  ],
+  "answer": 2,
+  "explanation": "Intrusion concentrates force at the apex, so about 10–20 g is used.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 165,
+  "subject": "Oral Pathology",
+  "question": "Gustafson's method is used for:",
+  "options": [
+   "Sex determination",
+   "Age estimation in adults",
+   "Bite-mark analysis",
+   "Lip-print analysis"
+  ],
+  "answer": 1,
+  "explanation": "Gustafson (1950) used six regressive changes in teeth (attrition, periodontosis, secondary dentine, cementum apposition, root resorption, root transparency).",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 166,
+  "subject": "Oral Pathology",
+  "question": "The study of palatal rugae for identification is called:",
+  "options": [
+   "Cheiloscopy",
+   "Rugoscopy",
+   "Odontometry",
+   "Dactyloscopy"
+  ],
+  "answer": 1,
+  "explanation": "Rugoscopy (palatoscopy) uses rugae patterns; cheiloscopy uses lip prints; dactyloscopy uses fingerprints.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 167,
+  "subject": "Oral Pathology",
+  "question": "Fusion of two teeth by cementum alone is:",
+  "options": [
+   "Gemination",
+   "Fusion",
+   "Concrescence",
+   "Twinning"
+  ],
+  "answer": 2,
+  "explanation": "Concrescence occurs after root formation; it is common between maxillary second and third molars.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 168,
+  "subject": "Oral Pathology",
+  "question": "Opalescent teeth with bulbous crowns and obliterated pulp chambers are typical of:",
+  "options": [
+   "Amelogenesis imperfecta",
+   "Dentinogenesis imperfecta",
+   "Regional odontodysplasia",
+   "Fluorosis"
+  ],
+  "answer": 1,
+  "explanation": "Dentinogenesis imperfecta: amber-grey opalescent teeth, cervical constriction, pulp obliteration; type I occurs with osteogenesis imperfecta.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 169,
+  "subject": "Oral Pathology",
+  "question": "\"Ghost teeth\" on radiographs are seen in:",
+  "options": [
+   "Dentin dysplasia type I",
+   "Regional odontodysplasia",
+   "Taurodontism",
+   "Hypophosphatasia"
+  ],
+  "answer": 1,
+  "explanation": "Regional odontodysplasia shows thin, poorly mineralised enamel and dentine with wide pulps, usually in one quadrant.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 170,
+  "subject": "Oral Pathology",
+  "question": "Chronic hyperplastic candidiasis (candidal leukoplakia) is important because it:",
+  "options": [
+   "Always wipes off",
+   "Is potentially malignant",
+   "Only affects infants",
+   "Is caused by Staphylococcus"
+  ],
+  "answer": 1,
+  "explanation": "It presents as a white patch that does not rub off, commonly at the commissures, and carries a risk of malignant change.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 171,
+  "subject": "Oral Medicine & Radiology",
+  "question": "Newton's type III denture stomatitis is:",
+  "options": [
+   "Pinpoint hyperaemia",
+   "Diffuse erythema",
+   "Papillary hyperplasia",
+   "Ulceration"
+  ],
+  "answer": 2,
+  "explanation": "Type I – localised pinpoint hyperaemia; II – diffuse erythema of the denture-bearing area; III – granular/papillary hyperplasia.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 172,
+  "subject": "Oral Medicine & Radiology",
+  "question": "The salivary gland most often affected by sialoliths is the:",
+  "options": [
+   "Parotid",
+   "Submandibular",
+   "Sublingual",
+   "Minor salivary glands"
+  ],
+  "answer": 1,
+  "explanation": "About 80–90% occur in the submandibular gland: alkaline, mucous, calcium-rich saliva and a long uphill duct.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 173,
+  "subject": "Oral Medicine & Radiology",
+  "question": "Antibodies characteristic of Sjögren's syndrome are:",
+  "options": [
+   "Anti-dsDNA",
+   "Anti-Ro (SSA) and anti-La (SSB)",
+   "Anti-centromere",
+   "ANCA"
+  ],
+  "answer": 1,
+  "explanation": "Anti-Ro and anti-La; labial gland biopsy shows focal lymphocytic sialadenitis.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 174,
+  "subject": "Oral Medicine & Radiology",
+  "question": "Stochastic effects of radiation:",
+  "options": [
+   "Have a threshold dose",
+   "Increase in severity with dose",
+   "Have no threshold; probability increases with dose",
+   "Occur only above 2 Gy"
+  ],
+  "answer": 2,
+  "explanation": "Cancer and genetic effects are stochastic; erythema and cataract are deterministic (threshold).",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 175,
+  "subject": "Oral Medicine & Radiology",
+  "question": "The operator should stand during intraoral exposure at least:",
+  "options": [
+   "0.5 m from the patient",
+   "2 m away at 90–135° to the beam",
+   "Directly behind the tube head",
+   "Holding the film for the patient"
+  ],
+  "answer": 1,
+  "explanation": "Distance (inverse square law) and position out of the primary beam, or behind a barrier.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 176,
+  "subject": "Conservative & Endo",
+  "question": "G.V. Black Class V cavities involve:",
+  "options": [
+   "Pits and fissures",
+   "Gingival third of facial or lingual surfaces",
+   "Proximal surfaces of posterior teeth",
+   "Incisal edges"
+  ],
+  "answer": 1,
+  "explanation": "Class V: cervical third of facial or lingual surfaces of any tooth.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 177,
+  "subject": "Conservative & Endo",
+  "question": "The cavosurface margin for an amalgam preparation should be:",
+  "options": [
+   "45° bevel",
+   "90° butt joint",
+   "30° bevel",
+   "Feather edge"
+  ],
+  "answer": 1,
+  "explanation": "Amalgam has low edge strength, so a 90° margin avoids thin, fragile edges.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 178,
+  "subject": "Periodontics",
+  "question": "Glickman grade IV furcation involvement means:",
+  "options": [
+   "Incipient involvement",
+   "Cul-de-sac defect",
+   "Through-and-through, covered by gingiva",
+   "Through-and-through and clinically visible"
+  ],
+  "answer": 3,
+  "explanation": "Grade III is through-and-through covered by soft tissue; grade IV is exposed and visible.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 179,
+  "subject": "Periodontics",
+  "question": "Cervical enamel projections were classified by:",
+  "options": [
+   "Glickman",
+   "Masters and Hoskins",
+   "Hamp",
+   "Miller"
+  ],
+  "answer": 1,
+  "explanation": "Masters and Hoskins (1964) graded CEPs I–III; they predispose to furcation involvement.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 180,
+  "subject": "Periodontics",
+  "question": "The modified Widman flap was described by:",
+  "options": [
+   "Ramfjord and Nissle",
+   "Nabers",
+   "Friedman",
+   "Kirkland"
+  ],
+  "answer": 0,
+  "explanation": "Ramfjord and Nissle (1974); it uses an internal bevel incision and aims for close adaptation with minimal recession.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 181,
+  "subject": "Periodontics",
+  "question": "Root resection of a mandibular molar dividing it into two halves, retaining one or both, is called:",
+  "options": [
+   "Root amputation",
+   "Hemisection",
+   "Tunnelling",
+   "Odontoplasty"
+  ],
+  "answer": 1,
+  "explanation": "Hemisection splits a lower molar buccolingually; \"bicuspidisation\" retains both halves.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 182,
+  "subject": "Oral Surgery",
+  "question": "The forceps beak acts mainly as a:",
+  "options": [
+   "Lever",
+   "Wedge",
+   "Wheel and axle",
+   "Pulley"
+  ],
+  "answer": 1,
+  "explanation": "Beaks are driven apically into the PDL space as wedges, expanding the socket; elevators act as levers or wheel-and-axle.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 183,
+  "subject": "Oral Surgery",
+  "question": "Rotational movement during extraction is suitable for the:",
+  "options": [
+   "Maxillary first premolar",
+   "Maxillary central incisor",
+   "Mandibular first molar",
+   "Maxillary first molar"
+  ],
+  "answer": 1,
+  "explanation": "Conical single roots (upper central incisor, lower premolars) tolerate rotation; the bifurcated upper first premolar does not.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 184,
+  "subject": "General Medicine",
+  "question": "Koilonychia, glossitis and dysphagia due to an oesophageal web form:",
+  "options": [
+   "Peutz–Jeghers syndrome",
+   "Plummer–Vinson syndrome",
+   "Melkersson–Rosenthal syndrome",
+   "Sjögren's syndrome"
+  ],
+  "answer": 1,
+  "explanation": "Plummer–Vinson (Paterson–Kelly) syndrome with iron deficiency; it is potentially malignant.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 185,
+  "subject": "General Medicine",
+  "question": "Megaloblastic anaemia with neuropathy and a beefy red tongue suggests deficiency of:",
+  "options": [
+   "Iron",
+   "Vitamin B12",
+   "Vitamin C",
+   "Vitamin K"
+  ],
+  "answer": 1,
+  "explanation": "B12 deficiency (e.g. pernicious anaemia) causes Hunter's glossitis and neurological signs; folate deficiency lacks neuropathy.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 186,
+  "subject": "General Medicine",
+  "question": "A \"hair-on-end\" appearance of the skull is seen in:",
+  "options": [
+   "Paget's disease",
+   "Thalassaemia major",
+   "Hyperparathyroidism",
+   "Multiple myeloma"
+  ],
+  "answer": 1,
+  "explanation": "Marrow hyperplasia in thalassaemia (and sickle cell) produces vertical trabeculae; myeloma gives \"punched-out\" lesions.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 187,
+  "subject": "Pharmacology",
+  "question": "Miconazole oral gel should be avoided in patients taking:",
+  "options": [
+   "Metformin",
+   "Warfarin",
+   "Amoxicillin",
+   "Paracetamol"
+  ],
+  "answer": 1,
+  "explanation": "Azoles inhibit CYP2C9 and raise warfarin levels – risk of serious bleeding.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 188,
+  "subject": "Pharmacology",
+  "question": "Pilocarpine is used for xerostomia because it is a:",
+  "options": [
+   "Muscarinic agonist",
+   "Muscarinic antagonist",
+   "Beta blocker",
+   "Antihistamine"
+  ],
+  "answer": 0,
+  "explanation": "Pilocarpine stimulates M3 receptors on residual salivary gland tissue; side effects include sweating and flushing.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 189,
+  "subject": "Public Health Dentistry",
+  "question": "The ICRP annual occupational effective dose limit is:",
+  "options": [
+   "1 mSv",
+   "5 mSv",
+   "20 mSv (averaged over 5 years)",
+   "100 mSv"
+  ],
+  "answer": 2,
+  "explanation": "Occupational limit 20 mSv/year averaged over 5 years (no more than 50 mSv in one year); public limit 1 mSv/year.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 190,
+  "subject": "Dental Anatomy",
+  "question": "The tooth most commonly showing dens invaginatus is the:",
+  "options": [
+   "Mandibular central incisor",
+   "Maxillary lateral incisor",
+   "Maxillary canine",
+   "Mandibular second premolar"
+  ],
+  "answer": 1,
+  "explanation": "Upper laterals are most often affected; the palatal pit should be sealed to prevent early pulp necrosis.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
  }
 ]
