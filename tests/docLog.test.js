@@ -116,3 +116,21 @@ describe("DocLog: dates", () => {
     expect(daysBetween("2026-11-02", "2026-10-31")).toBe(-2);
   });
 });
+
+import { treatmentsFor, buildProfile, SPECIALTY_TREATMENTS } from "../src/docLog.js";
+import { SPECIALTIES } from "../src/connect/rules.js";
+describe("DocLog speciality profile", () => {
+  it("has a treatment list for every speciality, ending with Other", () => {
+    for (const [k] of SPECIALTIES) { const l = treatmentsFor(k); expect(l.length).toBeGreaterThan(2); expect(l[l.length - 1]).toBe("Other"); }
+    expect(Object.keys(SPECIALTY_TREATMENTS).sort()).toEqual(SPECIALTIES.map(([k]) => k).sort());
+  });
+  it("falls back to general for unknown or unset", () => {
+    expect(treatmentsFor("")).toEqual(treatmentsFor("general"));
+    expect(treatmentsFor("zzz")).toEqual(treatmentsFor("general"));
+  });
+  it("needs a real speciality and trims text", () => {
+    expect(buildProfile({ specialty: "" }).error).toBeTruthy();
+    expect(buildProfile({ specialty: "nope" }).error).toBeTruthy();
+    expect(buildProfile({ specialty: "endodontics", name: "  Dr  A ", qualification: "MDS" }).profile).toEqual({ name: "Dr A", qualification: "MDS", specialty: "endodontics" });
+  });
+});

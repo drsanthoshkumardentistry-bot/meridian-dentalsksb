@@ -8,7 +8,7 @@ afterEach(() => cleanup());
 
 const today = dateKey();
 const makeApi = (seed = {}) => {
-  const db = { clinics: [...(seed.clinics || [])], visits: [...(seed.visits || [])] };
+  const db = { clinics: [...(seed.clinics || [])], visits: [...(seed.visits || [])], profile: seed.profile || null };
   const dl = {
     listClinics: vi.fn(async () => [...db.clinics]),
     listVisits: vi.fn(async () => [...db.visits]),
@@ -17,6 +17,8 @@ const makeApi = (seed = {}) => {
     saveVisit: vi.fn(async (v) => { db.visits = [...db.visits.filter((x) => x.id !== v.id), v]; }),
     saveVisits: vi.fn(async (vs) => { vs.forEach((v) => { db.visits = [...db.visits.filter((x) => x.id !== v.id), v]; }); }),
     deleteVisit: vi.fn(async (id) => { db.visits = db.visits.filter((x) => x.id !== id); }),
+    getProfile: vi.fn(async () => db.profile),
+    saveProfile: vi.fn(async (p) => { db.profile = p; }),
   };
   return { api: { docLog: dl }, dl, db };
 };
@@ -117,6 +119,22 @@ describe("MeriDent DocLog screen", () => {
     expect(dl.deleteVisit).not.toHaveBeenCalled();
     fireEvent.click(await screen.findByText("Delete"));
     await waitFor(() => expect(dl.deleteVisit).toHaveBeenCalledTimes(1));
+  });
+
+  it("asks for a speciality, saves the profile and shows that speciality's treatments", async () => {
+    const { dl } = mount({ clinics: [clinic] });
+    fireEvent.click(await screen.findByTestId("doclog-set-profile"));
+    const dlg = await screen.findByRole("dialog", { name: "My profile" });
+    fireEvent.click(within(dlg).getByText("Save profile"));
+    expect(within(dlg).getByRole("alert").textContent).toMatch(/Choose your speciality/);
+    type(within(dlg).getByLabelText("Speciality"), "orthodontics");
+    fireEvent.click(within(dlg).getByText("Save profile"));
+    await waitFor(() => expect(dl.saveProfile).toHaveBeenCalledWith({ name: "", qualification: "", specialty: "orthodontics" }));
+    expect((await screen.findByTestId("doclog-profile")).textContent).toMatch(/Orthodontics/);
+    fireEvent.click(screen.getByText("Add visit"));
+    const form = await screen.findByRole("dialog", { name: "Add visit" });
+    expect(within(form).getByRole("button", { name: "Braces fixing" })).toBeTruthy();
+    expect(within(form).queryByRole("button", { name: "RCT" })).toBeNull();
   });
 
   it("shows a retry when the cloud cannot be reached, and a sign-in notice without an api", async () => {

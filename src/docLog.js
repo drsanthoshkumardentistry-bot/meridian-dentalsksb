@@ -2,8 +2,34 @@
 // Money is kept in paise (whole numbers). Dates are "YYYY-MM-DD" strings in local time.
 import { MAX_AMOUNT_P, toPaise } from "./billing.js";
 import { toCsv } from "./reports.js";
+import { SPECIALTIES } from "./connect/rules.js";
 
 export const TREATMENTS = ["Consultation", "RCT", "Extraction", "Surgery", "Implant", "Perio", "Ortho", "Other"];
+/** Treatment buttons shown in "Add visit" for each speciality. "Other" is always last. */
+export const SPECIALTY_TREATMENTS = {
+  general: ["Consultation", "Filling", "Scaling", "RCT", "Extraction", "Crown", "Denture", "Other"],
+  endodontics: ["Consultation", "RCT", "Retreatment", "Re-RCT access", "Post and core", "Apicoectomy", "Pulpotomy", "Other"],
+  oral_surgery: ["Consultation", "Surgical extraction", "Impaction", "Cyst enucleation", "Implant placement", "Sinus lift", "Fracture fixation", "Biopsy", "Other"],
+  periodontics: ["Consultation", "Scaling", "Flap surgery", "Gingivectomy", "Graft", "Crown lengthening", "Maintenance", "Other"],
+  orthodontics: ["Consultation", "Braces fixing", "Adjustment", "Aligners", "Retainer", "Debonding", "Other"],
+  prosthodontics: ["Consultation", "Crown and bridge", "Complete denture", "Partial denture", "Veneer", "Implant crown", "Maxillofacial prosthesis", "Other"],
+  pedodontics: ["Consultation", "Pulpectomy", "Pulpotomy", "Stainless steel crown", "Space maintainer", "Sealant", "Fluoride", "Other"],
+  implantology: ["Consultation", "Implant placement", "Bone graft", "Sinus lift", "Second stage", "Implant crown", "Other"],
+  oral_medicine: ["Consultation", "OPG", "CBCT", "Biopsy", "Lesion management", "TMJ management", "Other"],
+  oral_pathology: ["Consultation", "Biopsy", "Cytology", "Report", "Other"],
+  public_health: ["Consultation", "Screening camp", "Oral health talk", "Fluoride programme", "Other"],
+};
+export const specialtyOptions = SPECIALTIES;
+/** Treatment buttons for a speciality; unknown or unset gives the general list. */
+export const treatmentsFor = (specialty) => SPECIALTY_TREATMENTS[specialty] || SPECIALTY_TREATMENTS.general;
+
+/** Checks the doctor's own DocLog profile. Returns { error } or { profile }. */
+export function buildProfile(form) {
+  const specialty = String((form && form.specialty) || "");
+  if (!SPECIALTIES.some(([k]) => k === specialty)) return { error: "Choose your speciality." };
+  return { profile: { name: clean(form.name, 80), qualification: clean(form.qualification, 60), specialty } };
+}
+
 export const CASE_STATUSES = [["planned", "Planned"], ["inprogress", "In progress"], ["completed", "Completed"]];
 export const PAY_MODES = [["cash", "Cash"], ["upi", "UPI"], ["bank", "Bank transfer"], ["other", "Other"]];
 export const MAX_VISITS_LOADED = 600;
