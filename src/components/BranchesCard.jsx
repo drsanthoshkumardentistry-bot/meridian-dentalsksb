@@ -36,18 +36,18 @@ export default function BranchesCard({ branches, data, onChange, newId, onTransf
         <p className="text-slate-500">Run several clinics from one account. Each record belongs to one branch, and the branch switcher in the header filters every screen.</p>
       </div>
       <div className="overflow-x-auto"><table className="w-full text-left">
-        <thead><tr className="text-slate-500"><th className="py-1 font-semibold">Branch</th><th className="font-semibold">Patients</th><th className="font-semibold">Visits today</th><th className="font-semibold">Billed this month</th><th /></tr></thead>
+        <thead><tr className="text-slate-500"><th className="py-1 font-semibold">Branch</th><th className="font-semibold">Patients</th><th className="font-semibold hidden sm:table-cell">Visits today</th><th className="font-semibold hidden sm:table-cell">Billed this month</th><th /></tr></thead>
         <tbody>
           {rows.map((r) => (
             <tr key={r.id} className="border-t border-slate-100">
-              <td className="py-2 pr-2">
+              <td className="py-2 pr-2 min-w-[9rem]">
                 <input aria-label={`Name of ${r.name}`} className={`${input} w-full`} value={edit[r.id] ?? r.name} maxLength={40}
                   onChange={(e) => setEdit({ ...edit, [r.id]: e.target.value })}
                   onBlur={() => { if (edit[r.id] !== undefined && edit[r.id] !== r.name) { apply(renameBranch(branches, r.id, edit[r.id])); } setEdit((s) => { const { [r.id]: _, ...rest } = s; return rest; }); }} />
               </td>
               <td className="tabular">{r.patients}</td>
-              <td className="tabular">{r.todayAppointments}</td>
-              <td className="tabular">{formatINR(r.billedThisMonthP)}</td>
+              <td className="tabular hidden sm:table-cell">{r.todayAppointments}</td>
+              <td className="tabular hidden sm:table-cell">{formatINR(r.billedThisMonthP)}</td>
               <td className="text-right"><button type="button" aria-label={`Remove ${r.name}`} onClick={() => apply(removeBranch(branches, r.id, data))} className="text-slate-500 hover:text-rose-600 font-semibold">Remove</button></td>
             </tr>
           ))}

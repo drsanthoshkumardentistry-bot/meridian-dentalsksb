@@ -2557,8 +2557,8 @@ export default function App() {
           {/* TAB 1: PATIENTS & ODONTOGRAM */}
           {activeNav === "Patients & Odontogram" && (
             <div>
-              <div className="flex items-center justify-between mb-6">
-                <div>
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+                <div className="min-w-[14rem] flex-1">
                   <h1 className="text-xl font-bold text-slate-900">Patient Records</h1>
                   <p className="text-xs text-slate-500">FDI 32-Tooth Odontogram, Trauma, Rx & History</p>
                 </div>
