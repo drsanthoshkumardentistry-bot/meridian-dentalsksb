@@ -2605,7 +2605,7 @@ export default function App() {
                   aria-label="Filter patients"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Filter by name, phone or label"
+                  placeholder="Filter by name, phone or label" maxLength={100}
                   className="mb-4 w-full sm:w-80 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none"
                 />
               )}
@@ -3051,7 +3051,7 @@ export default function App() {
                       aria-label="Search appointments"
                       value={diaryQuery}
                       onChange={(e) => setDiaryQuery(e.target.value)}
-                      placeholder="Search patient, phone or doctor"
+                      placeholder="Search patient, phone or doctor" maxLength={100}
                       className="ml-auto w-full sm:w-64 px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none"
                     />
                   </div>
@@ -3263,7 +3263,7 @@ export default function App() {
                     aria-label="Search invoices"
                     value={invoiceQuery}
                     onChange={(e) => setInvoiceQuery(e.target.value)}
-                    placeholder="Search patient, invoice or treatment"
+                    placeholder="Search patient, invoice or treatment" maxLength={100}
                     className="ml-auto w-full sm:w-64 px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none"
                   />
                   <button
@@ -3635,7 +3635,7 @@ export default function App() {
                       aria-label="Search stock"
                       value={stockQuery}
                       onChange={(e) => setStockQuery(e.target.value)}
-                      placeholder="Search item or category"
+                      placeholder="Search item or category" maxLength={100}
                       className="ml-auto w-full sm:w-64 px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none"
                     />
                   </div>

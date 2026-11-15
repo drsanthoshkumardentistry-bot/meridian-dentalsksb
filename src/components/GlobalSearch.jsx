@@ -110,7 +110,7 @@ export default function GlobalSearch({ patients, appointments, invoices, onPick 
         }}
         onFocus={() => setOpen(true)}
         onKeyDown={onInputKey}
-        placeholder="Search patients, visits, invoices"
+        placeholder="Search patients, visits, invoices" maxLength={100}
         className="w-full pl-9 pr-3 py-2 sm:py-1.5 bg-enamel border border-rule rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
       />
       {showPanel && (

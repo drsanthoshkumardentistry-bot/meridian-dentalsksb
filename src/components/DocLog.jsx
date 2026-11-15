@@ -434,7 +434,7 @@ export default function DocLog({ api, showToast }) {
               <button key={id} type="button" aria-pressed={status === id} onClick={() => setStatus(id)} className={`px-3 py-2 rounded-lg border text-xs font-semibold ${status === id ? "bg-blue-50 border-blue-300 text-blue-800" : "bg-white border-rule text-slate-700"}`}>{text}</button>
             ))}
             <label htmlFor="dl-q" className="sr-only">Search</label>
-            <input id="dl-q" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search patient or treatment" className="ml-auto min-w-[200px] px-3 py-2 border border-rule rounded-lg bg-white text-xs" />
+            <input id="dl-q" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search patient or treatment" maxLength={100} className="ml-auto min-w-[200px] px-3 py-2 border border-rule rounded-lg bg-white text-xs" />
           </div>
 
           {rows.length === 0 ? <p className="text-sm text-slate-500 py-4" data-testid="doclog-none">No visits match. Change the month, clinic or filter.</p> : (
