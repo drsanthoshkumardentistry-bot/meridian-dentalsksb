@@ -5,6 +5,7 @@ import { legalPageFromSearch } from './legal.js';
 import { seoPageForPath } from './seoPages.js';
 import { shouldAutoReload } from './recover.js';
 import { EARLY_ACCESS_PATH } from './earlyAccess.js';
+import { installErrorReporting } from './errorReport.js';
 import './index.css';
 
 // Each route is its own file, so a patient opening an estimate or booking link downloads only that page,
@@ -17,6 +18,8 @@ const LegalPage = lazy(() => import('./components/LegalPage.jsx'));
 const PayPage = lazy(() => import('./components/PayPage.jsx'));
 const SeoPage = lazy(() => import('./components/SeoPage.jsx'));
 const EarlyAccessPage = lazy(() => import('./components/EarlyAccessPage.jsx'));
+
+if (!import.meta.env.DEV) installErrorReporting();
 
 // After an update, a tab left open can ask for a file that is gone. Reload once to pick up the new version.
 window.addEventListener('vite:preloadError', (event) => {

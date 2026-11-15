@@ -1,5 +1,6 @@
 import React from "react";
 import { isChunkError, shouldAutoReload, crashCode } from "../recover.js";
+import { reportError } from "../errorReport.js";
 
 const WHATSAPP = "919043205927";
 
@@ -17,6 +18,7 @@ export default class ErrorBoundary extends React.Component {
   componentDidCatch(error) {
     // Log the technical error only; never log patient data
     console.error("MeriDent crashed:", error && error.message);
+    reportError(error, "screen");
     if (isChunkError(error) && shouldAutoReload()) {
       this.setState({ reloading: true });
       window.location.reload();
