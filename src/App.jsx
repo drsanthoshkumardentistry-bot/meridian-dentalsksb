@@ -64,6 +64,7 @@ import PatientGallery from "./components/PatientGallery.jsx";
 import { todayActionTiles, totalActions, liveFlow } from "./todayActions.js";
 import { listImages, addImage, removeImage, countImages } from "./galleryStore.js";
 import { cleanupPatientRemote } from "./patientCleanup.js";
+import { eraseFromRecords } from "./patientErase.js";
 import { buildPayLink } from "./payLink.js";
 import { readSeal, ensureSeal } from "./paySeal.js";
 import { windowFor, rangeProblem } from "./dateRange.js";
@@ -95,6 +96,7 @@ import { buildNotifications } from "./notifications.js";
 import { backupNotification, markBackupDone, readLastBackup } from "./reliability.js";
 import LockScreen from "./components/LockScreen";
 import SecurityCard from "./components/SecurityCard";
+import DeleteAccountCard from "./components/DeleteAccountCard.jsx";
 import { hasLock as pinLockOn, readLock as readPinLock } from "./appLock";
 import FullscreenButton from "./components/FullscreenButton.jsx";
 import ConnectionBar from "./components/ConnectionBar.jsx";
@@ -3867,6 +3869,8 @@ export default function App() {
 
               <SecurityCard uid={authUser?.uid} onLockNow={() => setPinLocked(true)} onChange={() => setPinTick((n) => n + 1)} />
 
+              {role === "owner" && <DeleteAccountCard onSignOut={handleLogout} onDeleted={() => { setAuthUser(null); setAuthError(""); setAuthNotice("Your account and its data were deleted."); setActiveNav("Dashboard"); }} />}
+
               {(role === "owner" || role === "manager") && (
                 <div className="space-y-2">
                   <PracticeChairs
@@ -5582,12 +5586,15 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => {
-                  if (confirm(`Delete chart for ${activePatient.name}?`)) {
+                  if (confirm(`Delete ${activePatient.name} completely?\n\nTheir chart and appointments are removed, and their name and phone are taken off their invoices. The invoice numbers and amounts are kept for your accounts. This cannot be undone.`)) {
+                    const gone = eraseFromRecords({ patientId: activePatient.id, appointments: allAppointments, invoices: allInvoices });
+                    setAppointments(gone.appointments);
+                    setInvoices(gone.invoices);
                     setPatients((prev) => prev.filter((p) => p.id !== activePatient.id));
                     cleanupPatientRemote(db, CLINIC_ID, activePatient).catch(() => {});
                     logAudit("patient.delete", activePatient.name);
                     setIsChartModalOpen(false);
-                    showToast("Patient chart deleted");
+                    showToast("Patient deleted");
                   }
                 }}
                 className="text-rose-600 hover:text-rose-800 font-medium flex items-center gap-1.5"
