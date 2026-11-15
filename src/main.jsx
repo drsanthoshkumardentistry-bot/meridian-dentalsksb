@@ -9,6 +9,7 @@ import { EARLY_ACCESS_PATH } from './earlyAccess.js';
 import { installErrorReporting } from './errorReport.js';
 import { startSentry } from './sentry.js';
 import { registerOfflinePage } from './offlinePage.js';
+import { hasSavedSession } from './savedSession.js';
 import './index.css';
 
 // Each route is its own file, so a patient opening an estimate or booking link downloads only that page,
@@ -20,6 +21,7 @@ const PatientPortalRoute = lazyWithRetry(() => import('./components/PatientPorta
 const LegalPage = lazyWithRetry(() => import('./components/LegalPage.jsx'));
 const PayPage = lazyWithRetry(() => import('./components/PayPage.jsx'));
 const SeoPage = lazyWithRetry(() => import('./components/SeoPage.jsx'));
+const LandingShell = lazyWithRetry(() => import('./components/LandingShell.jsx'));
 const EarlyAccessPage = lazyWithRetry(() => import('./components/EarlyAccessPage.jsx'));
 
 if (!import.meta.env.DEV) {
@@ -59,12 +61,26 @@ const Loading = () => (
 );
 
 
+// The home page for someone with no saved sign-in is the landing page alone; everyone else goes straight to the app.
+function Home() {
+  const eligible = window.location.pathname === '/' && !window.location.search;
+  const [mode, setMode] = React.useState(eligible ? 'checking' : 'app');
+  React.useEffect(() => {
+    if (!eligible) return undefined;
+    let live = true;
+    hasSavedSession().then((saved) => { if (live) setMode(saved ? 'app' : 'landing'); });
+    return () => { live = false; };
+  }, [eligible]);
+  if (mode === 'checking') return <Loading />;
+  return mode === 'landing' ? <LandingShell /> : <App />;
+}
+
 registerOfflinePage();
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary>
       <Suspense fallback={<Loading />}>
-        {legalPage ? <LegalPage page={legalPage} /> : seoPage ? <SeoPage page={seoPage} /> : earlyAccess ? <EarlyAccessPage /> : payPage ? <PayPage /> : planToken ? <PlanApprovalRoute token={planToken} /> : portalToken ? <PatientPortalRoute token={portalToken} /> : bookId ? <BookingPageRoute clinicId={bookId} /> : <App />}
+        {legalPage ? <LegalPage page={legalPage} /> : seoPage ? <SeoPage page={seoPage} /> : earlyAccess ? <EarlyAccessPage /> : payPage ? <PayPage /> : planToken ? <PlanApprovalRoute token={planToken} /> : portalToken ? <PatientPortalRoute token={portalToken} /> : bookId ? <BookingPageRoute clinicId={bookId} /> : <Home />}
       </Suspense>
     </ErrorBoundary>
   </React.StrictMode>

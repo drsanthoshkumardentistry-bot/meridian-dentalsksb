@@ -317,6 +317,7 @@ export default function LandingPage({
   onEmailSignUp,
   onResetPassword,
   loginBusy = false,
+  toLogin,
   authError = "",
   authNotice = "",
   firebaseConfigured = true
@@ -489,7 +490,7 @@ export default function LandingPage({
               {!emailOpen ? (
                 <button
                   type="button"
-                  onClick={() => setEmailOpen(true)}
+                  onClick={toLogin ? toLogin : () => setEmailOpen(true)}
                   className="text-sm font-semibold text-brand-700 hover:text-brand-900 underline underline-offset-4"
                 >
                   Use email and password instead
