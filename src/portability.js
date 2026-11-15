@@ -255,8 +255,11 @@ const GENDERS = { m: "Male", male: "Male", f: "Female", female: "Female", o: "Ot
  * Turns CSV rows into patients. Rows without a name are skipped; a phone that is not a 10-digit mobile is left blank
  * and reported. A person already in the clinic (same name and phone) is skipped, so importing twice is safe.
  */
-export const patientsFromCsv = (text, existing = [], makeId, now = new Date()) => {
-  const rows = parseCsv(text);
+export const patientsFromCsv = (text, existing = [], makeId, now = new Date()) => patientsFromRows(parseCsv(text), existing, makeId, now);
+
+/** Same as patientsFromCsv, for rows already split into cells (for example from an Excel sheet). */
+export const patientsFromRows = (rows, existing = [], makeId, now = new Date()) => {
+  rows = Array.isArray(rows) ? rows.filter(Array.isArray) : [];
   if (rows.length < 2) return { ok: false, error: "The file needs a header row and at least one patient" };
   const map = mapHeaders(rows[0]);
   if (map.name === undefined) return { ok: false, error: "No Name column found. Add a column headed Name (and Phone, Age, Gender if you have them)" };
@@ -299,3 +302,6 @@ export const patientsFromCsv = (text, existing = [], makeId, now = new Date()) =
   });
   return { ok: true, patients, skipped, problems, columns: Object.keys(map) };
 };
+
+/** A header-only CSV the clinic can fill in Excel and bring back with "Choose file". */
+export const patientTemplateCsv = () => toCsv([["Name", "Phone", "Age", "Gender", "Email", "Address", "Medical alert", "Allergies"]]);

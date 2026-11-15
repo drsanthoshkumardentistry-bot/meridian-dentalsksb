@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import { Download, Upload, Lock, ShieldAlert, History } from "lucide-react";
 import {
   buildBackup, backupFileName, encryptBackup, decryptBackup, validatePassword, parseBackupText, validateBackup, mergeBackup,
-  patientsCsv, appointmentsCsv, invoicesDetailCsv, patientsFromCsv,
+  patientsCsv, appointmentsCsv, invoicesDetailCsv, patientsFromCsv, patientsFromRows, patientTemplateCsv,
 } from "../portability.js";
 import { describePoint } from "../restorePoints.js";
 
@@ -10,6 +10,12 @@ const btn = "px-3 py-2 bg-white border border-rule hover:bg-enamel rounded-lg te
 const primary = "px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-semibold inline-flex items-center gap-1.5";
 const field = "w-full px-3 py-2 border border-rule rounded-lg text-xs";
 
+const readBytes = (file) => new Promise((resolve, reject) => {
+  const r = new FileReader();
+  r.onload = () => resolve(new Uint8Array(r.result));
+  r.onerror = () => reject(new Error("read"));
+  r.readAsArrayBuffer(file);
+});
 const readFile = (file) => new Promise((resolve, reject) => {
   const r = new FileReader();
   r.onload = () => resolve(String(r.result || ""));
@@ -74,6 +80,17 @@ export default function DataPortability({ data, newId, onDownloadFile, onImporte
     setError(""); setPlan(null); setNeedPw(null);
     if (!file) return;
     if (file.size > 60 * 1024 * 1024) { setError("This file is too large to import (60 MB limit)."); return; }
+    if (/\.xlsx?$/i.test(file.name)) {
+      try {
+        const { xlsxToRows } = await import("../xlsxRows.js");
+        const x = xlsxToRows(await readBytes(file));
+        if (!x.ok) { setError(x.error); return; }
+        const r = patientsFromRows(x.rows, data.patients, () => newId("P"));
+        if (!r.ok) { setError(r.error); return; }
+        setPlan({ kind: "csv", result: r });
+      } catch { setError("Could not read this workbook. Save it again as .xlsx or .csv and retry."); }
+      return;
+    }
     let text;
     try { text = await readFile(file); } catch { setError("Could not read this file."); return; }
     if (/\.csv$/i.test(file.name) || (!text.trimStart().startsWith("{"))) {
@@ -177,9 +194,10 @@ export default function DataPortability({ data, newId, onDownloadFile, onImporte
 
       <div className="space-y-2 border-t border-rule pt-4">
         <h3 className="text-xs font-bold text-slate-900">Bring records in</h3>
-        <p className="text-xs text-slate-500">Choose a MeriDent backup (.json), or a patient list (.csv) from another system. The patient list needs a Name column; Phone, Age, Gender, Email, Address and allergies are picked up if present. Nothing changes until you confirm.</p>
-        <input ref={fileRef} type="file" accept=".json,.csv,text/csv,application/json" onChange={choose} className="sr-only" aria-label="Choose a file to import" />
-        <button type="button" onClick={() => fileRef.current && fileRef.current.click()} className={btn}><Upload className="w-3.5 h-3.5" /> Choose file</button>
+        <p className="text-xs text-slate-500">Choose a MeriDent backup (.json), or a patient list from Excel (.xlsx) or a .csv file. The patient list needs a Name column; Phone, Age, Gender, Email, Address and allergies are picked up if present. Nothing changes until you confirm.</p>
+        <input ref={fileRef} type="file" accept=".json,.csv,.xlsx,.xls,text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={choose} className="sr-only" aria-label="Choose a file to import" />
+        <button type="button" onClick={() => fileRef.current && fileRef.current.click()} className={btn}><Upload className="w-3.5 h-3.5" /> Choose file</button>{" "}
+        <button type="button" onClick={() => onDownloadFile(patientTemplateCsv(), "patient-list-template.csv", "text/csv", true)} className={btn}><Download className="w-3.5 h-3.5" /> Download blank patient list</button>
 
         {needPw && (
           <div className="rounded-lg border border-rule p-3 space-y-2">
