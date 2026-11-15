@@ -147,10 +147,10 @@ describe("authentication gate", () => {
   it("new clinics are asked to complete their profile", async () => {
     h.user = googleUser;
     render(<App />);
-    expect(await screen.findByText(/Complete your clinic profile/i)).toBeTruthy();
-    fireEvent.click(screen.getByText("Open Practice Profile"));
+    expect(await screen.findByText(/Finish your clinic profile/i)).toBeTruthy();
+    fireEvent.click(screen.getByText("Open profile"));
     expect(await screen.findByText(/Dental Council Registration No/i)).toBeTruthy();
-    expect(screen.queryByText(/Complete your clinic profile/i)).toBeNull();
+    expect(screen.queryByText(/Finish your clinic profile/i)).toBeNull();
   });
 });
 
