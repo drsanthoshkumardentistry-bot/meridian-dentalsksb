@@ -4,13 +4,13 @@ const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 export const istTime = (d = new Date()) =>
   new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }).format(d) + " IST";
 
-export const buildAlert = ({ email, name, firstTime = false }, now = new Date()) => {
+export const buildAlert = ({ email, name, firstTime = false, blockUrl = "" }, now = new Date()) => {
   const who = String(email || "unknown").slice(0, 120);
   const when = istTime(now);
   return {
     subject: `${who} logged in to MeriDent`,
-    text: `${who} logged in to MeriDent.\n${name ? `Name: ${name}\n` : ""}Time: ${when}\n${firstTime ? "This looks like a first sign-in.\n" : ""}`,
-    html: `<p><b>${esc(who)}</b> logged in to MeriDent.</p>${name ? `<p>Name: ${esc(name)}</p>` : ""}<p>Time: ${esc(when)}</p>${firstTime ? "<p>This looks like a first sign-in.</p>" : ""}`,
+    text: `${who} logged in to MeriDent.\n${name ? `Name: ${name}\n` : ""}Time: ${when}\n${firstTime ? "This looks like a first sign-in.\n" : ""}${blockUrl ? `\nNot someone you expect? Block this login (asks you to confirm first):\n${blockUrl}\n` : ""}`,
+    html: `<p><b>${esc(who)}</b> logged in to MeriDent.</p>${name ? `<p>Name: ${esc(name)}</p>` : ""}<p>Time: ${esc(when)}</p>${firstTime ? "<p>This looks like a first sign-in.</p>" : ""}${blockUrl ? `<p>Not someone you expect? <a href="${esc(blockUrl)}">Block this login</a> (you will be asked to confirm).</p>` : ""}`,
   };
 };
 
