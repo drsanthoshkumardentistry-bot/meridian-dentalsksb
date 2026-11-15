@@ -4959,5 +4959,485 @@ export const MCQS = [
   "is_pyq": false,
   "exam": "NEET MDS",
   "is_important": true
+ },
+ {
+  "id": 311,
+  "subject": "Physiology",
+  "question": "The first heart sound is caused by closure of the:",
+  "options": [
+   "Aortic and pulmonary valves",
+   "Mitral and tricuspid valves",
+   "Aortic valve only",
+   "Foramen ovale"
+  ],
+  "answer": 1,
+  "explanation": "S1 marks the start of ventricular systole; S2 is semilunar valve closure.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 312,
+  "subject": "Physiology",
+  "question": "During isovolumetric contraction:",
+  "options": [
+   "Only the AV valves are open",
+   "All four valves are closed",
+   "The aortic valve is open",
+   "The ventricles fill rapidly"
+  ],
+  "answer": 1,
+  "explanation": "Pressure rises in a closed chamber until it exceeds aortic pressure.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 313,
+  "subject": "Physiology",
+  "question": "Baroreceptor impulses from the carotid sinus travel in the:",
+  "options": [
+   "Vagus nerve",
+   "Glossopharyngeal nerve (sinus nerve of Hering)",
+   "Hypoglossal nerve",
+   "Phrenic nerve"
+  ],
+  "answer": 1,
+  "explanation": "Aortic arch baroreceptors use the vagus.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 314,
+  "subject": "Biochemistry",
+  "question": "The rate-limiting enzyme of glycolysis is:",
+  "options": [
+   "Hexokinase",
+   "Phosphofructokinase-1",
+   "Pyruvate kinase",
+   "Enolase"
+  ],
+  "answer": 1,
+  "explanation": "PFK-1 is inhibited by ATP and citrate and activated by AMP and fructose-2,6-bisphosphate.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 315,
+  "subject": "Biochemistry",
+  "question": "Pyruvate dehydrogenase requires which vitamin as a cofactor (as TPP)?",
+  "options": [
+   "Riboflavin",
+   "Thiamine",
+   "Pyridoxine",
+   "Biotin"
+  ],
+  "answer": 1,
+  "explanation": "Thiamine deficiency impairs carbohydrate metabolism (beriberi, Wernicke's).",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 316,
+  "subject": "Biochemistry",
+  "question": "An AST:ALT ratio greater than 2 suggests:",
+  "options": [
+   "Viral hepatitis",
+   "Alcoholic liver disease",
+   "Obstructive jaundice",
+   "Gilbert's syndrome"
+  ],
+  "answer": 1,
+  "explanation": "Viral hepatitis typically raises ALT more than AST.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 317,
+  "subject": "General Medicine",
+  "question": "Pale stools, dark urine and itching with very high ALP suggest:",
+  "options": [
+   "Haemolytic jaundice",
+   "Obstructive jaundice",
+   "Gilbert's syndrome",
+   "Physiological jaundice"
+  ],
+  "answer": 1,
+  "explanation": "Conjugated bilirubin cannot reach the gut and spills into urine.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 318,
+  "subject": "General Medicine",
+  "question": "Langhans giant cells with caseating granulomas are characteristic of:",
+  "options": [
+   "Sarcoidosis",
+   "Tuberculosis",
+   "Crohn's disease",
+   "Foreign body reaction"
+  ],
+  "answer": 1,
+  "explanation": "Sarcoid granulomas are non-caseating.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 319,
+  "subject": "General Medicine",
+  "question": "Pyridoxine is given with isoniazid to prevent:",
+  "options": [
+   "Hepatotoxicity",
+   "Peripheral neuropathy",
+   "Optic neuritis",
+   "Orange urine"
+  ],
+  "answer": 1,
+  "explanation": "Isoniazid interferes with B6 metabolism; ethambutol causes optic neuritis.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 320,
+  "subject": "General Medicine",
+  "question": "The rapid molecular test recommended for TB diagnosis and rifampicin resistance in India is:",
+  "options": [
+   "Mantoux test",
+   "CBNAAT (GeneXpert)",
+   "Widal test",
+   "ELISA for HIV"
+  ],
+  "answer": 1,
+  "explanation": "It detects M. tuberculosis DNA and rpoB mutations within about 2 hours.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 321,
+  "subject": "General Medicine",
+  "question": "The first-line drug for an acute asthma attack in the dental chair is:",
+  "options": [
+   "IM adrenaline",
+   "Inhaled salbutamol",
+   "Oral prednisolone",
+   "IV aminophylline"
+  ],
+  "answer": 1,
+  "explanation": "4–6 puffs via a spacer (up to 10), repeated; call for help if no response.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 322,
+  "subject": "General Medicine",
+  "question": "A \"silent chest\" in an asthmatic patient indicates:",
+  "options": [
+   "Recovery",
+   "Life-threatening asthma",
+   "Mild asthma",
+   "Pneumothorax only"
+  ],
+  "answer": 1,
+  "explanation": "Very little air movement – an emergency.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 323,
+  "subject": "General Medicine",
+  "question": "Status epilepticus is defined as a seizure lasting more than:",
+  "options": [
+   "30 seconds",
+   "2 minutes",
+   "5 minutes",
+   "30 minutes"
+  ],
+  "answer": 2,
+  "explanation": "The operational definition is now 5 minutes; give buccal or IM midazolam.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 324,
+  "subject": "General Medicine",
+  "question": "The recommended adult dose of buccal midazolam for a prolonged seizure is:",
+  "options": [
+   "1 mg",
+   "2.5 mg",
+   "10 mg",
+   "50 mg"
+  ],
+  "answer": 2,
+  "explanation": "10 mg for adults; lower doses for children by age.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 325,
+  "subject": "General Surgery",
+  "question": "The universal donor blood group for red cells is:",
+  "options": [
+   "AB positive",
+   "O negative",
+   "A negative",
+   "B positive"
+  ],
+  "answer": 1,
+  "explanation": "O-negative cells lack A, B and D antigens; AB-positive is the universal recipient.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 326,
+  "subject": "General Surgery",
+  "question": "The commonest transfusion reaction is:",
+  "options": [
+   "Acute haemolytic",
+   "Febrile non-haemolytic",
+   "Anaphylactic",
+   "TRALI"
+  ],
+  "answer": 1,
+  "explanation": "Caused by cytokines or antibodies to donor leucocytes; leucodepletion reduces it.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 327,
+  "subject": "General Surgery",
+  "question": "A midline neck swelling that moves upward on tongue protrusion is a:",
+  "options": [
+   "Branchial cyst",
+   "Thyroglossal cyst",
+   "Dermoid cyst",
+   "Cystic hygroma"
+  ],
+  "answer": 1,
+  "explanation": "Its tract is attached to the hyoid and foramen caecum; treated by Sistrunk's operation.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 328,
+  "subject": "General Surgery",
+  "question": "A cyst at the anterior border of the upper sternocleidomastoid containing cholesterol crystals is a:",
+  "options": [
+   "Thyroglossal cyst",
+   "Branchial cyst",
+   "Ranula",
+   "Sebaceous cyst"
+  ],
+  "answer": 1,
+  "explanation": "Usually from the second branchial cleft, presenting in young adults.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 329,
+  "subject": "General Surgery",
+  "question": "In the ATLS primary survey, the first priority is:",
+  "options": [
+   "Breathing",
+   "Airway with cervical spine protection",
+   "Circulation",
+   "Disability"
+  ],
+  "answer": 1,
+  "explanation": "ABCDE – airway is always first.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 330,
+  "subject": "General Surgery",
+  "question": "A bilateral parasymphyseal mandibular fracture endangers the airway because:",
+  "options": [
+   "The maxilla collapses",
+   "The tongue loses its anterior support and falls back",
+   "It causes laryngeal oedema",
+   "It blocks the nose"
+  ],
+  "answer": 1,
+  "explanation": "Genioglossus loses its anchorage; pull the tongue forward and stabilise the fragment.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 331,
+  "subject": "Orthodontics",
+  "question": "The most commonly used retentive clasp on removable appliances is the:",
+  "options": [
+   "C-clasp",
+   "Adams clasp",
+   "Ball-end clasp",
+   "Southend clasp"
+  ],
+  "answer": 1,
+  "explanation": "Described by C. Philip Adams; usually 0.7 mm wire on first molars.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 332,
+  "subject": "Orthodontics",
+  "question": "Doubling the diameter of a spring wire increases its force by about:",
+  "options": [
+   "2 times",
+   "4 times",
+   "8 times",
+   "16 times"
+  ],
+  "answer": 3,
+  "explanation": "Force ∝ r⁴; doubling length reduces force about 8 times.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 333,
+  "subject": "Orthodontics",
+  "question": "Cervical-pull headgear tends to:",
+  "options": [
+   "Intrude upper molars",
+   "Extrude upper molars",
+   "Expand the mandible",
+   "Protract the maxilla"
+  ],
+  "answer": 1,
+  "explanation": "It is preferred in low-angle cases; high-pull headgear suits high-angle cases.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 334,
+  "subject": "Orthodontics",
+  "question": "The appearance of a midline diastema during rapid maxillary expansion indicates:",
+  "options": [
+   "Failure of treatment",
+   "Opening of the midpalatal suture",
+   "Root resorption",
+   "Relapse"
+  ],
+  "answer": 1,
+  "explanation": "The incisors separate as the maxillary halves move apart.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 335,
+  "subject": "Orthodontics",
+  "question": "Face mask (reverse-pull headgear) therapy is most effective:",
+  "options": [
+   "In adults",
+   "In early mixed dentition (before about 10 years)",
+   "After growth is complete",
+   "Only after orthognathic surgery"
+  ],
+  "answer": 1,
+  "explanation": "Circummaxillary sutures respond best when young.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 336,
+  "subject": "Orthodontics",
+  "question": "Rotational relapse is mainly due to the:",
+  "options": [
+   "Oblique fibres of the PDL",
+   "Supracrestal gingival and transseptal fibres",
+   "Alveolar bone",
+   "Cementum"
+  ],
+  "answer": 1,
+  "explanation": "They remodel slowly; circumferential supracrestal fibrotomy reduces relapse.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 337,
+  "subject": "Orthodontics",
+  "question": "An Essix retainer is a:",
+  "options": [
+   "Bonded lingual wire",
+   "Vacuum-formed clear retainer",
+   "Hawley retainer",
+   "Functional appliance"
+  ],
+  "answer": 1,
+  "explanation": "Thermoformed plastic covering the teeth; aesthetic but can wear or crack.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 338,
+  "subject": "Pedodontics",
+  "question": "The minimum oxygen concentration delivered during nitrous oxide sedation is:",
+  "options": [
+   "10%",
+   "21%",
+   "30%",
+   "50%"
+  ],
+  "answer": 2,
+  "explanation": "Modern machines have a fail-safe that prevents delivering less than 30% O₂.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 339,
+  "subject": "Pedodontics",
+  "question": "In a child, the mandibular foramen lies:",
+  "options": [
+   "Above the occlusal plane",
+   "At or below the occlusal plane",
+   "Behind the ramus",
+   "At the condyle"
+  ],
+  "answer": 1,
+  "explanation": "It rises with growth; in adults it is about 6–10 mm above the occlusal plane.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 340,
+  "subject": "Pedodontics",
+  "question": "Children with Down syndrome characteristically show:",
+  "options": [
+   "High caries and healthy periodontium",
+   "Early severe periodontitis",
+   "Early eruption of teeth",
+   "Macrodontia"
+  ],
+  "answer": 1,
+  "explanation": "Neutrophil dysfunction causes aggressive periodontal destruction; eruption is delayed.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
  }
 ]

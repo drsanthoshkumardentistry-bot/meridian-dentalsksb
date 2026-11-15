@@ -29,13 +29,13 @@ const BDS = [
     'Thorax, abdomen and limbs (general overview)',
   ]),
   subject('physio-biochem', 'General Human Physiology & Biochemistry', 1, 'Physiology', [
-    ['Blood and haemostasis', { topic: 'haemostasis' }], 'Nerve and muscle physiology', 'Cardiovascular system', 'Respiratory system',
+    ['Blood and haemostasis', { topic: 'haemostasis' }], 'Nerve and muscle physiology', ['Cardiovascular system', { topic: 'cardiac-cycle' }], 'Respiratory system',
     ['Gastrointestinal physiology and saliva', { topic: 'saliva' }], 'Renal physiology and body fluids', ['Endocrine system: pituitary, thyroid, parathyroid, calcium', { topic: 'calcium-metabolism' }],
     ['Central nervous system and physiology of pain', { topic: 'physiology-of-pain' }], 'Special senses: taste', 'Reproductive physiology (overview)',
-    ['Carbohydrate metabolism', { mcq: 'Biochemistry' }], ['Lipid metabolism', { mcq: 'Biochemistry' }],
+    ['Carbohydrate metabolism', { topic: 'carbohydrate-metabolism', mcq: 'Biochemistry' }], ['Lipid metabolism', { mcq: 'Biochemistry' }],
     ['Proteins and amino acids', { mcq: 'Biochemistry' }], ['Enzymes', { mcq: 'Biochemistry' }], ['Vitamins', { topic: 'vitamins', mcq: 'Biochemistry' }],
-    ['Minerals: calcium, phosphorus, fluoride', { mcq: 'Biochemistry' }], ['Nucleic acids and molecular biology', { mcq: 'Biochemistry' }],
-    ['Acid–base balance', { topic: 'acid-base', mcq: 'Biochemistry' }], ['Clinical biochemistry and liver function tests', { mcq: 'Biochemistry' }],
+    ['Minerals: calcium, phosphorus, fluoride', { topic: 'fluorides', mcq: 'Biochemistry' }], ['Nucleic acids and molecular biology', { mcq: 'Biochemistry' }],
+    ['Acid–base balance', { topic: 'acid-base', mcq: 'Biochemistry' }], ['Clinical biochemistry and liver function tests', { topic: 'jaundice-liver', mcq: 'Biochemistry' }],
   ]),
   subject('dental-anatomy', 'Dental Anatomy, Embryology & Oral Histology', 1, 'Dental Anatomy', [
     ['Development of teeth (odontogenesis)', { topic: 'tooth-development' }], ['Enamel', { topic: 'enamel' }], ['Dentine', { topic: 'dentine' }], 'Dental pulp', ['Cementum', { topic: 'cementum' }], ['Periodontal ligament', { topic: 'periodontal-ligament' }], 'Alveolar bone',
@@ -78,15 +78,15 @@ const BDS = [
   ]),
   // ---------------- 3rd year ----------------
   subject('medicine', 'General Medicine', 3, 'General Medicine', [
-    'Infectious diseases: typhoid, tuberculosis, HIV', ['Cardiovascular: IHD, hypertension, rheumatic heart disease, infective endocarditis', { topic: 'infective-endocarditis' }],
-    'Respiratory: asthma, COPD, pneumonia', ['Haematology: anaemia and bleeding disorders', { topic: 'anaemia' }], ['Endocrine: diabetes mellitus and thyroid disease', { topic: 'diabetes-dental' }],
-    'Gastrointestinal and liver disease: jaundice, hepatitis', 'Renal disease', 'Neurology: epilepsy, facial palsy, trigeminal neuralgia',
-    'Nutrition and vitamin deficiencies', ['Medical emergencies: syncope, anaphylaxis, CPR', { topic: 'adc-anaphylaxis' }],
+    ['Infectious diseases: typhoid, tuberculosis, HIV', { topic: 'tuberculosis' }], ['Cardiovascular: IHD, hypertension, rheumatic heart disease, infective endocarditis', { topic: 'infective-endocarditis' }],
+    ['Respiratory: asthma, COPD, pneumonia', { topic: 'asthma-copd' }], ['Haematology: anaemia and bleeding disorders', { topic: 'anaemia' }], ['Endocrine: diabetes mellitus and thyroid disease', { topic: 'diabetes-dental' }],
+    ['Gastrointestinal and liver disease: jaundice, hepatitis', { topic: 'jaundice-liver' }], 'Renal disease', ['Neurology: epilepsy, facial palsy, trigeminal neuralgia', { topic: 'epilepsy' }],
+    ['Nutrition and vitamin deficiencies', { topic: 'vitamins' }], ['Medical emergencies: syncope, anaphylaxis, CPR', { topic: 'adc-anaphylaxis' }],
   ]),
   subject('surgery', 'General Surgery', 3, 'General Surgery', [
-    ['Wound healing and surgical infections', { topic: 'wound-healing' }], ['Shock and haemorrhage', { topic: 'shock' }], 'Fluids, electrolytes and blood transfusion', ['Burns', { topic: 'burns' }],
-    'Cysts and tumours: benign and malignant', 'Neck swellings and lymph nodes', 'Thyroid swellings', 'Salivary gland swellings',
-    ['Oral cancer and neck dissection (overview)', { topic: 'neck-dissection' }], 'Trauma and ATLS principles', 'Sterilisation and asepsis in surgery', ['Tracheostomy', { topic: 'tracheostomy' }],
+    ['Wound healing and surgical infections', { topic: 'wound-healing' }], ['Shock and haemorrhage', { topic: 'shock' }], ['Fluids, electrolytes and blood transfusion', { topic: 'blood-transfusion' }], ['Burns', { topic: 'burns' }],
+    'Cysts and tumours: benign and malignant', ['Neck swellings and lymph nodes', { topic: 'neck-swellings' }], 'Thyroid swellings', ['Salivary gland swellings', { topic: 'pleomorphic-adenoma' }],
+    ['Oral cancer and neck dissection (overview)', { topic: 'neck-dissection' }], ['Trauma and ATLS principles', { topic: 'atls' }], ['Sterilisation and asepsis in surgery', { topic: 'sterilisation' }], ['Tracheostomy', { topic: 'tracheostomy' }],
   ]),
   subject('oral-pathology', 'Oral Pathology & Oral Microbiology', 3, 'Oral Pathology', [
     ['Developmental disturbances of teeth', { topic: 'tooth-anomalies' }], 'Developmental disturbances of oral and paraoral structures',
@@ -109,14 +109,14 @@ const BDS = [
   subject('pedodontics', 'Paediatric & Preventive Dentistry', 4, 'Pedodontics', [
     ['Child psychology and behaviour management', { topic: 'behaviour-management' }], 'Growth and development', ['Dental caries in children and early childhood caries', { topic: 'early-childhood-caries' }],
     ['Fluorides', { topic: 'fluorides' }], ['Pit and fissure sealants', { topic: 'pit-fissure-sealants' }], ['Pulp therapy in primary teeth', { topic: 'pulpotomy-primary' }],
-    ['Traumatic injuries to teeth', { topic: 'adc-avulsion' }], ['Space maintainers', { topic: 'space-maintainers' }], ['Oral habits', { topic: 'oral-habits' }], 'Children with special healthcare needs',
-    ['Paediatric restorative dentistry and stainless steel crowns', { topic: 'stainless-steel-crowns' }], 'Local anaesthesia and sedation in children',
+    ['Traumatic injuries to teeth', { topic: 'adc-avulsion' }], ['Space maintainers', { topic: 'space-maintainers' }], ['Oral habits', { topic: 'oral-habits' }], ['Children with special healthcare needs', { topic: 'special-needs-children' }],
+    ['Paediatric restorative dentistry and stainless steel crowns', { topic: 'stainless-steel-crowns' }], ['Local anaesthesia and sedation in children', { topic: 'sedation-children' }],
   ]),
   subject('orthodontics', 'Orthodontics & Dentofacial Orthopaedics', 4, 'Orthodontics', [
     'Growth and development of the craniofacial complex', 'Development of dentition and occlusion', ['Classification of malocclusion', { topic: 'angle-classification' }],
-    'Aetiology of malocclusion', ['Cephalometrics', { topic: 'cephalometrics' }], 'Diagnosis and treatment planning', ['Biology of tooth movement', { topic: 'biology-of-tooth-movement' }], 'Removable appliances',
-    'Fixed appliances: basics', ['Functional appliances', { topic: 'functional-appliances' }], 'Orthopaedic appliances: headgear, chin cup, RME',
-    'Preventive and interceptive orthodontics', 'Retention and relapse', ['Cleft lip and palate', { topic: 'cleft-lip-palate' }],
+    'Aetiology of malocclusion', ['Cephalometrics', { topic: 'cephalometrics' }], 'Diagnosis and treatment planning', ['Biology of tooth movement', { topic: 'biology-of-tooth-movement' }], ['Removable appliances', { topic: 'removable-appliances' }],
+    'Fixed appliances: basics', ['Functional appliances', { topic: 'functional-appliances' }], ['Orthopaedic appliances: headgear, chin cup, RME', { topic: 'orthopaedic-appliances' }],
+    'Preventive and interceptive orthodontics', ['Retention and relapse', { topic: 'retention-relapse' }], ['Cleft lip and palate', { topic: 'cleft-lip-palate' }],
   ]),
   subject('periodontics', 'Periodontology', 4, 'Periodontics', [
     'Anatomy of the periodontium', 'Classification of periodontal diseases (2017)', 'Dental plaque and calculus',

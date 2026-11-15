@@ -3971,6 +3971,408 @@ export const TOPICS = [
       ['Most important factor for direct pulp capping success?', 'A bacteria-tight seal over a healthy (or reversibly inflamed) pulp with controlled bleeding.'],
     ],
   },
+  // ---------------- Batch 11 ----------------
+  {
+    slug: 'cardiac-cycle', subject: 'basic-sciences', title: 'Cardiac Cycle & Blood Pressure', priority: 'must_know', marks_hint: '10-mark essay',
+    tags: ['physiology', 'cardiovascular'],
+    vignette: 'A patient\'s blood pressure in the chair is 168/104 mmHg. The examiner asks you to explain the cardiac cycle, heart sounds and how blood pressure is regulated.',
+    content: {
+      definition: 'The cardiac cycle is the sequence of events in one heartbeat (about 0.8 s at 75 beats/min): systole about 0.3 s and diastole about 0.5 s. Blood pressure is the lateral pressure of blood on vessel walls (normal about 120/80 mmHg).',
+      clinical_features: [
+        'Phases: atrial systole → isovolumetric contraction (all valves closed) → rapid and slow ejection → isovolumetric relaxation → rapid filling, slow filling (diastasis)',
+        'Heart sounds: S1 – closure of AV (mitral and tricuspid) valves, start of systole; S2 – closure of semilunar (aortic and pulmonary) valves, end of systole; S3 – rapid ventricular filling (normal in children, heart failure in adults); S4 – atrial contraction against a stiff ventricle',
+        'Cardiac output = stroke volume (about 70 mL) × heart rate ≈ 5 L/min; mean arterial pressure ≈ diastolic + ⅓ pulse pressure',
+        'Regulation of BP: short-term – baroreceptor reflex (carotid sinus via IX, aortic arch via X); intermediate – renin–angiotensin–aldosterone system; long-term – renal control of fluid volume, ADH',
+        'ECG: P wave (atrial depolarisation), QRS (ventricular depolarisation), T wave (ventricular repolarisation)',
+      ],
+      management: ['Dental relevance – BP categories (one common scheme): < 160/100 routine care; 160–179/100–109 – routine care possible, inform the physician, minimise stress; ≥ 180/110 – defer elective treatment and refer urgently', 'Limit adrenaline (e.g. 2 cartridges of 1:80,000 lignocaine) in uncontrolled cardiovascular disease; aspirate'],
+      viva_pearls: ['Carotid sinus massage slows the heart via the baroreceptor reflex.'],
+    },
+    viva: [
+      { q: 'Describe the phases of the cardiac cycle.', keywords: ['atrial systole', 'isovolumetric contraction|isovolumic', 'ejection', 'isovolumetric relaxation', 'filling'], probe: 'When are all four valves closed?' },
+      { q: 'What causes the heart sounds?', keywords: ['s1|first', 'atrioventricular|mitral|tricuspid', 's2|second', 'semilunar|aortic|pulmonary', 's3|s4|filling'], probe: 'What does S3 mean in an adult?' },
+      { q: 'How is blood pressure regulated?', keywords: ['baroreceptor', 'carotid sinus|aortic arch', 'renin|angiotensin', 'aldosterone|adh', 'kidney|renal'], probe: 'Which nerves carry baroreceptor signals?' },
+      { q: 'How will you manage this hypertensive patient?', keywords: ['160|180|110', 'defer|refer', 'physician', 'adrenaline|epinephrine', 'stress|anxiety'], probe: 'At what reading would you defer treatment?' },
+    ],
+    flashcards: [
+      ['Cause of the first heart sound?', 'Closure of the mitral and tricuspid (AV) valves.'],
+      ['Normal cardiac output?', 'About 5 L/min (stroke volume 70 mL × 72 beats/min).'],
+    ],
+  },
+  {
+    slug: 'carbohydrate-metabolism', subject: 'basic-sciences', title: 'Carbohydrate Metabolism', priority: 'desirable', marks_hint: '10-mark essay',
+    tags: ['biochemistry'],
+    vignette: 'A student asks why sucrose is more cariogenic than starch, and how cells turn glucose into energy.',
+    content: {
+      definition: 'Carbohydrate metabolism covers the breakdown of sugars for energy (glycolysis, TCA cycle, oxidative phosphorylation), their storage (glycogenesis), release (glycogenolysis) and synthesis (gluconeogenesis), under hormonal control.',
+      clinical_features: [
+        'Glycolysis (Embden–Meyerhof pathway): cytoplasm; glucose → 2 pyruvate; net 2 ATP + 2 NADH; key enzymes hexokinase/glucokinase, phosphofructokinase-1 (rate-limiting), pyruvate kinase; anaerobic end product lactate',
+        'Pyruvate dehydrogenase (needs thiamine B1) → acetyl-CoA → TCA (Krebs) cycle in mitochondria → NADH, FADH₂ → electron transport chain; total about 30–32 ATP per glucose',
+        'Gluconeogenesis: from lactate (Cori cycle), glycerol, amino acids (alanine) – liver and kidney during fasting',
+        'Glycogen: glycogenesis (glycogen synthase – insulin), glycogenolysis (glycogen phosphorylase – glucagon, adrenaline)',
+        'HMP shunt (pentose phosphate pathway): NADPH and ribose; G6PD deficiency → haemolysis with oxidant drugs',
+        'Hormones: insulin lowers glucose; glucagon, adrenaline, cortisol, growth hormone raise it',
+        'Oral relevance: plaque bacteria ferment sugars (S. mutans glycolysis) → lactic acid → demineralisation; sucrose also forms extracellular glucans (glucosyltransferase) that aid adhesion; fluoride inhibits enolase',
+      ],
+      viva_pearls: ['Phosphofructokinase-1 is the rate-limiting enzyme of glycolysis.'],
+    },
+    viva: [
+      { q: 'Describe glycolysis.', keywords: ['cytoplasm', 'pyruvate', '2 atp|two atp', 'phosphofructokinase', 'lactate|anaerobic'], probe: 'Which is the rate-limiting enzyme?' },
+      { q: 'What happens to pyruvate aerobically?', keywords: ['pyruvate dehydrogenase', 'acetyl coa|acetyl-coa', 'tca|krebs|citric acid', 'mitochondria', 'electron transport|oxidative phosphorylation'], probe: 'Which vitamin does pyruvate dehydrogenase need?' },
+      { q: 'Explain gluconeogenesis and glycogen metabolism.', keywords: ['gluconeogenesis', 'cori cycle|lactate', 'glycogen synthase|glycogenesis', 'glycogen phosphorylase|glycogenolysis', 'insulin|glucagon'], probe: 'What is the Cori cycle?' },
+      { q: 'How does sugar metabolism cause caries?', keywords: ['mutans', 'ferment|glycolysis', 'lactic acid', 'glucan|glucosyltransferase', 'sucrose'], probe: 'Why is sucrose especially cariogenic?' },
+    ],
+    flashcards: [
+      ['Rate-limiting enzyme of glycolysis?', 'Phosphofructokinase-1.'],
+      ['Why is sucrose especially cariogenic?', 'It is fermented to acid and is the substrate for extracellular glucans (glucosyltransferase) that aid plaque adhesion.'],
+    ],
+  },
+  {
+    slug: 'jaundice-liver', subject: 'general-medicine', title: 'Jaundice & Liver Disease', priority: 'must_know', marks_hint: '10-mark essay',
+    tags: ['medicine', 'biochemistry'],
+    vignette: 'A patient with alcoholic cirrhosis has yellow sclera, bruises easily and needs multiple extractions. His INR is 1.9 and platelets 85,000/μL.',
+    content: {
+      definition: 'Jaundice is yellow discolouration of skin, sclera and mucosa from raised serum bilirubin, clinically visible above about 2–3 mg/dL (normal < 1 mg/dL).',
+      classification: [
+        'Pre-hepatic (haemolytic): excess haemolysis – raised unconjugated bilirubin, no bilirubin in urine (acholuric), raised urobilinogen',
+        'Hepatic (hepatocellular): hepatitis, cirrhosis, drugs – both fractions raised, high ALT/AST',
+        'Post-hepatic (obstructive/cholestatic): gallstones, carcinoma of pancreas head – raised conjugated bilirubin, dark urine, pale stools, itching, high ALP and GGT',
+        'Neonatal (physiological) and congenital (Gilbert\'s syndrome – mild unconjugated)',
+      ],
+      investigations: ['Liver function tests: bilirubin (total, conjugated), ALT, AST (AST:ALT > 2 suggests alcohol), ALP, GGT, albumin (synthetic function), PT/INR', 'Hepatitis serology, ultrasound'],
+      clinical_features: ['Dental problems in liver disease: bleeding (reduced clotting factors II, VII, IX, X; thrombocytopenia from hypersplenism), altered drug metabolism, infection risk (hepatitis B/C), sialosis, poor healing'],
+      management: ['Liaise with the physician; check FBC, INR and LFTs', 'Local haemostatic measures; consider tranexamic acid; platelet transfusion if very low (e.g. < 50,000); vitamin K for obstructive jaundice', 'Drugs: avoid or reduce paracetamol (max about 2 g/day in liver disease), avoid NSAIDs (bleeding, GI ulcer, renal risk), avoid metronidazole/azoles where possible, reduce LA dose; use standard precautions'],
+      viva_pearls: ['Obstructive jaundice: vitamin K malabsorption raises INR – corrects with parenteral vitamin K; in cirrhosis it often does not.'],
+    },
+    viva: [
+      { q: 'Define and classify jaundice.', keywords: ['bilirubin', '2|3 mg', 'pre hepatic|pre-hepatic|haemolytic', 'hepatic|hepatocellular', 'post hepatic|post-hepatic|obstructive'], probe: 'At what level is jaundice visible?' },
+      { q: 'How do the types differ in lab findings?', keywords: ['unconjugated', 'conjugated', 'urine|urobilinogen', 'alp|alkaline phosphatase', 'alt|ast|transaminase'], probe: 'What does pale stool and dark urine suggest?' },
+      { q: 'Why does liver disease matter in dentistry?', keywords: ['bleeding|clotting', 'platelet|thrombocytopenia', 'drug metabolism', 'hepatitis|infection', 'healing'], probe: 'Why do these patients bleed?' },
+      { q: 'How will you plan this patient\'s extractions?', keywords: ['physician|liaise', 'inr', 'platelet', 'tranexamic|local measures', 'paracetamol|avoid nsaid'], probe: 'Which analgesic would you use and at what dose?' },
+    ],
+    flashcards: [
+      ['LFT pattern of obstructive jaundice?', 'Raised conjugated bilirubin, very high ALP and GGT, dark urine, pale stools.'],
+      ['Maximum paracetamol dose in significant liver disease?', 'About 2 g/day (reduced).'],
+    ],
+  },
+  {
+    slug: 'tuberculosis', subject: 'general-medicine', title: 'Tuberculosis', priority: 'must_know', marks_hint: '10-mark essay',
+    tags: ['infectious disease'],
+    vignette: 'A 40-year-old with a two-month cough, evening fever and weight loss has a painless, undermined ulcer on the dorsum of his tongue and matted cervical lymph nodes.',
+    content: {
+      definition: 'Tuberculosis is a chronic granulomatous infection by Mycobacterium tuberculosis, an acid-fast bacillus, spread mainly by airborne droplets. India has the highest number of cases globally.',
+      classification: ['Pulmonary (commonest) vs extrapulmonary (lymph node – commonest extrapulmonary, "scrofula"; bone, meninges, abdomen, genitourinary, oral)', 'Primary (Ghon focus + hilar lymph node = Ghon complex) vs post-primary (reactivation, apical cavities)', 'Drug-sensitive, MDR-TB (resistant to isoniazid and rifampicin), XDR-TB'],
+      clinical_features: [
+        'Systemic: chronic cough > 2 weeks, haemoptysis, evening fever, night sweats, weight loss',
+        'Oral TB (usually secondary to pulmonary): painful or painless chronic ulcer with undermined edges, often on the tongue (dorsum, lateral border); tuberculous osteomyelitis of the jaws; cervical lymphadenitis – matted nodes, cold abscess, sinus',
+        'Histology: caseating granulomas with epithelioid cells, Langhans giant cells (horseshoe nuclei) and lymphocytes',
+      ],
+      investigations: ['Sputum smear (Ziehl–Neelsen stain for AFB), CBNAAT/GeneXpert (rapid, detects rifampicin resistance), culture (Löwenstein–Jensen medium), chest X-ray, biopsy of the ulcer, FNAC of nodes, Mantoux (tuberculin) test, IGRA'],
+      management: ['Directly Observed Treatment under India\'s National TB Elimination Programme (NTEP): intensive phase 2 months HRZE (isoniazid, rifampicin, pyrazinamide, ethambutol), then continuation 4 months HRE', 'Side effects: hepatotoxicity (H, R, Z), peripheral neuropathy (isoniazid – give pyridoxine), orange urine and enzyme induction (rifampicin – reduces oral contraceptive and warfarin effect), optic neuritis (ethambutol)', 'Dental: defer elective care in active, sputum-positive TB; treat after 2–3 weeks of therapy or when non-infectious; use respirators (N95) for urgent care'],
+      viva_pearls: ['Oral TB ulcers can mimic carcinoma – always biopsy a chronic undermined ulcer.'],
+    },
+    viva: [
+      { q: 'What causes tuberculosis and how does it spread?', keywords: ['mycobacterium', 'acid fast|acid-fast', 'droplet|airborne', 'granuloma', 'india|ghon'], probe: 'What is the Ghon complex?' },
+      { q: 'What are the oral manifestations?', keywords: ['ulcer', 'undermined', 'tongue', 'lymph node|lymphadenitis|scrofula', 'osteomyelitis|cold abscess'], probe: 'What do the ulcer edges look like?' },
+      { q: 'How will you confirm the diagnosis?', keywords: ['ziehl neelsen|ziehl-neelsen|afb', 'cbnaat|genexpert', 'biopsy|caseating', 'chest x ray|chest radiograph', 'mantoux|igra|culture'], probe: 'What stain shows the bacilli?' },
+      { q: 'How is TB treated, and what are the dental precautions?', keywords: ['hrze|isoniazid|rifampicin', '6 months|2 months|4 months', 'dots|directly observed|ntep', 'hepatotox|neuropathy|pyridoxine', 'defer|n95|non infectious'], probe: 'Why give pyridoxine with isoniazid?' },
+    ],
+    flashcards: [
+      ['Giant cells typical of tuberculous granulomas?', 'Langhans giant cells (horseshoe nuclei).'],
+      ['Standard first-line TB regimen?', '2 months HRZE then 4 months HRE (isoniazid, rifampicin, pyrazinamide, ethambutol).'],
+    ],
+  },
+  {
+    slug: 'asthma-copd', subject: 'general-medicine', title: 'Asthma & COPD in Dental Practice', priority: 'must_know', marks_hint: '5-mark short note',
+    tags: ['respiratory', 'medically compromised', 'emergency'],
+    vignette: 'A young asthmatic becomes wheezy and breathless in the waiting room after rushing to her appointment. She has forgotten her inhaler.',
+    content: {
+      definition: 'Asthma is chronic airway inflammation with reversible airflow obstruction and bronchial hyper-responsiveness. COPD is progressive, largely irreversible airflow limitation (chronic bronchitis and emphysema), mainly from smoking.',
+      clinical_features: [
+        'Asthma triggers: allergens, exercise, cold air, stress, infections, NSAIDs/aspirin (aspirin-exacerbated respiratory disease), sulphites (preservative in adrenaline-containing LA)',
+        'Acute severe asthma: cannot complete sentences, RR > 25, pulse > 110, peak flow 33–50% of best; life-threatening – silent chest, cyanosis, exhaustion, confusion, SpO₂ < 92%',
+        'Oral effects of inhalers: candidiasis (steroids – rinse after use), xerostomia and caries (β2-agonists), gingivitis',
+        'COPD: chronic productive cough, dyspnoea; may retain CO₂ – care with high-flow oxygen for long periods and with sedatives',
+      ],
+      management: [
+        'Prevention: ask the patient to bring their inhaler, morning appointments, reduce anxiety, avoid NSAIDs in aspirin-sensitive asthma (use paracetamol), avoid the supine position in COPD',
+        'Acute attack: sit upright, salbutamol 100 μg – 4 to 6 puffs via a spacer (up to 10), repeat every 10–20 minutes, oxygen, call emergency services if no response or severe; consider IM adrenaline if anaphylaxis is suspected',
+        'Sedation: avoid IV sedation in severe COPD; nitrous oxide is usually acceptable in mild asthma',
+      ],
+      viva_pearls: ['A "silent chest" in asthma means very little air movement – a life-threatening sign.'],
+    },
+    viva: [
+      { q: 'How do asthma and COPD differ?', keywords: ['reversible', 'irreversible|progressive', 'inflammation|hyper responsive|hyperresponsive', 'smoking', 'emphysema|chronic bronchitis'], probe: 'Which is reversible?' },
+      { q: 'What triggers asthma in the dental setting?', keywords: ['anxiety|stress', 'nsaid|aspirin', 'sulphite|sulfite', 'cold|exercise', 'allergen|latex'], probe: 'Why can adrenaline-containing LA be a problem?' },
+      { q: 'What are the signs of severe and life-threatening asthma?', keywords: ['sentence|speak', 'respiratory rate|pulse|110', 'peak flow', 'silent chest', 'cyanosis|exhaustion|92'], probe: 'What does a silent chest mean?' },
+      { q: 'How will you manage this attack?', keywords: ['sit upright|upright', 'salbutamol', 'spacer|puffs', 'oxygen', 'emergency|ambulance|repeat'], probe: 'How many puffs of salbutamol?' },
+    ],
+    flashcards: [
+      ['First-line drug for an acute asthma attack in the chair?', 'Salbutamol via spacer, 4–6 puffs (up to 10), repeated every 10–20 minutes.'],
+      ['Oral side effect of inhaled corticosteroids?', 'Oral candidiasis – rinse after use.'],
+    ],
+  },
+  {
+    slug: 'epilepsy', subject: 'general-medicine', title: 'Epilepsy & Seizures in the Dental Chair', priority: 'must_know', marks_hint: '5-mark short note',
+    tags: ['neurology', 'emergency'],
+    vignette: 'A patient on phenytoin with overgrown gums has a generalised tonic–clonic seizure during scaling. It is still continuing after 5 minutes.',
+    content: {
+      definition: 'Epilepsy is a tendency to recurrent unprovoked seizures – paroxysmal, abnormal, excessive neuronal discharges in the brain. Status epilepticus is a seizure lasting more than 5 minutes or repeated seizures without recovery in between.',
+      classification: ['ILAE 2017: focal onset (aware or impaired awareness), generalised onset (tonic–clonic, absence, myoclonic, atonic), unknown onset'],
+      clinical_features: [
+        'Generalised tonic–clonic: possible aura, loss of consciousness, tonic stiffening, clonic jerking, tongue biting, incontinence, post-ictal drowsiness and confusion',
+        'Dental relevance: trauma to teeth and soft tissues, fractured restorations; drug effects – phenytoin gingival enlargement, carbamazepine and valproate (bone marrow suppression, bleeding), folate deficiency',
+        'Triggers: missed medication, sleep deprivation, flickering lights, stress, hypoglycaemia, alcohol',
+      ],
+      management: [
+        'Prevention: ensure medication taken, stress reduction, avoid flickering operating lights in photosensitive patients; prefer fixed over removable prostheses (metal-based if removable)',
+        'During a seizure: note the time, remove instruments, do not restrain or put anything in the mouth, protect from injury, give oxygen',
+        'If > 5 minutes or repeated: buccal midazolam 10 mg (adult) or IM midazolam; call emergency services',
+        'After: recovery position, check airway and injuries, check blood glucose, do not let the patient leave alone',
+      ],
+      viva_pearls: ['Phenytoin, ciclosporin and nifedipine (and other calcium channel blockers) cause drug-induced gingival enlargement.'],
+    },
+    viva: [
+      { q: 'Define epilepsy and status epilepticus.', keywords: ['recurrent', 'unprovoked', 'neuronal discharge|abnormal', 'status epilepticus', '5 minutes|five minutes'], probe: 'How long must a seizure last to be status epilepticus?' },
+      { q: 'Classify seizures.', keywords: ['focal', 'generalised|generalized', 'tonic clonic|tonic-clonic', 'absence', 'myoclonic|atonic'], probe: 'What is an absence seizure?' },
+      { q: 'What are the dental implications of epilepsy?', keywords: ['phenytoin', 'gingival enlargement|overgrowth|hyperplasia', 'trauma|fracture', 'valproate|carbamazepine|bleeding', 'fixed prosthesis|metal'], probe: 'Which antiepileptic causes gingival overgrowth?' },
+      { q: 'How will you manage this seizure?', keywords: ['time', 'do not restrain|nothing in the mouth', 'oxygen', 'buccal midazolam|midazolam', 'emergency|recovery position|glucose'], probe: 'What dose of midazolam would you give?' },
+    ],
+    flashcards: [
+      ['Drug for a seizure lasting more than 5 minutes in the chair?', 'Buccal midazolam 10 mg (adult), then call emergency services.'],
+      ['Three drug groups causing gingival enlargement?', 'Phenytoin (anticonvulsants), ciclosporin (immunosuppressants), calcium channel blockers such as nifedipine.'],
+    ],
+  },
+  {
+    slug: 'blood-transfusion', subject: 'general-surgery', title: 'Fluids, Electrolytes & Blood Transfusion', priority: 'desirable', marks_hint: '10-mark essay',
+    tags: ['surgery basics'],
+    vignette: 'A patient losing blood after a mandibular resection needs fluid and possibly blood. Ten minutes into a transfusion he develops fever, rigors, back pain and hypotension.',
+    content: {
+      definition: 'Fluid therapy replaces maintenance needs and losses; blood transfusion restores oxygen-carrying capacity and clotting when losses or anaemia are severe.',
+      classification: [
+        'Body water: about 60% of body weight – two-thirds intracellular, one-third extracellular (interstitial and plasma)',
+        'Maintenance: about 25–30 mL/kg/day water with Na⁺ and K⁺ about 1 mmol/kg/day each; Holliday–Segar 4-2-1 rule for hourly rates in children',
+        'Crystalloids: 0.9% saline (Na 154 mmol/L – hyperchloraemic acidosis in large volumes), Ringer\'s lactate/Hartmann\'s (balanced), 5% dextrose (free water – not for resuscitation)',
+        'Colloids: albumin, gelatins; blood products – packed red cells, FFP (clotting factors), platelets, cryoprecipitate (fibrinogen, factor VIII, vWF)',
+      ],
+      clinical_features: [
+        'ABO: group O negative is the universal donor of red cells; AB positive is the universal recipient; AB plasma is the universal plasma donor',
+        'One unit of packed cells raises Hb by about 1 g/dL in an adult',
+        'Complications: acute haemolytic reaction (ABO incompatibility – fever, rigors, loin pain, hypotension, haemoglobinuria, DIC), febrile non-haemolytic reaction (commonest), allergic/anaphylaxis, TRALI, TACO (circulatory overload), infection, hyperkalaemia, hypocalcaemia (citrate), hypothermia in massive transfusion',
+      ],
+      management: ['Suspected haemolytic reaction (this patient): stop the transfusion immediately, keep IV access with saline, check identity and return the bag, ABC and fluids, maintain urine output, send blood samples (Coombs test), treat DIC', 'Massive transfusion: balanced ratio of red cells, FFP and platelets (about 1:1:1), warm products, give calcium, tranexamic acid'],
+      viva_pearls: ['Most acute haemolytic reactions are due to clerical error – wrong blood to the wrong patient.'],
+    },
+    viva: [
+      { q: 'How is body water distributed, and what are maintenance requirements?', keywords: ['60%', 'intracellular', 'extracellular', '25|30 ml|ml/kg', 'sodium|potassium'], probe: 'What fraction is intracellular?' },
+      { q: 'Compare crystalloids and colloids.', keywords: ['saline|0.9', 'ringer|hartmann', 'dextrose', 'colloid|albumin|gelatin', 'resuscitation'], probe: 'Why not use 5% dextrose for resuscitation?' },
+      { q: 'What are the complications of blood transfusion?', keywords: ['haemolytic|hemolytic', 'febrile', 'allergic|anaphyla', 'overload|taco|trali', 'infection|hyperkalaemia|citrate'], probe: 'Which complication is commonest?' },
+      { q: 'What is happening to this patient and how will you manage him?', keywords: ['acute haemolytic|acute hemolytic|abo', 'stop the transfusion|stop', 'saline|fluids', 'check|identity|bag', 'urine output|coombs|dic'], probe: 'What is the usual cause of this reaction?' },
+    ],
+    flashcards: [
+      ['Universal red cell donor?', 'Group O Rh-negative.'],
+      ['Rise in Hb from one unit of packed red cells?', 'About 1 g/dL in an adult.'],
+    ],
+  },
+  {
+    slug: 'neck-swellings', subject: 'general-surgery', title: 'Neck Swellings & Cervical Lymphadenopathy', priority: 'must_know', marks_hint: '10-mark essay',
+    tags: ['surgery', 'diagnosis'],
+    vignette: 'A 20-year-old has a smooth midline neck swelling that moves up when he protrudes his tongue. A 60-year-old smoker has a hard, fixed node in the upper deep cervical chain.',
+    content: {
+      definition: 'Neck swellings are lumps arising from neck structures – lymph nodes (commonest), thyroid, salivary glands, congenital remnants, vessels, nerves or skin.',
+      classification: [
+        'Midline: thyroglossal cyst (moves on tongue protrusion and swallowing), thyroid isthmus swelling, dermoid cyst (sublingual/submental, does not move with tongue), plunging ranula, submental lymph node',
+        'Anterior triangle: branchial cyst (anterior border of upper sternocleidomastoid, young adults, cholesterol crystals in aspirate), carotid body tumour (pulsatile, moves side to side but not vertically), submandibular gland, lymph nodes, laryngocele',
+        'Posterior triangle: lymph nodes, cystic hygroma (lymphangioma – brilliantly transilluminant, infants), cervical rib, lipoma',
+        'Lymph nodes by cause: reactive/infective (tender, mobile – dental infection, tonsillitis), tuberculous (matted, cold abscess), lymphoma (rubbery, painless, multiple), metastatic carcinoma (hard, fixed, painless)',
+      ],
+      investigations: ['History and full examination of the head, neck, oral cavity and pharynx; ultrasound; FNAC (fine-needle aspiration cytology – avoid open biopsy of a suspected metastatic node until a primary is sought); CT/MRI; panendoscopy for an unknown primary'],
+      management: ['Thyroglossal cyst: Sistrunk operation (excision of the cyst, tract and the central part of the hyoid)', 'Branchial cyst: complete excision', 'Metastatic node: find and treat the primary – surgery with neck dissection and/or radiotherapy', 'Reactive node: treat the cause and review in 2–3 weeks; investigate if persistent > 3–6 weeks'],
+      viva_pearls: ['A hard, fixed upper deep cervical node in an older smoker is metastatic squamous cell carcinoma until proven otherwise.'],
+    },
+    viva: [
+      { q: 'Classify neck swellings by location.', keywords: ['midline', 'anterior triangle', 'posterior triangle', 'thyroglossal', 'branchial|cystic hygroma'], probe: 'Name two midline swellings.' },
+      { q: 'How do you tell a thyroglossal cyst from a dermoid?', keywords: ['tongue protrusion|protrude', 'swallow', 'moves', 'dermoid', 'hyoid|sistrunk'], probe: 'Which one moves with tongue protrusion?' },
+      { q: 'How do lymph nodes differ by cause?', keywords: ['tender|mobile|reactive', 'matted|tuberculous', 'rubbery|lymphoma', 'hard|fixed', 'metasta'], probe: 'What does a hard, fixed node suggest?' },
+      { q: 'How will you investigate the older patient?', keywords: ['oral cavity|examine|primary', 'fnac|fine needle', 'ultrasound|ct|mri', 'panendoscopy|endoscopy', 'avoid open biopsy|neck dissection'], probe: 'Why avoid an open biopsy of the node?' },
+    ],
+    flashcards: [
+      ['Operation for thyroglossal cyst?', 'Sistrunk operation (cyst, tract and central hyoid).'],
+      ['Brilliantly transilluminant neck swelling in an infant?', 'Cystic hygroma (lymphangioma).'],
+    ],
+  },
+  {
+    slug: 'atls', subject: 'general-surgery', title: 'Trauma & ATLS Principles', priority: 'must_know', marks_hint: '10-mark essay',
+    tags: ['trauma', 'emergency'],
+    vignette: 'A motorcyclist arrives with a crushed midface, bleeding into the mouth, noisy breathing and a GCS of 11. The maxillofacial team is called.',
+    content: {
+      definition: 'Advanced Trauma Life Support (ATLS, American College of Surgeons) is a systematic approach to the injured patient: a rapid primary survey to find and treat life threats in order of priority, resuscitation, then a detailed secondary survey.',
+      classification: [
+        'Primary survey (ABCDE): A – airway with cervical spine protection; B – breathing and ventilation; C – circulation with haemorrhage control; D – disability (GCS, pupils, glucose); E – exposure and environment (prevent hypothermia)',
+        'Adjuncts: monitoring, ECG, urinary catheter, ABG, chest and pelvis X-rays, FAST ultrasound',
+        'Secondary survey: head-to-toe examination, AMPLE history (Allergies, Medications, Past history, Last meal, Events)',
+        'Tertiary survey and definitive care',
+      ],
+      clinical_features: [
+        'Airway threats in maxillofacial trauma: posteriorly displaced maxilla (Le Fort), bilateral mandibular fracture with loss of tongue support (flail anterior mandible), blood, teeth, dentures, swelling',
+        'GCS: eye (4), verbal (5), motor (6); total 3–15; ≤ 8 – intubate ("GCS 8 – intubate")',
+        'Life-threatening chest injuries: tension pneumothorax, open pneumothorax, massive haemothorax, flail chest, cardiac tamponade',
+      ],
+      management: ['Airway: suction, jaw thrust (not head tilt), pull the tongue forward, manually reduce a displaced maxilla, oro/nasopharyngeal airway (avoid nasal in suspected base-of-skull fracture), intubation or surgical airway (cricothyroidotomy)', 'Control bleeding: pressure, packing (anterior/posterior nasal packs), reduce fractures, ligation or embolisation', 'Treat facial fractures after life-threatening injuries are controlled, usually within days'],
+      viva_pearls: ['In facial trauma, cervical spine injury must be assumed until excluded.'],
+    },
+    viva: [
+      { q: 'What is the ATLS primary survey?', keywords: ['airway', 'cervical spine|c spine|c-spine', 'breathing', 'circulation|haemorrhage', 'disability|exposure'], probe: 'Why is the cervical spine protected with the airway?' },
+      { q: 'Describe the Glasgow Coma Scale.', keywords: ['eye', 'verbal', 'motor', '15|3', '8|intubat'], probe: 'At what GCS would you secure the airway?' },
+      { q: 'Why is the airway at risk in facial trauma?', keywords: ['displaced maxilla|le fort', 'tongue|flail mandible|bilateral', 'blood|teeth|denture', 'swelling|oedema', 'base of skull|nasal'], probe: 'How does a bilateral parasymphyseal fracture threaten the airway?' },
+      { q: 'How will you manage this patient\'s airway and bleeding?', keywords: ['suction', 'jaw thrust|tongue forward', 'reduce the maxilla|disimpact', 'intubat|cricothyroid', 'packing|pressure'], probe: 'Why avoid a nasopharyngeal airway?' },
+    ],
+    flashcards: [
+      ['GCS at which intubation is indicated?', '8 or less.'],
+      ['AMPLE history?', 'Allergies, Medications, Past history, Last meal, Events.'],
+    ],
+  },
+  {
+    slug: 'removable-appliances', subject: 'orthodontics', title: 'Removable Orthodontic Appliances', priority: 'must_know', marks_hint: '10-mark essay',
+    tags: ['appliances'],
+    vignette: 'A 9-year-old has a single upper central incisor in anterior crossbite with enough space and a positive overbite. You plan a removable appliance.',
+    content: {
+      definition: 'Removable orthodontic appliances are appliances the patient can take out, producing mainly tipping movements of individual teeth or groups of teeth, or acting as space maintainers, habit breakers and retainers.',
+      classification: ['Active components: springs (finger, Z-spring, T-spring, buccal canine retractor, palatal canine retractor), screws (expansion), elastics, labial bow', 'Retentive components: Adams clasp (Philip Adams – most widely used, on first molars), C-clasp, ball-end clasp, Southend clasp (incisors), arrowhead clasp', 'Baseplate (acrylic): anchorage, carries components; bite planes – anterior (deep bite reduction), posterior (to free the occlusion for crossbite correction)', 'Anchorage components'],
+      clinical_features: [
+        'Spring force: F ∝ d r⁴ / l³ (deflection, radius of wire, length) – doubling the wire diameter increases force 16 times; doubling the length reduces force 8 times; coils increase effective length',
+        'Typical wire gauges: Adams clasp 0.7 mm; finger spring 0.5 mm; labial bow 0.7 mm; canine retractor 0.5–0.7 mm',
+        'Indications: simple tipping, anterior crossbite of one or two teeth, space maintenance, expansion (small), habit breaking, retention',
+        'Limitations: no bodily, rotation or root movement; depends on patient compliance',
+      ],
+      management: ['For this child: upper removable appliance with Z-springs (double cantilever) on the incisor, Adams clasps on first molars, and posterior bite plane to free the occlusion; activate about 1–2 mm a month, review every 4–6 weeks', 'Wear full time; clean daily'],
+      viva_pearls: ['Adams clasp engages the mesial and distal undercuts of the molar with arrowheads.'],
+    },
+    viva: [
+      { q: 'What are the components of a removable appliance?', keywords: ['active', 'retentive', 'baseplate|acrylic', 'anchorage', 'spring|screw|clasp'], probe: 'Give examples of active components.' },
+      { q: 'Describe the Adams clasp.', keywords: ['adams', 'arrowhead', 'undercut', '0.7', 'molar'], probe: 'What wire gauge do you use?' },
+      { q: 'What factors decide the force of a spring?', keywords: ['diameter|radius', 'length', 'deflection|activation', 'r4|fourth power|16', 'coil|l3|eight'], probe: 'What happens to force if you double the wire diameter?' },
+      { q: 'Design an appliance for this child.', keywords: ['z spring|z-spring|double cantilever', 'adams clasp|adams', 'posterior bite plane|bite plane', 'activate|1 mm|2 mm', 'review|compliance'], probe: 'Why add a posterior bite plane?' },
+    ],
+    flashcards: [
+      ['Effect of doubling wire diameter on spring force?', 'Increases about 16 times (force ∝ r⁴).'],
+      ['Spring used to procline an upper incisor in crossbite?', 'Z-spring (double cantilever spring).'],
+    ],
+  },
+  {
+    slug: 'orthopaedic-appliances', subject: 'orthodontics', title: 'Orthopaedic Appliances: Headgear, Chin Cup, Face Mask & RME', priority: 'desirable', marks_hint: '10-mark essay',
+    tags: ['growth modification'],
+    vignette: 'An 8-year-old has a retrusive maxilla with an anterior crossbite and a narrow upper arch with bilateral posterior crossbite.',
+    content: {
+      definition: 'Orthopaedic appliances apply heavy forces (about 400–500 g or more per side) to modify the growth of the jaws and sutures in growing patients, rather than move individual teeth.',
+      classification: [
+        'Headgear (extraoral traction to restrain maxillary growth or reinforce anchorage): cervical pull (extrudes molars – suits low-angle cases), high pull (intrudes – high-angle cases), combination (straight pull); worn 12–14 hours/day',
+        'Reverse-pull headgear / face mask (Delaire, Petit): protracts the maxilla in Class III maxillary deficiency – best before about 8–10 years, often with RME to disarticulate sutures',
+        'Chin cup: restrains mandibular growth in Class III (effect limited and often temporary); occipital or vertical pull',
+        'Rapid maxillary expansion (RME): Hyrax, Haas, Isaacson appliances; activated 0.25 mm twice daily; opens the midpalatal suture (midline diastema appears); best before suture interdigitation in adolescence; slow expansion (quad helix, W-arch) for younger children; MARPE (miniscrew-assisted) for older adolescents and adults',
+      ],
+      clinical_features: ['Indications for RME: bilateral or unilateral posterior crossbite with a narrow maxilla, maxillary deficiency (with face mask), cleft lip and palate, crowding (gain arch perimeter)'],
+      management: ['For this child: RME (Hyrax) followed by face mask protraction; then retention and monitoring through growth'],
+      viva_pearls: ['A midline diastema appearing during RME confirms that the midpalatal suture has opened.'],
+    },
+    viva: [
+      { q: 'What are orthopaedic appliances?', keywords: ['growth', 'heavy force|400|500', 'suture|jaw', 'growing', 'skeletal'], probe: 'How do orthopaedic forces differ from orthodontic forces?' },
+      { q: 'Describe the types of headgear.', keywords: ['cervical', 'high pull', 'combination|straight', 'extrude|intrude', 'maxillary growth|anchorage'], probe: 'Which headgear suits a high-angle case?' },
+      { q: 'What is rapid maxillary expansion?', keywords: ['midpalatal suture', 'hyrax|haas', '0.25 mm|twice', 'diastema', 'crossbite|narrow'], probe: 'What sign shows the suture has opened?' },
+      { q: 'How will you treat this child?', keywords: ['rme|rapid maxillary expansion', 'face mask|reverse pull|protraction', 'class iii', 'early|before 10|8', 'retention'], probe: 'Why combine RME with a face mask?' },
+    ],
+    flashcards: [
+      ['Activation rate of a Hyrax RME screw?', '0.25 mm twice a day (one quarter turn each time).'],
+      ['Headgear that extrudes upper molars?', 'Cervical-pull headgear.'],
+    ],
+  },
+  {
+    slug: 'retention-relapse', subject: 'orthodontics', title: 'Retention & Relapse', priority: 'must_know', marks_hint: '10-mark essay',
+    tags: ['retention'],
+    vignette: 'Two years after fixed appliance treatment, a patient\'s previously rotated upper lateral incisor has rotated back and her lower incisors have crowded again.',
+    content: {
+      definition: 'Retention is holding teeth in their corrected positions after orthodontic treatment. Relapse is the return of the original malocclusion features after treatment.',
+      classification: [
+        'Removable retainers: Hawley (labial bow and clasps), vacuum-formed (Essix) clear retainers, Begg wraparound',
+        'Fixed (bonded) retainers: lingual multistrand wire bonded to the lower canines and incisors (3-3) or upper incisors',
+        'Duration: limited, prolonged or lifelong – most orthodontists now advise long-term (often lifelong) retention',
+      ],
+      clinical_features: [
+        'Causes of relapse: periodontal and gingival fibres (supracrestal/transseptal fibres take about 232 days or longer to remodel – rotations relapse), soft-tissue pressure (lips, cheeks, tongue), continued growth (late mandibular growth), occlusal factors, late lower incisor crowding (normal ageing change), uncorrected habits',
+        'Riedel\'s theorems: teeth moved tend to return; eliminating the cause prevents relapse; overcorrection is a safety factor; proper occlusion aids retention; bone and adjacent tissues need time to reorganise; lower incisors placed upright over basal bone are more stable; corrections during growth are less likely to relapse; the farther teeth are moved, the less likely relapse; arch form, particularly the mandibular, cannot be permanently altered',
+      ],
+      management: ['Prevention: overcorrect rotations, circumferential supracrestal fibrotomy (CSF) for severe rotations, maintain lower intercanine width, correct habits', 'Retention: fixed lingual retainer plus removable retainer; full-time wear for the first months, then nights; long-term review', 'This patient: realign (limited appliance or aligners), CSF on the lateral incisor, then bonded retainers'],
+      viva_pearls: ['Mandibular intercanine width tends to return to its original value – avoid expanding it.'],
+    },
+    viva: [
+      { q: 'Define retention and relapse.', keywords: ['retention', 'hold|maintain', 'relapse', 'return', 'original'], probe: 'Why is retention necessary?' },
+      { q: 'What causes relapse?', keywords: ['periodontal fibres|transseptal|supracrestal|gingival fibres', 'soft tissue|lip|tongue', 'growth', 'rotation', 'late lower incisor crowding|ageing'], probe: 'Why do rotations relapse most?' },
+      { q: 'State some of Riedel\'s theorems.', keywords: ['riedel', 'overcorrection', 'eliminat|cause', 'basal bone|upright', 'arch form|intercanine'], probe: 'Can arch form be permanently changed?' },
+      { q: 'Name the types of retainers and how you will manage this patient.', keywords: ['hawley', 'essix|vacuum formed|vacuum-formed', 'bonded|fixed|lingual', 'fibrotomy|csf', 'lifelong|long term|long-term'], probe: 'What is circumferential supracrestal fibrotomy?' },
+    ],
+    flashcards: [
+      ['Fibres mainly responsible for rotational relapse?', 'Supracrestal (transseptal and gingival) fibres.'],
+      ['Should mandibular intercanine width be expanded?', 'No – it tends to return to its original value.'],
+    ],
+  },
+  {
+    slug: 'sedation-children', subject: 'pedodontics', title: 'Local Anaesthesia & Sedation in Children', priority: 'must_know', marks_hint: '10-mark essay',
+    tags: ['behaviour management', 'anaesthesia'],
+    vignette: 'An anxious 7-year-old weighing 20 kg needs two primary molar pulpotomies. You plan inhalation sedation and local anaesthesia.',
+    content: {
+      definition: 'Pain and anxiety control in children combines behaviour management with local anaesthesia and, when needed, conscious sedation – a drug-induced depression of consciousness during which verbal contact is maintained.',
+      clinical_features: [
+        'LA dose: lignocaine with adrenaline maximum 4.4 mg/kg (some sources 7 mg/kg) – for a 20 kg child about 88 mg ≈ 2 cartridges of 2% (each 2.2 mL ≈ 44 mg); articaine 7 mg/kg (not usually under 4 years)',
+        'Technique: topical anaesthetic, slow injection, "tell–show–do" with child-friendly language; in children the mandibular foramen is lower (below the occlusal plane) – inject slightly lower; infiltration often works in the primary mandibular molar region of young children',
+        'Complications: lip and cheek biting after the appointment (warn parents), toxicity with overdose (convulsions)',
+        'Inhalation sedation (nitrous oxide–oxygen): titrated (usually 20–40% N₂O), minimum 30% oxygen; rapid onset and recovery, analgesic, anxiolytic; contraindications – nasal obstruction, common cold, first-trimester pregnancy, severe COPD, recent middle-ear surgery, some psychiatric conditions; diffusion hypoxia at the end – give 100% oxygen for 3–5 minutes',
+        'Oral sedation (midazolam 0.3–0.5 mg/kg) and IV sedation in specialist settings; general anaesthesia for extensive treatment or uncooperative children',
+      ],
+      management: ['For this child: behaviour management, N₂O–O₂ sedation titrated, topical then local anaesthesia within dose limits, rubber dam, then 100% oxygen at the end; discharge to an adult'],
+      viva_pearls: ['Diffusion hypoxia: when N₂O is stopped it floods the alveoli and dilutes oxygen – give 100% oxygen.'],
+    },
+    viva: [
+      { q: 'How do you calculate the maximum LA dose for this child?', keywords: ['4.4|7 mg', 'kg|weight', '20 kg', '44 mg|cartridge', 'two cartridges|2 cartridges|88'], probe: 'How many cartridges can you give?' },
+      { q: 'How does LA technique differ in children?', keywords: ['mandibular foramen', 'lower|below the occlusal plane', 'infiltration', 'topical', 'tell show do|tell-show-do'], probe: 'Where is the mandibular foramen in a child?' },
+      { q: 'Describe nitrous oxide–oxygen sedation.', keywords: ['nitrous oxide', 'titrat', '30% oxygen|minimum oxygen', 'diffusion hypoxia', '100% oxygen'], probe: 'What is diffusion hypoxia?' },
+      { q: 'What are the contraindications to inhalation sedation, and what are the alternatives?', keywords: ['nasal obstruction|cold', 'pregnan', 'copd|respiratory', 'midazolam|oral sedation', 'general anaesthesia|ga'], probe: 'Why avoid it in a child with a blocked nose?' },
+    ],
+    flashcards: [
+      ['Minimum oxygen concentration during N₂O sedation?', '30%.'],
+      ['Treatment of diffusion hypoxia after N₂O?', 'Give 100% oxygen for 3–5 minutes.'],
+    ],
+  },
+  {
+    slug: 'special-needs-children', subject: 'pedodontics', title: 'Children with Special Healthcare Needs', priority: 'desirable', marks_hint: '10-mark essay',
+    tags: ['special care'],
+    vignette: 'A 10-year-old with Down syndrome and a repaired heart defect, and a 6-year-old with autism who is distressed by noise and lights, both come for check-ups.',
+    content: {
+      definition: 'Children with special healthcare needs (AAPD) have physical, developmental, mental, sensory, behavioural, cognitive or emotional impairments or limiting conditions that require medical management, healthcare intervention or specialised services.',
+      classification: ['Physical: cerebral palsy, muscular dystrophy, spina bifida', 'Developmental/intellectual: Down syndrome, autism spectrum disorder, ADHD, intellectual disability', 'Sensory: visual and hearing impairment', 'Medical: congenital heart disease, bleeding disorders, diabetes, epilepsy, cancer (chemotherapy), renal disease'],
+      clinical_features: [
+        'Down syndrome (trisomy 21): macroglossia (relative), fissured tongue, mouth breathing, delayed eruption, hypodontia, microdontia, Class III tendency, early severe periodontitis (immune defect), lower caries rate; congenital heart defects (about 40–50%) – check for endocarditis prophylaxis; atlantoaxial instability (care with neck positioning)',
+        'Autism spectrum disorder: communication difficulties, sensory sensitivity, need for routine; self-injury, bruxism, possible high caries from sweet rewards or medication',
+        'Cerebral palsy: abnormal muscle tone and reflexes, drooling, bruxism, trauma, malocclusion, gingival enlargement (phenytoin), difficulty with oral hygiene',
+      ],
+      management: [
+        'Plan short, predictable appointments with the same team; desensitisation visits; visual schedules (picture cards) for autism; reduce noise and light',
+        'Involve caregivers; liaise with physicians; consider positioning aids and protective stabilisation only with consent and as a last resort',
+        'Prevention: fluoride varnish, sealants, diet advice, adapted toothbrushes, chlorhexidine',
+        'Sedation or general anaesthesia for extensive treatment when cooperation is not possible',
+      ],
+      viva_pearls: ['Down syndrome: severe early periodontitis despite relatively low caries – due to neutrophil defects.'],
+    },
+    viva: [
+      { q: 'Who are children with special healthcare needs?', keywords: ['physical', 'developmental|intellectual', 'sensory', 'medical', 'aapd|specialised|specialized'], probe: 'Give examples from each group.' },
+      { q: 'What are the oral features of Down syndrome?', keywords: ['macroglossia|fissured tongue', 'delayed eruption|hypodontia', 'periodontitis|periodontal', 'class iii', 'heart|atlantoaxial'], probe: 'Why is periodontal disease severe?' },
+      { q: 'How will you manage the child with autism?', keywords: ['routine|predictable', 'visual|picture', 'desensitis|desensitiz', 'noise|light|sensory', 'caregiver|parent'], probe: 'What is a desensitisation visit?' },
+      { q: 'What preventive and advanced options are available?', keywords: ['fluoride', 'sealant', 'diet', 'sedation', 'general anaesthesia|ga'], probe: 'When would you choose general anaesthesia?' },
+    ],
+    flashcards: [
+      ['Periodontal feature of Down syndrome?', 'Early, severe periodontitis (neutrophil dysfunction) despite relatively low caries.'],
+      ['Useful communication aid for children with autism?', 'Visual schedules / picture cards and consistent routines.'],
+    ],
+  },
 ]
 
 // Spotters use schematic SVG illustrations from /public/spotters.
