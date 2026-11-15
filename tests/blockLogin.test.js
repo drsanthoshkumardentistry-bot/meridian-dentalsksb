@@ -30,7 +30,7 @@ describe("signed block link", () => {
     expect(verifyLink(sa, { ...p, u: "uid2" }, 2000)).toBe(false);
     expect(verifyLink(sa, { ...p, a: "unblock" }, 2000)).toBe(false);
     expect(verifyLink(sa, { ...p, n: "evil@b.com" }, 2000)).toBe(false);
-    expect(verifyLink(sa, { ...p, s: "00" + p.s.slice(2) }, 2000)).toBe(false);
+    expect(verifyLink(sa, { ...p, s: (p.s[0] === "0" ? "1" : "0") + p.s.slice(1) }, 2000)).toBe(false);
     expect(verifyLink(sa, { ...p, s: "zz" }, 2000)).toBe(false);
     expect(verifyLink(sa, p, Number(p.e) + 1)).toBe(false);
     expect(verifyLink(sa, { ...p, a: "delete" }, 2000)).toBe(false);

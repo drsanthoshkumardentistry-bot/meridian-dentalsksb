@@ -15,6 +15,7 @@ const go = async (p, s) => { await p.locator("nav button", { hasText: s }).first
 async function book(p, o = {}) {
   await p.getByRole("button", { name: /Book Appointment/ }).first().click(); await p.waitForSelector("text=Planned Procedure");
   const form = p.locator("form", { has: p.locator("text=Planned Procedure") }).first();
+  if (!book.checked) { book.checked = true; const pre = await form.getByPlaceholder("Choose or type").inputValue(); log(pre === "Dr S", "attending doctor is prefilled from Practice Profile (" + pre + ")"); }
   await form.getByPlaceholder("Patient Full Name").fill(o.name ?? "Asha Devi");
   await form.getByPlaceholder("10-digit number").fill(o.phone ?? "9876543210");
   await form.getByPlaceholder("dd/mm/yyyy").fill(o.date ?? dmy(tomorrow));
