@@ -2189,6 +2189,8 @@ export default function App() {
   };
 
   const dayKey = new Date().toDateString();
+  const diaryRowsAll = useMemo(() => diaryView(appointments, { view: diaryViewId, query: diaryQuery }), [appointments, diaryViewId, diaryQuery, dayKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const diaryPage = usePaged(diaryRowsAll, `${diaryViewId}|${diaryQuery}`);
   const { dashboardPatientSeries, dashboardRevenueSeries, todayKey, trend30, dashboardVisitSeries } = useMemo(() => {
   const dashboardPatientSeries = dashboardDays.map((date) => {
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -3015,7 +3017,7 @@ export default function App() {
                 </div>
               ) : (() => {
                 const dsum = diarySummary(appointments);
-                const rows = diaryView(appointments, { view: diaryViewId, query: diaryQuery });
+                const rows = diaryRowsAll;
                 return (
                 <>
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-testid="diary-summary">
@@ -3119,7 +3121,7 @@ export default function App() {
                         {rows.length === 0 && (
                           <tr><td colSpan={6} className="p-8 text-center text-slate-500">{diaryQuery ? "No appointment matches your search." : "No appointments in this view."}</td></tr>
                         )}
-                        {rows.map((appt) => (
+                        {diaryPage.shown.map((appt) => (
                           <tr key={appt.id} className="hover:bg-enamel/60">
                             <td className="p-3.5">
                               <div className="font-bold text-slate-900">{appt.patientName}</div>
@@ -3164,6 +3166,7 @@ export default function App() {
                             </td>
                           </tr>
                         ))}
+                        <ShowMore paged={diaryPage} noun="appointments" colSpan={6} />
                       </tbody>
                     </table>
                   </div>
