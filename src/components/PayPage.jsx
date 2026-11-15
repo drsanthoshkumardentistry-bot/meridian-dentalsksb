@@ -3,12 +3,17 @@ import { copyText } from "../copyText.js";
 import { formatINR } from "../billing.js";
 import { parsePayLink, upiUriFor } from "../payLink.js";
 import { checkPayLink } from "../paySeal.js";
+import { pageLang, saveLang, tr } from "../pageText.js";
+import LangSwitch from "./LangSwitch.jsx";
 
 /** The page a patient sees after tapping a payment link from their clinic. No sign-in, no data stored. */
 export default function PayPage({ search = window.location.search }) {
   const req = parsePayLink(search);
   const [qr, setQr] = useState("");
   const [copied, setCopied] = useState(false);
+  const [lang, setLang] = useState(() => pageLang());
+  const pick = (id) => { setLang(id); saveLang(id); };
+  const t = (k, ...a) => tr(lang, k, ...a);
   // "checking" only while a sealed link is being checked; unsealed (older) links go straight to a caution.
   const [trust, setTrust] = useState(req && req.ks ? "checking" : "unsigned");
   useEffect(() => {
@@ -30,8 +35,9 @@ export default function PayPage({ search = window.location.search }) {
     return (
       <main className={shell}>
         <div className="max-w-sm bg-white border border-slate-200 rounded-2xl p-6 text-center">
-          <h1 className="text-lg font-bold text-slate-900">This payment link is not valid</h1>
-          <p className="text-sm text-slate-600 mt-2">{req ? "This link was changed or is not genuine. Do not pay it. " : ""}Ask the clinic to send the link again, or pay using the UPI QR on your bill.</p>
+          <LangSwitch lang={lang} onChange={pick} />
+          <h1 className="text-lg font-bold text-slate-900">{t("payInvalid")}</h1>
+          <p className="text-sm text-slate-600 mt-2">{req ? t("payChanged") : ""}{t("payInvalidBody")}</p>
         </div>
       </main>
     );
@@ -39,27 +45,28 @@ export default function PayPage({ search = window.location.search }) {
   return (
     <main className={shell}>
       <div className="w-full max-w-sm bg-white border border-slate-200 rounded-2xl p-6 text-center space-y-4">
+        <LangSwitch lang={lang} onChange={pick} />
         <div>
-          <div className="text-xs text-slate-500">Pay</div>
-          <h1 className="text-xl font-bold text-slate-900">{req.name || "Your clinic"}</h1>
+          <div className="text-xs text-slate-500">{t("pay")}</div>
+          <h1 className="text-xl font-bold text-slate-900">{req.name || t("yourClinic")}</h1>
         </div>
-        {trust === "ok" && <p role="status" className="rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs p-2">Verified: this link was issued by a MeriDent clinic account.</p>}
-        {trust === "checking" && <p role="status" className="text-xs text-slate-500">Checking this link…</p>}
-        {(trust === "unsigned" || trust === "unknown") && <p role="status" className="rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs p-2">This link could not be verified. Confirm the clinic name and UPI ID with the clinic before you pay.</p>}
+        {trust === "ok" && <p role="status" className="rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs p-2">{t("verified")}</p>}
+        {trust === "checking" && <p role="status" className="text-xs text-slate-500">{t("checking")}</p>}
+        {(trust === "unsigned" || trust === "unknown") && <p role="status" className="rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs p-2">{t("unverified")}</p>}
         {req.amountP > 0 && <div className="text-3xl font-bold text-slate-900 tabular-nums">₹{formatINR(req.amountP)}</div>}
-        {req.note && <div className="text-xs text-slate-500">For {req.note}</div>}
-        {trust !== "checking" && <a href={uri} className="block w-full rounded-xl bg-[#1d4ed8] text-white font-semibold py-3 text-sm">Pay with a UPI app</a>}
-        <p className="text-xs text-slate-500">Opens GPay, PhonePe, Paytm or any UPI app on this phone.</p>
+        {req.note && <div className="text-xs text-slate-500">{t("for")} {req.note}</div>}
+        {trust !== "checking" && <a href={uri} className="block w-full rounded-xl bg-[#1d4ed8] text-white font-semibold py-3 text-sm">{t("payBtn")}</a>}
+        <p className="text-xs text-slate-500">{t("payHint")}</p>
         {qr && trust !== "checking" && (
           <div>
-            <img src={qr} alt="UPI QR code" width={200} height={200} className="mx-auto" />
-            <p className="text-xs text-slate-500 mt-1">On a computer? Scan this with your phone's UPI app.</p>
+            <img src={qr} alt={t("qrAlt")} width={200} height={200} className="mx-auto" />
+            <p className="text-xs text-slate-500 mt-1">{t("qrHint")}</p>
           </div>
         )}
         <div className="text-xs text-slate-700 border-t border-slate-100 pt-3">
-          UPI ID: <strong>{req.vpa}</strong>{" "}
-          <button type="button" onClick={() => { copyText(req.vpa).then((ok) => setCopied(ok)); }} className="underline text-blue-700">{copied ? "Copied" : "Copy"}</button>
-          <p className="mt-1 text-slate-500">Check that the name above is your clinic before you pay. The money goes straight to this UPI ID.</p>
+          {t("upiId")}: <strong>{req.vpa}</strong>{" "}
+          <button type="button" onClick={() => { copyText(req.vpa).then((ok) => setCopied(ok)); }} className="underline text-blue-700">{copied ? t("copied") : t("copy")}</button>
+          <p className="mt-1 text-slate-500">{t("payCheck")}</p>
         </div>
       </div>
     </main>
