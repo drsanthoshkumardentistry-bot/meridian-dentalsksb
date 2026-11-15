@@ -1,0 +1,5 @@
+export const collection=()=>({}),doc=()=>({}),setDoc=async()=>{},onSnapshot=()=>()=>{},deleteDoc=async()=>{};
+
+export const getDoc=async()=>(globalThis.__BOOK?{exists:()=>true,data:()=>({enabled:true,name:"Smile Dental Care",doctor:"Dr. Priya Raman, BDS",address:"12 Race Course Rd, Coimbatore"})}:{exists:()=>false,data:()=>undefined}),getDocs=async()=>({docs:[],forEach(){}}),updateDoc=async()=>{},getFirestore=()=>({}),Timestamp={now:()=>({toMillis:()=>Date.now()}),fromMillis:(m)=>({toMillis:()=>m})},query=(...a)=>a[0],where=()=>({}),orderBy=()=>({}),limit=()=>({}),writeBatch=()=>({set(){},update(){},delete(){},commit:async()=>{}}),serverTimestamp=()=>Date.now(),addDoc=async()=>({id:"x"});
+export const endAt=()=>({}),startAt=()=>({}),startAfter=()=>({}),endBefore=()=>({}),documentId=()=>({}),arrayUnion=(...a)=>a,arrayRemove=()=>[],increment=(n)=>n,collectionGroup=()=>({}),runTransaction=async()=>{};
+export const deleteField=()=>({__delete:true}),getCountFromServer=async()=>({data:()=>({count:0})});

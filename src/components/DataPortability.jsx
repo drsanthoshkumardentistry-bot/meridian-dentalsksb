@@ -50,7 +50,8 @@ export default function DataPortability({ data, newId, onDownloadFile, onImporte
   };
 
   const sheet = (which) => {
-    const day = new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    const day = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     const map = {
       patients: [patientsCsv(data.patients), `patients-${day}.csv`],
       appointments: [appointmentsCsv(data.appointments), `appointments-${day}.csv`],

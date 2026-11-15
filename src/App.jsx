@@ -63,6 +63,7 @@ import MedicineLibrary from "./components/MedicineLibrary.jsx";
 import PatientGallery from "./components/PatientGallery.jsx";
 import { todayActionTiles, totalActions, liveFlow } from "./todayActions.js";
 import { listImages, addImage, removeImage, countImages } from "./galleryStore.js";
+import { cleanupPatientRemote } from "./patientCleanup.js";
 import { buildPayLink } from "./payLink.js";
 import { whatsappAutoEnabled, sendWhatsAppTemplate } from "./whatsappApi.js";
 import StorageMeter from "./components/StorageMeter.jsx";
@@ -233,7 +234,7 @@ import {
 } from "./reports";
 import {
   TAX_CATEGORIES, MAX_LINE_ITEMS, computeLineItemTotals, nextInvoiceNumber, normalizeInvoice, addPayment,
-  paidPaise, balancePaise, paymentStatus, buildUpiUri, isValidUpiId, buildInvoiceHtml, formatINR, toPaise,
+  paidPaise, balancePaise, paymentStatus, buildUpiUri, isValidUpiId, buildInvoiceHtml, formatINR, toPaise, MAX_AMOUNT_P,
 } from "./billing";
 
 const auth = FirebaseModule.auth;
@@ -1952,6 +1953,10 @@ export default function App() {
     const items = newInvoiceForm.items;
     if (items.some((it) => !(parseFloat(it.amount) > 0))) {
       showToast("Enter a bill amount greater than zero for every item");
+      return;
+    }
+    if (items.some((it) => parseFloat(it.amount) * 100 > MAX_AMOUNT_P)) {
+      showToast(`One item is above the limit of Rs ${formatINR(MAX_AMOUNT_P).replace(/\.00$/, "")}. Check for an extra zero.`);
       return;
     }
     if (items.some((it) => !it.description.trim())) {
@@ -5540,7 +5545,7 @@ export default function App() {
                 onClick={() => {
                   if (confirm(`Delete chart for ${activePatient.name}?`)) {
                     setPatients((prev) => prev.filter((p) => p.id !== activePatient.id));
-                    if (db && CLINIC_ID && activePatient.hasOpg) deleteOpg(db, CLINIC_ID, activePatient.id).catch(() => {});
+                    cleanupPatientRemote(db, CLINIC_ID, activePatient).catch(() => {});
                     logAudit("patient.delete", activePatient.name);
                     setIsChartModalOpen(false);
                     showToast("Patient chart deleted");

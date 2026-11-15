@@ -1,0 +1,1 @@
+export const onAuthStateChanged=(_a,cb)=>{setTimeout(()=>cb(localStorage.getItem("__noauth")?null:{uid:"u-test",email:"priya@smiledental.example",displayName:"Dr. Priya Raman",emailVerified:true,providerData:[{providerId:"google.com"}]}),0);return()=>{}};

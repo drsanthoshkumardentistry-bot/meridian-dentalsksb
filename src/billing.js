@@ -14,8 +14,9 @@ export const toPaise = (rupees) => {
   return Number.isFinite(n) ? Math.round(n * 100) : 0;
 };
 
+// A missing or damaged amount shows as 0.00, never as "NaN" on a bill.
 export const formatINR = (paise) =>
-  (paise / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  ((Number.isFinite(Number(paise)) ? Number(paise) : 0) / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export const gstRateFor = (taxCategory) => {
   const found = TAX_CATEGORIES.find((c) => c.id === taxCategory);
@@ -125,7 +126,8 @@ export const nextInvoiceNumber = (existingInvoices = [], date = new Date()) => {
 /** Brings old invoices (rawAmount/total strings) into the new shape without losing data. */
 export const normalizeInvoice = (inv) => {
   if (!inv) return inv;
-  if (typeof inv.totalP === "number") return { ...inv, payments: inv.payments || [] };
+  // A damaged payment line (blank or not an object) is dropped here so no screen can crash on it.
+  if (typeof inv.totalP === "number") return { ...inv, payments: Array.isArray(inv.payments) ? inv.payments.filter((p) => p && typeof p === "object") : [] };
   const legacyP = toPaise(inv.rawAmount ?? inv.total ?? 0);
   const settled = inv.status === "Self-Pay Completed" || inv.status === "Claim Settled";
   return {
