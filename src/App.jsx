@@ -99,6 +99,7 @@ import SecurityCard from "./components/SecurityCard";
 import DeleteAccountCard from "./components/DeleteAccountCard.jsx";
 import FounderCard from "./components/FounderCard.jsx";
 import ReportProblem from "./components/ReportProblem.jsx";
+import PlanCard from "./components/PlanCard.jsx";
 import { hasLock as pinLockOn, readLock as readPinLock } from "./appLock";
 import FullscreenButton from "./components/FullscreenButton.jsx";
 import ConnectionBar from "./components/ConnectionBar.jsx";
@@ -3870,6 +3871,8 @@ export default function App() {
               </div>
 
               <SecurityCard uid={authUser?.uid} onLockNow={() => setPinLocked(true)} onChange={() => setPinTick((n) => n + 1)} />
+
+              {role === "owner" && <PlanCard clinic={practiceProfile.name} createdAt={authUser?.metadata?.creationTime} />}
 
               {role === "owner" && <FounderCard />}
 
