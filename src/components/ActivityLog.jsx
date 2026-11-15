@@ -20,7 +20,7 @@ export default function ActivityLog({ entries }) {
         <p className="text-slate-500">The latest 300 changes made by you and your team. Clinical notes are never copied here.</p>
       </div>
       <div className="flex flex-wrap gap-2">
-        <input aria-label="Search activity" placeholder="Search patient, invoice or action" className={`${input} flex-1 min-w-[180px]`} value={query} onChange={(e) => setQuery(e.target.value)} />
+        <input aria-label="Search activity" placeholder="Search patient, invoice or action" maxLength={100} className={`${input} flex-1 min-w-[180px]`} value={query} onChange={(e) => setQuery(e.target.value)} />
         <select aria-label="Filter by person" className={input} value={actor} onChange={(e) => setActor(e.target.value)}>
           <option value="all">Everyone</option>
           {auditActors(entries).map((a) => <option key={a} value={a}>{a}</option>)}
