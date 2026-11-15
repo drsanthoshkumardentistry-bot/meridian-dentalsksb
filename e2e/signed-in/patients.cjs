@@ -21,6 +21,10 @@ async function addPatient(p, o = {}) {
   const submit = p.locator("form button[type=submit]").first();
   if (o.dbl) await submit.dblclick(); else await submit.click();
   await p.waitForTimeout(800);
+  // Registering opens the new patient's casesheet over the page; close it so the next step can click through.
+  const sheet = p.getByRole("button", { name: /^Close/i }).first();
+  for (let i = 0; i < 3 && (await p.locator(".fixed.inset-0.z-50").count()) > 0; i++) { await p.keyboard.press("Escape"); await p.waitForTimeout(250); }
+  if ((await p.locator(".fixed.inset-0.z-50").count()) > 0 && (await sheet.count()) > 0) await sheet.click().catch(() => {});
 }
 (async () => {
   const b = await chromium.launch();
