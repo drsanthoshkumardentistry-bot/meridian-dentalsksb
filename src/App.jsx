@@ -98,6 +98,7 @@ import LockScreen from "./components/LockScreen";
 import SecurityCard from "./components/SecurityCard";
 import DeleteAccountCard from "./components/DeleteAccountCard.jsx";
 import FounderCard from "./components/FounderCard.jsx";
+import ReportProblem from "./components/ReportProblem.jsx";
 import { hasLock as pinLockOn, readLock as readPinLock } from "./appLock";
 import FullscreenButton from "./components/FullscreenButton.jsx";
 import ConnectionBar from "./components/ConnectionBar.jsx";
@@ -4220,6 +4221,7 @@ export default function App() {
                     </div>
                   ))}
                 </div>
+                <ReportProblem clinic={practiceProfile.name} screen={activeNav} />
                 <button
                   type="button"
                   onClick={handleLogout}
