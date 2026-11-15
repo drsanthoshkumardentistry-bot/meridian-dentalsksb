@@ -1,0 +1,30 @@
+name: Uptime check
+
+# Every 15 minutes: is the live site up and does its server function answer?
+# If a check fails 3 times in a row, this run fails and GitHub emails the repository owner.
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Site and server function
+        run: |
+          SITE="https://meridiandentalos.com"
+          try() { # name, command
+            for i in 1 2 3; do
+              if eval "$2"; then echo "OK   $1"; return 0; fi
+              echo "retry $i for $1"; sleep 20
+            done
+            echo "::error::FAILED $1"; return 1
+          }
+          fail=0
+          try "home page loads and has the app" 'curl -fsS --max-time 20 "$SITE/" | grep -q "id=\"root\""' || fail=1
+          try "login page loads" 'curl -fsS --max-time 20 -o /dev/null "$SITE/login"' || fail=1
+          try "server function answers (405 to GET)" '[ "$(curl -s --max-time 20 -o /dev/null -w "%{http_code}" "$SITE/api/ai")" = "405" ]' || fail=1
+          try "logo file loads" 'curl -fsS --max-time 20 -o /dev/null "$SITE/logo.png"' || fail=1
+          exit $fail
