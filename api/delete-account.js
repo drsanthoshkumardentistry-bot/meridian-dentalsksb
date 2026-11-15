@@ -5,9 +5,13 @@ import { makeLimiter } from "./_lib/aiCore.js";
 import { lookupUser } from "./_lib/loginAlertCore.js";
 import { readServiceAccount } from "./_lib/blockCore.js";
 import { eraseClinic } from "./_lib/eraseCore.js";
+import { makeCode, sealTicket, verifyTicket, maskEmail } from "./_lib/codeCore.js";
+import { sendMail, mailReady } from "./_lib/mailCore.js";
 
 export const RECENT_MS = 10 * 60 * 1000;
 const allow = makeLimiter(60, 24 * 60 * 60 * 1000); // many rounds are normal for a big clinic; this stops abuse
+const allowCodeMail = makeLimiter(3, 60 * 60 * 1000); // at most 3 codes an hour
+const allowWrongCode = makeLimiter(10, 60 * 60 * 1000); // wrong guesses are counted; the code is 8 digits and expires in 15 minutes
 
 const send = (res, status, body) => {
   res.statusCode = status;
@@ -28,6 +32,23 @@ export default async function handler(req, res) {
   if (!body || typeof body !== "object" || body.confirm !== "DELETE") return send(res, 400, { error: "Type DELETE to confirm." });
   if (!user.lastLoginAt || Date.now() - user.lastLoginAt > RECENT_MS) {
     return send(res, 403, { error: "For safety, sign out and sign in again, then delete within 10 minutes.", code: "recent-login" });
+  }
+  // Second step: a code sent to the account's own email address.
+  if (body.step === "request") {
+    if (!mailReady()) return send(res, 503, { error: "Email codes are not switched on yet. Message us on WhatsApp and we will help you delete the account.", code: "no-mail" });
+    if (!allowCodeMail(user.uid)) return send(res, 429, { error: "Too many codes requested. Try again in an hour." });
+    const code = makeCode();
+    const sent = await sendMail({
+      to: user.email,
+      subject: "MeriDent: your code to delete your clinic account",
+      text: `Your code is ${code}\n\nEnter it in MeriDent to permanently delete your clinic account and all its data. It works for 15 minutes.\n\nIf you did not ask for this, do not share the code. Someone may be signed in to your account: change your Google or MeriDent password now.`,
+    });
+    if (!sent) return send(res, 502, { error: "Could not send the email. Try again in a minute." });
+    return send(res, 200, { sent: true, ticket: sealTicket(sa, "delete-account", user.uid, code), to: maskEmail(user.email) });
+  }
+  if (!verifyTicket(sa, "delete-account", user.uid, body.code, body.ticket)) {
+    if (!allowWrongCode(user.uid)) return send(res, 429, { error: "Too many wrong codes. Try again in an hour." });
+    return send(res, 400, { error: "That code is wrong or has expired. Ask for a new code.", code: "bad-code" });
   }
   if (!allow(user.uid)) return send(res, 429, { error: "Too many attempts. Try again tomorrow." });
   try {
