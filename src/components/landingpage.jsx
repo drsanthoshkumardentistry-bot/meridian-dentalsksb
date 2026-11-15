@@ -745,8 +745,8 @@ export default function LandingPage({
         <p className="mt-2 text-base text-slate-600 max-w-xl">We study dentistry and write the code ourselves, so the app is shaped around real clinic work.</p>
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
           {[
-            { init: "SS", name: "Santhoshkumar S", role: "Founder & Managing Director", bio: "BDS student, Sri Ramakrishna Dental College & Hospital, Coimbatore. Full-stack developer and product lead." },
-            { init: "SG", name: "Sivasabari G", role: "Co-Founder & CEO", bio: "BDS student, Dhanalakshmi Srinivasan Dental College & Hospital, Perambalur. Leads clinical workflow requirements and testing." }
+            { init: "SS", name: "Santhoshkumar S", role: "Founder", bio: "BDS student, Sri Ramakrishna Dental College & Hospital, Coimbatore. Full-stack developer and product lead." },
+            { init: "SG", name: "Sivasabari G", role: "Co-Founder", bio: "BDS student, Dhanalakshmi Srinivasan Dental College & Hospital, Perambalur. Leads clinical workflow requirements and testing." }
           ].map((p) => (
             <div key={p.name} className="flex gap-4 rounded-2xl border border-white bg-white/80 shadow-[0_14px_36px_-24px_rgba(17,24,39,.5)] p-5">
               <div className="shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-sky-400 to-blue-600 text-white font-display font-bold flex items-center justify-center">{p.init}</div>
