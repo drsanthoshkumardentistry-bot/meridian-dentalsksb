@@ -80,4 +80,23 @@ describe("/api/whatsapp", () => {
     expect(res.statusCode).toBe(502);
     expect(res.body.error).toBe("Template not approved");
   });
+  it("never echoes the access token or a very long message back to the browser", async () => {
+    process.env.WHATSAPP_TOKEN = "EAAB-secret-token-value"; process.env.WHATSAPP_PHONE_ID = "123";
+    global.fetch = vi.fn(async (url) => String(url).includes("identitytoolkit")
+      ? { ok: true, json: async () => ({ users: [{ localId: "u-wa3", email: "a@b.in", emailVerified: true, createdAt: "1600000000000" }] }) }
+      : { ok: false, json: async () => ({ error: { message: "Bad token EAAB-secret-token-value " + "x".repeat(900) } }) });
+    const res = await call({ kind: "recall", to: "9043205927", params: ["A", "6", "S", "9"] });
+    expect(res.statusCode).toBe(502);
+    expect(res.body.error).not.toContain("EAAB-secret-token-value");
+    expect(res.body.error.length).toBeLessThanOrEqual(200);
+  });
+  it("copes with a non-object error message from Meta", async () => {
+    process.env.WHATSAPP_TOKEN = "t"; process.env.WHATSAPP_PHONE_ID = "123";
+    global.fetch = vi.fn(async (url) => String(url).includes("identitytoolkit")
+      ? { ok: true, json: async () => ({ users: [{ localId: "u-wa4", email: "a@b.in", emailVerified: true, createdAt: "1600000000000" }] }) }
+      : { ok: false, json: async () => ({ error: { message: { nested: 1 } } }) });
+    const res = await call({ kind: "recall", to: "9043205927", params: ["A", "6", "S", "9"] });
+    expect(res.statusCode).toBe(502);
+    expect(res.body.error).toBe("WhatsApp refused the message.");
+  });
 });
