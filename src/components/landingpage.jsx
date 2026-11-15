@@ -135,7 +135,7 @@ const PLANS = [
 
 const QUALITY = [
   { n: "1,200+", label: "automated tests", note: "run before every update goes live" },
-  { n: "600,000", label: "random stress checks", note: "bad input, odd dates, wrong totals, with 0 failures in the latest run" },
+  { n: "6 million+", label: "random stress checks", note: "bad input, odd dates, wrong totals, with 0 failures in the latest run" },
   { n: "3 ways", label: "of testing", note: "normal order, shuffled order, and random data" },
 ];
 
