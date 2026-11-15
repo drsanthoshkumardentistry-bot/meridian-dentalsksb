@@ -46,7 +46,7 @@ New tests: `apiAttack` (20), `screenWalk` (14), `moneyEdge` (18), `patientCleanu
 | Medium | No `script-src` Content-Security-Policy in `vercel.json` (only framing and form rules). A full policy needs care because of Firebase, so it was not changed blind. | **(Fixed: offline page and script-src CSP added.)**
 | Medium | **Pay links can be forged.** Anyone can build a link that shows any clinic name with their own UPI ID. The page already warns patients to check the name; consider showing the clinic's registered name from the server instead. |
 | Low | Public pages are blank when offline (no offline page or service worker). The Android app is not affected. | **(Fixed: offline page and script-src CSP added.)**
-| Low | Appointments can be booked on year 1900 or 9999 (any real date is accepted). Consider limiting to a sensible range. |
+| Low | Appointments can be booked on year 1900 or 9999 (any real date is accepted). Consider limiting to a sensible range. | **(Fixed: 1 year back, 2 years ahead; online booking 1 year ahead.)**
 | Low | The Vite preview server answers 500 on a malformed address like `/%E0%A4%A`. Not checked on Vercel. |
 
 ## Not tested here (could not be, or needs a real device)

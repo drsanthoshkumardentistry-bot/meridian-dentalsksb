@@ -1,4 +1,5 @@
-import { dateKey } from "./reminders.js";
+import { dateKey, addDays } from "./reminders.js";
+import { BOOKING_AHEAD_DAYS } from "./dateRange.js";
 
 export const BOOKING_SERVICES = ["Check-up and consultation", "Scaling and polishing", "Tooth pain", "Filling", "Root canal", "Braces enquiry", "Other"];
 export const bookingUrl = (origin, clinicId) => `${String(origin).replace(/\/$/, "")}/?book=${encodeURIComponent(clinicId)}`;
@@ -21,6 +22,7 @@ export const validateBookingRequest = (form = {}, now = new Date()) => {
   if (name.length > 80) return { ok: false, error: "Name is too long" };
   if (!/^[6-9]\d{9}$/.test(phone)) return { ok: false, error: "Enter a valid 10-digit mobile number" };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(form.date || "") || form.date < dateKey(now)) return { ok: false, error: "Choose today or a later date" };
+  if (form.date > dateKey(addDays(now, BOOKING_AHEAD_DAYS))) return { ok: false, error: "Choose a date within the next year" };
   if (!["Morning", "Afternoon", "Evening"].includes(form.slot)) return { ok: false, error: "Choose a time of day" };
   return { ok: true, request: {
     name, phone, date: form.date, slot: form.slot,

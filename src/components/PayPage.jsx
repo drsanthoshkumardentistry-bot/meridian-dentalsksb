@@ -2,13 +2,22 @@ import React, { useEffect, useState } from "react";
 import { copyText } from "../copyText.js";
 import { formatINR } from "../billing.js";
 import { parsePayLink, upiUriFor } from "../payLink.js";
+import { checkPayLink } from "../paySeal.js";
 
 /** The page a patient sees after tapping a payment link from their clinic. No sign-in, no data stored. */
 export default function PayPage({ search = window.location.search }) {
   const req = parsePayLink(search);
   const [qr, setQr] = useState("");
   const [copied, setCopied] = useState(false);
-  const uri = req ? upiUriFor(req) : "";
+  // "checking" only while a sealed link is being checked; unsealed (older) links go straight to a caution.
+  const [trust, setTrust] = useState(req && req.ks ? "checking" : "unsigned");
+  useEffect(() => {
+    if (!req || !req.ks) return undefined;
+    let off = false;
+    checkPayLink(req).then((t) => { if (!off) setTrust(t); });
+    return () => { off = true; };
+  }, [search]); // eslint-disable-line react-hooks/exhaustive-deps
+  const uri = req && trust !== "bad" ? upiUriFor(req) : "";
   useEffect(() => {
     if (!uri) return undefined;
     let off = false;
@@ -17,12 +26,12 @@ export default function PayPage({ search = window.location.search }) {
   }, [uri]);
 
   const shell = "min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans";
-  if (!req) {
+  if (!req || trust === "bad") {
     return (
       <main className={shell}>
         <div className="max-w-sm bg-white border border-slate-200 rounded-2xl p-6 text-center">
           <h1 className="text-lg font-bold text-slate-900">This payment link is not valid</h1>
-          <p className="text-sm text-slate-600 mt-2">Ask the clinic to send the link again, or pay using the UPI QR on your bill.</p>
+          <p className="text-sm text-slate-600 mt-2">{req ? "This link was changed or is not genuine. Do not pay it. " : ""}Ask the clinic to send the link again, or pay using the UPI QR on your bill.</p>
         </div>
       </main>
     );
@@ -34,11 +43,14 @@ export default function PayPage({ search = window.location.search }) {
           <div className="text-xs text-slate-500">Pay</div>
           <h1 className="text-xl font-bold text-slate-900">{req.name || "Your clinic"}</h1>
         </div>
+        {trust === "ok" && <p role="status" className="rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs p-2">Verified: this link was issued by a MeriDent clinic account.</p>}
+        {trust === "checking" && <p role="status" className="text-xs text-slate-500">Checking this link…</p>}
+        {(trust === "unsigned" || trust === "unknown") && <p role="status" className="rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs p-2">This link could not be verified. Confirm the clinic name and UPI ID with the clinic before you pay.</p>}
         {req.amountP > 0 && <div className="text-3xl font-bold text-slate-900 tabular-nums">₹{formatINR(req.amountP)}</div>}
         {req.note && <div className="text-xs text-slate-500">For {req.note}</div>}
-        <a href={uri} className="block w-full rounded-xl bg-[#1d4ed8] text-white font-semibold py-3 text-sm">Pay with a UPI app</a>
+        {trust !== "checking" && <a href={uri} className="block w-full rounded-xl bg-[#1d4ed8] text-white font-semibold py-3 text-sm">Pay with a UPI app</a>}
         <p className="text-xs text-slate-500">Opens GPay, PhonePe, Paytm or any UPI app on this phone.</p>
-        {qr && (
+        {qr && trust !== "checking" && (
           <div>
             <img src={qr} alt="UPI QR code" width={200} height={200} className="mx-auto" />
             <p className="text-xs text-slate-500 mt-1">On a computer? Scan this with your phone's UPI app.</p>
