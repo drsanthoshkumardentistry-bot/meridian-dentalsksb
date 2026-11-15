@@ -124,8 +124,7 @@ const STEPS = [
 ];
 
 const COMING_NEXT = [
-  "Automatic WhatsApp sending",
-  "Radiograph cloud storage"
+  "Automatic WhatsApp sending"
 ];
 
 const PLANS = [

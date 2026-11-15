@@ -1,11 +1,14 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { loadMyPlan } from "../planApi.js";
 import { PLANS, planStatus, subscribeText } from "../plan.js";
 import { CONTACT } from "../legal.js";
 
 /** Settings: shows the clinic its plan. During the trial run everything is free and nothing is charged. */
-export default function PlanCard({ clinic = "", createdAt, now }) {
+export default function PlanCard({ clinic = "", createdAt, now, loadFn = loadMyPlan }) {
+  const [paid, setPaid] = useState({ plan: "", paidUntil: 0 });
+  useEffect(() => { let live = true; loadFn().then((p) => { if (live && p) setPaid(p); }).catch(() => {}); return () => { live = false; }; }, [loadFn]);
   const [planId, setPlanId] = useState("standard");
-  const status = planStatus({ createdAt, now });
+  const status = planStatus({ createdAt, now, paidUntil: paid.paidUntil, plan: paid.plan });
   const link = `https://wa.me/${CONTACT.whatsapp}?text=${encodeURIComponent(subscribeText({ planId, clinic }))}`;
   return (
     <section className="rounded-xl border border-rule p-4 space-y-3" data-testid="plan-card">
