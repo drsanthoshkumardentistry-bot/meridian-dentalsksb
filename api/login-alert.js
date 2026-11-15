@@ -3,6 +3,7 @@
 // plus the Firebase web API key. Without them it does nothing and answers 204.
 import { makeLimiter } from "./_lib/aiCore.js";
 import { buildAlert, lookupUser } from "./_lib/loginAlertCore.js";
+import { readServiceAccount, buildLink } from "./_lib/blockCore.js";
 
 const allow = makeLimiter(4, 60 * 60 * 1000); // one person cannot make more than 4 alerts an hour
 
@@ -26,7 +27,9 @@ export default async function handler(req, res) {
   if (!allow(user.uid)) return send(res, 429, { error: "Too many alerts." });
 
   const firstTime = user.createdAt > 0 && Math.abs(user.lastLoginAt - user.createdAt) < 2 * 60 * 1000;
-  const msg = buildAlert({ email: user.email, name: user.name, firstTime });
+  const sa = readServiceAccount();
+  const blockUrl = sa ? buildLink(process.env.SITE_URL || "https://www.meridiandentalos.com", sa, user.uid, "block", user.email) : "";
+  const msg = buildAlert({ email: user.email, name: user.name, firstTime, blockUrl });
   try {
     const r = await fetch("https://api.resend.com/emails", {
       method: "POST",

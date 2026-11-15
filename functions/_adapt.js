@@ -21,7 +21,7 @@ export const adapt = (handler) => async ({ request, env }) => {
       setHeader: (k, v) => out.set(k, String(v)),
       end: (data) => resolve(new Response(data === undefined || data === "" ? null : data, { status: res.statusCode, headers: out })),
     };
-    Promise.resolve(handler({ method: request.method, headers, body }, res)).catch(() => {
+    Promise.resolve(handler({ method: request.method, headers, body, url: request.url }, res)).catch(() => {
       resolve(new Response(JSON.stringify({ error: "Server error." }), { status: 500, headers: { "Content-Type": "application/json" } }));
     });
   });
