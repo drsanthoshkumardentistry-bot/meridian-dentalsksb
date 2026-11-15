@@ -134,6 +134,7 @@ import DentistEarnings from "./components/DentistEarnings.jsx";
 import RecallConversion from "./components/RecallConversion.jsx";
 import { recallConversion } from "./recallReport.js";
 import BookingShare from "./components/BookingShare.jsx";
+import { shareName } from "./accountName.js";
 import { dentistEarnings, dentistEarningsCsv, cleanPct } from "./dentistReport.js";
 import { branchComparison, branchComparisonCsv } from "./branchReport.js";
 import LabOrders from "./components/LabOrders.jsx";
@@ -3872,7 +3873,7 @@ export default function App() {
                 {practiceProfile.onlineBooking ? (
                   <>
                     <p className="text-slate-600">Share this link on WhatsApp, Instagram or Google Business Profile. Patients send a request and you confirm it in the Appointments Diary.</p>
-                    <BookingShare url={bookingUrl(window.location.origin, CLINIC_ID)} clinicName={practiceProfile.name} onCopy={() => { navigator.clipboard?.writeText(bookingUrl(window.location.origin, CLINIC_ID)); showToast("Booking link copied"); }} />
+                    <BookingShare url={bookingUrl(window.location.origin, CLINIC_ID)} clinicName={shareName(practiceProfile.name, authUser)} onCopy={() => { navigator.clipboard?.writeText(bookingUrl(window.location.origin, CLINIC_ID)); showToast("Booking link copied"); }} />
                     <div className="flex flex-wrap gap-2 items-center">
                       <input readOnly aria-label="Booking link" value={bookingUrl(window.location.origin, CLINIC_ID)} onFocus={(e) => e.target.select()} className="flex-1 min-w-[220px] px-3 py-2 border border-slate-300 rounded-lg bg-white" />
                       <button type="button" onClick={() => { navigator.clipboard?.writeText(bookingUrl(window.location.origin, CLINIC_ID)); showToast("Booking link copied"); }} className="px-3 py-2 rounded-lg bg-[#1d4ed8] text-white font-semibold">Copy link</button>
