@@ -67,4 +67,17 @@ describe("rate limit", () => {
     expect(allow("b", 20)).toBe(true);
     expect(allow("a", 2000)).toBe(true);
   });
+  it("does not remember an unlimited number of callers", () => {
+    const allow = makeLimiter(1, 1000, 100);
+    for (let i = 0; i < 1000; i++) allow("k" + i, i); // 1000 different callers within one window
+    // memory stays bounded: the newest callers are still limited, and an old one is simply forgotten
+    expect(allow("k999", 1000)).toBe(false);
+    expect(allow("k0", 1001)).toBe(true);
+  });
+  it("forgets callers whose window has passed", () => {
+    const allow = makeLimiter(1, 1000, 10);
+    for (let i = 0; i < 50; i++) allow("old" + i, 0);
+    expect(allow("new", 5000)).toBe(true);
+    expect(allow("old1", 5001)).toBe(true);
+  });
 });

@@ -12,10 +12,10 @@ const done = (res, status = 204) => { res.statusCode = status; res.setHeader("Ca
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return done(res, 405);
+  const ip = String((req.headers && (req.headers["x-forwarded-for"] || req.headers["cf-connecting-ip"])) || "unknown").split(",")[0].trim().slice(0, 64);
+  if (!perVisitor(ip)) return done(res, 429); // checked first: a sender repeating big junk bodies is cut off before any work is done on them
   const report = sanitizeReport(req.body);
   if (!report) return done(res, 400);
-  const ip = String((req.headers && (req.headers["x-forwarded-for"] || req.headers["cf-connecting-ip"])) || "unknown").split(",")[0].trim();
-  if (!perVisitor(ip)) return done(res, 429);
 
   console.error("client-error", JSON.stringify(report));
 

@@ -86,9 +86,15 @@ export const parseVisitNote = (text) => {
 };
 
 /** Best-effort limit per login: `limit` calls per `windowMs`. Resets when the function restarts. */
-export const makeLimiter = (limit = 40, windowMs = 60 * 60 * 1000) => {
+export const makeLimiter = (limit = 40, windowMs = 60 * 60 * 1000, maxKeys = 5000) => {
   const hits = new Map();
+  const prune = (now) => {
+    // Many different callers must not grow memory without end: drop callers whose window has passed, then the oldest ones.
+    for (const [k, v] of hits) { if (!v.length || now - v[v.length - 1] >= windowMs) hits.delete(k); }
+    if (hits.size > maxKeys) { let n = hits.size - Math.floor(maxKeys * 0.8); for (const k of hits.keys()) { hits.delete(k); if (--n <= 0) break; } }
+  };
   return (key, now = Date.now()) => {
+    if (hits.size > maxKeys) prune(now);
     const recent = (hits.get(key) || []).filter((t) => now - t < windowMs);
     if (recent.length >= limit) { hits.set(key, recent); return false; }
     recent.push(now);
@@ -96,3 +102,4 @@ export const makeLimiter = (limit = 40, windowMs = 60 * 60 * 1000) => {
     return true;
   };
 };
+

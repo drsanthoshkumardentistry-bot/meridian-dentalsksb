@@ -81,3 +81,18 @@ describe("scrub speed", () => {
     expect(out.length).toBeLessThanOrEqual(1500);
   });
 });
+
+describe("/api/client-error rate limit comes before parsing", () => {
+  it("answers 429 to a repeating sender without reading its body", async () => {
+    const { default: h } = await import("../api/client-error.js");
+    let touched = 0;
+    const body = new Proxy({}, { get() { touched++; return "x"; }, ownKeys() { touched++; return []; } });
+    const run = async () => { const r = { statusCode: 0, setHeader() {}, end() {} }; await h({ method: "POST", headers: { "x-forwarded-for": "9.9.9.9" }, body }, r); return r.statusCode; };
+    const codes = [];
+    for (let i = 0; i < 14; i++) codes.push(await run());
+    expect(codes.filter((c) => c === 429).length).toBeGreaterThanOrEqual(4);
+    const before = touched;
+    await run();
+    expect(touched).toBe(before);
+  });
+});
