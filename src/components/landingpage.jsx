@@ -133,6 +133,12 @@ const PLANS = [
   { name: "Pro", price: "₹999", unit: "/month", sub: "everything in Standard, plus", points: ["WhatsApp sending", "Multiple branches", "AI features"] },
 ];
 
+const QUALITY = [
+  { n: "1,200+", label: "automated tests", note: "run before every update goes live" },
+  { n: "600,000", label: "random stress checks", note: "bad input, odd dates, wrong totals, with 0 failures in the latest run" },
+  { n: "3 ways", label: "of testing", note: "normal order, shuffled order, and random data" },
+];
+
 const FAQS = [
   {
     q: "Is MeriDent free?",
@@ -716,6 +722,23 @@ export default function LandingPage({
               </li>
             ))}
           </ul>
+        </div>
+      </section>
+
+      {/* QUALITY CHECKS */}
+      <section id="quality" aria-label="How we test MeriDent" className="max-w-6xl mx-auto px-5 pb-16">
+        <div className="rounded-3xl bg-white/70 backdrop-blur border border-white shadow-[0_20px_50px_-30px_rgba(17,24,39,.45)] p-6 sm:p-8">
+          <h2 className="font-display font-bold text-2xl tracking-tight">We test it hard, so your clinic does not have to</h2>
+          <p className="mt-1.5 text-sm text-slate-600 max-w-2xl">Billing, stock, dues and reminders are checked automatically every time we change the app.</p>
+          <dl className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {QUALITY.map((q) => (
+              <div key={q.label} className="rounded-2xl bg-blue-50/70 border border-blue-100 p-4">
+                <dt className="text-sm font-semibold text-blue-900">{q.label}</dt>
+                <dd className="mt-1"><span className="font-display font-bold text-3xl text-brand-600">{q.n}</span><span className="block mt-1 text-xs text-slate-600">{q.note}</span></dd>
+              </div>
+            ))}
+          </dl>
+          <p className="mt-5 text-xs text-slate-500">These are our own checks, not an outside audit. Tests lower the chance of mistakes but cannot promise there are none, so please report any problem you find from Settings.</p>
         </div>
       </section>
 

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import { adapt } from "../functions/_adapt.js";
 import ai from "../api/ai.js";
 import wa from "../api/whatsapp.js";
@@ -6,6 +6,9 @@ import alert from "../api/login-alert.js";
 
 const call = (h, env, init) => adapt(h)({ request: new Request("https://x.test/api", init), env });
 const post = (body, headers = {}) => ({ method: "POST", headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify(body) });
+
+const savedEnv = { ...process.env };
+afterEach(() => { process.env = { ...savedEnv }; });
 
 describe("Cloudflare Pages adapter", () => {
   it("answers 405 to GET", async () => {
@@ -18,6 +21,7 @@ describe("Cloudflare Pages adapter", () => {
     expect(r.status).toBe(503);
   });
   it("WhatsApp and login alert answer 204 when not configured", async () => {
+    for (const k of ["RESEND_API_KEY", "LOGIN_ALERT_TO", "WHATSAPP_TOKEN", "WHATSAPP_PHONE_ID"]) delete process.env[k];
     expect((await call(wa, {}, post({}))).status).toBe(204);
     expect((await call(alert, {}, post({}))).status).toBe(204);
   });

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 
 vi.mock("../src/aiClient.js", () => ({
   askAi: vi.fn(async () => ({ text: "நல்ல விளக்கம்" })),
@@ -13,6 +13,8 @@ const patient = {
   plans: [{ id: "PL1", title: "RCT", status: "Proposed", discount: 0, items: [{ id: "i1", description: "Root canal", tooth: "36", amount: 4500, taxCategory: "therapeutic" }] }],
 };
 const base = { patient, onChange: () => {}, onBill: () => {}, showToast: vi.fn(), clinicId: "c" };
+
+afterEach(cleanup);
 
 describe("Explain plan with AI", () => {
   it("is hidden until the clinic switches AI on", () => {

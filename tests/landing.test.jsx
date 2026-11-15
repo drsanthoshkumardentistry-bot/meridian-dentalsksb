@@ -45,6 +45,14 @@ describe("landing page content", () => {
     expect(document.querySelector('a[href="#pricing"]')).toBeTruthy();
   });
 
+  it("shows our own test numbers and says they are not an outside audit", () => {
+    render(<LandingPage firebaseConfigured onLoginClick={() => {}} />);
+    const sec = document.getElementById("quality");
+    expect(sec).toBeTruthy();
+    ["1,200+", "600,000"].forEach((n) => expect(sec.textContent).toContain(n));
+    expect(sec.textContent).toMatch(/not an outside audit/i);
+  });
+
   it("makes no unverifiable claims (testimonials, user counts, compliance badges)", () => {
     const { container } = render(<LandingPage firebaseConfigured onLoginClick={() => {}} />);
     const text = container.textContent;
