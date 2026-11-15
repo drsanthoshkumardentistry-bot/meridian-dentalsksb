@@ -4121,7 +4121,7 @@ export default function App() {
                 <ProfileNote k="dentalCouncil" />
                 </Field>
 
-                <Field label="Dental Council Registration No.">
+                <Field label="Dental Council Registration No." hint="Your registration as a dentist. It is not the Udyam (business) number below.">
                   <input
                     type="text"
                     id="pf-councilRegNumber"
@@ -4191,7 +4191,7 @@ export default function App() {
           {activeNav !== "Practice Profile" && profileGaps(practiceProfile).length > 0 && (
             <div className="mt-5 mb-6 rounded-xl border border-brand-100 bg-brand-50 p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
               <div className="text-sm text-slate-700">
-                <strong className="text-brand-700">Complete your clinic profile.</strong> Still needed:{" "}
+                <strong className="text-brand-700">Finish your clinic profile.</strong> Needed:{" "}
                 {profileGaps(practiceProfile).map((g, i, arr) => (
                   <React.Fragment key={g}>
                     <button
@@ -4206,13 +4206,13 @@ export default function App() {
                     {i < arr.length - 1 ? ", " : ""}
                   </React.Fragment>
                 ))}
-                , so prescriptions and invoices are correct. The Udyam number and the Dental Council registration number are two different fields.</div>
+                , so prescriptions and invoices are correct.</div>
               <button
                 type="button"
                 onClick={() => setActiveNav("Practice Profile")}
                 className="shrink-0 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold"
               >
-                Open Practice Profile
+                Open profile
               </button>
             </div>
           )}
