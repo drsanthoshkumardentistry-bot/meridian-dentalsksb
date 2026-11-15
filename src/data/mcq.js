@@ -3999,5 +3999,485 @@ export const MCQS = [
   "is_pyq": false,
   "exam": "NEET MDS",
   "is_important": true
+ },
+ {
+  "id": 251,
+  "subject": "Dental Anatomy",
+  "question": "The oblique ridge is a characteristic feature of:",
+  "options": [
+   "Mandibular first molar",
+   "Maxillary molars",
+   "Mandibular premolars",
+   "Maxillary canine"
+  ],
+  "answer": 1,
+  "explanation": "It runs from the mesiopalatal to the distobuccal cusp of maxillary molars.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 252,
+  "subject": "Dental Anatomy",
+  "question": "The largest cusp of the maxillary first molar is the:",
+  "options": [
+   "Mesiobuccal",
+   "Distobuccal",
+   "Mesiopalatal",
+   "Distopalatal"
+  ],
+  "answer": 2,
+  "explanation": "The mesiopalatal cusp is the largest and the main functional cusp; the cusp of Carabelli lies on it.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 253,
+  "subject": "Dental Anatomy",
+  "question": "The mandibular second molar typically shows which occlusal groove pattern?",
+  "options": [
+   "Y",
+   "+ (cross)",
+   "H",
+   "U"
+  ],
+  "answer": 1,
+  "explanation": "Four cusps with a cross-shaped groove pattern; the first molar has a Y5 pattern.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 254,
+  "subject": "Dental Anatomy",
+  "question": "The usual eruption sequence of primary teeth is:",
+  "options": [
+   "A B C D E",
+   "A B D C E",
+   "A D B C E",
+   "B A D C E"
+  ],
+  "answer": 1,
+  "explanation": "Central incisor, lateral incisor, first molar, canine, second molar.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 255,
+  "subject": "Dental Anatomy",
+  "question": "The only permanent tooth to begin calcification at birth is the:",
+  "options": [
+   "Central incisor",
+   "First molar",
+   "Canine",
+   "First premolar"
+  ],
+  "answer": 1,
+  "explanation": "Permanent first molar calcification begins at about birth.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 256,
+  "subject": "Dental Anatomy",
+  "question": "Primate spaces in the mandibular primary arch are located:",
+  "options": [
+   "Mesial to the canines",
+   "Distal to the canines",
+   "Between the central incisors",
+   "Distal to the second molars"
+  ],
+  "answer": 1,
+  "explanation": "Maxillary primate spaces are mesial to the canines; mandibular ones are distal to the canines.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 257,
+  "subject": "Dental Anatomy",
+  "question": "The tooth that resembles no other tooth in either dentition is the:",
+  "options": [
+   "Primary maxillary first molar",
+   "Primary mandibular first molar",
+   "Permanent mandibular first premolar",
+   "Primary maxillary canine"
+  ],
+  "answer": 1,
+  "explanation": "It has a prominent mesiobuccal cervical ridge and an unusual occlusal form.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 258,
+  "subject": "Dental Anatomy",
+  "question": "The most common relationship at the cementoenamel junction is:",
+  "options": [
+   "Edge to edge",
+   "Cementum overlaps enamel",
+   "A gap between enamel and cementum",
+   "Enamel overlaps cementum"
+  ],
+  "answer": 1,
+  "explanation": "About 60% overlap, 30% meet edge to edge, 10% leave a gap.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 259,
+  "subject": "Dental Anatomy",
+  "question": "Cellular cementum is found mainly:",
+  "options": [
+   "At the cervical third",
+   "In the apical third and furcations",
+   "Over the crown",
+   "Only in primary teeth"
+  ],
+  "answer": 1,
+  "explanation": "Secondary cellular cementum forms after occlusion, mostly apically and in furcations.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 260,
+  "subject": "Dental Anatomy",
+  "question": "The tissue considered essential for tooth eruption is the:",
+  "options": [
+   "Root",
+   "Dental follicle",
+   "Periodontal ligament",
+   "Pulp"
+  ],
+  "answer": 1,
+  "explanation": "Experiments show a tooth will not erupt without its follicle, even if the root is removed.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 261,
+  "subject": "Dental Anatomy",
+  "question": "The \"ugly duckling\" stage was described by:",
+  "options": [
+   "Angle",
+   "Broadbent",
+   "Nance",
+   "Baume"
+  ],
+  "answer": 1,
+  "explanation": "Broadbent: transient flaring and diastema of upper incisors at 8–11 years.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 262,
+  "subject": "Dental Anatomy",
+  "question": "Mutually protected occlusion means that in lateral excursions:",
+  "options": [
+   "All teeth contact",
+   "Canines disocclude the posterior teeth",
+   "Only molars contact",
+   "Balancing contacts are present"
+  ],
+  "answer": 1,
+  "explanation": "Canine guidance separates the posterior teeth; posteriors protect anteriors in intercuspation.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 263,
+  "subject": "Dental Anatomy",
+  "question": "Bonwill's triangle has sides of approximately:",
+  "options": [
+   "2 inches",
+   "4 inches",
+   "6 inches",
+   "8 inches"
+  ],
+  "answer": 1,
+  "explanation": "An equilateral triangle of about 4 inches (10 cm) from the condyles to the mandibular incisor contact.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 264,
+  "subject": "Oral Pathology",
+  "question": "A \"pregnancy tumour\" of the gingiva is histologically a:",
+  "options": [
+   "Fibroma",
+   "Pyogenic granuloma",
+   "Peripheral giant cell granuloma",
+   "Haemangiopericytoma"
+  ],
+  "answer": 1,
+  "explanation": "Granuloma gravidarum is a pyogenic granuloma, often regressing after delivery.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 265,
+  "subject": "Oral Pathology",
+  "question": "Cupping resorption of the underlying alveolar bone is a feature of:",
+  "options": [
+   "Irritation fibroma",
+   "Peripheral giant cell granuloma",
+   "Papilloma",
+   "Lipoma"
+  ],
+  "answer": 1,
+  "explanation": "PGCG is a purplish gingival mass that may produce superficial \"cupping\" resorption.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 266,
+  "subject": "Oral Pathology",
+  "question": "Haemorrhagic crusting of the lips with target lesions on the skin suggests:",
+  "options": [
+   "Pemphigus vulgaris",
+   "Erythema multiforme",
+   "Lichen planus",
+   "Recurrent aphthae"
+  ],
+  "answer": 1,
+  "explanation": "Often triggered by herpes simplex or drugs.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 267,
+  "subject": "Oral Pathology",
+  "question": "The commonest trigger for recurrent erythema multiforme is:",
+  "options": [
+   "Mycoplasma",
+   "Herpes simplex virus",
+   "Penicillin",
+   "Candida"
+  ],
+  "answer": 1,
+  "explanation": "Recurrent HSV-associated EM may be prevented with aciclovir prophylaxis.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 268,
+  "subject": "Oral Pathology",
+  "question": "Toxic epidermal necrolysis involves epidermal detachment of:",
+  "options": [
+   "< 10% of body surface",
+   "10–30%",
+   "> 30%",
+   "Only mucosa"
+  ],
+  "answer": 2,
+  "explanation": "SJS < 10%, SJS/TEN overlap 10–30%, TEN > 30%.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 269,
+  "subject": "Oral Surgery",
+  "question": "Partsch I operation is:",
+  "options": [
+   "Enucleation",
+   "Marsupialisation",
+   "Resection",
+   "Curettage"
+  ],
+  "answer": 1,
+  "explanation": "Partsch I – marsupialisation; Partsch II – enucleation with primary closure.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 270,
+  "subject": "Oral Surgery",
+  "question": "Marsupialisation is especially useful for:",
+  "options": [
+   "Small radicular cysts",
+   "Large cysts in children with developing teeth",
+   "Keratocysts in adults",
+   "Malignant lesions"
+  ],
+  "answer": 1,
+  "explanation": "It preserves developing teeth and vital structures and lets the cavity shrink.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 271,
+  "subject": "Oral Surgery",
+  "question": "Carnoy's solution is used after enucleation of:",
+  "options": [
+   "Radicular cyst",
+   "Odontogenic keratocyst",
+   "Nasopalatine cyst",
+   "Mucocele"
+  ],
+  "answer": 1,
+  "explanation": "It chemically cauterises the bony wall to remove satellite cysts and reduce OKC recurrence.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 272,
+  "subject": "Oral Surgery",
+  "question": "Intraseptal alveoloplasty is also known as:",
+  "options": [
+   "Obwegeser technique",
+   "Dean's technique",
+   "Kazanjian technique",
+   "Clark technique"
+  ],
+  "answer": 1,
+  "explanation": "Dean's alveoloplasty removes interseptal bone and collapses the labial cortex, preserving ridge height.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 273,
+  "subject": "Oral Surgery",
+  "question": "Kazanjian's vestibuloplasty uses a:",
+  "options": [
+   "Submucous tunnel",
+   "Labial mucosal flap",
+   "Skin graft from the thigh only",
+   "Palatal rotation flap"
+  ],
+  "answer": 1,
+  "explanation": "A labially based mucosal flap lines the new vestibule; Obwegeser described the submucous technique.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 274,
+  "subject": "Oral Surgery",
+  "question": "The most common complication of bilateral sagittal split osteotomy is:",
+  "options": [
+   "Facial nerve palsy",
+   "Inferior alveolar nerve paraesthesia",
+   "Hypoglossal palsy",
+   "Parotid fistula"
+  ],
+  "answer": 1,
+  "explanation": "The IAN runs through the split segments; transient numbness of the lower lip is common.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 275,
+  "subject": "Oral Surgery",
+  "question": "Bone damage during implant drilling occurs above about:",
+  "options": [
+   "37 °C",
+   "47 °C",
+   "57 °C",
+   "67 °C"
+  ],
+  "answer": 1,
+  "explanation": "Eriksson and Albrektsson: 47 °C for 1 minute causes bone necrosis.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 276,
+  "subject": "Oral Surgery",
+  "question": "The recommended minimum distance between two adjacent implants is about:",
+  "options": [
+   "1 mm",
+   "1.5 mm",
+   "3 mm",
+   "6 mm"
+  ],
+  "answer": 2,
+  "explanation": "About 3 mm between implants preserves interimplant bone and papilla; 1.5 mm from a natural tooth.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 277,
+  "subject": "Oral Surgery",
+  "question": "The material most commonly used for dental implants is:",
+  "options": [
+   "Stainless steel",
+   "Commercially pure titanium",
+   "Cobalt-chromium",
+   "Gold alloy"
+  ],
+  "answer": 1,
+  "explanation": "CP titanium (grade IV) or Ti-6Al-4V alloy, forming a stable titanium oxide surface layer.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 278,
+  "subject": "Orthodontics",
+  "question": "Decompensation before orthognathic surgery means:",
+  "options": [
+   "Extracting all premolars",
+   "Removing dental compensations so the skeletal problem is fully expressed",
+   "Retaining the teeth after surgery",
+   "Using headgear"
+  ],
+  "answer": 1,
+  "explanation": "Teeth are aligned over their basal bone so the surgeon can move the jaws to the correct skeletal position.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 279,
+  "subject": "Pedodontics",
+  "question": "Delayed eruption with multiple supernumerary teeth and absent clavicles suggests:",
+  "options": [
+   "Down syndrome",
+   "Cleidocranial dysplasia",
+   "Ectodermal dysplasia",
+   "Gardner syndrome"
+  ],
+  "answer": 1,
+  "explanation": "Cleidocranial dysplasia (RUNX2): hypoplastic clavicles, open fontanelles, unerupted and supernumerary teeth.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 280,
+  "subject": "Prosthodontics",
+  "question": "Epulis fissuratum is caused by:",
+  "options": [
+   "Viral infection",
+   "An ill-fitting, overextended denture flange",
+   "Vitamin deficiency",
+   "Smoking only"
+  ],
+  "answer": 1,
+  "explanation": "Reactive fibrous hyperplasia in folds at the denture border; excise and correct the denture.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
  }
 ]

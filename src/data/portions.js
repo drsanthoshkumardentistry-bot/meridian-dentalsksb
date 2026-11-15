@@ -38,10 +38,10 @@ const BDS = [
     ['Acid–base balance', { mcq: 'Biochemistry' }], ['Clinical biochemistry and liver function tests', { mcq: 'Biochemistry' }],
   ]),
   subject('dental-anatomy', 'Dental Anatomy, Embryology & Oral Histology', 1, 'Dental Anatomy', [
-    ['Development of teeth (odontogenesis)', { topic: 'tooth-development' }], ['Enamel', { topic: 'enamel' }], ['Dentine', { topic: 'dentine' }], 'Dental pulp', 'Cementum', ['Periodontal ligament', { topic: 'periodontal-ligament' }], 'Alveolar bone',
-    ['Oral mucous membrane', { topic: 'oral-mucosa' }], 'Salivary glands: histology', 'Eruption and shedding of teeth', 'Temporomandibular joint: histology',
-    'Maxillary sinus', 'Chronology of the human dentition', 'Permanent incisors and canines', 'Permanent premolars', 'Permanent molars',
-    'Deciduous teeth', 'Occlusion: basic concepts',
+    ['Development of teeth (odontogenesis)', { topic: 'tooth-development' }], ['Enamel', { topic: 'enamel' }], ['Dentine', { topic: 'dentine' }], 'Dental pulp', ['Cementum', { topic: 'cementum' }], ['Periodontal ligament', { topic: 'periodontal-ligament' }], 'Alveolar bone',
+    ['Oral mucous membrane', { topic: 'oral-mucosa' }], 'Salivary glands: histology', ['Eruption and shedding of teeth', { topic: 'tooth-eruption' }], 'Temporomandibular joint: histology',
+    'Maxillary sinus', ['Chronology of the human dentition', { topic: 'chronology-dentition' }], 'Permanent incisors and canines', 'Permanent premolars', ['Permanent molars', { topic: 'permanent-molars' }],
+    ['Deciduous teeth', { topic: 'primary-vs-permanent' }], ['Occlusion: basic concepts', { topic: 'occlusion-concepts' }],
   ]),
   // ---------------- 2nd year ----------------
   subject('path-micro', 'General Pathology & Microbiology', 2, 'Pathology', [
@@ -92,10 +92,10 @@ const BDS = [
     ['Developmental disturbances of teeth', { topic: 'tooth-anomalies' }], 'Developmental disturbances of oral and paraoral structures',
     ['Odontogenic cysts: inflammatory (radicular cyst)', { topic: 'radicular-cyst' }],
     ['Odontogenic cysts: developmental (OKC, dentigerous)', { topic: 'odontogenic-keratocyst' }],
-    ['Odontogenic tumours', { topic: 'ameloblastoma' }], 'Benign tumours of epithelial and connective tissue origin',
+    ['Odontogenic tumours', { topic: 'ameloblastoma' }], ['Benign tumours of epithelial and connective tissue origin', { topic: 'reactive-lesions' }],
     ['Oral squamous cell carcinoma and other malignancies', { topic: 'oral-squamous-cell-carcinoma' }], ['Salivary gland tumours', { topic: 'pleomorphic-adenoma' }], ['Fibro-osseous lesions and bone diseases', { topic: 'fibrous-dysplasia' }],
     ['Bacterial, viral and fungal infections', { topic: 'oral-candidiasis' }], ['Dental caries', { topic: 'dental-caries' }], 'Diseases of the pulp and periapical tissues',
-    ['Regressive changes: attrition, abrasion, erosion, resorption', { topic: 'tooth-wear' }], 'Physical and chemical injuries', 'Diseases of skin with oral manifestations',
+    ['Regressive changes: attrition, abrasion, erosion, resorption', { topic: 'tooth-wear' }], 'Physical and chemical injuries', ['Diseases of skin with oral manifestations', { topic: 'erythema-multiforme' }],
     ['Forensic odontology', { topic: 'forensic-odontology' }],
   ]),
   // ---------------- Final year ----------------
@@ -144,9 +144,9 @@ const BDS = [
     ['Asepsis and sterilisation', { topic: 'sterilisation' }], ['Local anaesthesia in oral surgery', { topic: 'local-anaesthetics', mcq: 'Pharmacology' }],
     ['Principles of exodontia', { topic: 'principles-of-exodontia' }], ['Impacted teeth', { topic: 'impacted-third-molar' }], ['Complications of extraction', { topic: 'dry-socket' }],
     ['Medical emergencies in dental practice', { topic: 'adc-anaphylaxis' }], ['Odontogenic infections and fascial spaces', { topic: 'ludwigs-angina' }],
-    'Cysts of the jaws: management', 'Benign and malignant jaw tumours', ['Mandibular fractures', { topic: 'mandibular-fractures' }],
+    ['Cysts of the jaws: management', { topic: 'cyst-management' }], 'Benign and malignant jaw tumours', ['Mandibular fractures', { topic: 'mandibular-fractures' }],
     ['Midface (Le Fort) fractures', { topic: 'le-fort-fractures' }], ['Zygomatic complex fractures', { topic: 'zygomatic-fractures' }], ['TMJ disorders and ankylosis', { topic: 'tmj-ankylosis' }],
-    'Pre-prosthetic surgery', 'Orthognathic surgery: basics', ['Maxillary sinus and oro-antral communication', { topic: 'oro-antral-communication' }], 'Implantology: basics',
+    ['Pre-prosthetic surgery', { topic: 'preprosthetic-surgery' }], ['Orthognathic surgery: basics', { topic: 'orthognathic-surgery' }], ['Maxillary sinus and oro-antral communication', { topic: 'oro-antral-communication' }], ['Implantology: basics', { topic: 'implant-basics' }],
   ]),
   subject('public-health', 'Public Health Dentistry', 4, 'Public Health Dentistry', [
     'Concepts of health and disease', ['Epidemiology and study designs', { topic: 'study-designs' }], ['Biostatistics', { topic: 'biostatistics' }], ['Indices: DMFT, CPI, Dean\'s fluorosis index', { topic: 'oral-health-indices' }],
