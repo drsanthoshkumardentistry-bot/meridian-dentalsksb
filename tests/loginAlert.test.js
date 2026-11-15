@@ -1,11 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import handler from "../api/login-alert.js";
 import { buildAlert } from "../api/_lib/loginAlertCore.js";
 
 const makeRes = () => { const r = { headers: {}, setHeader(k, v) { r.headers[k] = v; }, end(b) { r.body = b ? JSON.parse(b) : null; } }; return r; };
 const call = async (token = "good") => { const res = makeRes(); await handler({ method: "POST", headers: token ? { authorization: `Bearer ${token}` } : {} }, res); return res; };
-let sent;
+let sent, run = 0;
+const savedEnv = { ...process.env };
+afterEach(() => { process.env = { ...savedEnv }; });
 beforeEach(() => {
+  run++; // a fresh person each test, so the per-person alert limit never carries over between tests
   process.env.RESEND_API_KEY = "re_test"; process.env.LOGIN_ALERT_TO = "owner@example.com"; process.env.VITE_FIREBASE_API_KEY = "fb";
   sent = [];
   global.fetch = vi.fn(async (url, opts) => {
@@ -13,7 +16,7 @@ beforeEach(() => {
       const t = JSON.parse(opts.body).idToken;
       if (t === "bad") return { ok: false, json: async () => ({}) };
       const email = t === "owner" ? "owner@example.com" : t === "unverified" ? "x@example.com" : "asha@example.com";
-      return { ok: true, json: async () => ({ users: [{ localId: t + "-uid", email, emailVerified: t !== "unverified", displayName: "Asha", createdAt: "1000", lastLoginAt: "2000" }] }) };
+      return { ok: true, json: async () => ({ users: [{ localId: t + "-uid-" + run, email, emailVerified: t !== "unverified", displayName: "Asha", createdAt: "1000", lastLoginAt: "2000" }] }) };
     }
     sent.push(JSON.parse(opts.body)); return { ok: true, json: async () => ({}) };
   });
