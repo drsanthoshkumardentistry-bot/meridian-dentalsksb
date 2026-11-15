@@ -216,6 +216,7 @@ import {
 // Safe dynamic import from ./firebase
 import * as FirebaseModule from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import { safePatients, safeAppointments, safeInvoices } from "./safeRecords.js";
 import * as FirestoreModule from "firebase/firestore";
 import { collection, doc, setDoc, onSnapshot, deleteDoc } from "firebase/firestore";
 import { writeDocMerged } from "./cloudWrite.js";
@@ -909,9 +910,12 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState(null);
 
   // --- PERSISTENT DATA STORES (isolated per signed-in account) ---
-  const [allPatients, setPatients] = useState([]);
-  const [allAppointments, setAppointments] = useState([]);
-  const [allInvoices, setInvoices] = useState([]);
+  const [rawPatients, setPatients] = useState([]);
+  const [rawAppointments, setAppointments] = useState([]);
+  const [rawInvoices, setInvoices] = useState([]);
+  const allPatients = useMemo(() => safePatients(rawPatients), [rawPatients]);
+  const allAppointments = useMemo(() => safeAppointments(rawAppointments), [rawAppointments]);
+  const allInvoices = useMemo(() => safeInvoices(rawInvoices), [rawInvoices]);
   const [inventory, setInventory] = useState([]);
   const [employees, setEmployees] = useState(DEFAULT_EMPLOYEES);
   const [allQueue, setQueue] = useState([]);
