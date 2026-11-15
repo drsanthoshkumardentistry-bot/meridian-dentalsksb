@@ -33,3 +33,8 @@ export const firstScreen = (role) => (NAV_BY_ROLE[role] && !NAV_BY_ROLE[role].in
 
 /** Owners are never restricted; members see only their assigned branches (empty list = all). */
 export const branchScope = (member) => (member && Array.isArray(member.branchIds) && member.branchIds.length ? member.branchIds : null);
+
+// Every screen the side menu can open. A remembered screen that is not on this list (for example the visiting-doctor
+// screen after leaving that mode) would show an empty page, so it falls back to the Dashboard.
+export const SCREENS = ["Dashboard", "Appointments Diary", "Patients & Odontogram", "OPG & Diagnosis Studio", "Billing & Invoices", "MeriDent Connect", "Memberships & Leads", "Reports", "Stock Maintenance", "Employee Roles & Roster", "Practice Profile", "Settings"];
+export const safeScreen = (v) => (typeof v === "string" && SCREENS.includes(v) ? v : "Dashboard");

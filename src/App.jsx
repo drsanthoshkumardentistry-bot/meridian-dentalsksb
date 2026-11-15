@@ -20,7 +20,7 @@ import ActivityLog from "./components/ActivityLog.jsx";
 import { buildAuditEntry } from "./audit.js";
 import { writeAudit, watchAudit } from "./auditStore.js";
 import TeamCard from "./components/TeamCard.jsx";
-import { canRead, canWrite, navFor, NAV_BY_ROLE, firstScreen, branchScope, ROLE_LABEL } from "./roles.js";
+import { canRead, canWrite, navFor, NAV_BY_ROLE, firstScreen, branchScope, ROLE_LABEL, SCREENS, safeScreen } from "./roles.js";
 import { isActiveMember, isPendingInvite, buildInvite, inviteMessage } from "./team.js";
 import { watchMyMembership, watchTeam, createInvite, acceptInvite, updateMember, removeMember } from "./teamStore.js";
 import BranchesCard from "./components/BranchesCard.jsx";
@@ -887,7 +887,7 @@ export default function App() {
   // Remember the open screen across a refresh (this tab only); a fresh sign-in starts on the Dashboard.
   const [, setBackupTick] = useState(0);
   const [activeNav, setActiveNav] = useState(() => {
-    try { const v = window.sessionStorage.getItem("merident_nav"); return !v ? "Dashboard" : v === "Today" ? "Appointments Diary" : v; } catch (e) { return "Dashboard"; }
+    try { const v = window.sessionStorage.getItem("merident_nav"); return v === "Today" ? "Appointments Diary" : safeScreen(v); } catch (e) { return "Dashboard"; }
   });
   useEffect(() => {
     try { window.sessionStorage.setItem("merident_nav", activeNav); } catch (e) { /* storage unavailable */ }
@@ -1093,6 +1093,12 @@ export default function App() {
   const docLogOnly = docLogOnlyOn && !connectOnly;
   useEffect(() => { if (docLogOnly && activeNav !== "MeriDent DocLog") setActiveNav("MeriDent DocLog"); }, [docLogOnly, activeNav]);
   const leaveDocLogOnly = () => { setDocLogOnly(authUser.uid, false); setDocSignInChoice(false); setDocLogOnlyState(false); setActiveNav("Dashboard"); };
+
+  // A screen that no longer exists for this person (left DocLog-only mode, old saved value) would render an empty page.
+  useEffect(() => {
+    if (!CLINIC_ID) return;
+    if (activeNav === "MeriDent DocLog" ? !docLogOnly : !SCREENS.includes(activeNav)) setActiveNav("Dashboard");
+  }, [activeNav, docLogOnly, CLINIC_ID]);
 
   // Keep a team member on a screen their role allows
   useEffect(() => {
