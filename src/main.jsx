@@ -1,4 +1,5 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense } from 'react';
+import { lazyWithRetry } from './lazyWithRetry.js';
 import ReactDOM from 'react-dom/client';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import { legalPageFromSearch } from './legal.js';
@@ -11,14 +12,14 @@ import './index.css';
 
 // Each route is its own file, so a patient opening an estimate or booking link downloads only that page,
 // not the whole clinic app.
-const App = lazy(() => import('./App.jsx'));
-const PlanApprovalRoute = lazy(() => import('./components/PlanApprovalRoute.jsx'));
-const BookingPageRoute = lazy(() => import('./components/BookingPageRoute.jsx'));
-const PatientPortalRoute = lazy(() => import('./components/PatientPortalRoute.jsx'));
-const LegalPage = lazy(() => import('./components/LegalPage.jsx'));
-const PayPage = lazy(() => import('./components/PayPage.jsx'));
-const SeoPage = lazy(() => import('./components/SeoPage.jsx'));
-const EarlyAccessPage = lazy(() => import('./components/EarlyAccessPage.jsx'));
+const App = lazyWithRetry(() => import('./App.jsx'));
+const PlanApprovalRoute = lazyWithRetry(() => import('./components/PlanApprovalRoute.jsx'));
+const BookingPageRoute = lazyWithRetry(() => import('./components/BookingPageRoute.jsx'));
+const PatientPortalRoute = lazyWithRetry(() => import('./components/PatientPortalRoute.jsx'));
+const LegalPage = lazyWithRetry(() => import('./components/LegalPage.jsx'));
+const PayPage = lazyWithRetry(() => import('./components/PayPage.jsx'));
+const SeoPage = lazyWithRetry(() => import('./components/SeoPage.jsx'));
+const EarlyAccessPage = lazyWithRetry(() => import('./components/EarlyAccessPage.jsx'));
 
 if (!import.meta.env.DEV) {
   installErrorReporting();
