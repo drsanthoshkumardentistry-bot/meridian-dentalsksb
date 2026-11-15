@@ -20,7 +20,7 @@ const stubFirebase = ({ verified = true } = {}) => {
     if (String(url).includes("identitytoolkit")) {
       const tok = JSON.parse(opts.body).idToken;
       if (!tok.startsWith("good")) return { ok: false, json: async () => ({}) };
-      return { ok: true, json: async () => ({ users: [{ localId: tok, email: `${tok}@x.com`, emailVerified: verified }] }) };
+      return { ok: true, json: async () => ({ users: [{ localId: tok, email: `${tok}@x.com`, emailVerified: verified, createdAt: "1600000000000" }] }) };
     }
     return { ok: true, status: 200, json: async () => ({ content: [{ type: "text", text: "hello" }], messages: [{ id: "m1" }] }) };
   });

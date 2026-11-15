@@ -42,7 +42,7 @@ describe("/api/whatsapp", () => {
     global.fetch = vi.fn(async (url, opts) => {
       if (String(url).includes("identitytoolkit")) {
         const ok = JSON.parse(opts.body).idToken === "good";
-        return { ok, json: async () => ({ users: [{ localId: "u-wa", email: "a@b.in", emailVerified: true }] }) };
+        return { ok, json: async () => ({ users: [{ localId: "u-wa", email: "a@b.in", emailVerified: true, createdAt: "1600000000000" }] }) };
       }
       return { ok: true, json: async () => ({ messages: [{ id: "wamid.1" }] }) };
     });
@@ -74,7 +74,7 @@ describe("/api/whatsapp", () => {
   it("shows Meta's reason when it refuses", async () => {
     process.env.WHATSAPP_TOKEN = "t"; process.env.WHATSAPP_PHONE_ID = "123";
     global.fetch = vi.fn(async (url) => String(url).includes("identitytoolkit")
-      ? { ok: true, json: async () => ({ users: [{ localId: "u-wa2", email: "a@b.in", emailVerified: true }] }) }
+      ? { ok: true, json: async () => ({ users: [{ localId: "u-wa2", email: "a@b.in", emailVerified: true, createdAt: "1600000000000" }] }) }
       : { ok: false, json: async () => ({ error: { message: "Template not approved" } }) });
     const res = await call({ kind: "recall", to: "9043205927", params: ["A", "6", "S", "9"] });
     expect(res.statusCode).toBe(502);
