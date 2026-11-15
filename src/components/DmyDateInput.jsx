@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { isoToDmy, maskDmy, dmyToIso } from "../dateInput.js";
 
 /** Date field that shows dd/mm/yyyy (the Indian order). value and onChange use yyyy-mm-dd. max is yyyy-mm-dd. */
-export default function DmyDateInput({ value, onChange, max, className = "", ariaLabel = "Date (dd/mm/yyyy)", id }) {
+export default function DmyDateInput({ value, onChange, max, min, maxAhead, className = "", ariaLabel = "Date (dd/mm/yyyy)", id }) {
   const [text, setText] = useState(isoToDmy(value));
   const [problem, setProblem] = useState("");
   const inputRef = useRef(null);
@@ -14,8 +14,10 @@ export default function DmyDateInput({ value, onChange, max, className = "", ari
     if (text && text.length < 10) msg = "Type the full date as dd/mm/yyyy.";
     else if (text && !iso) msg = "That is not a real date. Use dd/mm/yyyy.";
     else if (iso && max && iso > max) msg = "The date cannot be in the future.";
+    else if (iso && min && iso < min) msg = "That date is too far in the past.";
+    else if (iso && maxAhead && iso > maxAhead) msg = "That date is too far ahead.";
     if (inputRef.current && inputRef.current.setCustomValidity) inputRef.current.setCustomValidity(msg);
-  }, [text, max]);
+  }, [text, max, min, maxAhead]);
 
   // Follow outside changes (for example loading another patient), but never overwrite what is being typed
   useEffect(() => {
@@ -31,6 +33,8 @@ export default function DmyDateInput({ value, onChange, max, className = "", ari
     const iso = dmyToIso(masked);
     if (!iso) { setProblem("That is not a real date. Use dd/mm/yyyy."); return; }
     if (max && iso > max) { setProblem("The date cannot be in the future."); return; }
+    if (min && iso < min) { setProblem("That date is too far in the past."); return; }
+    if (maxAhead && iso > maxAhead) { setProblem("That date is too far ahead."); return; }
     setProblem("");
     onChange(iso);
   };

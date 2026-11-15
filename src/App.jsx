@@ -65,6 +65,8 @@ import { todayActionTiles, totalActions, liveFlow } from "./todayActions.js";
 import { listImages, addImage, removeImage, countImages } from "./galleryStore.js";
 import { cleanupPatientRemote } from "./patientCleanup.js";
 import { buildPayLink } from "./payLink.js";
+import { readSeal, ensureSeal } from "./paySeal.js";
+import { windowFor, rangeProblem } from "./dateRange.js";
 import { whatsappAutoEnabled, sendWhatsAppTemplate } from "./whatsappApi.js";
 import StorageMeter from "./components/StorageMeter.jsx";
 import { CONTACT, CONTACT_CO } from "./legal.js";
@@ -1563,6 +1565,11 @@ export default function App() {
       showToast("Choose a date and time");
       return;
     }
+    const dateIssue = rangeProblem(newApptForm.date);
+    if (dateIssue) {
+      showToast(dateIssue);
+      return;
+    }
     if (!newApptForm.doctor.trim()) {
       showToast("Choose the attending doctor");
       return;
@@ -1821,7 +1828,7 @@ export default function App() {
       buildPaymentReminder({
         clinicName: practiceProfile.name, inv, upiId: isValidUpiId(practiceProfile.upiId) ? practiceProfile.upiId : "",
         language: languageOf(patients.find((p) => String(p.id) === String(inv.patientId))),
-        payLink: buildPayLink(window.location.origin, { vpa: practiceProfile.upiId, name: practiceProfile.name, amountP: balancePaise(normalizeInvoice(inv)), note: inv.id }),
+        payLink: buildPayLink(window.location.origin, { vpa: practiceProfile.upiId, name: practiceProfile.name, amountP: balancePaise(normalizeInvoice(inv)), note: inv.id, seal: readSeal(practiceProfile.upiId, practiceProfile.name) }),
       })
     );
     if (!link) {
@@ -2189,6 +2196,10 @@ export default function App() {
   };
 
   const dayKey = new Date().toDateString();
+  // Get the server's seal for this clinic's name + UPI ID so the pay links we send can be verified by patients.
+  useEffect(() => {
+    if (authUser && isVerified && isValidUpiId(practiceProfile.upiId) && String(practiceProfile.name || "").trim()) ensureSeal(practiceProfile.upiId, practiceProfile.name);
+  }, [authUser, isVerified, practiceProfile.upiId, practiceProfile.name]);
   const diaryRowsAll = useMemo(() => diaryView(appointments, { view: diaryViewId, query: diaryQuery }), [appointments, diaryViewId, diaryQuery, dayKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const diaryPage = usePaged(diaryRowsAll, `${diaryViewId}|${diaryQuery}`);
   const { dashboardPatientSeries, dashboardRevenueSeries, todayKey, trend30, dashboardVisitSeries } = useMemo(() => {
@@ -6027,7 +6038,7 @@ export default function App() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block font-semibold text-slate-600 mb-1">Date</label>
-                <DmyDateInput ariaLabel="Appointment date (dd/mm/yyyy)" value={newApptForm.date} onChange={(v) => setNewApptForm({ ...newApptForm, date: v })} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none" />
+                <DmyDateInput ariaLabel="Appointment date (dd/mm/yyyy)" min={windowFor().min} maxAhead={windowFor().maxAhead} value={newApptForm.date} onChange={(v) => setNewApptForm({ ...newApptForm, date: v })} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none" />
               </div>
 
               <div>

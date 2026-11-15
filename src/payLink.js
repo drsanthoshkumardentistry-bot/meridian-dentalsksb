@@ -4,12 +4,13 @@ import { isValidUpiId, buildUpiUri } from "./billing.js";
 
 const MAX_AMOUNT_P = 1000000 * 100; // 10 lakh rupees, far above one dental bill
 
-export const buildPayLink = (origin, { vpa, name = "", amountP = 0, note = "" } = {}) => {
+export const buildPayLink = (origin, { vpa, name = "", amountP = 0, note = "", seal = null } = {}) => {
   if (!isValidUpiId(vpa)) return "";
   const q = new URLSearchParams({ pay: "1", pa: String(vpa).trim() });
   if (name) q.set("pn", String(name).slice(0, 60));
   if (amountP > 0) q.set("am", (amountP / 100).toFixed(2));
   if (note) q.set("tn", String(note).slice(0, 40));
+  if (seal && seal.u && seal.ks) { q.set("u", String(seal.u)); q.set("ks", String(seal.ks)); } // proves the name + UPI ID are the clinic's own
   return `${String(origin).replace(/\/$/, "")}/?${q.toString()}`;
 };
 
@@ -26,7 +27,9 @@ export const parsePayLink = (search) => {
     amountP = Math.round(Number(amount) * 100);
     if (amountP <= 0 || amountP > MAX_AMOUNT_P) return null;
   }
-  return { vpa, name: (q.get("pn") || "").slice(0, 60), amountP, note: (q.get("tn") || "").slice(0, 40) };
+  const u = (q.get("u") || "").slice(0, 128);
+  const ks = /^[0-9a-f]{64}$/.test(q.get("ks") || "") ? q.get("ks") : "";
+  return { vpa, name: (q.get("pn") || "").slice(0, 60), amountP, note: (q.get("tn") || "").slice(0, 40), ...(u && ks ? { u, ks } : {}) };
 };
 
 export const upiUriFor = (req) => buildUpiUri(req);
