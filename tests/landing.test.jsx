@@ -30,8 +30,19 @@ describe("landing page content", () => {
     expect(faq).toBeTruthy();
     expect(within(faq).getByText("Does MeriDent send WhatsApp messages by itself?")).toBeTruthy();
     expect(faq.textContent).toMatch(/you tap Send/);
-    expect(faq.textContent).toMatch(/free during early access/i);
+    expect(faq.textContent).toMatch(/free during our trial run/i);
     expect(faq.querySelectorAll("details").length).toBe(9);
+  });
+
+  it("shows planned pricing with a clear trial-run notice", () => {
+    render(<LandingPage firebaseConfigured onLoginClick={() => {}} />);
+    const sec = document.getElementById("pricing");
+    expect(sec).toBeTruthy();
+    expect(within(sec).getByRole("note").textContent).toMatch(/trial run/i);
+    expect(within(sec).getByRole("note").textContent).toMatch(/nobody is being charged/i);
+    ["₹0", "₹499", "₹999"].forEach((p) => expect(sec.textContent).toContain(p));
+    expect(sec.textContent).toMatch(/₹4,999 per year/);
+    expect(document.querySelector('a[href="#pricing"]')).toBeTruthy();
   });
 
   it("makes no unverifiable claims (testimonials, user counts, compliance badges)", () => {

@@ -25,6 +25,7 @@ import {
   ReceiptText,
   ClipboardList,
   ShieldCheck,
+  Check,
   ScanSearch,
   IndianRupee,
   CalendarDays,
@@ -127,10 +128,16 @@ const COMING_NEXT = [
   "Radiograph cloud storage"
 ];
 
+const PLANS = [
+  { name: "Free trial", price: "₹0", unit: "", sub: "for 30 days", points: ["Every feature included", "No card needed", "Export your data any time"] },
+  { name: "Standard", price: "₹499", unit: "/month", sub: "or ₹4,999 per year", hot: true, points: ["Patients, charting, appointments", "Billing and invoices", "Backups, import and export"] },
+  { name: "Pro", price: "₹999", unit: "/month", sub: "everything in Standard, plus", points: ["WhatsApp sending", "Multiple branches", "AI features"] },
+];
+
 const FAQS = [
   {
     q: "Is MeriDent free?",
-    a: "It is free during early access, with no credit card. We will announce simple pricing well before anything changes, and early clinics will hear from us first."
+    a: "Yes, it is free during our trial run, with no credit card. The planned prices are in the Pricing section. Nobody is charged yet, we will tell you well before that changes, and the first 10 clinics get 3 months free in return for feedback."
   },
   {
     q: "Is my patients' data private?",
@@ -389,6 +396,7 @@ export default function LandingPage({
           <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-slate-600">
             <a href="#features" className="hover:text-brand-600">Features</a>
             <a href="#start" className="hover:text-brand-600">Getting started</a>
+            <a href="#pricing" className="hover:text-brand-600">Pricing</a>
             <a href="#faq" className="hover:text-brand-600">FAQ</a>
           </nav>
           <button
@@ -666,6 +674,32 @@ export default function LandingPage({
               </li>
             ))}
           </ol>
+        </div>
+      </section>
+
+      {/* PRICING */}
+      <section id="pricing" className="bg-white">
+        <div className="max-w-6xl mx-auto px-5 py-20 lg:py-24">
+          <div className="max-w-2xl mb-8">
+            <h2 className="font-display font-bold text-3xl sm:text-[2.5rem] tracking-[-0.025em] leading-tight text-ink">Pricing</h2>
+            <p className="mt-3 text-base text-slate-600">Per clinic, not per user. No setup fee.</p>
+          </div>
+          <div role="note" className="mb-8 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <strong>We are in our trial run.</strong> These are our planned prices, and nobody is being charged yet. Everything is free for now. The first 10 clinics get 3 months free in return for feedback, then keep a locked-in early price.
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {PLANS.map((plan) => (
+              <div key={plan.name} className={`rounded-2xl border-2 p-6 bg-white ${plan.hot ? "border-brand-600 shadow-lg shadow-blue-700/10" : "border-slate-200"}`}>
+                <h3 className="font-display font-bold text-lg text-brand-600">{plan.name}</h3>
+                <p className="mt-3 font-display font-extrabold text-4xl text-ink">{plan.price}<span className="text-base font-semibold text-slate-500">{plan.unit}</span></p>
+                <p className="mt-1 text-sm text-slate-500 min-h-[1.25rem]">{plan.sub}</p>
+                <ul className="mt-5 space-y-2.5 text-[15px] text-slate-700">
+                  {plan.points.map((pt) => <li key={pt} className="flex items-start gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0 mt-1" aria-hidden="true" /><span>{pt}</span></li>)}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <p className="mt-6 text-sm text-slate-500">You can download all your data at any time, on every plan. Prices may change before we start charging, and we will tell you first.</p>
         </div>
       </section>
 
