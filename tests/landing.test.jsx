@@ -51,6 +51,7 @@ describe("landing page content", () => {
     expect(sec).toBeTruthy();
     ["1,200+", "6 million+"].forEach((n) => expect(sec.textContent).toContain(n));
     expect(sec.textContent).toMatch(/not an outside audit/i);
+    expect(sec.textContent).toMatch(/data-access rules tested/);
   });
 
   it("makes no unverifiable claims (testimonials, user counts, compliance badges)", () => {
