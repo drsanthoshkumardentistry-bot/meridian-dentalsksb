@@ -233,7 +233,7 @@ import {
 } from "./reports";
 import {
   TAX_CATEGORIES, MAX_LINE_ITEMS, computeLineItemTotals, nextInvoiceNumber, normalizeInvoice, addPayment,
-  paidPaise, balancePaise, paymentStatus, buildUpiUri, isValidUpiId, buildInvoiceHtml, formatINR, toPaise,
+  paidPaise, balancePaise, paymentStatus, buildUpiUri, isValidUpiId, buildInvoiceHtml, formatINR, toPaise, MAX_AMOUNT_P,
 } from "./billing";
 
 const auth = FirebaseModule.auth;
@@ -1952,6 +1952,10 @@ export default function App() {
     const items = newInvoiceForm.items;
     if (items.some((it) => !(parseFloat(it.amount) > 0))) {
       showToast("Enter a bill amount greater than zero for every item");
+      return;
+    }
+    if (items.some((it) => parseFloat(it.amount) * 100 > MAX_AMOUNT_P)) {
+      showToast(`One item is above the limit of Rs ${formatINR(MAX_AMOUNT_P).replace(/\.00$/, "")}. Check for an extra zero.`);
       return;
     }
     if (items.some((it) => !it.description.trim())) {

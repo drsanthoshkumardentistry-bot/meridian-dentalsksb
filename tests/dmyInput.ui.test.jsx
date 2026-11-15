@@ -28,3 +28,20 @@ describe("DmyDateInput", () => {
     expect(screen.getByLabelText("DOB").value).toBe("05/12/1999");
   });
 });
+
+describe("date field blocks the form while the date is not valid", () => {
+  it("marks the input invalid for half-typed and impossible dates and valid again for a real one", async () => {
+    const { default: DmyDateInput } = await import("../src/components/DmyDateInput.jsx");
+    const { render, fireEvent } = await import("@testing-library/react");
+    const { container } = render(<DmyDateInput value="2026-11-15" onChange={() => {}} />);
+    const input = container.querySelector("input");
+    expect(input.validity.valid).toBe(true);
+    fireEvent.change(input, { target: { value: "3102" } });       // 31/02 half typed
+    expect(input.validity.valid).toBe(false);
+    fireEvent.change(input, { target: { value: "31022027" } });   // impossible date
+    expect(input.validity.valid).toBe(false);
+    expect(input.validationMessage).toMatch(/not a real date/i);
+    fireEvent.change(input, { target: { value: "28022027" } });
+    expect(input.validity.valid).toBe(true);
+  });
+});
