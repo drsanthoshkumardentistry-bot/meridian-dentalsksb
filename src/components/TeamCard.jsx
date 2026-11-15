@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { copyText } from "../copyText.js";
 import { ROLES, ROLE_LABEL, ROLE_NOTE } from "../roles.js";
 import { validateInvite } from "../team.js";
 
@@ -45,7 +46,7 @@ export default function TeamCard({ members, branches, ownerEmail, clinicName, or
               </select>
               <button type="button" onClick={() => onUpdate(m.email, { active: !m.active })} className="px-2 py-1.5 text-slate-600 hover:text-slate-900 font-semibold">{m.active ? "Suspend" : "Restore"}</button>
               <button type="button" aria-label={`Remove ${m.email}`} onClick={() => { if (confirm(`Remove the login for ${m.email}?`)) onRemove(m.email); }} className="px-2 py-1.5 text-slate-500 hover:text-rose-600 font-semibold">Remove</button>
-              {m.status === "invited" && <button type="button" onClick={() => navigator.clipboard?.writeText(message(m, origin))} className="px-2 py-1.5 text-[#1d4ed8] font-semibold">Copy invite message</button>}
+              {m.status === "invited" && <button type="button" onClick={() => copyText(message(m, origin))} className="px-2 py-1.5 text-[#1d4ed8] font-semibold">Copy invite message</button>}
             </li>
           ))}
         </ul>

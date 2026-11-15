@@ -1,4 +1,5 @@
 import StorageCheck from "./StorageCheck";
+import { copyText, COPY_FAILED } from "../copyText.js";
 import { isOwnerEmail } from "../connect/owner.js";
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import ConnectMessages from "./ConnectMessages.jsx";
@@ -298,7 +299,7 @@ function Finder({ api, me, geocode, showToast, refreshSent, onMessage }) {
               {directionsLink(d.geo && d.geo.lat, d.geo && d.geo.lng) && <a href={directionsLink(d.geo.lat, d.geo.lng)} target="_blank" rel="noopener noreferrer" className={`${btn} border border-rule text-slate-800 inline-flex items-center gap-1`}><MapPin className="w-3 h-3" /> Directions</a>}
               <button type="button" onClick={() => onMessage?.({ id: d.id, name: d.fullName })} className={`${btn} border border-rule text-slate-800`}>Message</button>
               <button type="button" aria-pressed={saved.includes(d.id)} onClick={() => flipSaved(d.id)} className={`${btn} border ${saved.includes(d.id) ? "bg-amber-50 border-amber-300 text-amber-900" : "border-rule text-slate-800"}`}>{saved.includes(d.id) ? "Saved" : "Save"}</button>
-              <button type="button" onClick={() => { navigator.clipboard?.writeText(shareText(d)); showToast("Contact copied. Paste it into WhatsApp."); }} className={`${btn} border border-rule text-slate-800`}>Copy contact</button>
+              <button type="button" onClick={() => { copyText(shareText(d)).then((ok) => showToast(ok ? "Contact copied. Paste it into WhatsApp." : COPY_FAILED)); }} className={`${btn} border border-rule text-slate-800`}>Copy contact</button>
               <button type="button" onClick={() => setInviteFor(inviteFor && inviteFor.id === d.id ? null : { id: d.id, when: "", room: newRoomName() })} className={`${btn} border border-brand-600 text-brand-700`}>Invite to video call</button>
               <button type="button" onClick={() => setOpenId(openId === d.id ? null : d.id)} className={`${btn} bg-brand-600 text-white`}>Ask for a consult</button>
             </div>

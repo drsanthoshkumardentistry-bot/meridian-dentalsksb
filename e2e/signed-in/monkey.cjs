@@ -8,7 +8,7 @@ const SKIP = /sign out|log ?out|delete (all|account|clinic)|erase|reset|clear (a
   const b = await chromium.launch(); let bad = 0, total = 0;
   for (const [w, h, label] of [[390, 844, "phone"], [1280, 800, "desktop"]]) {
     const ctx = await b.newContext({ viewport: { width: w, height: h } }); const p = await ctx.newPage(); const errs = [];
-    p.on("pageerror", e => errs.push(String(e).slice(0, 200))); p.on("console", m => { if (m.type() === "error" && !/ERR_TUNNEL|ERR_NAME|Failed to load resource|favicon/.test(m.text())) errs.push("console: " + m.text().slice(0, 200)); });
+    p.on("pageerror", e => errs.push(String(e).slice(0, 700))); p.on("console", m => { if (m.type() === "error" && !/ERR_TUNNEL|ERR_NAME|Failed to load resource|favicon/.test(m.text())) errs.push("console: " + m.text().slice(0, 700)); });
     p.on("dialog", d => rnd() < 0.5 ? d.accept("x") : d.dismiss()); p.on("popup", pp => pp.close()); await p.route(/^https?:\/\/(?!localhost)/, r => r.abort());
     await p.goto(URL); await p.waitForTimeout(2000);
     await p.evaluate(() => { localStorage.setItem("merident_u-test_profile", JSON.stringify({ name: "Smile Dental", drName: "Dr S", state: "TN", councilRegNumber: "12345" })); localStorage.setItem("merident_u-test_patients", JSON.stringify([{ id: "p1", name: "Asha Devi", age: "34", gender: "Female", phone: "9876543210", visits: [], plans: [], consent: { treatment: true, whatsapp: true } }])); });

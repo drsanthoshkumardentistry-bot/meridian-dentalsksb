@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { copyText } from "../copyText.js";
 import { formatINR } from "../billing.js";
 import { parsePayLink, upiUriFor } from "../payLink.js";
 
@@ -45,7 +46,7 @@ export default function PayPage({ search = window.location.search }) {
         )}
         <div className="text-xs text-slate-700 border-t border-slate-100 pt-3">
           UPI ID: <strong>{req.vpa}</strong>{" "}
-          <button type="button" onClick={() => { navigator.clipboard?.writeText(req.vpa); setCopied(true); }} className="underline text-blue-700">{copied ? "Copied" : "Copy"}</button>
+          <button type="button" onClick={() => { copyText(req.vpa).then((ok) => setCopied(ok)); }} className="underline text-blue-700">{copied ? "Copied" : "Copy"}</button>
           <p className="mt-1 text-slate-500">Check that the name above is your clinic before you pay. The money goes straight to this UPI ID.</p>
         </div>
       </div>

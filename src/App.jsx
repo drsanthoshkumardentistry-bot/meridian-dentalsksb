@@ -135,6 +135,7 @@ import RecallConversion from "./components/RecallConversion.jsx";
 import { recallConversion } from "./recallReport.js";
 import BookingShare from "./components/BookingShare.jsx";
 import { shareName } from "./accountName.js";
+import { copyText, COPY_FAILED } from "./copyText.js";
 import { dentistEarnings, dentistEarningsCsv, cleanPct } from "./dentistReport.js";
 import { branchComparison, branchComparisonCsv } from "./branchReport.js";
 import LabOrders from "./components/LabOrders.jsx";
@@ -3878,10 +3879,10 @@ export default function App() {
                 {practiceProfile.onlineBooking ? (
                   <>
                     <p className="text-slate-600">Share this link on WhatsApp, Instagram or Google Business Profile. Patients send a request and you confirm it in the Appointments Diary.</p>
-                    <BookingShare url={bookingUrl(window.location.origin, CLINIC_ID)} clinicName={shareName(practiceProfile.name, authUser)} onCopy={() => { navigator.clipboard?.writeText(bookingUrl(window.location.origin, CLINIC_ID)); showToast("Booking link copied"); }} />
+                    <BookingShare url={bookingUrl(window.location.origin, CLINIC_ID)} clinicName={shareName(practiceProfile.name, authUser)} onCopy={() => { copyText(bookingUrl(window.location.origin, CLINIC_ID)).then((ok) => showToast(ok ? "Booking link copied" : COPY_FAILED)); }} />
                     <div className="flex flex-wrap gap-2 items-center">
                       <input readOnly aria-label="Booking link" value={bookingUrl(window.location.origin, CLINIC_ID)} onFocus={(e) => e.target.select()} className="flex-1 min-w-[220px] px-3 py-2 border border-slate-300 rounded-lg bg-white" />
-                      <button type="button" onClick={() => { navigator.clipboard?.writeText(bookingUrl(window.location.origin, CLINIC_ID)); showToast("Booking link copied"); }} className="px-3 py-2 rounded-lg bg-[#1d4ed8] text-white font-semibold">Copy link</button>
+                      <button type="button" onClick={() => { copyText(bookingUrl(window.location.origin, CLINIC_ID)).then((ok) => showToast(ok ? "Booking link copied" : COPY_FAILED)); }} className="px-3 py-2 rounded-lg bg-[#1d4ed8] text-white font-semibold">Copy link</button>
                     </div>
                   </>
                 ) : (
@@ -3962,7 +3963,7 @@ export default function App() {
                   <label className="block font-semibold text-slate-600 mb-1">Clinic Name</label>
                   <input
                     type="text"
-                    value={practiceProfile.name}
+                    value={practiceProfile.name ?? ""}
                     onChange={(e) => setPracticeProfile({ ...practiceProfile, name: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                   />
@@ -3973,7 +3974,7 @@ export default function App() {
                   <label className="block font-semibold text-slate-600 mb-1">Udyam Registration Number</label>
                   <input
                     type="text"
-                    value={practiceProfile.regNumber}
+                    value={practiceProfile.regNumber ?? ""}
                     onChange={(e) => setPracticeProfile({ ...practiceProfile, regNumber: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 font-mono font-bold text-indigo-700 focus:outline-none"
                   />
@@ -3985,7 +3986,7 @@ export default function App() {
                   <input
                     type="text"
                     id="pf-drName"
-                    value={practiceProfile.drName}
+                    value={practiceProfile.drName ?? ""}
                     onChange={(e) => setPracticeProfile({ ...practiceProfile, drName: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                   />
@@ -3996,7 +3997,7 @@ export default function App() {
                   <label className="block font-semibold text-slate-600 mb-1">Qualifications</label>
                   <input
                     type="text"
-                    value={practiceProfile.qualification}
+                    value={practiceProfile.qualification ?? ""}
                     onChange={(e) => setPracticeProfile({ ...practiceProfile, qualification: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                   />
@@ -4007,7 +4008,7 @@ export default function App() {
                   <label className="block font-semibold text-slate-600 mb-1">Official Contact Number</label>
                   <input
                     type="text"
-                    value={practiceProfile.phone}
+                    value={practiceProfile.phone ?? ""}
                     onChange={(e) => setPracticeProfile({ ...practiceProfile, phone: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                   />
@@ -4018,7 +4019,7 @@ export default function App() {
                   <label className="block font-semibold text-slate-600 mb-1">Clinic UPI ID (for QR Billing)</label>
                   <input
                     type="text"
-                    value={practiceProfile.upiId}
+                    value={practiceProfile.upiId ?? ""}
                     onChange={(e) => setPracticeProfile({ ...practiceProfile, upiId: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 font-mono focus:outline-none"
                   />
@@ -4052,7 +4053,7 @@ export default function App() {
                   <label className="block font-semibold text-slate-600 mb-1">Clinic Address</label>
                   <input
                     type="text"
-                    value={practiceProfile.address}
+                    value={practiceProfile.address ?? ""}
                     onChange={(e) => setPracticeProfile({ ...practiceProfile, address: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                   />
@@ -4306,7 +4307,7 @@ export default function App() {
 
               <BirthdayPanel due={birthdaysToday} onGreet={greetBirthday} canWrite={canWrite(role, "patients")} />
 
-              {canRead(role, "invoices") && <DayClose summary={closeSummary} clinicName={practiceProfile.name} onCopy={(t) => { navigator.clipboard?.writeText(t); showToast("Summary copied"); }} />}
+              {canRead(role, "invoices") && <DayClose summary={closeSummary} clinicName={practiceProfile.name} onCopy={(t) => { copyText(t).then((ok) => showToast(ok ? "Summary copied" : COPY_FAILED)); }} />}
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <section className="bg-white rounded-xl border border-rule p-5 shadow-card" data-testid="today-schedule">
@@ -6540,7 +6541,7 @@ export default function App() {
               )}
               {qrBalanceP > 0 && isValidUpiId(practiceProfile.upiId) && (
                 <button
-                  onClick={() => { navigator.clipboard?.writeText(buildPayLink(window.location.origin, { vpa: practiceProfile.upiId, name: practiceProfile.name, amountP: qrBalanceP, note: qrInvoice.id })); showToast("Payment link copied. Paste it into WhatsApp."); }}
+                  onClick={() => { copyText(buildPayLink(window.location.origin, { vpa: practiceProfile.upiId, name: practiceProfile.name, amountP: qrBalanceP, note: qrInvoice.id })).then((ok) => showToast(ok ? "Payment link copied. Paste it into WhatsApp." : COPY_FAILED)); }}
                   className="flex-1 py-2 border border-rule rounded-lg text-xs font-semibold text-slate-700 hover:bg-enamel"
                 >
                   Copy payment link
