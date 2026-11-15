@@ -5,7 +5,8 @@
  * File: src/App.jsx
  * ============================================================================== */
 
-import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from "react";
+import React, { useState, useEffect, useRef, useMemo, Suspense } from "react";
+import { lazyWithRetry } from "./lazyWithRetry.js";
 import { profileGaps } from "./profileGaps.js";
 import { todaySummary } from "./today.js";
 import { memberDiscountRupees, membershipInvoice, leadPatientPrefill, setLeadStatus, activeMembershipFor } from "./growth.js";
@@ -24,7 +25,7 @@ import { canRead, canWrite, navFor, NAV_BY_ROLE, firstScreen, branchScope, ROLE_
 import { isActiveMember, isPendingInvite, buildInvite, inviteMessage } from "./team.js";
 import { watchMyMembership, watchTeam, createInvite, acceptInvite, updateMember, removeMember } from "./teamStore.js";
 import BranchesCard from "./components/BranchesCard.jsx";
-const LazyDataPortability = lazy(() => import("./components/DataPortability.jsx"));
+const LazyDataPortability = lazyWithRetry(() => import("./components/DataPortability.jsx"));
 const Connect = (props) => <Suspense fallback={<TabLoading />}><LazyConnect {...props} /></Suspense>;
 const Growth = (props) => <Suspense fallback={<TabLoading />}><LazyGrowth {...props} /></Suspense>;
 const OpgViewer = (props) => <Suspense fallback={<TabLoading />}><LazyOpgViewer {...props} /></Suspense>;
@@ -82,7 +83,7 @@ import { publishBookingPage, watchBookingRequests, markBookingRequest } from "./
 import { patientSummary } from "./patientSummary.js";
 import { buildVisit, addVisit, removeVisit } from "./visits.js";
 import { shiftDay, dayGrid, hourMarks } from "./dayView.js";
-const LazyOpgViewer = lazy(() => import("./components/OpgViewer.jsx"));
+const LazyOpgViewer = lazyWithRetry(() => import("./components/OpgViewer.jsx"));
 import ExtraRadiographs from "./components/ExtraRadiographs.jsx";
 import { NowStrip } from "./components/NowPanel.jsx";
 import NotificationBell from "./components/NotificationBell.jsx";
@@ -104,10 +105,10 @@ import CertificatePanel from "./components/CertificatePanel.jsx";
 import InstalmentPlan from "./components/InstalmentPlan.jsx";
 import { withInstalments, syncDueDate } from "./instalments.js";
 import TodayDesk from "./components/TodayDesk.jsx";
-const LazyGrowth = lazy(() => import("./components/Growth.jsx"));
+const LazyGrowth = lazyWithRetry(() => import("./components/Growth.jsx"));
 import PrePostOp from "./components/PrePostOp.jsx";
 const TabLoading = () => <div className="p-8 text-sm text-slate-500" role="status">Loading…</div>;
-const LazyConnect = lazy(() => import("./components/Connect.jsx"));
+const LazyConnect = lazyWithRetry(() => import("./components/Connect.jsx"));
 import { bindApi } from "./connect/api.js";
 import { findDuplicates, duplicateWarning, duplicateKey } from "./duplicates.js";
 import { geocodeAddress } from "./connect/geo.js";
