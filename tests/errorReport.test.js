@@ -71,3 +71,13 @@ describe("server side", () => {
     expect(last).toBe(429);
   });
 });
+
+describe("scrub speed", () => {
+  it("handles a huge stack trace in well under a second", async () => {
+    const { scrub } = await import("../src/errorReport.js");
+    const t0 = Date.now();
+    const out = scrub("a".repeat(200000) + " x@y.com", 1500);
+    expect(Date.now() - t0).toBeLessThan(500);
+    expect(out.length).toBeLessThanOrEqual(1500);
+  });
+});

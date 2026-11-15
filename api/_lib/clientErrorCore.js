@@ -1,7 +1,9 @@
 // Checks and cleans an error report sent by the app, and writes the owner's email. No patient data is kept.
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+// Cut to a small size BEFORE the pattern matching: the e-mail pattern is slow (quadratic) on very long text, and this endpoint is public.
 const clean = (v, max) =>
   String(v == null ? "" : v)
+    .slice(0, max * 2)
     .replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g, "[email]")
     .replace(/\bBearer\s+[\w.~+/=-]+/gi, "Bearer [token]")
     .replace(/\d{6,}/g, "[number]")

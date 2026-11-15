@@ -62,6 +62,7 @@ import MedicineLibrary from "./components/MedicineLibrary.jsx";
 import PatientGallery from "./components/PatientGallery.jsx";
 import { todayActionTiles, totalActions, liveFlow } from "./todayActions.js";
 import { listImages, addImage, removeImage, countImages } from "./galleryStore.js";
+import { cleanupPatientRemote } from "./patientCleanup.js";
 import { buildPayLink } from "./payLink.js";
 import { whatsappAutoEnabled, sendWhatsAppTemplate } from "./whatsappApi.js";
 import StorageMeter from "./components/StorageMeter.jsx";
@@ -5539,7 +5540,7 @@ export default function App() {
                 onClick={() => {
                   if (confirm(`Delete chart for ${activePatient.name}?`)) {
                     setPatients((prev) => prev.filter((p) => p.id !== activePatient.id));
-                    if (db && CLINIC_ID && activePatient.hasOpg) deleteOpg(db, CLINIC_ID, activePatient.id).catch(() => {});
+                    cleanupPatientRemote(db, CLINIC_ID, activePatient).catch(() => {});
                     logAudit("patient.delete", activePatient.name);
                     setIsChartModalOpen(false);
                     showToast("Patient chart deleted");

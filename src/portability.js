@@ -50,8 +50,9 @@ export const buildPatientBackup = (patientId, all = {}, profile = {}, now = new 
   return { format: BACKUP_FORMAT, version: BACKUP_VERSION, kind: "patient", exportedAt: now.toISOString(), source: { clinic: String(profile.name || "") }, counts: counts(data), data };
 };
 
+const localDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; // the clinic's own calendar day, not UTC
 export const backupFileName = (backup, now = new Date()) => {
-  const day = now.toISOString().slice(0, 10);
+  const day = localDay(now);
   if (backup.kind === "patient") {
     const name = String(backup.data.patients[0]?.name || "patient").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 30) || "patient";
     return `merident-patient-${name}-${day}.json`;

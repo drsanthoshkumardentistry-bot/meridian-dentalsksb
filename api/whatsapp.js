@@ -24,7 +24,9 @@ export default async function handler(req, res) {
   const user = await lookupUser(header.startsWith("Bearer ") ? header.slice(7) : "").catch(() => null);
   if (!user) return send(res, 401, { error: "Sign in again." });
 
-  const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
+  let body = req.body || {};
+  if (typeof body === "string") { try { body = JSON.parse(body || "{}"); } catch (e) { return send(res, 400, { error: "Bad request." }); } }
+  if (!body || typeof body !== "object" || Array.isArray(body)) return send(res, 400, { error: "Bad request." });
   if (body.check) return send(res, 200, { enabled: true });
 
   const built = buildSend({ ...body, lang: process.env.WHATSAPP_TEMPLATE_LANG || "en" });

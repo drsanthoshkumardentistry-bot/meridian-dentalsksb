@@ -13,6 +13,7 @@ const NOISE = [
 
 export const scrub = (text, max = 1500) =>
   String(text == null ? "" : text)
+    .slice(0, max * 3) // cut first: the e-mail pattern is quadratic on very long text
     .replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g, "[email]")
     .replace(/\bBearer\s+[\w.~+/=-]+/gi, "Bearer [token]")
     .replace(/\beyJ[\w-]{10,}\.[\w-]{10,}\.[\w-]{5,}\b/g, "[token]")
