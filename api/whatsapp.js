@@ -48,7 +48,13 @@ export default async function handler(req, res) {
       body: JSON.stringify(built.payload),
     });
     const data = await r.json().catch(() => ({}));
-    if (!r.ok) return send(res, 502, { error: (data.error && data.error.message) || "WhatsApp refused the message." });
+    if (!r.ok) {
+      // Meta's reason helps the clinic (e.g. "recipient not allowed"), but never echo our token or an unbounded string.
+      let why = data && data.error && typeof data.error.message === "string" ? data.error.message : "";
+      if (token && token.length >= 8) why = why.split(token).join("[hidden]");
+      why = why.replace(/\bEA[A-Za-z0-9]{20,}\b/g, "[hidden]").slice(0, 200);
+      return send(res, 502, { error: why || "WhatsApp refused the message." });
+    }
     return send(res, 200, { ok: true, id: data.messages && data.messages[0] && data.messages[0].id });
   } catch (e) {
     return send(res, 502, { error: "Could not reach WhatsApp." });
