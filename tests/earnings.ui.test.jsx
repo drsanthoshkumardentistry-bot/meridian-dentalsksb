@@ -36,4 +36,17 @@ describe("BookingShare", () => {
     expect(screen.getByText("Share on WhatsApp").getAttribute("href")).toContain(encodeURIComponent("https://x.test/?book=abc"));
     await waitFor(() => expect(screen.getByText("Download QR").getAttribute("download")).toBe("booking-qr.png"));
   });
+  it("prints a poster in a new window", async () => {
+    const doc = { write: vi.fn(), close: vi.fn() };
+    const win = { document: doc, focus: vi.fn(), print: vi.fn() };
+    const open = vi.spyOn(window, "open").mockReturnValue(win);
+    vi.useFakeTimers({ toFake: ["setTimeout"] });
+    render(<BookingShare url="https://x.test/?book=abc" clinicName="Smile Care" onCopy={() => {}} />);
+    vi.useRealTimers();
+    fireEvent.click(await screen.findByText("Print poster"));
+    expect(open).toHaveBeenCalled();
+    expect(doc.write.mock.calls[0][0]).toContain("Scan to book your appointment");
+    await waitFor(() => expect(win.print).toHaveBeenCalled());
+    open.mockRestore();
+  });
 });
