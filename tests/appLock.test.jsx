@@ -45,6 +45,26 @@ describe("app lock", () => {
     fireEvent.click(screen.getByRole("button", { name: "Unlock" }));
     await waitFor(() => expect(unlock).toHaveBeenCalled());
   });
+  it("forgot PIN: signs out and removes the PIN so a new one can be set after signing in", async () => {
+    await setLock("u1", "4821");
+    const out = vi.fn(); const unlock = vi.fn();
+    render(<LockScreen uid="u1" onUnlock={unlock} onSignOut={out} />);
+    fireEvent.click(screen.getByRole("button", { name: "Forgot PIN?" }));
+    expect(hasLock("u1")).toBe(true); // nothing changes until it is confirmed
+    expect(screen.getByText(/clinic data is not deleted/i)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Reset PIN and sign in again" }));
+    expect(hasLock("u1")).toBe(false);
+    expect(out).toHaveBeenCalledWith(expect.stringMatching(/set a new PIN/i));
+    expect(unlock).not.toHaveBeenCalled(); // it never unlocks; the account sign-in is still required
+  });
+  it("forgot PIN: Back returns to the PIN screen and keeps the PIN", async () => {
+    await setLock("u1", "4821");
+    render(<LockScreen uid="u1" onUnlock={() => {}} onSignOut={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { name: "Forgot PIN?" }));
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(screen.getByLabelText("PIN")).toBeTruthy();
+    expect(hasLock("u1")).toBe(true);
+  });
   it("security card sets a PIN only when both entries match", async () => {
     render(<SecurityCard uid="u1" onLockNow={() => {}} />);
     const [a, b] = screen.getAllByLabelText(/PIN|again/i);
