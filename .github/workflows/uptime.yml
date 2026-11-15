@@ -12,6 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Diagnostics
+        run: |
+          for u in / /api/ai; do echo "=== $u"; curl -sS --max-time 20 -D - -o /tmp/b "https://meridiandentalos.com$u" | head -12; head -c 300 /tmp/b; echo; done
       - name: Site and server function
         run: |
           SITE="https://meridiandentalos.com"
