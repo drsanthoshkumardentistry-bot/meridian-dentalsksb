@@ -4479,5 +4479,485 @@ export const MCQS = [
   "is_pyq": false,
   "exam": "NEET MDS",
   "is_important": true
+ },
+ {
+  "id": 281,
+  "subject": "Anatomy",
+  "question": "The articular surfaces of the TMJ are covered by:",
+  "options": [
+   "Hyaline cartilage",
+   "Fibrocartilage",
+   "Elastic cartilage",
+   "Synovial membrane"
+  ],
+  "answer": 1,
+  "explanation": "Dense fibrocartilage allows remodelling – unlike most synovial joints.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 282,
+  "subject": "Anatomy",
+  "question": "The main stabilising ligament of the TMJ is the:",
+  "options": [
+   "Sphenomandibular",
+   "Stylomandibular",
+   "Lateral (temporomandibular)",
+   "Pterygomandibular raphe"
+  ],
+  "answer": 2,
+  "explanation": "The lateral ligament limits posterior and inferior displacement of the condyle.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 283,
+  "subject": "Anatomy",
+  "question": "The sphenomandibular ligament is a remnant of:",
+  "options": [
+   "Reichert's cartilage",
+   "Meckel's cartilage",
+   "Third arch cartilage",
+   "Notochord"
+  ],
+  "answer": 1,
+  "explanation": "Meckel's (first arch) cartilage also forms the malleus and incus.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 284,
+  "subject": "Anatomy",
+  "question": "The only sensory branch of the anterior division of the mandibular nerve is the:",
+  "options": [
+   "Masseteric",
+   "Buccal",
+   "Deep temporal",
+   "Lingual"
+  ],
+  "answer": 1,
+  "explanation": "The long buccal nerve supplies the cheek and buccal gingiva of the lower molars.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 285,
+  "subject": "Anatomy",
+  "question": "Secretomotor fibres to the parotid relay in the:",
+  "options": [
+   "Submandibular ganglion",
+   "Otic ganglion",
+   "Pterygopalatine ganglion",
+   "Ciliary ganglion"
+  ],
+  "answer": 1,
+  "explanation": "IX → tympanic → lesser petrosal → otic ganglion → auriculotemporal nerve → parotid.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 286,
+  "subject": "Anatomy",
+  "question": "Frey's syndrome follows damage to the:",
+  "options": [
+   "Facial nerve",
+   "Auriculotemporal nerve",
+   "Great auricular nerve",
+   "Hypoglossal nerve"
+  ],
+  "answer": 1,
+  "explanation": "Misdirected parasympathetic regeneration causes gustatory sweating after parotidectomy.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 287,
+  "subject": "Anatomy",
+  "question": "In a right hypoglossal nerve palsy, the protruded tongue deviates to the:",
+  "options": [
+   "Left",
+   "Right",
+   "Does not deviate",
+   "Upward"
+  ],
+  "answer": 1,
+  "explanation": "The intact left genioglossus pushes the tongue towards the paralysed (right) side.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 288,
+  "subject": "Anatomy",
+  "question": "Taste from the posterior one-third of the tongue is carried by the:",
+  "options": [
+   "Chorda tympani",
+   "Lingual nerve",
+   "Glossopharyngeal nerve",
+   "Hypoglossal nerve"
+  ],
+  "answer": 2,
+  "explanation": "IX carries both general and taste sensation from the posterior third.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 289,
+  "subject": "Anatomy",
+  "question": "The only muscle derived from the third pharyngeal arch is the:",
+  "options": [
+   "Stylohyoid",
+   "Stylopharyngeus",
+   "Stapedius",
+   "Cricothyroid"
+  ],
+  "answer": 1,
+  "explanation": "Supplied by the glossopharyngeal nerve.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 290,
+  "subject": "Anatomy",
+  "question": "The palatine tonsil develops from the:",
+  "options": [
+   "First pharyngeal pouch",
+   "Second pharyngeal pouch",
+   "Third pharyngeal pouch",
+   "Fourth pharyngeal pouch"
+  ],
+  "answer": 1,
+  "explanation": "1st – middle ear; 2nd – tonsil; 3rd – inferior parathyroid and thymus; 4th – superior parathyroid.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 291,
+  "subject": "Anatomy",
+  "question": "Micrognathia, glossoptosis and cleft palate together form:",
+  "options": [
+   "Treacher Collins syndrome",
+   "Pierre Robin sequence",
+   "Crouzon syndrome",
+   "Apert syndrome"
+  ],
+  "answer": 1,
+  "explanation": "The small mandible displaces the tongue, which blocks palatal fusion and the airway.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 292,
+  "subject": "Physiology",
+  "question": "Anxiety-induced hyperventilation causes:",
+  "options": [
+   "Respiratory acidosis",
+   "Respiratory alkalosis",
+   "Metabolic acidosis",
+   "Metabolic alkalosis"
+  ],
+  "answer": 1,
+  "explanation": "CO₂ is blown off; falling ionised calcium causes tingling and carpopedal spasm.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 293,
+  "subject": "Physiology",
+  "question": "Kussmaul breathing is seen in:",
+  "options": [
+   "Metabolic alkalosis",
+   "Diabetic ketoacidosis",
+   "Respiratory alkalosis",
+   "Opioid overdose"
+  ],
+  "answer": 1,
+  "explanation": "Deep, rapid breathing compensates for metabolic acidosis.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 294,
+  "subject": "Dental Materials",
+  "question": "The reactor in alginate impression material is:",
+  "options": [
+   "Potassium alginate",
+   "Calcium sulphate dihydrate",
+   "Trisodium phosphate",
+   "Diatomaceous earth"
+  ],
+  "answer": 1,
+  "explanation": "Calcium ions from calcium sulphate cross-link the alginate chains.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 295,
+  "subject": "Dental Materials",
+  "question": "An alginate impression should ideally be poured within about:",
+  "options": [
+   "1 minute",
+   "12 minutes",
+   "1 hour",
+   "24 hours"
+  ],
+  "answer": 1,
+  "explanation": "Syneresis and imbibition distort it rapidly; store at 100% humidity if a short delay is unavoidable.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 296,
+  "subject": "Dental Materials",
+  "question": "The initiator in heat-cure acrylic resin is:",
+  "options": [
+   "Hydroquinone",
+   "Benzoyl peroxide",
+   "Tertiary amine",
+   "Camphorquinone"
+  ],
+  "answer": 1,
+  "explanation": "Heat decomposes benzoyl peroxide into free radicals; hydroquinone is the inhibitor.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 297,
+  "subject": "Dental Materials",
+  "question": "Gaseous porosity in thick parts of a denture is due to:",
+  "options": [
+   "Insufficient dough",
+   "Rapid heating above the boiling point of monomer",
+   "Excess pressure",
+   "Slow cooling"
+  ],
+  "answer": 1,
+  "explanation": "MMA boils at 100.8 °C; use a slow curing cycle.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 298,
+  "subject": "Dental Materials",
+  "question": "The first dental cement to bond chemically to tooth structure was:",
+  "options": [
+   "Zinc phosphate",
+   "Zinc polycarboxylate",
+   "Zinc oxide eugenol",
+   "Silicate cement"
+  ],
+  "answer": 1,
+  "explanation": "Introduced by Smith in 1968; bonds via chelation of calcium.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 299,
+  "subject": "Dental Materials",
+  "question": "Zinc phosphate cement is mixed on a cool glass slab to:",
+  "options": [
+   "Increase strength only",
+   "Dissipate the heat of reaction and extend working time",
+   "Make it adhesive",
+   "Increase film thickness"
+  ],
+  "answer": 1,
+  "explanation": "The reaction is exothermic; incremental mixing over a large area controls setting.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 300,
+  "subject": "Dental Materials",
+  "question": "The maximum acceptable film thickness for a luting cement (ADA) is about:",
+  "options": [
+   "5 μm",
+   "25 μm",
+   "100 μm",
+   "250 μm"
+  ],
+  "answer": 1,
+  "explanation": "≤ 25 μm for type I luting cements.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 301,
+  "subject": "Dental Materials",
+  "question": "The investment of choice for casting metal-ceramic and base-metal alloys is:",
+  "options": [
+   "Gypsum-bonded",
+   "Phosphate-bonded",
+   "Plaster of Paris",
+   "Die stone"
+  ],
+  "answer": 1,
+  "explanation": "Gypsum investments break down above about 700 °C.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 302,
+  "subject": "Dental Materials",
+  "question": "Nodules on the surface of a casting are caused by:",
+  "options": [
+   "Too rapid heating",
+   "Air bubbles in the investment",
+   "Thin sprue",
+   "Overheated alloy"
+  ],
+  "answer": 1,
+  "explanation": "Use a wetting agent and vacuum mixing; fins come from investment cracks.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 303,
+  "subject": "Conservative & Endo",
+  "question": "The ISO size number of an endodontic file indicates:",
+  "options": [
+   "Its length in mm",
+   "Its tip diameter in hundredths of a mm",
+   "Its taper",
+   "Number of flutes"
+  ],
+  "answer": 1,
+  "explanation": "Size 25 = 0.25 mm tip; standard taper 0.02 mm/mm.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 304,
+  "subject": "Conservative & Endo",
+  "question": "The colour code of an ISO size 30 file is:",
+  "options": [
+   "Red",
+   "Blue",
+   "Green",
+   "Yellow"
+  ],
+  "answer": 1,
+  "explanation": "15 white, 20 yellow, 25 red, 30 blue, 35 green, 40 black.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 305,
+  "subject": "Conservative & Endo",
+  "question": "The most efficient hand cutting instrument (used with a pull stroke) is the:",
+  "options": [
+   "K-file",
+   "Reamer",
+   "Hedström file",
+   "Barbed broach"
+  ],
+  "answer": 2,
+  "explanation": "H-files cut on withdrawal but fracture easily if rotated.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 306,
+  "subject": "Conservative & Endo",
+  "question": "The bleaching agent commonly used in the walking bleach technique is:",
+  "options": [
+   "10% carbamide peroxide",
+   "Sodium perborate",
+   "Hydrochloric acid",
+   "Sodium hypochlorite"
+  ],
+  "answer": 1,
+  "explanation": "Sodium perborate (with water or H₂O₂) is sealed in the pulp chamber and replaced every few days.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 307,
+  "subject": "Conservative & Endo",
+  "question": "The main complication of intracoronal (non-vital) bleaching is:",
+  "options": [
+   "Pulpitis",
+   "External cervical resorption",
+   "Root fracture",
+   "Ankylosis"
+  ],
+  "answer": 1,
+  "explanation": "Prevent with a 2 mm cervical barrier and by avoiding heat and high-concentration peroxide.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 308,
+  "subject": "Conservative & Endo",
+  "question": "During apicoectomy the root apex is usually resected by about:",
+  "options": [
+   "1 mm",
+   "3 mm",
+   "6 mm",
+   "9 mm"
+  ],
+  "answer": 1,
+  "explanation": "Removes most apical ramifications and lateral canals, with a near-perpendicular bevel.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 309,
+  "subject": "Conservative & Endo",
+  "question": "The preferred root-end filling material is:",
+  "options": [
+   "Amalgam",
+   "Gutta-percha",
+   "MTA",
+   "Zinc phosphate"
+  ],
+  "answer": 2,
+  "explanation": "MTA and bioceramics give the best seal and biocompatibility.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 310,
+  "subject": "Conservative & Endo",
+  "question": "The pH of calcium hydroxide is approximately:",
+  "options": [
+   "7.0",
+   "9.0",
+   "12.5",
+   "14.0"
+  ],
+  "answer": 2,
+  "explanation": "Its high pH is antibacterial and stimulates hard-tissue formation.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
  }
 ]

@@ -20,12 +20,12 @@ function subject(key, name, year, mcq, chapters, group = null) {
 const BDS = [
   // ---------------- 1st year ----------------
   subject('anatomy', 'General Human Anatomy (incl. Embryology & Histology)', 1, 'Anatomy', [
-    'Osteology of the skull', 'Mandible and temporomandibular joint', ['Scalp, face and facial nerve', { topic: 'facial-nerve' }],
-    'Parotid region and salivary glands', 'Temporal and infratemporal fossae; muscles of mastication',
-    'Pterygopalatine fossa and maxillary nerve', 'Mandibular nerve and otic ganglion', 'Submandibular region and lingual nerve',
-    'Oral cavity, palate and tongue', 'Pharynx and larynx', 'Nose and paranasal sinuses', 'Triangles of the neck and cervical fascia',
+    'Osteology of the skull', ['Mandible and temporomandibular joint', { topic: 'tmj-anatomy' }], ['Scalp, face and facial nerve', { topic: 'facial-nerve' }],
+    'Parotid region and salivary glands', ['Temporal and infratemporal fossae; muscles of mastication', { topic: 'muscles-of-mastication' }],
+    'Pterygopalatine fossa and maxillary nerve', ['Mandibular nerve and otic ganglion', { topic: 'mandibular-nerve' }], 'Submandibular region and lingual nerve',
+    ['Oral cavity, palate and tongue', { topic: 'tongue' }], 'Pharynx and larynx', 'Nose and paranasal sinuses', 'Triangles of the neck and cervical fascia',
     'Blood supply and lymphatic drainage of head and neck', 'Cranial nerves V, VII, IX and XII',
-    'Embryology: pharyngeal arches, face and palate', 'General histology: epithelium, connective tissue, bone, cartilage',
+    ['Embryology: pharyngeal arches, face and palate', { topic: 'pharyngeal-arches' }], 'General histology: epithelium, connective tissue, bone, cartilage',
     'Thorax, abdomen and limbs (general overview)',
   ]),
   subject('physio-biochem', 'General Human Physiology & Biochemistry', 1, 'Physiology', [
@@ -35,7 +35,7 @@ const BDS = [
     ['Carbohydrate metabolism', { mcq: 'Biochemistry' }], ['Lipid metabolism', { mcq: 'Biochemistry' }],
     ['Proteins and amino acids', { mcq: 'Biochemistry' }], ['Enzymes', { mcq: 'Biochemistry' }], ['Vitamins', { topic: 'vitamins', mcq: 'Biochemistry' }],
     ['Minerals: calcium, phosphorus, fluoride', { mcq: 'Biochemistry' }], ['Nucleic acids and molecular biology', { mcq: 'Biochemistry' }],
-    ['Acid–base balance', { mcq: 'Biochemistry' }], ['Clinical biochemistry and liver function tests', { mcq: 'Biochemistry' }],
+    ['Acid–base balance', { topic: 'acid-base', mcq: 'Biochemistry' }], ['Clinical biochemistry and liver function tests', { mcq: 'Biochemistry' }],
   ]),
   subject('dental-anatomy', 'Dental Anatomy, Embryology & Oral Histology', 1, 'Dental Anatomy', [
     ['Development of teeth (odontogenesis)', { topic: 'tooth-development' }], ['Enamel', { topic: 'enamel' }], ['Dentine', { topic: 'dentine' }], 'Dental pulp', ['Cementum', { topic: 'cementum' }], ['Periodontal ligament', { topic: 'periodontal-ligament' }], 'Alveolar bone',
@@ -63,9 +63,9 @@ const BDS = [
     'Drug interactions and adverse reactions',
   ]),
   subject('dental-materials', 'Dental Materials', 2, 'Dental Materials', [
-    'Structure and properties of dental materials', ['Gypsum products', { topic: 'gypsum-products' }], 'Impression materials: hydrocolloids',
-    ['Impression materials: elastomers, compound and ZOE', { topic: 'elastomeric-impressions' }], 'Denture base resins', 'Dental waxes', 'Investments and casting procedures',
-    'Dental cements: zinc phosphate, ZOE, polycarboxylate', ['Glass ionomer cements', { topic: 'glass-ionomer-cement' }], ['Dental amalgam', { topic: 'dental-amalgam' }],
+    'Structure and properties of dental materials', ['Gypsum products', { topic: 'gypsum-products' }], ['Impression materials: hydrocolloids', { topic: 'hydrocolloids' }],
+    ['Impression materials: elastomers, compound and ZOE', { topic: 'elastomeric-impressions' }], ['Denture base resins', { topic: 'denture-base-resins' }], 'Dental waxes', ['Investments and casting procedures', { topic: 'casting-investments' }],
+    ['Dental cements: zinc phosphate, ZOE, polycarboxylate', { topic: 'dental-cements' }], ['Glass ionomer cements', { topic: 'glass-ionomer-cement' }], ['Dental amalgam', { topic: 'dental-amalgam' }],
     ['Composite resins and bonding agents', { topic: 'composite-resins' }], 'Direct filling gold', 'Dental casting alloys', ['Dental ceramics', { topic: 'dental-ceramics' }],
     ['Biomaterials: calcium silicates and MTA', { topic: 'mta' }], 'Implant materials',
   ]),
@@ -134,11 +134,11 @@ const BDS = [
     'Implant prosthodontics', ['Occlusion and articulators', { topic: 'articulators' }],
   ]),
   subject('conservative', 'Conservative Dentistry & Endodontics', 4, 'Conservative & Endo', [
-    ['Dental caries and caries risk assessment', { topic: 'dental-caries' }], ['Principles of cavity design', { topic: 'cavity-design' }], 'Amalgam restorations', 'Composite restorations and adhesion',
-    'Glass ionomer restorations', 'Pulp protection: liners and bases', 'Cast restorations: inlays and onlays',
-    ['Pulp and periapical diseases', { topic: 'pulp-periapical-diseases' }], 'Endodontic access and instruments', ['Cleaning and shaping', { topic: 'root-canal-irrigants' }], ['Obturation', { topic: 'obturation' }],
+    ['Dental caries and caries risk assessment', { topic: 'dental-caries' }], ['Principles of cavity design', { topic: 'cavity-design' }], ['Amalgam restorations', { topic: 'dental-amalgam' }], ['Composite restorations and adhesion', { topic: 'composite-resins' }],
+    ['Glass ionomer restorations', { topic: 'glass-ionomer-cement' }], ['Pulp protection: liners and bases', { topic: 'pulp-protection' }], 'Cast restorations: inlays and onlays',
+    ['Pulp and periapical diseases', { topic: 'pulp-periapical-diseases' }], ['Endodontic access and instruments', { topic: 'endodontic-access' }], ['Cleaning and shaping', { topic: 'root-canal-irrigants' }], ['Obturation', { topic: 'obturation' }],
     ['Vital pulp therapy and MTA', { topic: 'mta' }], ['Endodontic emergencies', { topic: 'endodontic-emergencies' }], 'Traumatic injuries: endodontic management',
-    'Bleaching and aesthetic dentistry', 'Endodontic surgery',
+    ['Bleaching and aesthetic dentistry', { topic: 'bleaching' }], ['Endodontic surgery', { topic: 'endodontic-surgery' }],
   ]),
   subject('oral-surgery', 'Oral & Maxillofacial Surgery', 4, 'Oral Surgery', [
     ['Asepsis and sterilisation', { topic: 'sterilisation' }], ['Local anaesthesia in oral surgery', { topic: 'local-anaesthetics', mcq: 'Pharmacology' }],
