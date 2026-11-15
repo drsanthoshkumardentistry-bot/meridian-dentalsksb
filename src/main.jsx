@@ -8,6 +8,7 @@ import { shouldAutoReload } from './recover.js';
 import { EARLY_ACCESS_PATH } from './earlyAccess.js';
 import { installErrorReporting } from './errorReport.js';
 import { startSentry } from './sentry.js';
+import { registerOfflinePage } from './offlinePage.js';
 import './index.css';
 
 // Each route is its own file, so a patient opening an estimate or booking link downloads only that page,
@@ -58,6 +59,7 @@ const Loading = () => (
 );
 
 
+registerOfflinePage();
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary>

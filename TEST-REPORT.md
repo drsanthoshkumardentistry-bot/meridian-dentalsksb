@@ -43,9 +43,9 @@ New tests: `apiAttack` (20), `screenWalk` (14), `moneyEdge` (18), `patientCleanu
 | Severity | Item |
 |---|---|
 | High (if WhatsApp is turned on) | **Anyone with a verified e-mail account can call `/api/whatsapp` and `/api/ai`.** The check is "signed in with Firebase", not "member of a clinic". Limits are held in memory per server instance, so they do not hold up under real traffic or many accounts. Before switching WhatsApp on, add a clinic-membership check and a per-clinic daily limit. |
-| Medium | No `script-src` Content-Security-Policy in `vercel.json` (only framing and form rules). A full policy needs care because of Firebase, so it was not changed blind. |
+| Medium | No `script-src` Content-Security-Policy in `vercel.json` (only framing and form rules). A full policy needs care because of Firebase, so it was not changed blind. | **(Fixed: offline page and script-src CSP added.)**
 | Medium | **Pay links can be forged.** Anyone can build a link that shows any clinic name with their own UPI ID. The page already warns patients to check the name; consider showing the clinic's registered name from the server instead. |
-| Low | Public pages are blank when offline (no offline page or service worker). The Android app is not affected. |
+| Low | Public pages are blank when offline (no offline page or service worker). The Android app is not affected. | **(Fixed: offline page and script-src CSP added.)**
 | Low | Appointments can be booked on year 1900 or 9999 (any real date is accepted). Consider limiting to a sensible range. |
 | Low | The Vite preview server answers 500 on a malformed address like `/%E0%A4%A`. Not checked on Vercel. |
 

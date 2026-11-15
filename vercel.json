@@ -8,6 +8,10 @@
   ],
   "headers": [
     {
+      "source": "/sw.js",
+      "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+    },
+    {
       "source": "/(.*)",
       "headers": [
         {
@@ -28,7 +32,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'"
+          "value": "script-src 'self' 'sha256-BQ0VkbvoF6Q2lk68cST1BGtO8Po06f8Y65EiWrEJyWU=' https://apis.google.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'"
         }
       ]
     }
