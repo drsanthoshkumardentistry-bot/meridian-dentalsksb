@@ -1212,6 +1212,11 @@ export default function App() {
   useEffect(() => {
     if (!chairList.includes(newApptForm.chair)) setNewApptForm((f) => ({ ...f, chair: chairList[0] }));
   }, [chairList]); // eslint-disable-line react-hooks/exhaustive-deps
+  // The attending doctor is required, so offer the doctor from Practice Profile instead of an empty box.
+  useEffect(() => {
+    const dr = String(practiceProfile.drName || "").trim();
+    if (isAddApptOpen && dr) setNewApptForm((f) => (String(f.doctor || "").trim() ? f : { ...f, doctor: dr }));
+  }, [isAddApptOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // New Invoice Modal State
   const [isAddInvoiceOpen, setIsAddInvoiceOpen] = useState(false);
