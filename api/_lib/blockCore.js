@@ -38,10 +38,10 @@ export const buildLink = (base, sa, uid, action, email, now = Date.now()) => {
   return `${String(base).replace(/\/$/, "")}/api/block-login?${q.toString()}`;
 };
 
-export const getAccessToken = async (sa, fetchFn = fetch, now = Date.now()) => {
+export const getAccessToken = async (sa, fetchFn = fetch, now = Date.now(), scope = "https://www.googleapis.com/auth/identitytoolkit") => {
   const iat = Math.floor(now / 1000);
   const head = b64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
-  const claim = b64url(JSON.stringify({ iss: sa.client_email, scope: "https://www.googleapis.com/auth/identitytoolkit", aud: "https://oauth2.googleapis.com/token", iat, exp: iat + 3000 }));
+  const claim = b64url(JSON.stringify({ iss: sa.client_email, scope, aud: "https://oauth2.googleapis.com/token", iat, exp: iat + 3000 }));
   const sig = b64url(crypto.createSign("RSA-SHA256").update(`${head}.${claim}`).sign(sa.private_key));
   const r = await fetchFn("https://oauth2.googleapis.com/token", {
     method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },

@@ -15,7 +15,7 @@ beforeEach(() => {
   global.fetch = vi.fn(async (url, opts) => {
     if (String(url).includes("identitytoolkit")) {
       const ok = JSON.parse(opts.body).idToken === "good";
-      return { ok, json: async () => ({ users: [{ localId: "u1" }] }) };
+      return { ok, json: async () => ({ users: [{ localId: "u1", email: "u1@x.in", emailVerified: true, createdAt: "1600000000000" }] }) };
     }
     return { ok: true, json: async () => ({ content: [{ type: "text", text: JSON.stringify({ complaint: "Pain", findings: "", treatment: "", advice: "", nextVisit: "" }) }] }) };
   });
@@ -43,7 +43,7 @@ describe("/api/ai", () => {
   it("uses the free Gemini key when set and sends no Firebase token", async () => {
     process.env.GEMINI_API_KEY = "gem-test";
     global.fetch = vi.fn(async (url) => {
-      if (String(url).includes("identitytoolkit")) return { ok: true, json: async () => ({ users: [{ localId: "u1" }] }) };
+      if (String(url).includes("identitytoolkit")) return { ok: true, json: async () => ({ users: [{ localId: "u1", email: "u1@x.in", emailVerified: true, createdAt: "1600000000000" }] }) };
       return { ok: true, status: 200, json: async () => ({ candidates: [{ content: { parts: [{ text: "{\"complaint\":\"Pain\",\"findings\":\"\",\"treatment\":\"\",\"advice\":\"\",\"nextVisit\":\"\"}" }] } }] }) };
     });
     const res = await call({ task: "visit_note", notes: "pain lower left caries 36" });
@@ -56,7 +56,7 @@ describe("/api/ai", () => {
   it("falls back to the next Gemini model when one is retired", async () => {
     process.env.GEMINI_API_KEY = "gem-test";
     global.fetch = vi.fn(async (url) => {
-      if (String(url).includes("identitytoolkit")) return { ok: true, json: async () => ({ users: [{ localId: "u4" }] }) };
+      if (String(url).includes("identitytoolkit")) return { ok: true, json: async () => ({ users: [{ localId: "u4", email: "u4@x.in", emailVerified: true, createdAt: "1600000000000" }] }) };
       if (String(url).includes("gemini-3.8-flash:")) return { ok: false, status: 404, json: async () => ({}) };
       return { ok: true, status: 200, json: async () => ({ candidates: [{ content: { parts: [{ text: "Open Billing." }] } }] }) };
     });
@@ -69,7 +69,7 @@ describe("/api/ai", () => {
   it("says busy when Gemini's free limit is reached", async () => {
     process.env.GEMINI_API_KEY = "gem-test";
     global.fetch = vi.fn(async (url) => String(url).includes("identitytoolkit")
-      ? { ok: true, json: async () => ({ users: [{ localId: "u2" }] }) }
+      ? { ok: true, json: async () => ({ users: [{ localId: "u2", email: "u2@x.in", emailVerified: true, createdAt: "1600000000000" }] }) }
       : { ok: false, status: 429, json: async () => ({}) });
     const res = await call({ task: "visit_note", notes: "pain lower left caries 36" });
     expect(res.statusCode).toBe(429);
@@ -78,7 +78,7 @@ describe("/api/ai", () => {
   it("sends chat history to Gemini with model and user roles", async () => {
     process.env.GEMINI_API_KEY = "gem-test";
     global.fetch = vi.fn(async (url) => String(url).includes("identitytoolkit")
-      ? { ok: true, json: async () => ({ users: [{ localId: "u3" }] }) }
+      ? { ok: true, json: async () => ({ users: [{ localId: "u3", email: "u3@x.in", emailVerified: true, createdAt: "1600000000000" }] }) }
       : { ok: true, status: 200, json: async () => ({ candidates: [{ content: { parts: [{ text: "Open Billing." }] } }] }) });
     const res = await call({ task: "help", messages: [{ role: "user", content: "how to bill" }, { role: "assistant", content: "ok" }, { role: "user", content: "and print?" }] });
     expect(res.statusCode).toBe(200);

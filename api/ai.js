@@ -1,29 +1,20 @@
 // Vercel function: POST /api/ai ("Meridee"). Needs GEMINI_API_KEY (free Google AI Studio key) or ANTHROPIC_API_KEY, server only,
 // plus the Firebase web API key.
 import { MODEL, GEMINI_MODELS, buildRequest, parseVisitNote, makeLimiter } from "./_lib/aiCore.js";
+import { readServiceAccount } from "./_lib/blockCore.js";
+import { lookupUser } from "./_lib/loginAlertCore.js";
+import { checkAccess, dailyCap } from "./_lib/gateCore.js";
 
 export const config = { maxDuration: 30 };
 
 const allow = makeLimiter(40, 60 * 60 * 1000);
+const allowAll = makeLimiter(dailyCap(process.env.AI_SITE_DAILY, 3000), 24 * 60 * 60 * 1000); // whole-site daily cap
 
 const send = (res, status, body) => {
   res.statusCode = status;
   res.setHeader("Content-Type", "application/json");
   res.setHeader("Cache-Control", "no-store");
   res.end(JSON.stringify(body));
-};
-
-// Confirm the caller is a signed-in MeriDent user by asking Firebase to look up their token.
-const verifyUser = async (idToken) => {
-  const apiKey = process.env.VITE_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY;
-  if (!apiKey || !idToken) return null;
-  const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`, {
-    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idToken }),
-  });
-  if (!r.ok) return null;
-  const data = await r.json();
-  const user = data && data.users && data.users[0];
-  return user ? user.localId : null;
 };
 
 const readBody = async (req) => {
@@ -42,8 +33,12 @@ export default async function handler(req, res) {
   try { body = await readBody(req); } catch (e) { return send(res, 413, { error: "Request too large." }); }
 
   const header = String(req.headers.authorization || "");
-  const uid = await verifyUser(header.startsWith("Bearer ") ? header.slice(7) : "").catch(() => null);
-  if (!uid) return send(res, 401, { error: "Sign in again to use Meridee." });
+  const user = await lookupUser(header.startsWith("Bearer ") ? header.slice(7) : "").catch(() => null);
+  if (!user) return send(res, 401, { error: "Sign in again to use Meridee." });
+  const uid = user.uid;
+  const gate = await checkAccess({ user, sa: readServiceAccount() });
+  if (!gate.ok) return send(res, gate.status, { error: gate.error });
+  if (!allowAll("site")) return send(res, 429, { error: "Meridee is busy today. Try again tomorrow." });
   if (!allow(uid)) return send(res, 429, { error: "Too many Meridee requests this hour. Try again later." });
 
   const built = buildRequest(body);
