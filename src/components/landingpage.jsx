@@ -386,11 +386,11 @@ export default function LandingPage({
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f4f8ff] via-[#eaf1fc] to-[#dbe7f8] text-ink font-sans antialiased">
       {/* HEADER */}
-      <header className="sticky top-0 z-40 bg-white/60 backdrop-blur-xl border-b border-white/70 shadow-[0_8px_30px_-18px_rgba(17,24,39,.45)]">
+      <header className="sticky top-0 z-40 bg-white/95 border-b border-white/70 shadow-[0_8px_30px_-18px_rgba(17,24,39,.45)]">
         <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
           <a href="#top" className="flex items-center gap-2.5">
             <img
-              src="/logo.png"
+              src="/logo-small.png"
               alt="MeriDent logo"
               className="w-9 h-9 object-contain"
               onError={(e) => {
@@ -623,7 +623,7 @@ export default function LandingPage({
       </section>
 
       {/* TRUST STRIP */}
-      <section aria-label="Why clinics can trust MeriDent" className="bg-white/60 backdrop-blur border-b border-white/70">
+      <section aria-label="Why clinics can trust MeriDent" className="bg-white/90 border-b border-white/70">
         <ul className="max-w-6xl mx-auto px-5 py-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-slate-700">
           <li className="flex items-start gap-2.5"><GraduationCap className="w-5 h-5 text-brand-600 shrink-0 mt-0.5" aria-hidden="true" /><span><strong className="text-ink">Built by dental students.</strong> Made by people who sit in the dental chair every day.</span></li>
           <li className="flex items-start gap-2.5"><Flag className="w-5 h-5 text-brand-600 shrink-0 mt-0.5" aria-hidden="true" /><span><strong className="text-ink">Made in India, for India.</strong> GST invoices, UPI, WhatsApp and ₹ throughout.</span></li>
@@ -673,7 +673,7 @@ export default function LandingPage({
           </div>
           <ol className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-6">
             {STEPS.map((step) => (
-              <li key={step.n} className="rounded-2xl bg-white/10 border border-white/20 backdrop-blur p-5">
+              <li key={step.n} className="rounded-2xl bg-white/10 border border-white/20 p-5">
                 <span className="inline-flex w-9 h-9 items-center justify-center rounded-full bg-white text-blue-800 font-display font-bold">{step.n}</span>
                 <h3 className="mt-2 font-display font-bold text-lg">{step.title}</h3>
                 <p className="mt-1.5 text-sm leading-relaxed text-slate-300">{step.text}</p>
@@ -711,7 +711,7 @@ export default function LandingPage({
 
       {/* COMING NEXT */}
       <section className="max-w-6xl mx-auto px-5 py-16">
-        <div className="rounded-3xl bg-white/70 backdrop-blur border border-white shadow-[0_20px_50px_-30px_rgba(17,24,39,.45)] p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center gap-5 lg:gap-10">
+        <div className="rounded-3xl bg-white/90 border border-white shadow-[0_20px_50px_-30px_rgba(17,24,39,.45)] p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center gap-5 lg:gap-10">
           <div className="lg:w-1/3">
             <h2 className="font-display font-bold text-2xl tracking-tight">Coming next</h2>
             <p className="mt-1.5 text-sm text-slate-600">We are building these now. Tell us what your clinic needs most.</p>
@@ -728,7 +728,7 @@ export default function LandingPage({
 
       {/* QUALITY CHECKS */}
       <section id="quality" aria-label="How we test MeriDent" className="max-w-6xl mx-auto px-5 pb-16">
-        <div className="rounded-3xl bg-white/70 backdrop-blur border border-white shadow-[0_20px_50px_-30px_rgba(17,24,39,.45)] p-6 sm:p-8">
+        <div className="rounded-3xl bg-white/90 border border-white shadow-[0_20px_50px_-30px_rgba(17,24,39,.45)] p-6 sm:p-8">
           <h2 className="font-display font-bold text-2xl tracking-tight">We test it hard, so your clinic does not have to</h2>
           <p className="mt-1.5 text-sm text-slate-600 max-w-2xl">Billing, stock, dues and reminders are checked automatically every time we change the app.</p>
           <dl className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -773,7 +773,7 @@ export default function LandingPage({
       <InstallApp />
 
       {/* FAQ */}
-      <section id="faq" className="bg-white/50 backdrop-blur border-y border-white/70">
+      <section id="faq" className="bg-white/80 border-y border-white/70">
         <div className="max-w-3xl mx-auto px-5 py-16 lg:py-20">
           <h2 className="font-display font-bold text-3xl sm:text-[2.5rem] tracking-[-0.025em] mb-8">Questions clinics ask</h2>
           <div className="divide-y divide-rule border-y border-rule">
@@ -845,7 +845,7 @@ export default function LandingPage({
       </a>
 
       {/* FOOTER */}
-      <footer className="bg-white/70 backdrop-blur border-t border-white text-slate-500 py-10 px-5 text-center text-sm space-y-1.5">
+      <footer className="bg-white/90 border-t border-white text-slate-500 py-10 px-5 text-center text-sm space-y-1.5">
         <p className="font-display font-bold text-ink text-base">MeriDent</p>
         <p>StartupTN ref: STN99974 | MSME Udyam: UDYAM-TN-04-0139569</p>
         <p>Applicant, National Startup Awards 6.0 (Student Innovator category). Result awaited.</p>
