@@ -136,6 +136,7 @@ const PLANS = [
 const QUALITY = [
   { n: "1,200+", label: "automated tests", note: "run before every update goes live" },
   { n: "6 million+", label: "random stress checks", note: "bad input, odd dates, wrong totals, with 0 failures in the latest run" },
+  { n: "Every change", label: "data-access rules tested", note: "the rules that keep each clinic's records private are tested automatically whenever they change" },
   { n: "3 ways", label: "of testing", note: "normal order, shuffled order, and random data" },
 ];
 
@@ -730,7 +731,7 @@ export default function LandingPage({
         <div className="rounded-3xl bg-white/70 backdrop-blur border border-white shadow-[0_20px_50px_-30px_rgba(17,24,39,.45)] p-6 sm:p-8">
           <h2 className="font-display font-bold text-2xl tracking-tight">We test it hard, so your clinic does not have to</h2>
           <p className="mt-1.5 text-sm text-slate-600 max-w-2xl">Billing, stock, dues and reminders are checked automatically every time we change the app.</p>
-          <dl className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <dl className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {QUALITY.map((q) => (
               <div key={q.label} className="rounded-2xl bg-blue-50/70 border border-blue-100 p-4">
                 <dt className="text-sm font-semibold text-blue-900">{q.label}</dt>
