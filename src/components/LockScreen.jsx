@@ -12,7 +12,13 @@ export default function LockScreen({ uid, onUnlock, onSignOut }) {
 
   const submit = async (e) => {
     e.preventDefault();
-    if (await checkPin(uid, pin)) return onUnlock();
+    let ok;
+    try { ok = await checkPin(uid, pin); } catch (err) {
+      // Some browsers (plain http pages, certain in-app browsers) cannot run the secure check at all.
+      setPin("");
+      return setError("This browser cannot check your PIN. Tap Forgot PIN to reset it and sign in again.");
+    }
+    if (ok) return onUnlock();
     const n = tries + 1;
     setTries(n);
     setPin("");

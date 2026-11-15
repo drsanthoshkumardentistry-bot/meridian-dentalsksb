@@ -65,6 +65,17 @@ describe("app lock", () => {
     expect(screen.getByLabelText("PIN")).toBeTruthy();
     expect(hasLock("u1")).toBe(true);
   });
+  it("shows a clear message when the browser cannot check the PIN", async () => {
+    await setLock("u1", "4821");
+    const unlock = vi.fn();
+    render(<LockScreen uid="u1" onUnlock={unlock} onSignOut={() => {}} />);
+    const spy = vi.spyOn(globalThis.crypto.subtle, "importKey").mockRejectedValue(new Error("no subtle"));
+    fireEvent.change(screen.getByLabelText("PIN"), { target: { value: "4821" } });
+    fireEvent.click(screen.getByRole("button", { name: "Unlock" }));
+    await screen.findByText(/cannot check your PIN/i);
+    expect(unlock).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
   it("security card sets a PIN only when both entries match", async () => {
     render(<SecurityCard uid="u1" onLockNow={() => {}} />);
     const [a, b] = screen.getAllByLabelText(/PIN|again/i);
