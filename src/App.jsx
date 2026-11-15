@@ -136,6 +136,8 @@ import { recallConversion } from "./recallReport.js";
 import BookingShare from "./components/BookingShare.jsx";
 import { shareName } from "./accountName.js";
 import { copyText, COPY_FAILED } from "./copyText.js";
+import { usePaged } from "./usePaged.js";
+import ShowMore from "./components/ShowMore.jsx";
 import { dentistEarnings, dentistEarningsCsv, cleanPct } from "./dentistReport.js";
 import { branchComparison, branchComparisonCsv } from "./branchReport.js";
 import LabOrders from "./components/LabOrders.jsx";
@@ -1695,17 +1697,20 @@ export default function App() {
   };
 
   // --- WhatsApp reminders (opens WhatsApp with the message ready; the clinic taps Send) ---
-  const birthdaysToday = dueBirthdays(patients);
-  const closeSummary = dayClose({ invoices, appointments, patients });
-  const dueApptReminders = dueAppointmentReminders(appointments, new Date(), patients);
-  const dueRecallList = dueRecalls(patients, appointments, invoices.map(normalizeInvoice));
-  const duePayReminders = duePaymentReminders(invoices.map(normalizeInvoice), patients);
-  const feedbackDue = dueFeedbackRequests(appointments, patients);
-  const awaitingList = awaitingRatings(appointments);
-  const lowList = lowRatings(appointments);
-  const feedbackStats = feedbackSummary(appointments);
-  const planFollowUps = duePlanFollowUps(patients, appointments);
-  const nextVisitsDue = dueNextVisits(patients, appointments);
+  // These run over every patient and invoice, so they are worked out again only when the data (or the minute) changes, not on every keystroke.
+  const minute = Math.floor(Date.now() / 60000);
+  const normInvoices = useMemo(() => invoices.map(normalizeInvoice), [invoices]);
+  const birthdaysToday = useMemo(() => dueBirthdays(patients), [patients, minute]);
+  const closeSummary = useMemo(() => dayClose({ invoices, appointments, patients }), [invoices, appointments, patients, minute]);
+  const dueApptReminders = useMemo(() => dueAppointmentReminders(appointments, new Date(), patients), [appointments, patients, minute]);
+  const dueRecallList = useMemo(() => dueRecalls(patients, appointments, normInvoices), [patients, appointments, normInvoices, minute]);
+  const duePayReminders = useMemo(() => duePaymentReminders(normInvoices, patients), [normInvoices, patients, minute]);
+  const feedbackDue = useMemo(() => dueFeedbackRequests(appointments, patients), [appointments, patients, minute]);
+  const awaitingList = useMemo(() => awaitingRatings(appointments), [appointments]);
+  const lowList = useMemo(() => lowRatings(appointments), [appointments]);
+  const feedbackStats = useMemo(() => feedbackSummary(appointments), [appointments]);
+  const planFollowUps = useMemo(() => duePlanFollowUps(patients, appointments), [patients, appointments, minute]);
+  const nextVisitsDue = useMemo(() => dueNextVisits(patients, appointments), [patients, appointments, minute]);
   const actionTiles = todayActionTiles({
     reminders: dueApptReminders.length, recalls: dueRecallList.length, payments: duePayReminders.length,
     nextVisits: nextVisitsDue.length, plans: planFollowUps.length, feedback: feedbackDue.length,
@@ -1730,8 +1735,9 @@ export default function App() {
   const [visitForm, setVisitForm] = useState({ complaint: "", findings: "", treatment: "", advice: "", nextVisit: "", nextVisitOn: "", date: "" });
   const [diaryQuery, setDiaryQuery] = useState("");
   const visibleInvoices = invoiceView(invoices, { status: invoiceFilter, query: invoiceQuery });
-  const billing = billingSummary(invoices);
-  const diarySum = diarySummary(appointments);
+  const invoicePage = usePaged(visibleInvoices, `${invoiceFilter}|${invoiceQuery}`);
+  const billing = useMemo(() => billingSummary(invoices), [invoices]);
+  const diarySum = useMemo(() => diarySummary(appointments), [appointments, minute]);
   const stockSum = stockSummary(inventory);
   const todaysVisits = diaryView(appointments, { view: "today" }).filter((a) => !["cancelled", "no show", "completed"].includes(String(a.status || "").toLowerCase()));
   const overdueList = invoiceView(invoices, { status: "overdue" });
@@ -2154,6 +2160,7 @@ export default function App() {
     p.phone.includes(searchQuery) ||
     labelsOf(p).some((l) => l.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+  const patientPage = usePaged(filteredPatients, `${searchQuery}|${labelFilter}|${dateMode}|${dateFrom}|${dateTo}`);
 
   const opgPatientRecord = patients.find((p) => p.id === (opgSelectedPatientId || (patients[0] && patients[0].id))) || null;
   const currentOpgPatient = opgPatientRecord && opgScan.patientId === opgPatientRecord.id && opgScan.image && !opgPatientRecord.opgImage ? { ...opgPatientRecord, opgImage: opgScan.image } : opgPatientRecord;
@@ -2177,6 +2184,8 @@ export default function App() {
     return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}-${String(parsed.getDate()).padStart(2, "0")}`;
   };
 
+  const dayKey = new Date().toDateString();
+  const { dashboardPatientSeries, dashboardRevenueSeries, todayKey, trend30, dashboardVisitSeries } = useMemo(() => {
   const dashboardPatientSeries = dashboardDays.map((date) => {
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
     return {
@@ -2217,6 +2226,9 @@ export default function App() {
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
     return appointments.filter((a) => a.date === key).length;
   });
+
+  return { dashboardPatientSeries, dashboardRevenueSeries, todayKey, trend30, dashboardVisitSeries };
+  }, [patients, invoices, appointments, dayKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const doctorOptions = Array.from(
     new Set([practiceProfile.drName, ...employees.filter((e) => e.active !== false).map((e) => e.name)].filter(Boolean))
@@ -2635,7 +2647,7 @@ export default function App() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {filteredPatients.map((p) => {
+                  {patientPage.shown.map((p) => {
                     const chartedCount = chartedTeeth(p.toothConditions);
                     return (
                       <div
@@ -2693,6 +2705,7 @@ export default function App() {
                       </div>
                     );
                   })}
+                  <ShowMore paged={patientPage} noun="patients" />
                 </div>
               )}
             </div>
@@ -3292,7 +3305,7 @@ export default function App() {
                           <td colSpan={7} className="p-8 text-center text-slate-500">{invoiceQuery ? "No invoice matches your search." : "Nothing to show in this view."}</td>
                         </tr>
                       )}
-                      {visibleInvoices.map(normalizeInvoice).map((inv) => (
+                      {invoicePage.shown.map(normalizeInvoice).map((inv) => (
                         <tr key={inv.id} className="hover:bg-enamel/60">
                           <td className="p-4">
                             <div className="font-bold text-blue-700">{inv.id}</div>
@@ -3366,6 +3379,7 @@ export default function App() {
                           </td>
                         </tr>
                       ))}
+                      <ShowMore paged={invoicePage} noun="invoices" colSpan={7} />
                     </tbody>
                   </table>
                 </div>
