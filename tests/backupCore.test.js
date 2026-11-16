@@ -83,14 +83,14 @@ describe("summarise and restore", () => {
 describe("repo safety", () => {
   it("backup-public.pem is a public key and no private key is in the repo", async () => {
     const fs = await import("node:fs");
-    const pem = fs.readFileSync(new URL("../backup-public.pem", import.meta.url), "utf8");
+    const pem = fs.readFileSync(process.cwd() + "/backup-public.pem", "utf8");
     expect(pem).toContain("BEGIN PUBLIC KEY");
     expect(pem).not.toContain("PRIVATE");
     expect(() => crypto.createPublicKey(pem)).not.toThrow();
   });
   it("the weekly workflow encrypts before uploading and never prints the service account", async () => {
     const fs = await import("node:fs");
-    const yml = fs.readFileSync(new URL("../.github/workflows/backup.yml", import.meta.url), "utf8");
+    const yml = fs.readFileSync(process.cwd() + "/.github/workflows/backup.yml", "utf8");
     expect(yml).toContain("scripts/backup.mjs");
     expect(yml).toContain("path: backup.enc");
     expect(yml).not.toMatch(/echo[^\n]*SERVICE_ACCOUNT/);
