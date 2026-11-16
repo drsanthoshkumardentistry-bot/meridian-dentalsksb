@@ -136,3 +136,15 @@ describe("sign-in alert e-mail", () => {
     expect(verifyLink(sa, p)).toBe(true);
   });
 });
+
+import { signRS256 } from "../api/_lib/blockCore.js";
+describe("RS256 signing through Web Crypto", () => {
+  it("makes a signature that a normal RSA verifier accepts", async () => {
+    const sig = await signRS256(privateKey, "head.claim");
+    const ok = crypto.createVerify("RSA-SHA256").update("head.claim").verify(crypto.createPublicKey(privateKey), Buffer.from(sig.replace(/-/g, "+").replace(/_/g, "/"), "base64"));
+    expect(ok).toBe(true);
+  });
+  it("fails on a key that is not a key", async () => {
+    await expect(signRS256("not a key", "x")).rejects.toBeTruthy();
+  });
+});

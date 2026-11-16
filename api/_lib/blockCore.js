@@ -38,11 +38,22 @@ export const buildLink = (base, sa, uid, action, email, now = Date.now()) => {
   return `${String(base).replace(/\/$/, "")}/api/block-login?${q.toString()}`;
 };
 
+// RS256 signing through Web Crypto, so it runs on Vercel (Node) and on Cloudflare, which has no crypto.createSign.
+const pemToDer = (pem) => {
+  const b64 = String(pem).replace(/-----[A-Z ]+-----/g, "").replace(/\s+/g, "");
+  return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+};
+export const signRS256 = async (privateKeyPem, data) => {
+  const key = await globalThis.crypto.subtle.importKey("pkcs8", pemToDer(privateKeyPem), { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await globalThis.crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, new TextEncoder().encode(data));
+  return b64url(Buffer.from(sig));
+};
+
 export const getAccessToken = async (sa, fetchFn = fetch, now = Date.now(), scope = "https://www.googleapis.com/auth/identitytoolkit") => {
   const iat = Math.floor(now / 1000);
   const head = b64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
   const claim = b64url(JSON.stringify({ iss: sa.client_email, scope, aud: "https://oauth2.googleapis.com/token", iat, exp: iat + 3000 }));
-  const sig = b64url(crypto.createSign("RSA-SHA256").update(`${head}.${claim}`).sign(sa.private_key));
+  const sig = await signRS256(sa.private_key, `${head}.${claim}`);
   const r = await fetchFn("https://oauth2.googleapis.com/token", {
     method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: `${head}.${claim}.${sig}` }).toString(),
