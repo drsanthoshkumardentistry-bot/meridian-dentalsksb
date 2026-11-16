@@ -51,6 +51,7 @@ describe("landing page content", () => {
     expect(sec).toBeTruthy();
     ["1,200+", "36 million+"].forEach((n) => expect(sec.textContent).toContain(n));
     expect(sec.textContent).toMatch(/not an outside audit/i);
+    expect(sec.textContent).toMatch(/calculation logic.*not every screen/i);
     expect(sec.textContent).toMatch(/data-access rules tested/);
   });
 
