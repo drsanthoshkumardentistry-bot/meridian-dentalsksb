@@ -196,3 +196,16 @@ describe("DocLog: type your own under Other", () => {
   });
 });
 
+
+describe("DocLog greeting", () => {
+  it("says hi with the doctor's name from the profile, tidied", async () => {
+    const { api } = makeApi({ profile: { name: "Dr.priyanka", qualification: "MDS", specialty: "prosthodontics" } });
+    render(<DocLog api={api} />);
+    expect((await screen.findByTestId("doclog-greeting")).textContent).toBe("Hi Dr. Priyanka");
+  });
+  it("uses the sign-in name until a profile name is saved", async () => {
+    const { api } = makeApi({});
+    render(<DocLog api={api} userName="Anita Rao" />);
+    expect((await screen.findByTestId("doclog-greeting")).textContent).toBe("Hi Dr. Anita Rao");
+  });
+});
