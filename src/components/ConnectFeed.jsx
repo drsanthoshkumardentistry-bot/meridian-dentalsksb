@@ -54,10 +54,11 @@ function DeletedPosts({ api, me, showToast, onRestored, onClose }) {
 }
 
 /** The professional network for verified dentists: case discussions, questions, tips and events. */
-export default function ConnectFeed({ api, me, admin, showToast, onMessage }) {
+export default function ConnectFeed({ api, me, admin, showToast, onMessage, binSignal = 0 }) {
   const f = useConnectFeed({ api, showToast });
   const { view } = f;
   const [binOpen, setBinOpen] = useState(false);
+  useEffect(() => { if (binSignal) setBinOpen(true); }, [binSignal]);
 
   const card = (p) => (
     <PostCard key={p.id} post={p} api={api} me={me} admin={admin}

@@ -482,9 +482,10 @@ function AdminSetup({ api, onDone, showToast }) {
   );
 }
 
-export default function Connect({ api, defaults = {}, geocode, showToast, uid, email = "", initialTab = "network" }) {
+export default function Connect({ api, defaults = {}, geocode, showToast, uid, email = "", initialTab = "network", binSignal = 0 }) {
   const [state, setState] = useState({ status: "loading", me: null, admin: false });
   const [tab, setTab] = useState(initialTab);
+  useEffect(() => { if (binSignal) setTab("network"); }, [binSignal]);
   const [received, setReceived] = useState([]);
   const [sent, setSent] = useState([]);
   const [editing, setEditing] = useState(false);
@@ -577,7 +578,7 @@ export default function Connect({ api, defaults = {}, geocode, showToast, uid, e
         <button type="button" onClick={() => setEditing(true)} className={`${btn} border border-rule text-slate-700`}>Correct my details</button>
       </div>
     );
-  } else if (tab === "network") body = <ConnectFeed api={api} me={me} admin={admin} showToast={showToast} onMessage={(d) => { setChatWith(d); setTab("messages"); }} />;
+  } else if (tab === "network") body = <ConnectFeed binSignal={binSignal} api={api} me={me} admin={admin} showToast={showToast} onMessage={(d) => { setChatWith(d); setTab("messages"); }} />;
   else if (tab === "find") body = <Finder api={api} me={me} geocode={geocode} showToast={showToast} refreshSent={loadConsults} onMessage={(d) => { setChatWith(d); setTab("messages"); }} />;
   else if (tab === "messages") body = <ConnectMessages api={api} me={me} start={chatWith} showToast={showToast} />;
   else if (tab === "inbox") body = <ConsultList api={api} side="received" items={received} reload={loadConsults} showToast={showToast} />;
