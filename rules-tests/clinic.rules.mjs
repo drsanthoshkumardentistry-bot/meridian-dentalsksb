@@ -280,3 +280,29 @@ describe("patient photos and X-rays", () => {
     await assertSucceeds(deleteDoc(at(asEmail("doc"))));
   });
 });
+
+describe("recently deleted copies", () => {
+  const entry = (over = {}) => ({ id: "patients__P1", coll: "patients", recordId: "P1", deletedAt: "2026-11-16T00:00:00.000Z", json: "{\"id\":\"P1\"}", ...over });
+  const bin = (db, id = "patients__P1") => doc(db, "clinics", OWNER, "recycleBin", id);
+  it("staff who can delete a record can leave a copy, but cannot read, change or remove it", async () => {
+    await assertSucceeds(setDoc(bin(asEmail("rec")), entry()));
+    await assertSucceeds(setDoc(bin(asEmail("doc"), "patients__P2"), entry({ id: "patients__P2", recordId: "P2" })));
+    await assertFails(getDoc(bin(asEmail("rec"))));
+    await assertFails(deleteDoc(bin(asEmail("rec"))));
+    await assertFails(updateDoc(bin(asEmail("rec")), { json: "{}" }));
+  });
+  it("the owner and managers can read, restore and remove copies; outsiders can do nothing", async () => {
+    await seed(env, (db) => setDoc(bin(db), entry()));
+    await assertSucceeds(getDoc(bin(as(env, OWNER))));
+    await assertSucceeds(getDoc(bin(asEmail("mgr"))));
+    await assertSucceeds(deleteDoc(bin(asEmail("mgr"))));
+    await assertFails(getDoc(bin(as(env, "intruder"))));
+    await assertFails(setDoc(bin(as(env, "intruder")), entry()));
+    await assertFails(getDoc(bin(anon(env))));
+  });
+  it("rejects a copy with the wrong shape, another collection, or a huge body", async () => {
+    await assertFails(setDoc(bin(asEmail("rec")), entry({ coll: "staff" })));
+    await assertFails(setDoc(bin(asEmail("rec")), entry({ extra: 1 })));
+    await assertFails(setDoc(bin(asEmail("rec")), entry({ json: "x".repeat(900001) })));
+  });
+});

@@ -71,6 +71,9 @@ import { windowFor, rangeProblem } from "./dateRange.js";
 import { whatsappAutoEnabled, sendWhatsAppTemplate } from "./whatsappApi.js";
 import StorageMeter from "./components/StorageMeter.jsx";
 import ModeSwitch from "./components/ModeSwitch.jsx";
+import RecycleBinCard from "./components/RecycleBinCard.jsx";
+import { makeBinEntry } from "./recycleBin.js";
+import { saveToBin, listBin, restoreFromBin, removeFromBin } from "./recycleStore.js";
 import { CONTACT, CONTACT_CO } from "./legal.js";
 import { setCariesDetail, pruneCariesDetails, cariesText } from "./caries.js";
 import { compressImage } from "./imageCompress.js";
@@ -338,7 +341,7 @@ const saveLocal = (key, value) => {
 const SYNC_FAILED = "__sync_failed__";
 const SYNC_DELETING = "__sync_deleting__";
 
-function useCloudCollection({ clinicId, ready, name, items, setItems, sortFn, onError, readOnly = false }) {
+function useCloudCollection({ clinicId, ready, name, items, setItems, sortFn, onError, readOnly = false, keepDeleted = false }) {
   const synced = useRef(new Map());
   const itemsRef = useRef(items);
   const [loaded, setLoaded] = useState(false);
@@ -447,7 +450,10 @@ function useCloudCollection({ clinicId, ready, name, items, setItems, sortFn, on
       Array.from(synced.current.entries()).forEach(([id, value]) => {
         if (currentIds.has(id) || value === SYNC_DELETING) return;
         synced.current.set(id, SYNC_DELETING);
-        deleteDoc(doc(db, "clinics", clinicId, name, cloudDocId(id)))
+        // Keep a copy for 30 days ("Recently deleted"). If the copy cannot be saved, the delete still goes ahead.
+        const entry = keepDeleted ? makeBinEntry(name, id, value, new Date()) : null;
+        (entry ? saveToBin(db, clinicId, entry).catch(() => {}) : Promise.resolve())
+          .then(() => deleteDoc(doc(db, "clinics", clinicId, name, cloudDocId(id))))
           .then(() => synced.current.delete(id))
           .catch((error) => {
             synced.current.delete(id);
@@ -457,7 +463,7 @@ function useCloudCollection({ clinicId, ready, name, items, setItems, sortFn, on
     }, 700);
 
     return () => clearTimeout(timer);
-  }, [items, loaded, retryTick, clinicId, ready, name, readOnly]);
+  }, [items, loaded, retryTick, clinicId, ready, name, readOnly, keepDeleted]);
 }
 
 function useCloudDoc({ clinicId, ready, name, value, setValue, onError, readOnly = false }) {
@@ -998,9 +1004,9 @@ export default function App() {
       showToast("Cloud sync issue. Your changes are kept and will retry automatically.");
     }
   };
-  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "patients"), readOnly: !canWrite(role, "patients"), name: "patients", items: allPatients, setItems: setPatients, sortFn: byIdDesc, onError: reportSyncError });
+  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "patients"), readOnly: !canWrite(role, "patients"), name: "patients", items: allPatients, setItems: setPatients, sortFn: byIdDesc, onError: reportSyncError, keepDeleted: true });
   useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "appointments"), readOnly: !canWrite(role, "appointments"), name: "appointments", items: allAppointments, setItems: setAppointments, sortFn: byIdDesc, onError: reportSyncError });
-  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "invoices"), readOnly: !canWrite(role, "invoices"), name: "invoices", items: allInvoices, setItems: setInvoices, sortFn: byIdDesc, onError: reportSyncError });
+  useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "invoices"), readOnly: !canWrite(role, "invoices"), name: "invoices", items: allInvoices, setItems: setInvoices, sortFn: byIdDesc, onError: reportSyncError, keepDeleted: true });
   useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "inventory"), readOnly: !canWrite(role, "inventory"), name: "inventory", items: inventory, setItems: setInventory, onError: reportSyncError });
   useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "queue"), readOnly: !canWrite(role, "queue"), name: "queue", items: allQueue, setItems: setQueue, onError: reportSyncError });
   useCloudCollection({ clinicId: CLINIC_ID, ready: cloudReady && canRead(role, "leads"), readOnly: !canWrite(role, "leads"), name: "leads", items: leads, setItems: setLeads, onError: reportSyncError });
@@ -3890,6 +3896,8 @@ export default function App() {
               <SecurityCard uid={authUser?.uid} onLockNow={() => setPinLocked(true)} onChange={() => setPinTick((n) => n + 1)} />
 
               {role === "owner" && <PlanCard clinic={practiceProfile.name} createdAt={authUser?.metadata?.creationTime} />}
+
+              {role === "owner" && CLINIC_ID && <RecycleBinCard loadFn={() => listBin(db, CLINIC_ID)} restoreFn={(e) => restoreFromBin(db, CLINIC_ID, e)} removeFn={(e) => removeFromBin(db, CLINIC_ID, e)} />}
 
               {role === "owner" && <FounderCard />}
 
