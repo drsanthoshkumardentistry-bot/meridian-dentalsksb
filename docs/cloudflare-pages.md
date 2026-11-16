@@ -20,7 +20,7 @@ Server routes:
 - `GEMINI_API_KEY`, `GEMINI_MODEL`, `ANTHROPIC_API_KEY`, `AI_SITE_DAILY` (only the AI ones you use)
 - `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_ID`, `WHATSAPP_TEMPLATE_LANG`, `WHATSAPP_SITE_DAILY` (only if WhatsApp is on)
 
-## Switch the domain
+## Switch the domain (done 16 Nov 2026: meridiandentalos.com and www are served by Cloudflare Pages)
 Pages project > Custom domains > add `meridiandentalos.com` and `www`. Cloudflare updates the two A records itself.
 Keep the Vercel project for a week as the fallback, then remove the domain from it.
 
