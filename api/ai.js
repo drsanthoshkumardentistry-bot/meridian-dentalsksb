@@ -3,12 +3,13 @@
 import { MODEL, GEMINI_MODELS, buildRequest, parseVisitNote, makeLimiter } from "./_lib/aiCore.js";
 import { readServiceAccount } from "./_lib/blockCore.js";
 import { lookupUser } from "./_lib/loginAlertCore.js";
-import { checkAccess, dailyCap } from "./_lib/gateCore.js";
+import { checkAccess, dailyCap, siteDailyHit } from "./_lib/gateCore.js";
 
 export const config = { maxDuration: 30 };
 
 const allow = makeLimiter(40, 60 * 60 * 1000);
-const allowAll = makeLimiter(dailyCap(process.env.AI_SITE_DAILY, 3000), 24 * 60 * 60 * 1000); // whole-site daily cap
+const SITE_CAP = () => dailyCap(process.env.AI_SITE_DAILY, 3000);
+const allowAllMemory = makeLimiter(SITE_CAP(), 24 * 60 * 60 * 1000); // backup if the shared counter cannot be reached
 
 const send = (res, status, body) => {
   res.statusCode = status;
@@ -36,9 +37,10 @@ export default async function handler(req, res) {
   const user = await lookupUser(header.startsWith("Bearer ") ? header.slice(7) : "").catch(() => null);
   if (!user) return send(res, 401, { error: "Sign in again to use Meridee." });
   const uid = user.uid;
-  const gate = await checkAccess({ user, sa: readServiceAccount() });
+  const sa = readServiceAccount();
+  const gate = await checkAccess({ user, sa });
   if (!gate.ok) return send(res, gate.status, { error: gate.error });
-  if (!allowAll("site")) return send(res, 429, { error: "Meridee is busy today. Try again tomorrow." });
+  if (!(await siteDailyHit({ sa, name: "ai", limit: SITE_CAP(), fallback: () => allowAllMemory("site") }))) return send(res, 429, { error: "Meridee is busy today. Try again tomorrow." });
   if (!allow(uid)) return send(res, 429, { error: "Too many Meridee requests this hour. Try again later." });
 
   const built = buildRequest(body);
