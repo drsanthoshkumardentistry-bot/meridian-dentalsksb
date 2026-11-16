@@ -9,8 +9,7 @@ The site is a Vite build (`dist`) plus server routes in `functions/api/*` (they 
 4. Firebase console > Authentication > Settings > Authorized domains: add the `*.pages.dev` address and later the real domain.
 
 ## Environment variables (copy values from Vercel; never paste them in chat or commit them)
-Build time (VITE_ ones are public by design):
-- every `VITE_*` variable the Vercel project has (for example `VITE_FIREBASE_API_KEY`)
+Build time: the public `VITE_FIREBASE_*` values live in `.env.production` in the repo (they ship inside the website to every visitor by design). Because `wrangler.toml` exists, the dashboard only accepts Secrets, and secrets are not available to the build, so do not put VITE_ values in the dashboard.
 
 Server routes:
 - `FIREBASE_SERVICE_ACCOUNT` (the service-account JSON, as secret text)
