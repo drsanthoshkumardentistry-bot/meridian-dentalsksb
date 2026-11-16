@@ -204,3 +204,24 @@ export function docLogCsv(visits, ym = "") {
   }
   return toCsv(rows);
 }
+
+/** "Dr.priyanka" -> "Priyanka": drops a typed "Dr", capitalises only words typed in lower case, keeps the rest as typed. */
+export const doctorName = (raw) => {
+  const t = String(raw || "").replace(/\s+/g, " ").trim().replace(/^(dr|doctor)\b\.?\s*/i, "").replace(/^[\s.,-]+/, "");
+  return t.split(" ").filter(Boolean).map((w) => (w === w.toLowerCase() ? w.charAt(0).toUpperCase() + w.slice(1) : w)).join(" ");
+};
+
+/** The line shown when DocLog opens, e.g. "Hi Dr. Priyanka". Falls back to a plain greeting when no name is known. */
+export const greeting = (name) => { const n = doctorName(name); return n ? `Hi Dr. ${n}` : "Hi doctor"; };
+
+/** One short line about today: bookings today, and money still to receive. Empty when there is nothing to say. */
+export const todayLine = (visits, today, fmt = (p) => String(p / 100)) => {
+  const list_ = Array.isArray(visits) ? visits : [];
+  const booked = comingUp(list_, today, 500).filter((v) => v.nextVisit === today).length;
+  const dues = duesByClinic(list_, today);
+  const owed = dues.reduce((n, d) => n + d.pendingP, 0);
+  const parts = [];
+  if (booked > 0) parts.push(`${booked} follow-up${booked === 1 ? "" : "s"} booked for today`);
+  if (owed > 0) parts.push(`${fmt(owed)} still to receive from ${dues.length} clinic${dues.length === 1 ? "" : "s"}`);
+  return parts.join(" · ");
+};

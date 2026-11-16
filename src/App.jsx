@@ -3434,7 +3434,7 @@ export default function App() {
           )}
 
           {/* MERIDENT CONNECT */}
-          {activeNav === "MeriDent DocLog" && docLogOnly && <DocLog api={connectApi} showToast={showToast} />}
+          {activeNav === "MeriDent DocLog" && docLogOnly && <DocLog api={connectApi} showToast={showToast} userName={authUser?.displayName} />}
 
           {activeNav === "MeriDent Connect" && (
             <Connect

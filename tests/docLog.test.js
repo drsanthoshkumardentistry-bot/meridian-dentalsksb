@@ -146,3 +146,29 @@ describe("modeLabel with a typed mode", () => {
     expect(modeLabel("")).toBe("");
   });
 });
+
+import { doctorName, greeting, todayLine } from "../src/docLog.js";
+describe("greeting a doctor", () => {
+  it("tidies the name however it was typed", () => {
+    expect(doctorName("Dr.priyanka")).toBe("Priyanka");
+    expect(doctorName("  dr  priyanka   kumar ")).toBe("Priyanka Kumar");
+    expect(doctorName("Doctor Ravi")).toBe("Ravi");
+    expect(doctorName("Dr.SanthoshKumar Sivakumar")).toBe("SanthoshKumar Sivakumar");
+    expect(doctorName("Drishti")).toBe("Drishti"); // a name that only starts with the letters "dr"
+    expect(doctorName("Dr.")).toBe("");
+    expect(doctorName(null)).toBe("");
+  });
+  it("says hi with Dr. and the name, or a plain greeting without one", () => {
+    expect(greeting("Dr.priyanka")).toBe("Hi Dr. Priyanka");
+    expect(greeting("Anita")).toBe("Hi Dr. Anita");
+    expect(greeting("")).toBe("Hi doctor");
+    expect(greeting(undefined)).toBe("Hi doctor");
+  });
+  it("summarises today in one line, and stays silent when there is nothing to say", () => {
+    const v = (o) => ({ id: "a", clinicId: "C1", clinicName: "X", patient: "P", date: "2026-11-10", feeP: 100000, receivedP: 40000, nextVisit: "", ...o });
+    expect(todayLine([], "2026-11-16")).toBe("");
+    expect(todayLine(null, "2026-11-16")).toBe("");
+    expect(todayLine([v({ feeP: 0, receivedP: 0, nextVisit: "2026-11-16" })], "2026-11-16")).toBe("1 follow-up booked for today");
+    expect(todayLine([v({}), v({ id: "b", clinicId: "C2", feeP: 50000, receivedP: 0 })], "2026-11-16", (p) => `Rs${p / 100}`)).toBe("Rs1100 still to receive from 2 clinics");
+  });
+});
