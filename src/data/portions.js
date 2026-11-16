@@ -24,7 +24,7 @@ const BDS = [
     'Parotid region and salivary glands', ['Temporal and infratemporal fossae; muscles of mastication', { topic: 'muscles-of-mastication' }],
     'Pterygopalatine fossa and maxillary nerve', ['Mandibular nerve and otic ganglion', { topic: 'mandibular-nerve' }], 'Submandibular region and lingual nerve',
     ['Oral cavity, palate and tongue', { topic: 'tongue' }], 'Pharynx and larynx', 'Nose and paranasal sinuses', 'Triangles of the neck and cervical fascia',
-    'Blood supply and lymphatic drainage of head and neck', 'Cranial nerves V, VII, IX and XII',
+    'Blood supply and lymphatic drainage of head and neck', ['Cranial nerves V, VII, IX and XII', { topic: 'facial-nerve' }],
     ['Embryology: pharyngeal arches, face and palate', { topic: 'pharyngeal-arches' }], 'General histology: epithelium, connective tissue, bone, cartilage',
     'Thorax, abdomen and limbs (general overview)',
   ]),
@@ -100,11 +100,11 @@ const BDS = [
   ]),
   // ---------------- Final year ----------------
   subject('oral-medicine', 'Oral Medicine & Radiology', 4, 'Oral Medicine & Radiology', [
-    'Case history and clinical examination', ['Red and white lesions; leukoplakia', { topic: 'leukoplakia' }],
+    ['Case history and clinical examination', { topic: 'case-history' }], ['Red and white lesions; leukoplakia', { topic: 'leukoplakia' }],
     ['Oral submucous fibrosis', { topic: 'osmf' }], ['Lichen planus', { topic: 'oral-lichen-planus' }], ['Vesiculobullous lesions', { topic: 'pemphigus-vulgaris' }],
-    ['Ulcerative lesions and recurrent aphthae', { topic: 'recurrent-aphthous-stomatitis' }], 'Pigmented lesions', ['Orofacial pain and TMJ disorders', { topic: 'trigeminal-neuralgia' }], ['Salivary gland disorders', { topic: 'salivary-gland-disorders' }],
+    ['Ulcerative lesions and recurrent aphthae', { topic: 'recurrent-aphthous-stomatitis' }], ['Pigmented lesions', { topic: 'pigmented-lesions' }], ['Orofacial pain and TMJ disorders', { topic: 'trigeminal-neuralgia' }], ['Salivary gland disorders', { topic: 'salivary-gland-disorders' }],
     'Oral manifestations of systemic disease', 'Medically compromised patients', 'Radiation physics and biology', ['Radiation protection', { topic: 'radiation-protection' }],
-    'Intraoral radiographic techniques', 'Panoramic and extraoral radiography; CBCT', ['Radiographic interpretation of cysts and tumours', { topic: 'dentigerous-cyst' }],
+    ['Intraoral radiographic techniques', { topic: 'intraoral-radiography' }], ['Panoramic and extraoral radiography; CBCT', { topic: 'opg-cbct' }], ['Radiographic interpretation of cysts and tumours', { topic: 'dentigerous-cyst' }],
   ]),
   subject('pedodontics', 'Paediatric & Preventive Dentistry', 4, 'Pedodontics', [
     ['Child psychology and behaviour management', { topic: 'behaviour-management' }], 'Growth and development', ['Dental caries in children and early childhood caries', { topic: 'early-childhood-caries' }],
@@ -114,24 +114,24 @@ const BDS = [
   ]),
   subject('orthodontics', 'Orthodontics & Dentofacial Orthopaedics', 4, 'Orthodontics', [
     'Growth and development of the craniofacial complex', 'Development of dentition and occlusion', ['Classification of malocclusion', { topic: 'angle-classification' }],
-    'Aetiology of malocclusion', ['Cephalometrics', { topic: 'cephalometrics' }], 'Diagnosis and treatment planning', ['Biology of tooth movement', { topic: 'biology-of-tooth-movement' }], ['Removable appliances', { topic: 'removable-appliances' }],
-    'Fixed appliances: basics', ['Functional appliances', { topic: 'functional-appliances' }], ['Orthopaedic appliances: headgear, chin cup, RME', { topic: 'orthopaedic-appliances' }],
-    'Preventive and interceptive orthodontics', ['Retention and relapse', { topic: 'retention-relapse' }], ['Cleft lip and palate', { topic: 'cleft-lip-palate' }],
+    ['Aetiology of malocclusion', { topic: 'aetiology-malocclusion' }], ['Cephalometrics', { topic: 'cephalometrics' }], 'Diagnosis and treatment planning', ['Biology of tooth movement', { topic: 'biology-of-tooth-movement' }], ['Removable appliances', { topic: 'removable-appliances' }],
+    ['Fixed appliances: basics', { topic: 'fixed-appliances' }], ['Functional appliances', { topic: 'functional-appliances' }], ['Orthopaedic appliances: headgear, chin cup, RME', { topic: 'orthopaedic-appliances' }],
+    ['Preventive and interceptive orthodontics', { topic: 'interceptive-orthodontics' }], ['Retention and relapse', { topic: 'retention-relapse' }], ['Cleft lip and palate', { topic: 'cleft-lip-palate' }],
   ]),
   subject('periodontics', 'Periodontology', 4, 'Periodontics', [
-    'Anatomy of the periodontium', 'Classification of periodontal diseases (2017)', 'Dental plaque and calculus',
+    'Anatomy of the periodontium', ['Classification of periodontal diseases (2017)', { topic: 'periodontitis-staging-grading' }], ['Dental plaque and calculus', { topic: 'dental-plaque' }],
     'Host response and risk factors', ['Gingival diseases and gingival enlargement', { topic: 'gingival-enlargement' }],
-    'Periodontal pocket and bone loss', ['Periodontitis: staging and grading', { topic: 'periodontitis-staging-grading' }], ['Necrotising periodontal diseases', { topic: 'necrotising-periodontal' }],
-    'Periodontal–systemic interrelationships', 'Clinical diagnosis and indices', 'Scaling, root planing and instruments',
-    'Chemical plaque control', ['Periodontal flap surgery', { topic: 'periodontal-flap-surgery' }], 'Mucogingival and regenerative surgery', ['Furcation and perio-endo lesions', { topic: 'furcation-involvement' }],
+    ['Periodontal pocket and bone loss', { topic: 'periodontal-pocket' }], ['Periodontitis: staging and grading', { topic: 'periodontitis-staging-grading' }], ['Necrotising periodontal diseases', { topic: 'necrotising-periodontal' }],
+    ['Periodontal–systemic interrelationships', { topic: 'perio-systemic' }], ['Clinical diagnosis and indices', { topic: 'oral-health-indices' }], ['Scaling, root planing and instruments', { topic: 'periodontal-instruments' }],
+    ['Chemical plaque control', { topic: 'chemical-plaque-control' }], ['Periodontal flap surgery', { topic: 'periodontal-flap-surgery' }], ['Mucogingival and regenerative surgery', { topic: 'mucogingival-surgery' }], ['Furcation and perio-endo lesions', { topic: 'furcation-involvement' }],
     ['Dental implants and peri-implantitis', { topic: 'peri-implantitis' }], 'Supportive periodontal therapy',
   ]),
   subject('prosthodontics', 'Prosthodontics & Crown and Bridge', 4, 'Prosthodontics', [
     'Edentulous anatomy and diagnosis', ['Complete denture impressions', { topic: 'complete-denture-impressions' }], ['Jaw relations', { topic: 'jaw-relations' }], 'Selection and arrangement of teeth',
     ['Try-in, insertion and post-insertion problems', { topic: 'denture-complaints' }], ['Classification of partially edentulous arches', { topic: 'kennedy-classification' }],
-    ['RPD components and design', { topic: 'rpd-components' }], ['Fixed partial dentures: abutments and tooth preparation', { topic: 'fpd-abutments' }], 'Pontics and connectors',
-    ['Impressions and gingival retraction', { topic: 'gingival-retraction' }], ['Overdentures and immediate dentures', { topic: 'overdentures' }], 'Maxillofacial prosthodontics',
-    'Implant prosthodontics', ['Occlusion and articulators', { topic: 'articulators' }],
+    ['RPD components and design', { topic: 'rpd-components' }], ['Fixed partial dentures: abutments and tooth preparation', { topic: 'fpd-abutments' }], ['Pontics and connectors', { topic: 'pontics' }],
+    ['Impressions and gingival retraction', { topic: 'gingival-retraction' }], ['Overdentures and immediate dentures', { topic: 'overdentures' }], ['Maxillofacial prosthodontics', { topic: 'maxillofacial-prosthesis' }],
+    ['Implant prosthodontics', { topic: 'implant-basics' }], ['Occlusion and articulators', { topic: 'articulators' }],
   ]),
   subject('conservative', 'Conservative Dentistry & Endodontics', 4, 'Conservative & Endo', [
     ['Dental caries and caries risk assessment', { topic: 'dental-caries' }], ['Principles of cavity design', { topic: 'cavity-design' }], ['Amalgam restorations', { topic: 'dental-amalgam' }], ['Composite restorations and adhesion', { topic: 'composite-resins' }],
@@ -150,9 +150,9 @@ const BDS = [
   ]),
   subject('public-health', 'Public Health Dentistry', 4, 'Public Health Dentistry', [
     'Concepts of health and disease', ['Epidemiology and study designs', { topic: 'study-designs' }], ['Biostatistics', { topic: 'biostatistics' }], ['Indices: DMFT, CPI, Dean\'s fluorosis index', { topic: 'oral-health-indices' }],
-    ['Fluorides and water fluoridation', { topic: 'fluorides' }], 'Preventive dentistry and oral health education', 'Dental public health programmes in India',
+    ['Fluorides and water fluoridation', { topic: 'fluorides' }], 'Preventive dentistry and oral health education', ['Dental public health programmes in India', { topic: 'public-health-programmes' }],
     'Health care delivery and dental manpower', 'Ethics and jurisprudence', 'Research methodology',
-    'Oral health surveys (WHO methods)', 'Nutrition and oral health',
+    ['Oral health surveys (WHO methods)', { topic: 'oral-health-indices' }], 'Nutrition and oral health',
   ]),
 ]
 

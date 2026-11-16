@@ -5439,5 +5439,485 @@ export const MCQS = [
   "is_pyq": false,
   "exam": "NEET MDS",
   "is_important": true
+ },
+ {
+  "id": 341,
+  "subject": "Oral Medicine & Radiology",
+  "question": "The most common focal pigmented lesion of the oral mucosa is:",
+  "options": [
+   "Melanoma",
+   "Amalgam tattoo",
+   "Naevus",
+   "Kaposi's sarcoma"
+  ],
+  "answer": 1,
+  "explanation": "Grey-blue macule near amalgam restorations; radiopaque particles may be visible.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 342,
+  "subject": "Oral Medicine & Radiology",
+  "question": "Perioral melanotic macules with intestinal hamartomatous polyps indicate:",
+  "options": [
+   "Addison's disease",
+   "Peutz–Jeghers syndrome",
+   "Gardner syndrome",
+   "McCune–Albright syndrome"
+  ],
+  "answer": 1,
+  "explanation": "Autosomal dominant (STK11); increased cancer risk.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 343,
+  "subject": "Oral Medicine & Radiology",
+  "question": "The commonest intraoral site of melanoma is the:",
+  "options": [
+   "Tongue",
+   "Hard palate and maxillary gingiva",
+   "Floor of mouth",
+   "Lower lip"
+  ],
+  "answer": 1,
+  "explanation": "Any enlarging palatal pigmentation needs biopsy.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 344,
+  "subject": "Oral Medicine & Radiology",
+  "question": "The bisecting angle technique is based on:",
+  "options": [
+   "Clark's rule",
+   "Cieszynski's rule of isometry",
+   "Inverse square law",
+   "Bragg's law"
+  ],
+  "answer": 1,
+  "explanation": "The beam is directed perpendicular to the bisector of the angle between tooth and film.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 345,
+  "subject": "Oral Medicine & Radiology",
+  "question": "Excessive vertical angulation in periapical radiography causes:",
+  "options": [
+   "Elongation",
+   "Foreshortening",
+   "Overlapping",
+   "Cone cutting"
+  ],
+  "answer": 1,
+  "explanation": "Too little vertical angulation elongates the image.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 346,
+  "subject": "Oral Medicine & Radiology",
+  "question": "The view of choice for detecting interproximal caries is:",
+  "options": [
+   "Periapical",
+   "Bitewing",
+   "Occlusal",
+   "Panoramic"
+  ],
+  "answer": 1,
+  "explanation": "Bitewings show crowns and crestal bone with minimal distortion.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 347,
+  "subject": "Oral Medicine & Radiology",
+  "question": "On an OPG, anterior teeth appear narrow and blurred when the patient is positioned:",
+  "options": [
+   "Too far back",
+   "Too far forward",
+   "With the chin raised",
+   "With the head rotated"
+  ],
+  "answer": 1,
+  "explanation": "Teeth anterior to the focal trough are narrowed; behind it they are widened.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 348,
+  "subject": "Oral Medicine & Radiology",
+  "question": "A radiolucent band over the maxillary root apices on an OPG is caused by:",
+  "options": [
+   "Patient too far forward",
+   "Tongue not placed against the palate",
+   "Chin tipped down",
+   "Ghost image of the spine"
+  ],
+  "answer": 1,
+  "explanation": "The air space between tongue and palate shows as a dark band.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 349,
+  "subject": "Oral Medicine & Radiology",
+  "question": "Ghost images on a panoramic radiograph appear:",
+  "options": [
+   "On the same side, lower and sharper",
+   "On the opposite side, higher and blurred",
+   "In the midline only",
+   "Only with digital receptors"
+  ],
+  "answer": 1,
+  "explanation": "Objects between the source and the rotation centre project to the opposite side.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 350,
+  "subject": "Orthodontics",
+  "question": "Graber classified the aetiology of malocclusion into:",
+  "options": [
+   "Skeletal and dental",
+   "General and local factors",
+   "Prenatal and postnatal",
+   "Hereditary and acquired only"
+  ],
+  "answer": 1,
+  "explanation": "General (heredity, congenital, habits, nutrition) and local (number, size, premature loss, retention).",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 351,
+  "subject": "Orthodontics",
+  "question": "The pre-adjusted (straight wire) appliance was introduced by:",
+  "options": [
+   "Angle",
+   "Begg",
+   "Andrews",
+   "Tweed"
+  ],
+  "answer": 2,
+  "explanation": "Andrews (1970) built tip, torque and in-out into each bracket.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 352,
+  "subject": "Orthodontics",
+  "question": "Third-order bends in an archwire control:",
+  "options": [
+   "In-out position",
+   "Tip (angulation)",
+   "Torque (inclination)",
+   "Arch width"
+  ],
+  "answer": 2,
+  "explanation": "Torque requires a rectangular wire in a rectangular slot.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 353,
+  "subject": "Orthodontics",
+  "question": "Absolute anchorage in orthodontics is provided by:",
+  "options": [
+   "Headgear",
+   "Transpalatal arch",
+   "Mini-implants (TADs)",
+   "Nance button"
+  ],
+  "answer": 2,
+  "explanation": "Skeletal anchorage does not depend on teeth or patient compliance.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 354,
+  "subject": "Orthodontics",
+  "question": "Dewel's sequence of serial extraction is:",
+  "options": [
+   "D – C – 4",
+   "C – D – 4",
+   "4 – C – D",
+   "C – 4 – D"
+  ],
+  "answer": 1,
+  "explanation": "Primary canines, then primary first molars, then first premolars; Tweed's variation is D–C–4.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 355,
+  "subject": "Orthodontics",
+  "question": "Serial extraction is best suited to:",
+  "options": [
+   "Class II skeletal pattern with spacing",
+   "Class I with severe crowding",
+   "Class III with open bite",
+   "Spaced dentition"
+  ],
+  "answer": 1,
+  "explanation": "Arch length deficiency with a good skeletal pattern and normal overbite.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 356,
+  "subject": "Periodontics",
+  "question": "A three-walled infrabony defect is most suitable for:",
+  "options": [
+   "Gingivectomy",
+   "Regenerative therapy",
+   "Extraction",
+   "No treatment"
+  ],
+  "answer": 1,
+  "explanation": "Its containment supports clot, graft and new attachment.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 357,
+  "subject": "Periodontics",
+  "question": "The commonest two-walled osseous defect is the:",
+  "options": [
+   "Hemiseptum",
+   "Interdental crater",
+   "Dehiscence",
+   "Fenestration"
+  ],
+  "answer": 1,
+  "explanation": "Craters form in the col area of posterior teeth.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 358,
+  "subject": "Periodontics",
+  "question": "The working cutting edge of a Gracey curette is the:",
+  "options": [
+   "Upper edge",
+   "Lower edge",
+   "Both edges",
+   "Toe only"
+  ],
+  "answer": 1,
+  "explanation": "The face is offset 60–70° to the lower shank, so only the lower edge cuts.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 359,
+  "subject": "Periodontics",
+  "question": "Gracey curette 13-14 is designed for:",
+  "options": [
+   "Anterior teeth",
+   "Mesial surfaces of posterior teeth",
+   "Distal surfaces of posterior teeth",
+   "Buccal surfaces of premolars"
+  ],
+  "answer": 2,
+  "explanation": "11-12 mesial posterior; 13-14 distal posterior.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 360,
+  "subject": "Periodontics",
+  "question": "The substantivity of chlorhexidine is about:",
+  "options": [
+   "1 hour",
+   "4 hours",
+   "12 hours",
+   "48 hours"
+  ],
+  "answer": 2,
+  "explanation": "It binds to oral surfaces and is released slowly.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 361,
+  "subject": "Periodontics",
+  "question": "Delmopinol is classified as a:",
+  "options": [
+   "First-generation antiplaque agent",
+   "Second-generation antiplaque agent",
+   "Third-generation antiplaque agent",
+   "Antibiotic"
+  ],
+  "answer": 2,
+  "explanation": "An anti-adhesive agent that interferes with plaque matrix formation.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 362,
+  "subject": "Periodontics",
+  "question": "Miller class III recession involves:",
+  "options": [
+   "No interdental loss, not reaching MGJ",
+   "Recession beyond MGJ, no interdental loss",
+   "Interdental bone or soft-tissue loss or malposition",
+   "No root coverage possible due to severe interdental loss"
+  ],
+  "answer": 2,
+  "explanation": "Partial root coverage only; class IV – none expected.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 363,
+  "subject": "Periodontics",
+  "question": "The subepithelial connective tissue graft for root coverage was described by:",
+  "options": [
+   "Nabers",
+   "Langer and Langer",
+   "Miller",
+   "Bjorn"
+  ],
+  "answer": 1,
+  "explanation": "Langer and Langer (1985); considered the gold standard.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 364,
+  "subject": "Periodontics",
+  "question": "The principle of guided tissue regeneration was developed by:",
+  "options": [
+   "Löe and Silness",
+   "Nyman, Lindhe and Karring",
+   "Socransky and Haffajee",
+   "Ramfjord and Nissle"
+  ],
+  "answer": 1,
+  "explanation": "A barrier excludes epithelium and gingival connective tissue so PDL cells repopulate the root.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 365,
+  "subject": "Periodontics",
+  "question": "Periodontal treatment in diabetic patients reduces HbA1c by about:",
+  "options": [
+   "0.03%",
+   "0.3–0.4%",
+   "3–4%",
+   "No change"
+  ],
+  "answer": 1,
+  "explanation": "A modest but clinically relevant improvement, similar to adding a second diabetes drug.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 366,
+  "subject": "Public Health Dentistry",
+  "question": "The National Oral Health Programme of India was launched in:",
+  "options": [
+   "1990",
+   "2003",
+   "2014",
+   "2020"
+  ],
+  "answer": 2,
+  "explanation": "Under the National Health Mission.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 367,
+  "subject": "Public Health Dentistry",
+  "question": "COTPA prohibits the sale of tobacco products within how far of an educational institution?",
+  "options": [
+   "10 metres",
+   "100 yards",
+   "1 km",
+   "500 m"
+  ],
+  "answer": 1,
+  "explanation": "Also bans sale to people under 18 and smoking in public places.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 368,
+  "subject": "Public Health Dentistry",
+  "question": "The Nalgonda technique of defluoridation uses:",
+  "options": [
+   "Activated carbon",
+   "Alum and lime",
+   "Bone char only",
+   "Reverse osmosis"
+  ],
+  "answer": 1,
+  "explanation": "Developed by NEERI; flocculation and sedimentation.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 369,
+  "subject": "Prosthodontics",
+  "question": "A pontic with no contact with the ridge, used in mandibular posterior regions with poor hygiene, is the:",
+  "options": [
+   "Ridge lap",
+   "Ovate",
+   "Sanitary (hygienic)",
+   "Modified ridge lap"
+  ],
+  "answer": 2,
+  "explanation": "At least 3 mm of clearance for cleaning.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
+ },
+ {
+  "id": 370,
+  "subject": "Prosthodontics",
+  "question": "The most common maxillectomy defect in Aramany's classification is:",
+  "options": [
+   "Class I",
+   "Class II",
+   "Class IV",
+   "Class VI"
+  ],
+  "answer": 1,
+  "explanation": "Class II – unilateral resection with the anterior teeth on the other side retained.",
+  "is_pyq": false,
+  "exam": "NEET MDS",
+  "is_important": true
  }
 ]
