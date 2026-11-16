@@ -286,7 +286,7 @@ describe("recently deleted copies", () => {
   const bin = (db, id = "patients__P1") => doc(db, "clinics", OWNER, "recycleBin", id);
   it("staff who can delete a record can leave a copy, but cannot read, change or remove it", async () => {
     await assertSucceeds(setDoc(bin(asEmail("rec")), entry()));
-    await assertSucceeds(setDoc(bin(asEmail("doc")), entry({ id: "patients__P2", recordId: "P2" }), {}));
+    await assertSucceeds(setDoc(bin(asEmail("doc"), "patients__P2"), entry({ id: "patients__P2", recordId: "P2" })));
     await assertFails(getDoc(bin(asEmail("rec"))));
     await assertFails(deleteDoc(bin(asEmail("rec"))));
     await assertFails(updateDoc(bin(asEmail("rec")), { json: "{}" }));
