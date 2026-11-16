@@ -61,3 +61,16 @@ describe("clinic isolation", () => {
     await assertFails(setDoc(doc(db, "clinicStaff", "evil@example.com"), staff("evil@example.com", "manager", B)));
   });
 });
+
+// rateLimits holds the server's shared daily counters (written only with the service account, which skips these rules).
+// No browser, signed in or not, may read or change them.
+describe("server-only counters", () => {
+  it("rateLimits is closed to every browser", async () => {
+    await seed(env, (db) => setDoc(doc(db, "rateLimits", "ai_2026-11-17"), { n: 1 }));
+    for (const db of [as(env, A), anon(env)]) {
+      await assertFails(getDoc(doc(db, "rateLimits", "ai_2026-11-17")));
+      await assertFails(setDoc(doc(db, "rateLimits", "ai_2026-11-17"), { n: 0 }));
+      await assertFails(deleteDoc(doc(db, "rateLimits", "ai_2026-11-17")));
+    }
+  });
+});

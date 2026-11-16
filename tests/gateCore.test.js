@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import crypto from "node:crypto";
-import { checkAccess, dailyCap } from "../api/_lib/gateCore.js";
+import { checkAccess, dailyCap, siteDailyHit } from "../api/_lib/gateCore.js";
 import { readServiceAccount } from "../api/_lib/blockCore.js";
 
 const { privateKey } = crypto.generateKeyPairSync("rsa", { modulusLength: 2048, privateKeyEncoding: { type: "pkcs8", format: "pem" }, publicKeyEncoding: { type: "spki", format: "pem" } });
@@ -62,5 +62,38 @@ describe("/api/whatsapp uses the gate", () => {
     await handler({ method: "POST", headers: { authorization: "Bearer abc" }, body: { check: true } }, res);
     expect(res.statusCode).toBe(403);
     expect(calls.some((u) => u.includes("graph.facebook.com"))).toBe(false);
+  });
+});
+
+describe("siteDailyHit (shared daily counter)", () => {
+  const counterFetch = (n, ok = true) => vi.fn(async (url, init) => {
+    const u = String(url);
+    if (u.includes("oauth2")) return { ok: true, json: async () => ({ access_token: "t" }) };
+    if (!ok) return { ok: false, status: 500 };
+    return { ok: true, json: async () => ({ writeResults: [{ transformResults: [{ integerValue: String(n) }] }] }) };
+  });
+  const fb = () => vi.fn(() => "memory");
+  it("allows while the shared count is within the limit and blocks above it", async () => {
+    expect(await siteDailyHit({ sa, name: "ai", limit: 3, fallback: fb(), fetchFn: counterFetch(3), now })).toBe(true);
+    expect(await siteDailyHit({ sa, name: "ai", limit: 3, fallback: fb(), fetchFn: counterFetch(4), now })).toBe(false);
+  });
+  it("increments one document per name and UTC day", async () => {
+    const f = counterFetch(1);
+    await siteDailyHit({ sa, name: "whatsapp", limit: 5, fallback: fb(), fetchFn: f, now: Date.UTC(2026, 10, 17, 3) });
+    const call = f.mock.calls.find(([u]) => String(u).includes(":commit"));
+    const body = JSON.parse(call[1].body);
+    expect(body.writes[0].transform.document).toContain("/rateLimits/whatsapp_2026-11-17");
+    expect(body.writes[0].transform.fieldTransforms[0].increment.integerValue).toBe("1");
+  });
+  it("falls back to the in-memory limiter when there is no service account", async () => {
+    const f = fb();
+    expect(await siteDailyHit({ sa: null, name: "ai", limit: 1, fallback: f, now })).toBe("memory");
+    expect(f).toHaveBeenCalled();
+  });
+  it("falls back, and never throws, when Firestore fails or answers oddly", async () => {
+    const f1 = fb(), f2 = fb();
+    expect(await siteDailyHit({ sa, name: "ai", limit: 1, fallback: f1, fetchFn: counterFetch(0, false), now })).toBe("memory");
+    const odd = vi.fn(async (u) => String(u).includes("oauth2") ? { ok: true, json: async () => ({ access_token: "t" }) } : { ok: true, json: async () => ({}) });
+    expect(await siteDailyHit({ sa, name: "ai", limit: 1, fallback: f2, fetchFn: odd, now })).toBe("memory");
   });
 });

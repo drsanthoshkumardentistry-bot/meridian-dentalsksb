@@ -5,11 +5,12 @@ import { makeLimiter } from "./_lib/aiCore.js";
 import { lookupUser } from "./_lib/loginAlertCore.js";
 import { buildSend } from "./_lib/whatsappCore.js";
 import { readServiceAccount } from "./_lib/blockCore.js";
-import { checkAccess, dailyCap } from "./_lib/gateCore.js";
+import { checkAccess, dailyCap, siteDailyHit } from "./_lib/gateCore.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 const allow = makeLimiter(150, DAY); // one login cannot send more than 150 a day
-const allowAll = makeLimiter(dailyCap(process.env.WHATSAPP_SITE_DAILY, 1000), DAY); // and the whole site no more than this a day
+const SITE_CAP = () => dailyCap(process.env.WHATSAPP_SITE_DAILY, 1000);
+const allowAllMemory = makeLimiter(SITE_CAP(), DAY); // backup if the shared counter cannot be reached
 
 const send = (res, status, body) => {
   res.statusCode = status;
@@ -31,7 +32,8 @@ export default async function handler(req, res) {
   let body = req.body || {};
   if (typeof body === "string") { try { body = JSON.parse(body || "{}"); } catch (e) { return send(res, 400, { error: "Bad request." }); } }
   if (!body || typeof body !== "object" || Array.isArray(body)) return send(res, 400, { error: "Bad request." });
-  const gate = await checkAccess({ user, sa: readServiceAccount(), minAgeMs: DAY });
+  const sa = readServiceAccount();
+  const gate = await checkAccess({ user, sa, minAgeMs: DAY });
   if (!gate.ok) return send(res, gate.status, { error: gate.error });
   if (body.check) return send(res, 200, { enabled: true });
 
@@ -39,7 +41,7 @@ export default async function handler(req, res) {
   if (built.error) return send(res, 400, { error: built.error });
   if (!allow(user.uid)) return send(res, 429, { error: "Daily WhatsApp limit reached. Try again tomorrow." });
 
-  if (!allowAll("site")) return send(res, 429, { error: "WhatsApp is busy. Try again later." });
+  if (!(await siteDailyHit({ sa, name: "whatsapp", limit: SITE_CAP(), fallback: () => allowAllMemory("site") }))) return send(res, 429, { error: "WhatsApp is busy. Try again later." });
 
   try {
     const r = await fetch(`https://graph.facebook.com/v21.0/${encodeURIComponent(phoneId)}/messages`, {
