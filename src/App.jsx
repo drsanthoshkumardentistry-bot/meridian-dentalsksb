@@ -70,6 +70,7 @@ import { readSeal, ensureSeal } from "./paySeal.js";
 import { windowFor, rangeProblem } from "./dateRange.js";
 import { whatsappAutoEnabled, sendWhatsAppTemplate } from "./whatsappApi.js";
 import StorageMeter from "./components/StorageMeter.jsx";
+import ModeSwitch from "./components/ModeSwitch.jsx";
 import { CONTACT, CONTACT_CO } from "./legal.js";
 import { setCariesDetail, pruneCariesDetails, cariesText } from "./caries.js";
 import { compressImage } from "./imageCompress.js";
@@ -1110,6 +1111,15 @@ export default function App() {
   const docLogOnly = docLogOnlyOn && !connectOnly;
   useEffect(() => { if (docLogOnly && activeNav !== "MeriDent DocLog") setActiveNav("MeriDent DocLog"); }, [docLogOnly, activeNav]);
   const leaveDocLogOnly = () => { setDocLogOnly(authUser.uid, false); setDocSignInChoice(false); setDocLogOnlyState(false); setActiveNav("Dashboard"); };
+  // The side-menu switch: the full app, only MeriDent Connect, or only MeriDent DocLog. Remembered for this account.
+  const viewMode = connectOnly ? "connect" : docLogOnly ? "doclog" : "full";
+  const switchViewMode = (m) => {
+    if (!authUser) return;
+    const c = m === "connect", d = m === "doclog";
+    setConnectOnly(authUser.uid, c); setSignInChoice(c); setConnectOnlyState(c);
+    setDocLogOnly(authUser.uid, d); setDocSignInChoice(d); setDocLogOnlyState(d);
+    setActiveNav(c ? "MeriDent Connect" : d ? "MeriDent DocLog" : "Dashboard");
+  };
 
   // A screen that no longer exists for this person (left DocLog-only mode, old saved value) would render an empty page.
   useEffect(() => {
@@ -2502,9 +2512,16 @@ export default function App() {
             </button>
           )}
           {navFor(role, [{ label: "Practice Profile" }]).length > 0 ? (
-            <div className="mt-3 rounded-2xl bg-white p-3 shadow-lg rail-label">
-              <StorageMeter patients={allPatients} galleryCount={galleryCount} />
-            </div>
+            <>
+              {CLINIC_ID && !activeMember && (
+                <div className="mt-3 rounded-2xl bg-white p-3 shadow-lg rail-label">
+                  <ModeSwitch mode={viewMode} onChange={switchViewMode} />
+                </div>
+              )}
+              <div className="mt-3 rounded-2xl bg-white p-3 shadow-lg rail-label">
+                <StorageMeter patients={allPatients} galleryCount={galleryCount} />
+              </div>
+            </>
           ) : (
             <button
               type="button"
