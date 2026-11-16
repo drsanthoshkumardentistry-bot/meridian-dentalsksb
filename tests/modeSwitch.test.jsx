@@ -9,7 +9,8 @@ describe("view switch in the side menu", () => {
   it("shows three choices and marks the current one", () => {
     render(<ModeSwitch mode="connect" onChange={() => {}} />);
     const radios = screen.getAllByRole("radio");
-    expect(radios.map((r) => r.textContent.split("Just")[0].split("Every")[0].trim())).toEqual(["Full app", "Connect only", "DocLog only"]);
+    expect(radios.map((r) => r.getAttribute("aria-label"))).toEqual(["Full app", "Connect only", "DocLog only"]);
+    expect(screen.getByText("Only MeriDent Connect")).toBeTruthy(); // the line under the title explains the current choice
     expect(radios.map((r) => r.getAttribute("aria-checked"))).toEqual(["false", "true", "false"]);
   });
   it("reports the choice, and ignores a tap on the one already selected", () => {
