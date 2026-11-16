@@ -43,6 +43,7 @@ function mergeValue(b, l, r) {
   } else {
     if (l === undefined) return r; // base unknown: never delete what the cloud has
     if (r === undefined) return l;
+    if (Array.isArray(l) && l.length === 0 && Array.isArray(r) && r.length > 0) return r; // an empty list here must not wipe a list the cloud has
   }
   if (isObj(l) && isObj(r) && (b === undefined || isObj(b))) {
     const out = {};
