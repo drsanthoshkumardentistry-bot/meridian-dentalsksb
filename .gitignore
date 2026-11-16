@@ -59,3 +59,7 @@ coverage/
 *.sln
 *.sw?
 .wrangler/
+
+# Backup decryption key: never commit it
+*PRIVATE-KEY*.pem
+*private-key*.pem

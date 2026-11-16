@@ -27,3 +27,10 @@ Keep the Vercel project for a week as the fallback, then remove the domain from 
 ## Notes
 - `wrangler.toml` turns on `nodejs_compat` (needed for Buffer, hashing and HMAC). RSA signing uses Web Crypto because Cloudflare has no `crypto.createSign`.
 - Headers live in `public/_headers`; page refreshes on any path fall back to `index.html` automatically.
+
+## Weekly backup (free, encrypted)
+- `.github/workflows/backup.yml` runs every Monday 2:00 AM IST (and on demand: Actions > Weekly backup > Run workflow).
+- It reads every collection with the Firebase service account (repository secret `FIREBASE_SERVICE_ACCOUNT`), encrypts with `backup-public.pem`, and keeps `backup.enc` as an artifact for 90 days.
+- Only the PRIVATE key can open a backup. It is not in the repo. Keep two copies offline (password manager and a private drive). Without it, backups cannot be read.
+- Check a backup: `node scripts/restore-backup.mjs backup.enc merident-backup-PRIVATE-KEY.pem` prints counts per collection.
+- Restore test: use a SEPARATE test Firebase project: `FIREBASE_SERVICE_ACCOUNT='<test project key>' node scripts/restore-backup.mjs backup.enc key.pem --restore --yes`.
