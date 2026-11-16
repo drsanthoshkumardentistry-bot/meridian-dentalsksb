@@ -20,6 +20,7 @@ const check = (ok, msg) => { console.log(`${ok ? "PASS" : "FAIL"}  ${msg}`); if 
     check(!(await page.isVisible("#boot")), `${name}: opening screen has gone`);
     check((await page.innerText("body")).includes("meridentapp@gmail.com"), `${name}: contact email is shown`);
     await page.click("text=Use email and password instead").catch(() => {});
+    await page.waitForSelector("input[type=email]", { timeout: 10000 }).catch(() => {}); // the sign-in page loads on demand
     const email = await page.$("input[type=email]");
     check(!!email, `${name}: email sign-in form opens`);
     if (email) {
