@@ -739,7 +739,7 @@ export default function LandingPage({
               </div>
             ))}
           </dl>
-          <p className="mt-5 text-xs text-slate-500">These are our own checks, not an outside audit. Tests lower the chance of mistakes but cannot promise there are none, so please report any problem you find from Settings.</p>
+          <p className="mt-5 text-xs text-slate-500">These are our own checks, not an outside audit. The random stress checks cover the calculation logic (billing, stock, dues, reminders), not every screen. Tests lower the chance of mistakes but cannot promise there are none, so please report any problem you find from Settings.</p>
         </div>
       </section>
 
