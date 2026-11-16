@@ -482,3 +482,24 @@ describe("recently deleted posts", () => {
     expect(postFromBin({ json: "x" })).toBeNull();
   });
 });
+
+describe("recently deleted posts: restore and sidebar signal", () => {
+  const entry = { id: "p9", authorId: "me", deletedAt: new Date().toISOString(), json: JSON.stringify({ type: "case", title: "Old case I removed", body: "Swelling after RCT in 46." }), images: [] };
+  it("opens from the sidebar signal and restores a post", async () => {
+    const api = makeApi({ listPostBin: vi.fn(async () => [entry]), restorePost: vi.fn(async () => "n2"), removePostBin: vi.fn(async () => {}) });
+    render(<ConnectFeed api={api} me={me} admin={false} showToast={vi.fn()} binSignal={1} />);
+    const row = await screen.findByTestId("deleted-post");
+    expect(row.textContent).toContain("Old case I removed");
+    fireEvent.click(within(row).getByRole("button", { name: "Restore" }));
+    await waitFor(() => expect(api.restorePost).toHaveBeenCalledWith(me, entry));
+    await waitFor(() => expect(screen.getByTestId("deleted-posts-empty")).toBeTruthy());
+  });
+  it("stays closed until asked", async () => {
+    const api = makeApi({ listPostBin: vi.fn(async () => []) });
+    mount(api);
+    await screen.findByTestId("connect-feed");
+    expect(screen.queryByTestId("deleted-posts")).toBeNull();
+    fireEvent.click(screen.getByTestId("deleted-posts-open"));
+    expect(await screen.findByTestId("deleted-posts-empty")).toBeTruthy();
+  });
+});

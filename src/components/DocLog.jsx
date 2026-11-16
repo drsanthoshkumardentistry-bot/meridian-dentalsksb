@@ -296,7 +296,7 @@ function ReceiveDialog({ due, onSave, onClose }) {
 }
 
 /** MeriDent DocLog: a visiting doctor's private diary of clinic visits, treatments and payments. */
-export default function DocLog({ api, showToast, userName = "" }) {
+export default function DocLog({ api, showToast, userName = "", binSignal = 0 }) {
   const dl = api && api.docLog;
   const today = dateKey();
   const thisMonth = today.slice(0, 7);
@@ -317,6 +317,7 @@ export default function DocLog({ api, showToast, userName = "" }) {
     } catch { setState((s) => ({ ...s, status: "error" })); }
   }, [dl]);
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (binSignal) setDialog({ kind: "bin" }); }, [binSignal]);
 
   const fail = () => showToast && showToast("Could not save. Check your connection and try again.");
   const saveClinic = async (c) => {

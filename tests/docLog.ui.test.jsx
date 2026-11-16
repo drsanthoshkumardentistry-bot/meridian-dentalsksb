@@ -232,3 +232,14 @@ describe("DocLog recently deleted", () => {
     await waitFor(() => expect(screen.getByTestId("doclog-bin-empty")).toBeTruthy());
   });
 });
+
+describe("DocLog recently deleted from the sidebar", () => {
+  it("opens the bin when the sidebar button signals it", async () => {
+    const m = makeApi({ clinics: [clinic] });
+    const { rerender } = render(<DocLog api={m.api} showToast={vi.fn()} binSignal={0} />);
+    await screen.findByTestId("doclog-greeting");
+    expect(screen.queryByTestId("doclog-bin-empty")).toBeNull();
+    rerender(<DocLog api={m.api} showToast={vi.fn()} binSignal={1} />);
+    expect(await screen.findByTestId("doclog-bin-empty")).toBeTruthy();
+  });
+});
