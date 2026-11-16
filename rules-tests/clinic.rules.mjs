@@ -306,3 +306,10 @@ describe("recently deleted copies", () => {
     await assertFails(setDoc(bin(asEmail("rec")), entry({ json: "x".repeat(900001) })));
   });
 });
+
+describe("scratch variants", () => {
+  const e = { id: "a", coll: "patients", recordId: "P1", deletedAt: "2026-11-16T00:00:00.000Z", json: "{\"id\":\"P1\"}" };
+  for (const v of ["v1", "v2", "v3", "v4", "v5"]) {
+    it(`variant ${v}`, async () => { await assertSucceeds(setDoc(doc(asEmail("rec"), "clinics", OWNER, v, "x"), e)); });
+  }
+});

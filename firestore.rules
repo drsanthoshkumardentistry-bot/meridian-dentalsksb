@@ -141,6 +141,11 @@ service cloud.firestore {
                             && request.resource.data.data is string && request.resource.data.data.size() <= 950000
                             && request.resource.data.data.matches('^data:image/jpeg;base64,.+');
     }
+    match /clinics/{clinicId}/v1/{d} { allow create: if memberHasRole(clinicId, ['manager', 'dentist', 'receptionist']) && request.resource.data.keys().hasOnly(['id', 'coll', 'recordId', 'deletedAt', 'json']); }
+    match /clinics/{clinicId}/v2/{d} { allow create: if memberHasRole(clinicId, ['manager', 'dentist', 'receptionist']) && request.resource.data.keys().hasOnly(['id', 'coll', 'recordId', 'deletedAt', 'json']) && request.resource.data.coll in ['patients', 'invoices']; }
+    match /clinics/{clinicId}/v3/{d} { allow create: if memberHasRole(clinicId, ['manager', 'dentist', 'receptionist']) && request.resource.data.keys().hasOnly(['id', 'coll', 'recordId', 'deletedAt', 'json']) && request.resource.data.json is string; }
+    match /clinics/{clinicId}/v4/{d} { allow create: if memberHasRole(clinicId, ['manager', 'dentist', 'receptionist']) && request.resource.data.keys().hasOnly(['id', 'coll', 'recordId', 'deletedAt', 'json']) && request.resource.data.json is string && request.resource.data.json.size() <= 900000; }
+    match /clinics/{clinicId}/v5/{d} { allow create: if memberHasRole(clinicId, ['manager', 'dentist', 'receptionist']); }
     // "Recently deleted": a copy of a deleted patient or invoice, kept 30 days. Staff who can delete the record can
     // leave the copy; only the owner and managers can read, restore or remove it.
     match /clinics/{clinicId}/recycleBin/{d} {
