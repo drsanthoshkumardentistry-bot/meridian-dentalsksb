@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:rules": "npx --yes firebase-tools@13.35.1 emulators:exec --only firestore --project demo-merident \"npx vitest run --config vitest.rules.config.mjs\"",
-    "stress": "vite-node scripts/stress.mjs"
+    "stress": "vite-node scripts/stress.mjs",
+    "stress:storage": "vite-node scripts/storage-stress.mjs"
   },
   "dependencies": {
     "@capacitor-firebase/authentication": "^8.6.0",

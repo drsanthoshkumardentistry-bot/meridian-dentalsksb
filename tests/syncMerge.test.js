@@ -81,3 +81,15 @@ describe("saving without overwriting a newer cloud copy", () => {
     expect(setDoc).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("when the last cloud copy is unknown", () => {
+  it("an empty list on this device does not wipe a list the cloud already has", () => {
+    const local = { id: "P1", name: "A", visits: [] };
+    const remote = { id: "P1", name: "A", visits: [{ id: "V1", date: "2026-11-01" }] };
+    expect(mergeDoc(undefined, local, remote).visits).toEqual(remote.visits);
+  });
+  it("still lets this device delete the last item when it knew the cloud copy", () => {
+    const base = { id: "P1", visits: [{ id: "V1" }] };
+    expect(mergeDoc(base, { id: "P1", visits: [] }, base).visits).toEqual([]);
+  });
+});
