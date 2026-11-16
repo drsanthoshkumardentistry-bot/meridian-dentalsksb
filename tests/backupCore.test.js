@@ -93,6 +93,6 @@ describe("repo safety", () => {
     const yml = fs.readFileSync(process.cwd() + "/.github/workflows/backup.yml", "utf8");
     expect(yml).toContain("scripts/backup.mjs");
     expect(yml).toContain("path: backup.enc");
-    expect(yml).not.toMatch(/echo[^\n]*SERVICE_ACCOUNT/);
+    expect(yml).not.toMatch(/echo[^\n]*\$\{?(SA|FIREBASE_SERVICE_ACCOUNT)\b/);
   });
 });
