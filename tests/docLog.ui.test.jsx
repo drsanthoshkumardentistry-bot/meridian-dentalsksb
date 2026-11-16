@@ -8,7 +8,7 @@ afterEach(() => cleanup());
 
 const today = dateKey();
 const makeApi = (seed = {}) => {
-  const db = { clinics: [...(seed.clinics || [])], visits: [...(seed.visits || [])], profile: seed.profile || null };
+  const db = { clinics: [...(seed.clinics || [])], visits: [...(seed.visits || [])], profile: seed.profile || null, bin: [...(seed.bin || [])] };
   const dl = {
     listClinics: vi.fn(async () => [...db.clinics]),
     listVisits: vi.fn(async () => [...db.visits]),
@@ -19,6 +19,9 @@ const makeApi = (seed = {}) => {
     deleteVisit: vi.fn(async (id) => { db.visits = db.visits.filter((x) => x.id !== id); }),
     getProfile: vi.fn(async () => db.profile),
     saveProfile: vi.fn(async (p) => { db.profile = p; }),
+    listBin: vi.fn(async () => [...db.bin]),
+    restoreBin: vi.fn(async (e) => { db.bin = db.bin.filter((x) => x.id !== e.id); const record = { id: e.recordId, ...JSON.parse(e.json) }; if (e.coll === "visits") db.visits = [...db.visits, record]; return { coll: e.coll, record }; }),
+    removeBin: vi.fn(async (e) => { db.bin = db.bin.filter((x) => x.id !== e.id); }),
   };
   return { api: { docLog: dl }, dl, db };
 };
@@ -207,5 +210,25 @@ describe("DocLog greeting", () => {
     const { api } = makeApi({});
     render(<DocLog api={api} userName="Anita Rao" />);
     expect((await screen.findByTestId("doclog-greeting")).textContent).toBe("Hi Dr. Anita Rao");
+  });
+});
+
+describe("DocLog recently deleted", () => {
+  it("passes the visit to the delete call so a copy can be kept", async () => {
+    const { dl } = mount({ clinics: [clinic], visits: [visit()] });
+    await screen.findByText("Ramesh K");
+    fireEvent.click(screen.getAllByLabelText(/Delete visit/)[0]);
+    fireEvent.click(await screen.findByText("Delete"));
+    await waitFor(() => expect(dl.deleteVisit).toHaveBeenCalledWith("V1", expect.objectContaining({ patient: "Ramesh K" })));
+  });
+  it("lists deleted visits and restores one", async () => {
+    const entry = { id: "visits__V9", coll: "visits", recordId: "V9", deletedAt: new Date().toISOString(), json: JSON.stringify(visit({ patient: "Lakshmi" })) };
+    const { dl } = mount({ clinics: [clinic], bin: [entry] });
+    fireEvent.click(await screen.findByTestId("doclog-bin-open"));
+    const row = await screen.findByTestId("doclog-bin-item");
+    expect(row.textContent).toContain("Lakshmi");
+    fireEvent.click(within(row).getByRole("button", { name: "Restore" }));
+    await waitFor(() => expect(dl.restoreBin).toHaveBeenCalledWith(entry));
+    await waitFor(() => expect(screen.getByTestId("doclog-bin-empty")).toBeTruthy());
   });
 });

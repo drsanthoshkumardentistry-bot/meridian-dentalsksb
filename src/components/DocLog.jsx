@@ -5,7 +5,7 @@ import { monthLabel } from "../reports.js";
 import { dateKey } from "../reminders.js";
 import {
   treatmentsFor, specialtyOptions, buildProfile, CASE_STATUSES, PAY_MODES, MAX_CLINICS, buildClinic, buildVisit, pendingP, paymentState, summary, duesByClinic, comingUp,
-  visitNumber, filterVisits, monthsPresent, allocatePayment, docLogCsv, statusLabel, modeLabel, sortVisits, greeting, todayLine,
+  visitNumber, filterVisits, monthsPresent, allocatePayment, docLogCsv, statusLabel, modeLabel, sortVisits, greeting, todayLine, describeBin, binDaysLeft,
 } from "../docLog.js";
 
 const field = "w-full px-3 py-2 border border-rule rounded-lg bg-white text-sm text-ink";
@@ -25,6 +25,28 @@ const download = (text, name) => {
   a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
+
+function BinDialog({ api, onRestore, onClose }) {
+  const [list, setList] = useState(null);
+  useEffect(() => { let on = true; api.listBin().then((l) => on && setList(l)).catch(() => on && setList([])); return () => { on = false; }; }, [api]);
+  const restore = async (e) => { if (await onRestore(e)) setList((l) => l.filter((x) => x.id !== e.id)); };
+  const remove = async (e) => { try { await api.removeBin(e); setList((l) => l.filter((x) => x.id !== e.id)); } catch { /* stays listed */ } };
+  return (
+    <Modal title="Recently deleted" onClose={onClose}>
+      <p className="text-xs text-slate-500 mb-3">Deleted visits and clinics are kept for 30 days. Restore one to bring it back.</p>
+      {list === null ? <p className="text-sm text-slate-500">Loading...</p>
+        : list.length === 0 ? <p className="text-sm text-slate-500" data-testid="doclog-bin-empty">Nothing deleted recently.</p>
+        : <ul className="divide-y divide-rule">{list.map((e) => { const d = describeBin(e); return (
+          <li key={e.id} className="py-2 flex items-center justify-between gap-2" data-testid="doclog-bin-item">
+            <div className="min-w-0"><p className="text-sm font-semibold text-ink truncate">{d.title}</p><p className="text-xs text-slate-500 truncate">{d.detail} · {binDaysLeft(e)} days left</p></div>
+            <div className="flex gap-1.5 shrink-0">
+              <button type="button" onClick={() => restore(e)} className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-700 text-white">Restore</button>
+              <button type="button" onClick={() => remove(e)} aria-label="Delete for good" className="px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-rule text-rose-700">Delete</button>
+            </div>
+          </li>); })}</ul>}
+    </Modal>
+  );
+}
 
 function Modal({ title, onClose, children }) {
   useEffect(() => {
@@ -302,7 +324,7 @@ export default function DocLog({ api, showToast, userName = "" }) {
     catch { fail(); return false; }
   };
   const deleteClinic = async (id) => {
-    try { await dl.deleteClinic(id); setState((s) => ({ ...s, clinics: s.clinics.filter((x) => x.id !== id) })); showToast && showToast("Clinic removed. Its earlier visits are kept."); }
+    try { const rec = clinics.find((x) => x.id === id); await dl.deleteClinic(id, rec); setState((s) => ({ ...s, clinics: s.clinics.filter((x) => x.id !== id) })); showToast && showToast("Clinic removed. Its earlier visits are kept. You can bring it back from Recently deleted."); }
     catch { fail(); }
   };
   const saveProfile = async (p) => {
@@ -314,8 +336,18 @@ export default function DocLog({ api, showToast, userName = "" }) {
     catch { fail(); }
   };
   const deleteVisit = async (id) => {
-    try { await dl.deleteVisit(id); setState((s) => ({ ...s, visits: s.visits.filter((x) => x.id !== id) })); setConfirmDel(""); showToast && showToast("Visit deleted"); }
+    try { const rec = visits.find((x) => x.id === id); await dl.deleteVisit(id, rec); setState((s) => ({ ...s, visits: s.visits.filter((x) => x.id !== id) })); setConfirmDel(""); showToast && showToast("Visit deleted. You can bring it back from Recently deleted."); }
     catch { fail(); }
+  };
+  const restoreBin = async (e) => {
+    try {
+      const { coll, record } = await dl.restoreBin(e);
+      setState((s) => coll === "clinics"
+        ? { ...s, clinics: [...s.clinics.filter((x) => x.id !== record.id), record].sort((a, b) => String(a.name).localeCompare(String(b.name))) }
+        : { ...s, visits: [...s.visits.filter((x) => x.id !== record.id), record] });
+      showToast && showToast("Restored");
+      return true;
+    } catch { fail(); return false; }
   };
   const receive = async (due, amountP, mode) => {
     const { changed } = allocatePayment(visits, due.clinicId, amountP, mode);
@@ -362,6 +394,7 @@ export default function DocLog({ api, showToast, userName = "" }) {
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => setDialog({ kind: "profile" })} className={`${btn} border border-rule bg-white text-slate-700 inline-flex items-center gap-1.5`}>My profile</button>
           <button type="button" onClick={() => setDialog({ kind: "clinics" })} className={`${btn} border border-rule bg-white text-slate-700 inline-flex items-center gap-1.5`}><Building2 className="w-3.5 h-3.5" /> My clinics</button>
+          <button type="button" onClick={() => setDialog({ kind: "bin" })} className={`${btn} border border-rule bg-white text-slate-700 inline-flex items-center gap-1.5`} data-testid="doclog-bin-open"><Trash2 className="w-3.5 h-3.5" /> Recently deleted</button>
           <button type="button" disabled={!visits.length} onClick={() => download(docLogCsv(visits, ym), `doclog-${ym || "all"}.csv`)} className={`${btn} border border-rule bg-white text-slate-700 disabled:opacity-50 inline-flex items-center gap-1.5`}><Download className="w-3.5 h-3.5" /> Download spreadsheet</button>
           <button type="button" onClick={startVisit} className={primary}><Plus className="w-4 h-4" /> Add visit</button>
         </div>
@@ -472,6 +505,7 @@ export default function DocLog({ api, showToast, userName = "" }) {
       )}
       <p className="text-xs text-slate-500 flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> Stored in your own account in the cloud. Clinics and other doctors cannot see it. Use initials if you prefer not to store patient names.</p>
 
+      {dialog && dialog.kind === "bin" && <BinDialog api={dl} onRestore={restoreBin} onClose={() => setDialog(null)} />}
       {dialog && dialog.kind === "profile" && <ProfileDialog profile={profile} onSave={saveProfile} onClose={() => setDialog(null)} />}
       {dialog && dialog.kind === "clinics" && <ClinicsDialog clinics={clinics} onSave={saveClinic} onDelete={deleteClinic} onClose={() => setDialog(null)} />}
       {dialog && dialog.kind === "visit" && <VisitDialog clinics={clinics} visits={visits} profile={profile} initial={dialog.initial} onSave={saveVisit} onClose={() => setDialog(null)} onClinics={() => setDialog({ kind: "clinics" })} />}

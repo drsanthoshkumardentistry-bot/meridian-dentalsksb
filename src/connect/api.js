@@ -6,6 +6,7 @@ import {
 import { searchBounds, withinRadius } from "./geo.js";
 import { CONSENT_TEXT, CONSENT_VERSION } from "./rules.js";
 import * as docLogApi from "./docLogApi.js";
+import { postBinEntry, postFromBin, postBinDaysLeft, buildPost } from "./feed.js";
 
 const DENTISTS = "connectDentists";
 const DIRECTORY = "connectDirectory";
@@ -13,6 +14,7 @@ const CONSULTS = "connectConsults";
 const AUDIT = "connectAudit";
 const ADMINS = "connectAdmins";
 const POSTS = "connectPosts";
+const POST_BIN = "connectPostBin";
 const FOLLOWS = "connectFollows";
 const REPORTS = "connectReports";
 const SAVES = "connectSaves";
@@ -186,11 +188,35 @@ export const getPostImages = async (db, postId, count) => {
   return out;
 };
 
-export const deletePost = async (db, postId, imageCount = 0) => {
+export const deletePost = async (db, postId, imageCount = 0, post = null, uid = null) => {
+  // The author's own delete keeps a copy for 30 days. A moderator's removal (no post given) keeps nothing.
+  if (post && uid) {
+    try {
+      const images = imageCount ? await getPostImages(db, postId, imageCount) : [];
+      const entry = postBinEntry(post, images, uid);
+      if (entry) { const { id, ...data } = entry; await setDoc(doc(db, POST_BIN, id), data); }
+    } catch { /* the delete must still work */ }
+  }
   // Pictures first: their rules look at the post, which must still exist.
   await Promise.all(Array.from({ length: Math.min(imageCount, 2) }, (_, i) => deleteDoc(doc(db, POSTS, postId, "images", String(i))).catch(() => {})));
   await deleteDoc(doc(db, POSTS, postId));
 };
+
+export const listPostBin = async (db, uid) => {
+  const snap = await getDocs(query(collection(db, POST_BIN), where("authorId", "==", uid)));
+  const all = snap.docs.map(withId);
+  const gone = all.filter((e) => postBinDaysLeft(e) <= 0);
+  await Promise.all(gone.map((e) => deleteDoc(doc(db, POST_BIN, e.id)).catch(() => {})));
+  return all.filter((e) => postBinDaysLeft(e) > 0 && postFromBin(e)).sort((a, b) => String(b.deletedAt).localeCompare(String(a.deletedAt)));
+};
+export const restorePost = async (db, uid, me, entry) => {
+  const content = postFromBin(entry);
+  if (!content) throw new Error("unreadable copy");
+  const id = await createPost(db, buildPost(content, uid, me), entry.images || []);
+  await deleteDoc(doc(db, POST_BIN, entry.id));
+  return id;
+};
+export const removePostBin = (db, entry) => deleteDoc(doc(db, POST_BIN, entry.id));
 
 export const likedSet = async (db, uid, postIds) => {
   const found = await Promise.all(postIds.map(async (id) => ((await getDoc(doc(db, POSTS, id, "likes", uid))).exists() ? id : null)));
@@ -387,7 +413,10 @@ export const bindApi = (db, uid) => ({
   listPosts: (cursor) => listPosts(db, cursor),
   createPost: (post, images) => createPost(db, post, images),
   getPostImages: (postId, count) => getPostImages(db, postId, count),
-  deletePost: (postId, imageCount) => deletePost(db, postId, imageCount),
+  deletePost: (postId, imageCount, post) => deletePost(db, postId, imageCount, post, uid),
+  listPostBin: () => listPostBin(db, uid),
+  restorePost: (me, entry) => restorePost(db, uid, me, entry),
+  removePostBin: (entry) => removePostBin(db, entry),
   likedSet: (ids) => likedSet(db, uid, ids),
   setLike: (postId, on) => setLike(db, uid, postId, on),
   listComments: (postId) => listComments(db, postId),
@@ -423,11 +452,14 @@ export const bindApi = (db, uid) => ({
   docLog: {
     listClinics: () => docLogApi.listClinics(db, uid),
     saveClinic: (c) => docLogApi.saveClinic(db, uid, c),
-    deleteClinic: (id) => docLogApi.deleteClinic(db, uid, id),
+    deleteClinic: (id, record) => docLogApi.deleteClinic(db, uid, id, record),
+    listBin: () => docLogApi.listBin(db, uid),
+    restoreBin: (e) => docLogApi.restoreBin(db, uid, e),
+    removeBin: (e) => docLogApi.removeBin(db, uid, e),
     listVisits: () => docLogApi.listVisits(db, uid),
     saveVisit: (v) => docLogApi.saveVisit(db, uid, v),
     saveVisits: (vs) => docLogApi.saveVisits(db, uid, vs),
-    deleteVisit: (id) => docLogApi.deleteVisit(db, uid, id),
+    deleteVisit: (id, record) => docLogApi.deleteVisit(db, uid, id, record),
     getProfile: () => docLogApi.getProfile(db, uid),
     saveProfile: (p) => docLogApi.saveProfile(db, uid, p),
   },

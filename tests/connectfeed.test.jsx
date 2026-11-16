@@ -117,7 +117,7 @@ describe("feed basics", () => {
     await waitFor(() => expect(api.report).toHaveBeenCalledWith({ postId: "p1", reason: "Spam or advertising" }));
     vi.spyOn(window, "confirm").mockReturnValue(true);
     fireEvent.click(within(await article("My tip")).getByText("Delete"));
-    await waitFor(() => expect(api.deletePost).toHaveBeenCalledWith("p2", 0));
+    await waitFor(() => expect(api.deletePost).toHaveBeenCalledWith("p2", 0, expect.objectContaining({ id: "p2" })));
     await waitFor(() => expect(screen.queryByRole("article", { name: "My tip" })).toBeNull());
   });
 
@@ -458,6 +458,27 @@ describe("case images", () => {
     mount(api);
     const card = within(await article("Abscess after RCT"));
     fireEvent.click(card.getByRole("button", { name: /Delete/ }));
-    await waitFor(() => expect(api.deletePost).toHaveBeenCalledWith("p1", 1));
+    await waitFor(() => expect(api.deletePost).toHaveBeenCalledWith("p1", 1, expect.objectContaining({ id: "p1" })));
+  });
+});
+
+import { postBinEntry, postFromBin, postBinDaysLeft } from "../src/connect/feed.js";
+describe("recently deleted posts", () => {
+  const p = { id: "p1", authorId: "me", type: "case", title: "Abscess after RCT", body: "Swelling in 46 after obturation.", likeCount: 4, commentCount: 2, imageCount: 1, createdAt: 1 };
+  it("keeps only the author's own post, without counters", () => {
+    const e = postBinEntry(p, ["data:image/jpeg;base64,AAA"], "me", new Date("2026-11-16T00:00:00Z"));
+    expect(e.id).toBe("p1");
+    const c = postFromBin(e);
+    expect(c).toEqual({ type: "case", title: "Abscess after RCT", body: "Swelling in 46 after obturation.", imageCount: 1 });
+    expect(e.images).toHaveLength(1);
+    expect(postBinEntry(p, [], "someone-else")).toBeNull();
+    expect(postBinEntry(null, [], "me")).toBeNull();
+  });
+  it("drops the picture count when no picture could be read, and counts 30 days", () => {
+    const e = postBinEntry(p, [], "me", new Date("2026-11-16T00:00:00Z"));
+    expect(postFromBin(e).imageCount).toBeUndefined();
+    expect(postBinDaysLeft(e, new Date("2026-11-16T00:00:00Z"))).toBe(30);
+    expect(postBinDaysLeft(e, new Date("2027-01-01T00:00:00Z"))).toBe(0);
+    expect(postFromBin({ json: "x" })).toBeNull();
   });
 });

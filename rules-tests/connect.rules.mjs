@@ -583,3 +583,27 @@ describe("owner email admin", () => {
     await assertFails(updateDoc(doc(db, "connectDentists", "pat2"), { status: "verified" }));
   });
 });
+
+describe("recently deleted copies", () => {
+  const binDoc = (over = {}) => ({ authorId: "alice", deletedAt: "2026-11-16T00:00:00.000Z", json: "{}", images: [], ...over });
+  it("only the author can keep, read and remove their own copy", async () => {
+    await assertSucceeds(setDoc(doc(as(env, "alice"), "connectPostBin", "p1"), binDoc()));
+    await assertFails(setDoc(doc(as(env, "bob"), "connectPostBin", "p2"), binDoc()));
+    await assertSucceeds(getDoc(doc(as(env, "alice"), "connectPostBin", "p1")));
+    await assertFails(getDoc(doc(as(env, "bob"), "connectPostBin", "p1")));
+    await assertFails(deleteDoc(doc(as(env, "bob"), "connectPostBin", "p1")));
+    await assertSucceeds(deleteDoc(doc(as(env, "alice"), "connectPostBin", "p1")));
+  });
+  it("rejects extra fields, too many pictures and a copy for someone else", async () => {
+    await assertFails(setDoc(doc(as(env, "alice"), "connectPostBin", "x"), binDoc({ extra: 1 })));
+    await assertFails(setDoc(doc(as(env, "alice"), "connectPostBin", "y"), binDoc({ images: ["a", "b", "c"] })));
+    await assertFails(setDoc(doc(as(env, "alice"), "connectPostBin", "z"), binDoc({ authorId: "bob" })));
+  });
+  it("a doctor's DocLog bin is private to that doctor", async () => {
+    const e = { coll: "visits", recordId: "V1", deletedAt: "2026-11-16T00:00:00.000Z", json: "{}" };
+    await assertSucceeds(setDoc(doc(as(env, "alice"), "connectDocLog", "alice", "bin", "visits__V1"), e));
+    await assertFails(getDoc(doc(as(env, "bob"), "connectDocLog", "alice", "bin", "visits__V1")));
+    await assertFails(setDoc(doc(as(env, "alice"), "connectDocLog", "alice", "bin", "q"), { ...e, coll: "patients" }));
+    await assertSucceeds(deleteDoc(doc(as(env, "alice"), "connectDocLog", "alice", "bin", "visits__V1")));
+  });
+});
