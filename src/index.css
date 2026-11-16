@@ -219,13 +219,14 @@ input::placeholder, textarea::placeholder { color: #64748b; opacity: 1; }
 .float-a { animation: float-y 6s ease-in-out infinite; }
 .float-b { animation: float-y 7.5s ease-in-out -2s infinite; }
 .float-c { animation: float-y 8s ease-in-out -4s infinite; }
-@keyframes float-y { 0%, 100% { margin-top: 0; } 50% { margin-top: -9px; } }
+/* `translate` moves the card without touching layout. Animating margin-top made the page below it jitter while scrolling. */
+@keyframes float-y { 0%, 100% { translate: 0 0; } 50% { translate: 0 -9px; } }
 @media (max-width: 640px) {
   .scene3d { padding-bottom: 1rem; }
   .scene3d-bill { position: relative; right: auto; bottom: auto; width: fit-content; margin: -16px 0 0 auto; transform: translateZ(40px); }
   .scene3d-tooth { width: 96px; top: -58px; right: -2px; transform: translateZ(50px); }
   .scene3d-back { transform: translateZ(-30px); }
-  .scene3d-stage { animation-duration: 18s; }
+  .scene3d-stage { animation: none; transform: rotateY(-4deg) rotateX(3deg); } /* no endless 3D sway on phones: it re-draws the hero every frame and makes scrolling shake */
 }
 @media (prefers-reduced-motion: reduce) {
   .scene3d-stage, .float-a, .float-b, .float-c { animation: none !important; }

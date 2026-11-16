@@ -331,6 +331,17 @@ service cloud.firestore {
 
     // Network feed: posts, likes, comments and follows. Only verified dentists can read or write, and the
     // author's name, qualification and specialty must match their verified profile.
+    // Recently deleted posts: the author's own copy for 30 days so a post can be restored (as a fresh post).
+    match /connectPostBin/{entryId} {
+      allow read, delete: if isVerified() && resource.data.authorId == request.auth.uid;
+      allow create: if isVerified() && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.keys().hasOnly(['authorId', 'deletedAt', 'json', 'images'])
+        && request.resource.data.deletedAt is string && request.resource.data.deletedAt.size() <= 40
+        && request.resource.data.json is string && request.resource.data.json.size() <= 6000
+        && request.resource.data.images is list && request.resource.data.images.size() <= 2;
+      allow update: if false;
+    }
+
     match /connectPosts/{postId} {
       allow read: if isVerified();
       allow create: if isVerified()
@@ -564,6 +575,17 @@ service cloud.firestore {
         && (!('age' in request.resource.data) || request.resource.data.age == '' || (request.resource.data.age is int && request.resource.data.age >= 0 && request.resource.data.age <= 120))
         && dlMoney(request.resource.data, 'feeP') && dlMoney(request.resource.data, 'receivedP')
         && request.resource.data.receivedP <= request.resource.data.feeP;
+    }
+
+    // Recently deleted visits and clinics, kept 30 days so they can be restored. Only that doctor.
+    match /connectDocLog/{uid}/bin/{entryId} {
+      allow read, delete: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['coll', 'recordId', 'deletedAt', 'json'])
+        && request.resource.data.coll in ['visits', 'clinics']
+        && request.resource.data.recordId is string && request.resource.data.recordId.size() <= 100
+        && request.resource.data.deletedAt is string && request.resource.data.deletedAt.size() <= 40
+        && request.resource.data.json is string && request.resource.data.json.size() <= 20000;
     }
 
     // Append-only audit log. Staff can read it; nobody can change or delete an entry.

@@ -291,3 +291,17 @@ export const pollResults = (post = {}) => {
   const total = votes.reduce((a, b) => a + b, 0);
   return { total, rows: options.map((label, index) => ({ index, label, votes: votes[index], pct: total ? Math.round((votes[index] / total) * 100) : 0 })) };
 };
+
+// ---- Recently deleted posts (kept 30 days, author only) ----
+export const POST_BIN_DAYS = 30;
+const KEEP = ["type", "title", "body", "tag", "eventDate", "venue", "pollOptions", "imageCount"];
+/** What to keep of a deleted post. Likes, comments and poll votes are not kept; the post comes back fresh. */
+export const postBinEntry = (post, images = [], authorId, now = new Date()) => {
+  if (!post || !post.id || !authorId || post.authorId !== authorId) return null;
+  const keep = Object.fromEntries(KEEP.filter((k) => post[k] !== undefined && post[k] !== null).map((k) => [k, post[k]]));
+  const imgs = (Array.isArray(images) ? images : []).filter((x) => typeof x === "string").slice(0, 2);
+  if (imgs.length) keep.imageCount = imgs.length; else delete keep.imageCount;
+  return { id: String(post.id), authorId, deletedAt: now.toISOString(), json: JSON.stringify(keep), images: imgs };
+};
+export const postFromBin = (entry) => { try { const r = JSON.parse(entry && entry.json); return r && typeof r === "object" && !Array.isArray(r) ? r : null; } catch { return null; } };
+export const postBinDaysLeft = (e, now = new Date()) => { const t = Date.parse(e && e.deletedAt); return Number.isFinite(t) ? Math.max(0, POST_BIN_DAYS - Math.floor((now.getTime() - t) / 86400000)) : 0; };

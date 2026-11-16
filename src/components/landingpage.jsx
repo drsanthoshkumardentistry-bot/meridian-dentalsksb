@@ -135,7 +135,7 @@ const PLANS = [
 
 const QUALITY = [
   { n: "1,200+", label: "automated tests", note: "run before every update goes live" },
-  { n: "6 million+", label: "random stress checks", note: "bad input, odd dates, wrong totals, with 0 failures in the latest run" },
+  { n: "18 million+", label: "random stress checks", note: "bad input, odd dates, wrong totals, with 0 failures in the latest run" },
   { n: "Every change", label: "data-access rules tested", note: "the rules that keep each clinic's records private are tested automatically whenever they change" },
   { n: "3 ways", label: "Ways we test", note: "normal order, shuffled order, and random data" },
 ];

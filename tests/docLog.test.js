@@ -172,3 +172,32 @@ describe("greeting a doctor", () => {
     expect(todayLine([v({}), v({ id: "b", clinicId: "C2", feeP: 50000, receivedP: 0 })], "2026-11-16", (p) => `Rs${p / 100}`)).toBe("Rs1100 still to receive from 2 clinics");
   });
 });
+
+import { makeBinEntry, binRecord, binDaysLeft, expiredBinIds, sortedBin, describeBin } from "../src/docLog.js";
+describe("DocLog recently deleted helpers", () => {
+  const rec = { id: "V1", patient: "Ramesh", treatment: "RCT", clinicName: "Sai", date: "2026-11-10" };
+  const now = new Date("2026-11-16T00:00:00Z");
+  it("keeps a visit or clinic, and nothing else", () => {
+    const e = makeBinEntry("visits", "V1", rec, now);
+    expect(e.id).toBe("visits__V1");
+    expect(binRecord(e)).toEqual(rec);
+    expect(makeBinEntry("patients", "V1", rec)).toBeNull();
+    expect(makeBinEntry("visits", "", rec)).toBeNull();
+    expect(makeBinEntry("visits", "V1", null)).toBeNull();
+    expect(makeBinEntry("visits", "V1", { note: "x".repeat(30000) })).toBeNull();
+  });
+  it("counts 30 days and lists expired copies", () => {
+    const e = makeBinEntry("visits", "V1", rec, now);
+    expect(binDaysLeft(e, now)).toBe(30);
+    expect(binDaysLeft(e, new Date("2026-12-10T00:00:00Z"))).toBe(6);
+    const later = new Date("2026-12-17T00:00:00Z");
+    expect(expiredBinIds([e], later)).toEqual(["visits__V1"]);
+    expect(expiredBinIds([{ id: "x", deletedAt: "bad" }], now)).toEqual(["x"]);
+  });
+  it("describes entries and ignores junk", () => {
+    expect(describeBin(makeBinEntry("visits", "V1", rec, now)).title).toBe("Ramesh");
+    expect(describeBin(makeBinEntry("clinics", "C1", { name: "Sai Dental", place: "Pollachi" }, now)).title).toBe("Sai Dental");
+    expect(binRecord({ json: "nope" })).toBeNull();
+    expect(sortedBin([null, {}, makeBinEntry("visits", "V1", rec, now)]).length).toBe(1);
+  });
+});

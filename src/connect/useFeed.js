@@ -180,7 +180,7 @@ export default function useConnectFeed({ api, showToast }) {
     setAuthor((a) => (a && a.ids ? { ...a, ids: a.ids.filter((x) => x !== id) } : a));
   };
   const remove = async (post) => {
-    try { await apiRef.current.deletePost(post.id, post.imageCount || 0); drop(post.id); toastRef.current("Post deleted"); } catch { toastRef.current("Could not delete the post."); }
+    try { await apiRef.current.deletePost(post.id, post.imageCount || 0, post); drop(post.id); toastRef.current("Post deleted. You can bring it back from Recently deleted."); } catch { toastRef.current("Could not delete the post."); }
   };
 
   const publish = async (post, images = []) => {

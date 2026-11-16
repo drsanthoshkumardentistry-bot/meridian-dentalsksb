@@ -225,3 +225,24 @@ export const todayLine = (visits, today, fmt = (p) => String(p / 100)) => {
   if (owed > 0) parts.push(`${fmt(owed)} still to receive from ${dues.length} clinic${dues.length === 1 ? "" : "s"}`);
   return parts.join(" · ");
 };
+
+// ---- Recently deleted (30 days) ----
+export const DL_BIN_DAYS = 30;
+const BIN_KINDS = ["visits", "clinics"];
+/** The bin entry for a deleted visit or clinic, or null when there is nothing to keep. */
+export const makeBinEntry = (coll, id, record, now = new Date()) => {
+  if (!BIN_KINDS.includes(coll) || !id || !record || typeof record !== "object") return null;
+  const json = JSON.stringify(record);
+  if (json.length > 20000) return null;
+  return { id: `${coll}__${String(id).replace(/[/\s]/g, "_")}`, coll, recordId: String(id), deletedAt: now.toISOString(), json };
+};
+export const binRecord = (e) => { try { const r = JSON.parse(e && e.json); return r && typeof r === "object" && !Array.isArray(r) ? r : null; } catch { return null; } };
+export const binDaysLeft = (e, now = new Date()) => { const t = Date.parse(e && e.deletedAt); return Number.isFinite(t) ? Math.max(0, DL_BIN_DAYS - Math.floor((now.getTime() - t) / 86400000)) : 0; };
+export const expiredBinIds = (list, now = new Date()) => (Array.isArray(list) ? list : []).filter((e) => e && e.id && binDaysLeft(e, now) <= 0).map((e) => e.id);
+export const sortedBin = (list) => (Array.isArray(list) ? list : []).filter((e) => e && e.id && e.coll && e.json).sort((a, b) => String(b.deletedAt).localeCompare(String(a.deletedAt)));
+export const describeBin = (e) => {
+  const r = binRecord(e) || {};
+  return e && e.coll === "clinics"
+    ? { title: String(r.name || "Clinic"), detail: [r.place, "clinic"].filter(Boolean).join(" · ") }
+    : { title: String(r.patient || "Visit"), detail: [r.treatment, r.clinicName, r.date].filter(Boolean).join(" · ") };
+};

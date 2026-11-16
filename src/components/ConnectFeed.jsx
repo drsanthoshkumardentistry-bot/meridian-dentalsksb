@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Search, RefreshCw } from "lucide-react";
 import { SPECIALTIES } from "../connect/rules.js";
-import { FEED_FILTERS, SORTS, buildPost } from "../connect/feed.js";
+import { FEED_FILTERS, SORTS, buildPost, postFromBin, postBinDaysLeft } from "../connect/feed.js";
 import useConnectFeed from "../connect/useFeed.js";
 import Composer from "./ConnectComposer.jsx";
 import PostCard from "./ConnectPost.jsx";
@@ -24,10 +24,40 @@ function emptyText(f, hasMore) {
   return `Nothing matches this filter.${more}`;
 }
 
+function DeletedPosts({ api, me, showToast, onRestored, onClose }) {
+  const [list, setList] = useState(null);
+  useEffect(() => { let on = true; api.listPostBin().then((l) => on && setList(l)).catch(() => on && setList([])); return () => { on = false; }; }, [api]);
+  const restore = async (e) => {
+    try { await api.restorePost(me, e); setList((l) => l.filter((x) => x.id !== e.id)); showToast("Post restored. Its likes and comments are not kept."); onRestored(); }
+    catch { showToast("Could not restore the post."); }
+  };
+  const remove = async (e) => { try { await api.removePostBin(e); setList((l) => l.filter((x) => x.id !== e.id)); } catch { showToast("Could not delete it."); } };
+  return (
+    <div className="rounded-xl border border-rule bg-white p-4" data-testid="deleted-posts">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="font-display font-bold text-ink">Recently deleted</h3>
+        <button type="button" onClick={onClose} className="text-xs font-semibold text-slate-600 hover:underline">Close</button>
+      </div>
+      <p className="text-xs text-slate-500 mb-2">Your deleted posts are kept for 30 days. A restored post comes back as a new post, without its likes and comments.</p>
+      {list === null ? <p className="text-sm text-slate-500">Loading...</p>
+        : list.length === 0 ? <p className="text-sm text-slate-500" data-testid="deleted-posts-empty">No deleted posts.</p>
+        : <ul className="divide-y divide-rule">{list.map((e) => { const c = postFromBin(e) || {}; return (
+          <li key={e.id} className="py-2 flex items-center justify-between gap-2" data-testid="deleted-post">
+            <div className="min-w-0"><p className="text-sm font-semibold text-ink truncate">{c.title}</p><p className="text-xs text-slate-500">{c.type} · {postBinDaysLeft(e)} days left</p></div>
+            <div className="flex gap-1.5 shrink-0">
+              <button type="button" onClick={() => restore(e)} className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-700 text-white">Restore</button>
+              <button type="button" onClick={() => remove(e)} aria-label="Delete for good" className="px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-rule text-rose-700">Delete</button>
+            </div>
+          </li>); })}</ul>}
+    </div>
+  );
+}
+
 /** The professional network for verified dentists: case discussions, questions, tips and events. */
 export default function ConnectFeed({ api, me, admin, showToast, onMessage }) {
   const f = useConnectFeed({ api, showToast });
   const { view } = f;
+  const [binOpen, setBinOpen] = useState(false);
 
   const card = (p) => (
     <PostCard key={p.id} post={p} api={api} me={me} admin={admin}
@@ -61,10 +91,13 @@ export default function ConnectFeed({ api, me, admin, showToast, onMessage }) {
           <select aria-label="Sort posts" value={view.sort} onChange={(e) => f.setView({ sort: e.target.value })} className={select}>
             {SORTS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
           </select>
+          <button type="button" onClick={() => setBinOpen((o) => !o)} className={select} data-testid="deleted-posts-open">Recently deleted</button>
           <button type="button" onClick={f.refresh} disabled={f.refreshing} aria-label="Refresh the feed" className="p-2 rounded-full border border-rule bg-white text-slate-600 hover:bg-sky-50 disabled:opacity-50">
             <RefreshCw className={`w-4 h-4 ${f.refreshing ? "animate-spin" : ""}`} />
           </button>
         </div>
+
+        {binOpen && <DeletedPosts api={api} me={me} showToast={showToast} onRestored={f.refresh} onClose={() => setBinOpen(false)} />}
 
         <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filter posts">
           {FEED_FILTERS.map(([id, label]) => (
