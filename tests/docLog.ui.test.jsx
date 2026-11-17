@@ -286,6 +286,18 @@ describe("DocLog: a day paid as one total", () => {
     expect(new Set(saved.map((v) => v.id)).size).toBe(5);
     await waitFor(() => expect(screen.getByTestId("summary-pending").textContent).toContain("5,000"));
   });
+  it("shows the balance, highlights the payment choice and flags a count that does not match the names", async () => {
+    mount({ clinics: [clinic], visits: [visit()] });
+    fireEvent.click(await screen.findByTestId("doclog-add-day"));
+    type(screen.getByLabelText("Number of patients"), "4");
+    type(screen.getByLabelText(/Patient names/), "Ramesh\nLatha, Scaling");
+    expect(screen.getByTestId("day-count-hint").textContent).toContain("Patient 3 to Patient 4");
+    type(screen.getByLabelText(/Total for the day/), "4000");
+    expect(screen.getByTestId("day-balance").textContent).toContain("₹4,000 still to receive");
+    fireEvent.click(screen.getByText("Received in full"));
+    expect(screen.getByText("Received in full", { selector: "button" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByTestId("day-balance").textContent).toBe("Received in full");
+  });
   it("explains a missing patient count instead of saving", async () => {
     const m = mount({ clinics: [clinic], visits: [visit()] });
     fireEvent.click(await screen.findByTestId("doclog-add-day"));

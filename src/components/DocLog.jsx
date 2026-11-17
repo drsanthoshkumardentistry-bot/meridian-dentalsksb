@@ -6,7 +6,7 @@ import { dateKey } from "../reminders.js";
 import {
   treatmentsFor, specialtyOptions, buildProfile, CASE_STATUSES, PAY_MODES, MAX_CLINICS, buildClinic, buildVisit, pendingP, paymentState, summary, duesByClinic, comingUp,
   visitNumber, filterVisits, monthsPresent, allocatePayment, docLogCsv, statusLabel, modeLabel, sortVisits, greeting, todayLine, describeBin, binDaysLeft,
-  expectedToday, usualDays, weekdayName, buildDay, splitPaise, MAX_DAY_PATIENTS, clinicBreakdown, hasShares, myShareTotalP, whatsappNumber, statementText, monthlyStatementText,
+  expectedToday, usualDays, weekdayName, buildDay, dayLines, splitPaise, MAX_DAY_PATIENTS, clinicBreakdown, hasShares, myShareTotalP, whatsappNumber, statementText, monthlyStatementText,
 } from "../docLog.js";
 
 const field = "w-full px-3 py-2 border border-rule rounded-lg bg-white text-sm text-ink";
@@ -246,9 +246,19 @@ function DayDialog({ clinics, visits, profile, startClinic, onSave, onClose }) {
   const [error, setError] = useState("");
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
   const lbl = "block text-[11px] font-semibold text-slate-600 mb-1";
-  const names = form.names.split("\n").filter((x) => x.trim()).length;
-  const n = Math.max(Number(form.count) || 0, names);
-  const totalP = Math.round((Number(String(form.total).replace(/,/g, "")) || 0) * 100);
+  const names = dayLines(form.names).length;
+  const asked = Number(form.count) || 0;
+  const n = Math.max(asked, names);
+  const amount = (v) => Math.round((Number(String(v).replace(/,/g, "")) || 0) * 100);
+  const totalP = amount(form.total);
+  const recP = Math.min(amount(form.received), totalP);
+  const payState = totalP > 0 && recP === totalP ? "full" : recP === 0 ? "later" : "";
+  // When the count and the typed names disagree, say what will be saved.
+  const countHint = names > 0 && asked > 0 && asked !== names
+    ? asked > names
+      ? `${names} ${names === 1 ? "name" : "names"} typed for ${asked} patients. The other ${asked - names} will be saved as ${asked - names === 1 ? `Patient ${names + 1}` : `Patient ${names + 1} to Patient ${asked}`}.`
+      : `${names} names typed, so ${names} patients will be saved.`
+    : "";
   const treatments = treatmentsFor(profile && profile.specialty).filter((t) => t !== "Other");
   const submit = async (e) => {
     e.preventDefault();
@@ -265,18 +275,20 @@ function DayDialog({ clinics, visits, profile, startClinic, onSave, onClose }) {
           <div><label htmlFor="dd-clinic" className={lbl}>Clinic</label>
             <select id="dd-clinic" className={field} value={form.clinicId} onChange={set("clinicId")}>{clinics.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
           <div><label htmlFor="dd-date" className={lbl}>Date</label><input id="dd-date" type="date" className={field} value={form.date} onChange={set("date")} /></div>
-          <div><label htmlFor="dd-count" className={lbl}>Number of patients</label><input id="dd-count" inputMode="numeric" className={field} value={form.count} onChange={set("count")} placeholder="e.g. 5" /></div>
+          <div><label htmlFor="dd-count" className={lbl}>Number of patients</label><input id="dd-count" inputMode="numeric" className={field} value={form.count} onChange={set("count")} placeholder={names > 0 ? `${names} (from names)` : "e.g. 5"} /></div>
           <div><label htmlFor="dd-treat" className={lbl}>Treatment</label>
             <select id="dd-treat" className={field} value={form.treatment} onChange={set("treatment")}>{treatments.map((t) => <option key={t} value={t}>{t}</option>)}</select></div>
         </div>
-        <div><label htmlFor="dd-names" className={lbl}>Patient names, one per line (optional)</label><textarea id="dd-names" rows={3} className={field} value={form.names} onChange={set("names")} placeholder={"Ramesh K\nLatha"} /></div>
+        <div><label htmlFor="dd-names" className={lbl}>Patient names, one per line (optional)</label><textarea id="dd-names" rows={3} className={field} value={form.names} onChange={set("names")} placeholder={"e.g. Ramesh K\ne.g. Latha, Scaling"} />
+          <p className="mt-1 text-[11px] text-slate-500">Different treatment for someone? Add it after a comma, like "Latha, Scaling". Others get the treatment chosen above.</p>
+          {countHint && <p data-testid="day-count-hint" className="mt-1 text-[11px] font-semibold text-amber-800">{countHint}</p>}</div>
         <div className="grid grid-cols-2 gap-3">
           <div><label htmlFor="dd-total" className={lbl}>Total for the day (₹)</label><input id="dd-total" inputMode="decimal" className={field} value={form.total} onChange={set("total")} placeholder="e.g. 5000" /></div>
           <div><label htmlFor="dd-rec" className={lbl}>Received now (₹)</label><input id="dd-rec" inputMode="decimal" className={field} value={form.received} onChange={set("received")} /></div>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {[["full", "Received in full"], ["later", "Pay later"]].map(([id, text]) => (
-            <button key={id} type="button" onClick={() => setForm({ ...form, received: id === "full" ? form.total : "" })} className="px-3 py-1.5 rounded-full border border-slate-300 text-xs font-semibold text-slate-700">{text}</button>
+            <button key={id} type="button" aria-pressed={payState === id} onClick={() => setForm({ ...form, received: id === "full" ? form.total : "" })} className={`px-3 py-1.5 rounded-full border text-xs font-semibold ${payState === id ? "border-blue-600 bg-blue-600 text-white" : "border-slate-300 text-slate-700"}`}>{text}</button>
           ))}
           {Number(form.received) > 0 && (
             <select aria-label="Payment mode" className="px-2 py-1 border border-slate-300 rounded-full text-xs" value={form.payMode} onChange={set("payMode")}>{PAY_MODES.map(([id, text]) => <option key={id} value={id}>{text}</option>)}</select>
@@ -285,6 +297,9 @@ function DayDialog({ clinics, visits, profile, startClinic, onSave, onClose }) {
         {n > 0 && totalP > 0 && n <= MAX_DAY_PATIENTS && (
           <p data-testid="day-preview" className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-900">
             {n} {n === 1 ? "patient" : "patients"} · {rs(splitPaise(totalP, n)[n - 1])}{totalP % n ? " to " + rs(splitPaise(totalP, n)[0]) : ""} each
+            <span className={`block mt-0.5 ${recP === totalP ? "text-emerald-800" : "text-amber-900"}`} data-testid="day-balance">
+              {recP === totalP ? "Received in full" : recP > 0 ? `Received ${rs(recP)} · ${rs(totalP - recP)} still to receive` : `${rs(totalP)} still to receive`}
+            </span>
           </p>
         )}
         <div><label htmlFor="dd-note" className={lbl}>Note (only you see it)</label><input id="dd-note" className={field} value={form.note} maxLength={200} onChange={set("note")} /></div>
@@ -463,7 +478,7 @@ export default function DocLog({ api, showToast, userName = "", binSignal = 0 })
   const logNext = (v) => openVisit({ clinicId: v.clinicId, date: v.nextVisit <= today ? v.nextVisit : today, patient: v.patient, age: v.age === "" ? "" : String(v.age), phone: v.phone, treatment: v.treatment, tooth: v.tooth, status: v.status === "completed" ? "completed" : "inprogress", fee: v.feeP ? String(v.feeP / 100) : "" });
 
   return (
-    <div className="space-y-5" data-testid="doclog">
+    <div className="space-y-5 pb-24" data-testid="doclog">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="font-display font-bold text-lg text-blue-800" data-testid="doclog-greeting">{greeting((profile && profile.name) || userName)}</p>

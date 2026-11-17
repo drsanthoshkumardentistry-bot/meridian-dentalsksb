@@ -302,6 +302,11 @@ describe("DocLog: lump-sum day at a clinic", () => {
     expect(buildDay(day({ date: "2026-02-30" }), ids, clinics, NOW).error).toMatch(/date/);
     expect(buildDay(null, ids, clinics, NOW).error).toBeTruthy();
   });
+  it("takes a treatment after a comma for mixed days, and the chosen treatment for the rest", () => {
+    const r = buildDay(day({ count: "3", names: "Ramesh K\nLatha, Scaling\n , RCT" }), ids, clinics, NOW);
+    expect(r.visits.map((v) => v.patient)).toEqual(["Ramesh K", "Latha", "Patient 3"]);
+    expect(r.visits.map((v) => v.treatment)).toEqual(["Consultation", "Scaling", "Consultation"]);
+  });
   it("allows a free day (total 0)", () => {
     expect(buildDay(day({ total: "" }), ids, clinics, NOW).visits.every((v) => v.feeP === 0)).toBe(true);
   });
