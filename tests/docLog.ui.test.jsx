@@ -243,3 +243,29 @@ describe("DocLog recently deleted from the sidebar", () => {
     expect(await screen.findByTestId("doclog-bin-empty")).toBeTruthy();
   });
 });
+
+describe("DocLog for visiting consultants", () => {
+  it("shows the doctor's share and a by-clinic table once a clinic keeps part of the bill", async () => {
+    mount({ clinics: [{ ...clinic, sharePct: 40 }], visits: [visit({ feeP: 100000 })] });
+    expect((await screen.findByTestId("summary-share")).textContent).toContain("400");
+    const t = screen.getByTestId("by-clinic");
+    expect(within(t).getByText("Sri Sai Dental")).toBeTruthy();
+    expect(t.textContent).toContain("1,000");
+  });
+  it("hides the share figure when no clinic has a share set", async () => {
+    mount({ clinics: [clinic], visits: [visit()] });
+    await screen.findByTestId("doclog-summary");
+    expect(screen.queryByTestId("summary-share")).toBeNull();
+    expect(screen.queryByTestId("by-clinic")).toBeNull();
+  });
+  it("opens WhatsApp with a statement of what the clinic owes", async () => {
+    const open = vi.spyOn(window, "open").mockImplementation(() => null);
+    mount({ clinics: [{ ...clinic, phone: "9876543210" }], visits: [visit({ feeP: 250000, receivedP: 50000 })] });
+    fireEvent.click(await screen.findByText("Send statement on WhatsApp"));
+    expect(open).toHaveBeenCalledTimes(1);
+    const url = open.mock.calls[0][0];
+    expect(url.startsWith("https://wa.me/919876543210?text=")).toBe(true);
+    expect(decodeURIComponent(url)).toContain("Total pending: ₹2,000");
+    open.mockRestore();
+  });
+});

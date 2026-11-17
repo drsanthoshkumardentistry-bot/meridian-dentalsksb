@@ -6,6 +6,7 @@ import { dateKey } from "../reminders.js";
 import {
   treatmentsFor, specialtyOptions, buildProfile, CASE_STATUSES, PAY_MODES, MAX_CLINICS, buildClinic, buildVisit, pendingP, paymentState, summary, duesByClinic, comingUp,
   visitNumber, filterVisits, monthsPresent, allocatePayment, docLogCsv, statusLabel, modeLabel, sortVisits, greeting, todayLine, describeBin, binDaysLeft,
+  clinicBreakdown, hasShares, myShareTotalP, whatsappNumber, statementText,
 } from "../docLog.js";
 
 const field = "w-full px-3 py-2 border border-rule rounded-lg bg-white text-sm text-ink";
@@ -108,7 +109,7 @@ function ClinicsDialog({ clinics, onSave, onDelete, onClose }) {
           <div><label htmlFor="dl-ccontact" className="block text-[11px] font-semibold text-slate-600 mb-1">Contact person</label><input id="dl-ccontact" className={field} value={form.contact} onChange={set("contact")} maxLength={80} /></div>
           <div><label htmlFor="dl-cphone" className="block text-[11px] font-semibold text-slate-600 mb-1">Phone</label><input id="dl-cphone" inputMode="tel" className={field} value={form.phone} onChange={set("phone")} maxLength={15} /></div>
           <div><label htmlFor="dl-cfee" className="block text-[11px] font-semibold text-slate-600 mb-1">Usual fee per visit (₹)</label><input id="dl-cfee" inputMode="decimal" className={field} value={form.defaultFee} onChange={set("defaultFee")} /></div>
-          <div><label htmlFor="dl-cshare" className="block text-[11px] font-semibold text-slate-600 mb-1">Your share of the bill (%), if any</label><input id="dl-cshare" inputMode="decimal" className={field} value={form.sharePct} onChange={set("sharePct")} /></div>
+          <div><label htmlFor="dl-cshare" className="block text-[11px] font-semibold text-slate-600 mb-1">Your share of the bill (%). Leave empty if you keep the whole fee</label><input id="dl-cshare" inputMode="decimal" className={field} value={form.sharePct} onChange={set("sharePct")} /></div>
         </div>
         {error && <p role="alert" className="text-xs text-rose-700">{error}</p>}
         <div className="flex gap-2">
@@ -364,6 +365,9 @@ export default function DocLog({ api, showToast, userName = "", binSignal = 0 })
   const months = useMemo(() => monthsPresent(visits, thisMonth), [visits, thisMonth]);
   const totals = useMemo(() => summary(visits, ym), [visits, ym]);
   const dues = useMemo(() => duesByClinic(visits, today), [visits, today]);
+  const shares = useMemo(() => hasShares(clinics), [clinics]);
+  const myShare = useMemo(() => myShareTotalP(visits, clinics, ym), [visits, clinics, ym]);
+  const perClinic = useMemo(() => clinicBreakdown(visits, clinics, ym), [visits, clinics, ym]);
   const upcoming = useMemo(() => comingUp(visits, today), [visits, today]);
   const rows = useMemo(() => filterVisits(visits, { ym, clinicId: clinicFilter, status, q }), [visits, ym, clinicFilter, status, q]);
 
@@ -376,6 +380,13 @@ export default function DocLog({ api, showToast, userName = "", binSignal = 0 })
     </div>
   );
 
+  const sendStatement = (d) => {
+    const clinic = clinics.find((c) => c.id === d.clinicId) || { id: d.clinicId, name: d.name };
+    const text = statementText({ visits, clinic, doctor: (profile && profile.name) || userName, today, fmt: rs });
+    if (!text) return;
+    const num = whatsappNumber(clinic.phone);
+    window.open(`https://wa.me/${num}?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+  };
   const openVisit = (initial) => setDialog({ kind: "visit", initial });
   const startVisit = () => (clinics.length === 0 ? setDialog({ kind: "clinics" }) : openVisit(null));
   const logNext = (v) => openVisit({ clinicId: v.clinicId, date: v.nextVisit <= today ? v.nextVisit : today, patient: v.patient, age: v.age === "" ? "" : String(v.age), phone: v.phone, treatment: v.treatment, tooth: v.tooth, status: v.status === "completed" ? "completed" : "inprogress", fee: v.feeP ? String(v.feeP / 100) : "" });
@@ -416,12 +427,27 @@ export default function DocLog({ api, showToast, userName = "", binSignal = 0 })
               <option value="">All months</option>
             </select>
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-testid="doclog-summary">
+          <div className={`grid grid-cols-2 ${shares ? "lg:grid-cols-5" : "lg:grid-cols-4"} gap-3`} data-testid="doclog-summary">
             <div className="bg-white border border-rule rounded-2xl p-4 shadow-card"><p className="text-xs font-semibold text-slate-500">Visits</p><p className="font-display font-extrabold text-2xl mt-1 tabular">{totals.count}</p><p className="text-xs text-slate-500">at {totals.clinics} {totals.clinics === 1 ? "clinic" : "clinics"}</p></div>
             <div className="bg-white border border-rule rounded-2xl p-4 shadow-card"><p className="text-xs font-semibold text-slate-500">Earned</p><p className="font-display font-extrabold text-2xl mt-1 tabular">{rs(totals.earnedP)}</p><p className="text-xs text-slate-500">fees logged</p></div>
+            {shares && <div className="bg-white border border-blue-200 rounded-2xl p-4 shadow-card"><p className="text-xs font-semibold text-blue-800">Your share</p><p className="font-display font-extrabold text-2xl mt-1 tabular text-blue-800" data-testid="summary-share">{rs(myShare)}</p><p className="text-xs text-slate-500">at each clinic's current share</p></div>}
             <div className="bg-white border border-rule rounded-2xl p-4 shadow-card"><p className="text-xs font-semibold text-slate-500">Received</p><p className="font-display font-extrabold text-2xl mt-1 tabular text-emerald-700">{rs(totals.receivedP)}</p><p className="text-xs text-slate-500">{totals.collectedPct}% collected</p></div>
             <div className="bg-white border border-rule rounded-2xl p-4 shadow-card"><p className="text-xs font-semibold text-slate-500">Still to receive</p><p className="font-display font-extrabold text-2xl mt-1 tabular text-amber-700" data-testid="summary-pending">{rs(totals.pendingP)}</p><p className="text-xs text-slate-500">across {totals.pendingClinics} {totals.pendingClinics === 1 ? "clinic" : "clinics"}</p></div>
           </div>
+
+          {perClinic.length > 0 && (perClinic.length > 1 || shares) && (
+            <section aria-label="By clinic" data-testid="by-clinic">
+              <h3 className="text-xs font-bold text-slate-800 mb-2">By clinic{ym ? `, ${monthLabel(ym)}` : ""}</h3>
+              <div className="bg-white border border-rule rounded-2xl overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead><tr className="text-left text-xs text-slate-500"><th className="p-3 font-semibold">Clinic</th><th className="p-3 font-semibold text-right">Visits</th><th className="p-3 font-semibold text-right">Billed</th>{shares && <th className="p-3 font-semibold text-right">Your share</th>}<th className="p-3 font-semibold text-right">Still to receive</th></tr></thead>
+                  <tbody className="divide-y divide-rule">{perClinic.map((r) => (
+                    <tr key={r.clinicId}><td className="p-3 font-semibold text-ink">{r.name}</td><td className="p-3 text-right tabular">{r.visits}</td><td className="p-3 text-right tabular">{rs(r.billedP)}</td>{shares && <td className="p-3 text-right tabular text-blue-800">{rs(r.shareP)}</td>}<td className="p-3 text-right tabular text-amber-700">{r.pendingP ? rs(r.pendingP) : "-"}</td></tr>
+                  ))}</tbody>
+                </table>
+              </div>
+            </section>
+          )}
 
           {upcoming.length > 0 && (
             <section aria-label="Coming up" data-testid="coming-up">
@@ -452,6 +478,7 @@ export default function DocLog({ api, showToast, userName = "", binSignal = 0 })
                     <p className="text-xs text-slate-600">oldest unpaid visit: {d.oldestDays === 0 ? "today" : `${d.oldestDays} ${d.oldestDays === 1 ? "day" : "days"} ago`}</p>
                     <span className="mt-2 flex gap-3">
                       <button type="button" onClick={() => setDialog({ kind: "receive", due: d })} className="text-[11px] font-semibold text-blue-700 hover:underline">Record payment</button>
+                      <button type="button" onClick={() => sendStatement(d)} className="text-[11px] font-semibold text-emerald-700 hover:underline">Send statement on WhatsApp</button>
                       <button type="button" onClick={() => { setClinicFilter(d.clinicId); setStatus("pending"); setYm(""); }} className="text-[11px] font-semibold text-slate-600 hover:underline">Show visits</button>
                     </span>
                   </li>
