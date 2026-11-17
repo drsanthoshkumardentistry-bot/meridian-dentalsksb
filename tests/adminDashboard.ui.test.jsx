@@ -237,3 +237,59 @@ describe("admin dashboard: sidebar", () => {
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Billing & approvals");
   });
 });
+
+describe("admin profile page", () => {
+  const profile = async () => {
+    render(<AdminDashboard email="boss@x.com" initial={data()} loadFn={vi.fn()} refreshMs={0} now={NOW} />);
+    await go("Admin profile");
+  };
+  it("shows the account and follow-up lists, and copies emails", async () => {
+    const writeText = vi.fn().mockResolvedValue();
+    Object.assign(navigator, { clipboard: { writeText } });
+    await profile();
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Admin profile");
+    expect(within(screen.getByLabelText("Account")).getByText("boss@x.com")).toBeTruthy();
+    expect(within(screen.getByTestId("follow-expired")).getByText("1")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Copy emails: Plan ended" }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith("c@x.com"));
+    expect(await screen.findByText("Copied 1 email.")).toBeTruthy();
+    fireEvent.click(within(screen.getByTestId("follow-expired")).getByText("Show list"));
+    expect(within(screen.getByTestId("follow-expired")).getByText("c@x.com")).toBeTruthy();
+  });
+  it("says so when copying is blocked", async () => {
+    Object.assign(navigator, { clipboard: { writeText: vi.fn().mockRejectedValue(new Error("no")) } });
+    await profile();
+    fireEvent.click(screen.getByRole("button", { name: "Copy email" }));
+    expect(await screen.findByText(/Could not copy/)).toBeTruthy();
+  });
+  it("exports csv files", async () => {
+    URL.createObjectURL = vi.fn(() => "blob:x"); URL.revokeObjectURL = vi.fn();
+    await profile();
+    fireEvent.click(screen.getByText("Clinics (CSV)"));
+    expect(await screen.findByText("Saved merident-clinics.csv.")).toBeTruthy();
+    fireEvent.click(screen.getByText("Plan requests (CSV)"));
+    expect(await screen.findByText("Saved merident-plan-requests.csv.")).toBeTruthy();
+  });
+  it("keeps a to-do list and private notes on this device", async () => {
+    localStorage.clear();
+    await profile();
+    fireEvent.change(screen.getByLabelText("New to-do"), { target: { value: "Call Smile Care" } });
+    fireEvent.click(screen.getByText("Add"));
+    fireEvent.click(screen.getByLabelText("Done: Call Smile Care"));
+    expect(JSON.parse(localStorage.getItem("merident.admin.todos"))[0].done).toBe(true);
+    fireEvent.change(screen.getByLabelText("Private notes", { selector: "textarea" }), { target: { value: "raise price?" } });
+    expect(JSON.parse(localStorage.getItem("merident.admin.notes"))).toBe("raise price?");
+    fireEvent.click(screen.getByLabelText("Remove: Call Smile Care"));
+    expect(screen.getByText(/Nothing here yet/)).toBeTruthy();
+  });
+  it("saves the refresh choice", async () => {
+    localStorage.clear();
+    await profile();
+    fireEvent.change(screen.getByLabelText("Refresh the numbers"), { target: { value: "300000" } });
+    expect(localStorage.getItem("merident.admin.refresh")).toBe("300000");
+  });
+  it("can open straight on the profile", () => {
+    render(<AdminDashboard email="boss@x.com" initial={data()} loadFn={vi.fn()} refreshMs={0} startView="profile" />);
+    expect(screen.getByTestId("admin-profile")).toBeTruthy();
+  });
+});

@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { LayoutDashboard, IndianRupee, Users, Menu, X, LogOut, Hospital, RefreshCw, CheckCircle2 } from "lucide-react";
+import { LayoutDashboard, IndianRupee, Users, Menu, X, LogOut, Hospital, UserCog, RefreshCw, CheckCircle2 } from "lucide-react";
 import NotificationBell from "./NotificationBell.jsx";
+import AdminProfile from "./AdminProfile.jsx";
+import { readLocal, writeLocal } from "../adminTools.js";
 import FullscreenButton from "./FullscreenButton.jsx";
 import { loadOverview, decideRequest } from "../adminApi.js";
 
@@ -18,7 +20,7 @@ const DAY = 86400000;
 const AVATARS = ["bg-brand-600", "bg-aqua-600", "bg-emerald-600", "bg-violet-600", "bg-gold-700", "bg-rose-600"];
 const avatarOf = (s) => AVATARS[[...String(s)].reduce((n, c) => n + c.charCodeAt(0), 0) % AVATARS.length];
 
-const NAV = [["overview", "Overview", LayoutDashboard], ["billing", "Billing & approvals", IndianRupee], ["clinics", "Clinics", Users]];
+const NAV = [["overview", "Overview", LayoutDashboard], ["billing", "Billing & approvals", IndianRupee], ["clinics", "Clinics", Users], ["profile", "Admin profile", UserCog]];
 
 const Tile = ({ label, value, note, accent = "bg-brand-500", tone = "text-ink" }) => (
   <div className="relative overflow-hidden rounded-2xl border border-rule bg-white p-4 pl-5 shadow-card">
@@ -42,7 +44,7 @@ const Section = ({ title, label, children, right, testId }) => (
 const Chip = ({ children, tone = "bg-slate-100 text-slate-700" }) => <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${tone}`}>{children}</span>;
 
 /** Founder-only home screen: who is online, time spent, billing, and subscription approvals. No patient data. */
-export default function AdminDashboard({ email = "", initial = null, loadFn = loadOverview, decideFn = decideRequest, onOpenApp, onLogout, refreshMs = 60000, now }) {
+export default function AdminDashboard({ email = "", initial = null, loadFn = loadOverview, decideFn = decideRequest, onOpenApp, onLogout, refreshMs = 60000, now, user = null, startView = "overview" }) {
   const [data, setData] = useState(initial);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
@@ -52,8 +54,9 @@ export default function AdminDashboard({ email = "", initial = null, loadFn = lo
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [showAll, setShowAll] = useState(false);
-  const [view, setView] = useState("overview");
+  const [view, setView] = useState(NAV.some((n) => n[0] === startView) ? startView : "overview");
   const [menu, setMenu] = useState(false);
+  const [every, setEvery] = useState(() => { const v = readLocal("merident.admin.refresh", null); return Number.isFinite(v) ? v : refreshMs; });
 
   const load = useCallback(async () => {
     try {
@@ -64,9 +67,9 @@ export default function AdminDashboard({ email = "", initial = null, loadFn = lo
   }, [loadFn]);
   useEffect(() => {
     if (!initial) load();
-    const t = refreshMs > 0 ? setInterval(load, refreshMs) : null;
+    const t = every > 0 ? setInterval(load, every) : null;
     return () => { if (t) clearInterval(t); };
-  }, [load, refreshMs]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [load, every]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const decide = async (r, action) => {
     setBusy(r.uid + action); setMsg("");
@@ -298,6 +301,7 @@ export default function AdminDashboard({ email = "", initial = null, loadFn = lo
               <button type="button" onClick={() => setShowAll(true)} className="w-full rounded-xl border border-rule bg-white py-2.5 text-xs font-semibold text-brand-700">Show all {shown.length}</button>
             )}
           </Section>}
+          {view === "profile" && <AdminProfile user={user} email={email} data={data} now={now} every={every} onEvery={(ms) => { setEvery(ms); writeLocal("merident.admin.refresh", ms); }} onToast={setMsg} onOpenApp={onOpenApp} onLogout={onLogout} />}
         </>)}
         </main>
       </div>
