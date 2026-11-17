@@ -46,7 +46,7 @@ jobs:
           mode=mixed; if [ $(( ${{ matrix.shard }} % 2 )) -eq 0 ]; then mode=wide; fi
           npx vite-node scripts/stress.mjs $(( 10000 + ${{ matrix.shard }} )) ${{ inputs.cases }} $mode > shard.json
           cat shard.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: shard-${{ matrix.shard }}
