@@ -19,3 +19,21 @@ export const markPaid = async ({ email, plan, days }, { fetchFn = fetch, getToke
   if (!res.ok) throw new Error(d.error || "Could not save.");
   return d;
 };
+
+/** Ask for a plan. The founder approves it once payment has arrived. */
+export const requestPlan = async ({ plan, yearly = false, clinic = "" }, { fetchFn = fetch, getToken = tokenOf } = {}) => {
+  const res = await fetchFn("/api/plan-request", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${await getToken()}` }, body: JSON.stringify({ plan, yearly, clinic }) });
+  let d = {}; try { d = await res.json(); } catch (e) { /* keep empty */ }
+  if (!res.ok) throw new Error(d.error || "Could not send the request.");
+  return d;
+};
+
+/** The state of this clinic's own request: { status: "" | "pending" | "approved" | "rejected" }. Never throws. */
+export const loadMyRequest = async ({ fetchFn = fetch, getToken = tokenOf } = {}) => {
+  try {
+    const res = await fetchFn("/api/plan-request", { headers: { Authorization: `Bearer ${await getToken()}` } });
+    if (!res.ok) return { status: "" };
+    const d = await res.json();
+    return { status: ["pending", "approved", "rejected"].includes(d.status) ? d.status : "", plan: d.plan === "pro" ? "pro" : d.plan === "standard" ? "standard" : "" };
+  } catch (e) { return { status: "" }; }
+};

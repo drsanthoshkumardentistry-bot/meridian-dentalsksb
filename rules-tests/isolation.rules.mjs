@@ -73,4 +73,15 @@ describe("server-only counters", () => {
       await assertFails(deleteDoc(doc(db, "rateLimits", "ai_2026-11-17")));
     }
   });
+  // Founder dashboard data. A clinic must not be able to mark itself paid, approve its own request, or read others' usage.
+  it("plans, planRequests and presence are closed to every browser", async () => {
+    for (const [col, id] of [["plans", A], ["planRequests", A], ["presence", A]]) {
+      await seed(env, (db) => setDoc(doc(db, col, id), { x: 1 }));
+      for (const db of [as(env, A), as(env, B), anon(env)]) {
+        await assertFails(getDoc(doc(db, col, id)));
+        await assertFails(setDoc(doc(db, col, id), { plan: "pro", paidUntil: 9999999999999, status: "approved" }));
+        await assertFails(deleteDoc(doc(db, col, id)));
+      }
+    }
+  });
 });

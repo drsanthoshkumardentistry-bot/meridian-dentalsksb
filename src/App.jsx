@@ -104,6 +104,9 @@ import DeleteAccountCard from "./components/DeleteAccountCard.jsx";
 import FounderCard from "./components/FounderCard.jsx";
 import ReportProblem from "./components/ReportProblem.jsx";
 import PlanCard from "./components/PlanCard.jsx";
+import AdminDashboard from "./components/AdminDashboard.jsx";
+import { loadOverview } from "./adminApi.js";
+import { startHeartbeat } from "./heartbeat.js";
 import { hasLock as pinLockOn, readLock as readPinLock } from "./appLock";
 import FullscreenButton from "./components/FullscreenButton.jsx";
 import ConnectionBar from "./components/ConnectionBar.jsx";
@@ -762,6 +765,24 @@ export default function App() {
   useEffect(() => {
     if (authUser?.uid && authUser.emailVerified) sendLoginAlert(authUser.uid);
   }, [authUser?.uid, authUser?.emailVerified]);
+
+  // Online time: a small "this tab is open" message every 5 minutes while signed in and visible
+  useEffect(() => {
+    if (!isVerified || !authUser?.uid) return undefined;
+    return startHeartbeat();
+  }, [isVerified, authUser?.uid]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Founder accounts open the admin dashboard. Everyone else gets "not available" from the server and sees the normal app.
+  const [adminData, setAdminData] = useState(null);
+  const [adminOpen, setAdminOpen] = useState(() => { try { return sessionStorage.getItem("merident.admin") !== "clinic"; } catch { return true; } });
+  useEffect(() => {
+    setAdminData(null);
+    if (!isVerified || !authUser?.uid) return undefined;
+    let live = true;
+    loadOverview().then((d) => { if (live && d) setAdminData(d); }).catch(() => {});
+    return () => { live = false; };
+  }, [isVerified, authUser?.uid]);
+  const setAdminView = (open) => { setAdminOpen(open); try { sessionStorage.setItem("merident.admin", open ? "admin" : "clinic"); } catch { /* ignore */ } };
 
   useEffect(() => {
     if (!firebaseConfigured || !auth) {
@@ -2362,6 +2383,10 @@ export default function App() {
     );
   }
 
+  if (adminData && adminOpen) {
+    return <AdminDashboard initial={adminData} onOpenApp={() => setAdminView(false)} onLogout={() => handleLogout()} />;
+  }
+
   const nowNext = diaryView(appointments, { view: "upcoming" }).find((a) => a.date === dateKey()) || null;
   const nowAlerts = [
             navFor(role, [{ label: "Billing & Invoices" }]).length > 0 && billing.overdueCount > 0 && { tone: "red", text: `${billing.overdueCount} overdue ${billing.overdueCount === 1 ? "bill" : "bills"}`, to: "Billing & Invoices" },
@@ -2392,6 +2417,10 @@ export default function App() {
             <button type="button" onClick={() => removeMember(db, authUser.email).catch(() => showToast("Could not decline. Check your connection."))} className="px-4 py-2 rounded-lg border border-rule text-slate-700 font-semibold">Decline</button>
           </div>
         </div>
+      )}
+
+      {adminData && (
+        <button type="button" onClick={() => setAdminView(true)} data-testid="back-to-admin" className="fixed top-3 right-3 z-50 px-3 py-1.5 rounded-lg bg-blue-700 text-white text-xs font-semibold shadow-lg">Admin dashboard</button>
       )}
 
       {/* Toast Notifier */}

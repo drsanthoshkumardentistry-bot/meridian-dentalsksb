@@ -14,6 +14,13 @@ What to do when something breaks, and what to check every month. No secrets live
 | Backups | `.github/workflows/backup.yml` (weekly, encrypted), see `docs/cloudflare-pages.md` |
 | DNS and domain | Cloudflare DNS; registrar BigRock; renew before 18 Oct 2027 |
 
+## Admin dashboard (founder)
+
+Signing in with an address listed in the `FOUNDER_EMAILS` secret opens the admin dashboard: who is online, hours online, plans and billing, and subscription requests. "Open my clinic" goes to the normal app; "Admin dashboard" (top right) comes back.
+- Clinics ask for a plan from Settings, Your plan. Approve only after the payment (UPI) has arrived; approving switches the plan on for 30 days (365 yearly).
+- Online time comes from a small message every 5 minutes while a tab is open (collection `presence`). Each active clinic user costs about 12 reads and 12 writes per hour, so the free Firebase daily limits (50,000 reads, 20,000 writes) allow roughly 150 to 200 users online for 8 hours. Watch Firebase usage as the user count grows.
+- The collections `presence`, `planRequests` and `plans` are server-only. Browsers cannot read or write them (rules test: "plans, planRequests and presence are closed to every browser").
+
 ## When the site is down
 
 1. Open Cloudflare, Workers & Pages, the project, Deployments. If the newest deployment failed, open the previous good one and choose Rollback.
