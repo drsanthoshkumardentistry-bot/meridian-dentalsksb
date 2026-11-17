@@ -2384,7 +2384,7 @@ export default function App() {
   }
 
   if (adminData && adminOpen) {
-    return <AdminDashboard initial={adminData} onOpenApp={() => setAdminView(false)} onLogout={() => handleLogout()} />;
+    return <AdminDashboard email={authUser.email} initial={adminData} onOpenApp={() => setAdminView(false)} onLogout={() => handleLogout()} />;
   }
 
   const nowNext = diaryView(appointments, { view: "upcoming" }).find((a) => a.date === dateKey()) || null;
@@ -3371,9 +3371,9 @@ export default function App() {
                   </button>
                 </div>
               ) : (
-                <div className="bg-white rounded-xl border border-rule overflow-hidden shadow-xs">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-enamel text-slate-600 font-semibold uppercase text-[10px] border-b border-rule">
+                <div className="bg-white rounded-xl border border-rule overflow-x-auto shadow-xs">
+                  <table className="w-full text-left text-xs max-md:block">
+                    <thead className="bg-enamel text-slate-600 font-semibold uppercase text-[10px] border-b border-rule max-md:hidden">
                       <tr>
                         <th className="p-4">Invoice</th>
                         <th className="p-4">Patient</th>
@@ -3384,26 +3384,26 @@ export default function App() {
                         <th className="p-4 text-center">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 max-md:block">
                       {visibleInvoices.length === 0 && (
                         <tr>
                           <td colSpan={7} className="p-8 text-center text-slate-500">{invoiceQuery ? "No invoice matches your search." : "Nothing to show in this view."}</td>
                         </tr>
                       )}
                       {invoicePage.shown.map(normalizeInvoice).map((inv) => (
-                        <tr key={inv.id} className="hover:bg-enamel/60">
-                          <td className="p-4">
+                        <tr key={inv.id} className="hover:bg-enamel/60 max-md:block max-md:p-3">
+                          <td className="p-4 max-md:block max-md:px-1 max-md:py-1">
                             <div className="font-bold text-blue-700">{inv.id}</div>
                             {balancePaise(inv) > 0 && invoiceAgeDays(inv) !== null ? (
                               <div className="text-[10px] text-slate-500">{invoiceAgeDays(inv)} {invoiceAgeDays(inv) === 1 ? "day" : "days"} old</div>
                             ) : null}
                           </td>
-                          <td className="p-4 font-semibold">{inv.patient}</td>
-                          <td className="p-4 text-slate-600">
+                          <td className="p-4 font-semibold max-md:block max-md:px-1 max-md:py-1">{inv.patient}</td>
+                          <td data-label="Payment" className="p-4 text-slate-600 max-md:block max-md:px-1 max-md:py-1 max-md:before:content-[attr(data-label)] max-md:before:mr-2 max-md:before:text-[10px] max-md:before:font-semibold max-md:before:uppercase max-md:before:text-slate-400">
                             {inv.paymentMode || "Cash"}
                             {inv.treatment ? <div className="text-[10px] text-slate-500 max-w-[14rem] truncate">{inv.treatment}</div> : null}
                           </td>
-                          <td className="p-4">
+                          <td className="p-4 max-md:block max-md:px-1 max-md:py-1">
                             <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
                               {paymentStatus(inv)}
                             </span>
@@ -3413,12 +3413,12 @@ export default function App() {
                               <div className="text-[10px] text-slate-500 mt-1">Due {new Date(inv.dueDate).toLocaleDateString("en-IN")}</div>
                             ) : null}
                           </td>
-                          <td className="p-4 font-bold text-sm">
+                          <td data-label="Total" className="p-4 font-bold text-sm max-md:block max-md:px-1 max-md:py-1 max-md:before:content-[attr(data-label)] max-md:before:mr-2 max-md:before:text-[10px] max-md:before:font-semibold max-md:before:uppercase max-md:before:text-slate-400">
                             ₹{formatINR(inv.totalP)}
                             {inv.gstRate > 0 ? <div className="text-[10px] font-normal text-slate-500">incl. GST {inv.gstRate}%</div> : null}
                           </td>
-                          <td className={`p-4 font-bold text-sm ${balancePaise(inv) > 0 ? "text-rose-600" : "text-emerald-600"}`}>₹{formatINR(balancePaise(inv))}</td>
-                          <td className="p-4 text-center space-x-1.5 whitespace-nowrap">
+                          <td data-label="Balance" className={`p-4 font-bold text-sm max-md:block max-md:px-1 max-md:py-1 max-md:before:content-[attr(data-label)] max-md:before:mr-2 max-md:before:text-[10px] max-md:before:font-semibold max-md:before:uppercase max-md:before:text-slate-400 ${balancePaise(inv) > 0 ? "text-rose-600" : "text-emerald-600"}`}>₹{formatINR(balancePaise(inv))}</td>
+                          <td className="p-4 text-center md:space-x-1.5 md:whitespace-nowrap max-md:flex max-md:flex-wrap max-md:gap-1.5 max-md:px-1 max-md:pt-2 max-md:text-left">
                             <button
                               onClick={() => { setPayForm({ amount: "", mode: "Cash" }); setActiveUpiQrInvoice(inv); }}
                               className="px-3 py-1.5 bg-slate-100 hover:bg-blue-50 border border-rule text-slate-800 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5"
@@ -5414,7 +5414,7 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="border border-rule rounded-xl overflow-hidden">
+                  <div className="border border-rule rounded-xl overflow-x-auto">
                     <table className="w-full text-left text-xs">
                       <thead className="bg-enamel text-slate-600 font-semibold uppercase text-[10px] border-b border-rule">
                         <tr>
