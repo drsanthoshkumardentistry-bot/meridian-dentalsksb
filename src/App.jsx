@@ -2420,7 +2420,7 @@ export default function App() {
       )}
 
       {adminData && (
-        <button type="button" onClick={() => setAdminView(true)} data-testid="back-to-admin" className="fixed top-3 right-3 z-50 px-3 py-1.5 rounded-lg bg-blue-700 text-white text-xs font-semibold shadow-lg">Admin dashboard</button>
+        <button type="button" onClick={() => setAdminView(true)} data-testid="back-to-admin" aria-label="Admin dashboard" title="Admin dashboard" className="fixed bottom-24 right-5 z-40 print:hidden grid h-12 w-12 place-items-center rounded-full bg-navy-900 text-white shadow-lift ring-2 ring-white hover:bg-brand-700 focus:outline-none focus-visible:ring-brand-400"><LayoutDashboard className="h-5 w-5" aria-hidden="true" /></button>
       )}
 
       {/* Toast Notifier */}
