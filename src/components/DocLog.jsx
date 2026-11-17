@@ -6,7 +6,7 @@ import { dateKey } from "../reminders.js";
 import {
   treatmentsFor, specialtyOptions, buildProfile, CASE_STATUSES, PAY_MODES, MAX_CLINICS, buildClinic, buildVisit, pendingP, paymentState, summary, duesByClinic, comingUp,
   visitNumber, filterVisits, monthsPresent, allocatePayment, docLogCsv, statusLabel, modeLabel, sortVisits, greeting, todayLine, describeBin, binDaysLeft,
-  clinicBreakdown, hasShares, myShareTotalP, whatsappNumber, statementText,
+  buildDay, splitPaise, MAX_DAY_PATIENTS, clinicBreakdown, hasShares, myShareTotalP, whatsappNumber, statementText,
 } from "../docLog.js";
 
 const field = "w-full px-3 py-2 border border-rule rounded-lg bg-white text-sm text-ink";
@@ -237,6 +237,64 @@ function VisitDialog({ clinics, initial, visits, profile, onSave, onClose, onCli
   );
 }
 
+function DayDialog({ clinics, visits, profile, onSave, onClose }) {
+  const last = sortVisits(visits)[0];
+  const [form, setForm] = useState({
+    clinicId: (last && clinics.some((c) => c.id === last.clinicId) ? last.clinicId : clinics[0]?.id) || "", date: dateKey(), count: "", names: "",
+    treatment: "Consultation", total: "", received: "", payMode: "cash", note: "",
+  });
+  const [error, setError] = useState("");
+  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  const lbl = "block text-[11px] font-semibold text-slate-600 mb-1";
+  const names = form.names.split("\n").filter((x) => x.trim()).length;
+  const n = Math.max(Number(form.count) || 0, names);
+  const totalP = Math.round((Number(String(form.total).replace(/,/g, "")) || 0) * 100);
+  const treatments = treatmentsFor(profile && profile.specialty).filter((t) => t !== "Other");
+  const submit = async (e) => {
+    e.preventDefault();
+    const r = buildDay(form, (i) => newId(`V${i}`), clinics);
+    if (r.error) return setError(r.error);
+    setError("");
+    await onSave(r.visits);
+  };
+  return (
+    <Modal title="Add a day" onClose={onClose}>
+      <form onSubmit={submit} className="space-y-3">
+        <p className="text-xs text-slate-500">For clinics that pay one amount for the whole day. Enter the patients and the day's total. The total is shared equally across the patients, so your dues and spreadsheet stay correct.</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div><label htmlFor="dd-clinic" className={lbl}>Clinic</label>
+            <select id="dd-clinic" className={field} value={form.clinicId} onChange={set("clinicId")}>{clinics.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+          <div><label htmlFor="dd-date" className={lbl}>Date</label><input id="dd-date" type="date" className={field} value={form.date} onChange={set("date")} /></div>
+          <div><label htmlFor="dd-count" className={lbl}>Number of patients</label><input id="dd-count" inputMode="numeric" className={field} value={form.count} onChange={set("count")} placeholder="e.g. 5" /></div>
+          <div><label htmlFor="dd-treat" className={lbl}>Treatment</label>
+            <select id="dd-treat" className={field} value={form.treatment} onChange={set("treatment")}>{treatments.map((t) => <option key={t} value={t}>{t}</option>)}</select></div>
+        </div>
+        <div><label htmlFor="dd-names" className={lbl}>Patient names, one per line (optional)</label><textarea id="dd-names" rows={3} className={field} value={form.names} onChange={set("names")} placeholder={"Ramesh K\nLatha"} /></div>
+        <div className="grid grid-cols-2 gap-3">
+          <div><label htmlFor="dd-total" className={lbl}>Total for the day (₹)</label><input id="dd-total" inputMode="decimal" className={field} value={form.total} onChange={set("total")} placeholder="e.g. 5000" /></div>
+          <div><label htmlFor="dd-rec" className={lbl}>Received now (₹)</label><input id="dd-rec" inputMode="decimal" className={field} value={form.received} onChange={set("received")} /></div>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {[["full", "Received in full"], ["later", "Pay later"]].map(([id, text]) => (
+            <button key={id} type="button" onClick={() => setForm({ ...form, received: id === "full" ? form.total : "" })} className="px-3 py-1.5 rounded-full border border-slate-300 text-xs font-semibold text-slate-700">{text}</button>
+          ))}
+          {Number(form.received) > 0 && (
+            <select aria-label="Payment mode" className="px-2 py-1 border border-slate-300 rounded-full text-xs" value={form.payMode} onChange={set("payMode")}>{PAY_MODES.map(([id, text]) => <option key={id} value={id}>{text}</option>)}</select>
+          )}
+        </div>
+        {n > 0 && totalP > 0 && n <= MAX_DAY_PATIENTS && (
+          <p data-testid="day-preview" className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-900">
+            {n} {n === 1 ? "patient" : "patients"} · {rs(splitPaise(totalP, n)[n - 1])}{totalP % n ? " to " + rs(splitPaise(totalP, n)[0]) : ""} each
+          </p>
+        )}
+        <div><label htmlFor="dd-note" className={lbl}>Note (only you see it)</label><input id="dd-note" className={field} value={form.note} maxLength={200} onChange={set("note")} /></div>
+        {error && <p role="alert" className="text-xs text-rose-700">{error}</p>}
+        <button type="submit" className={`${primary} w-full justify-center`}>Save the day</button>
+      </form>
+    </Modal>
+  );
+}
+
 function ProfileDialog({ profile, onSave, onClose }) {
   const [form, setForm] = useState({ name: "", qualification: "", specialty: "", ...(profile || {}) });
   const [error, setError] = useState("");
@@ -333,6 +391,10 @@ export default function DocLog({ api, showToast, userName = "", binSignal = 0 })
     try { await dl.saveProfile(p); setState((s) => ({ ...s, profile: p })); setDialog(null); showToast && showToast("Profile saved"); }
     catch { fail(); }
   };
+  const saveDay = async (vs) => {
+    try { await dl.saveVisits(vs); setState((s) => ({ ...s, visits: [...s.visits.filter((x) => !vs.some((v) => v.id === x.id)), ...vs] })); setDialog(null); showToast && showToast(`Day saved: ${vs.length} ${vs.length === 1 ? "patient" : "patients"}`); }
+    catch { fail(); }
+  };
   const saveVisit = async (v) => {
     try { await dl.saveVisit(v); setState((s) => ({ ...s, visits: [...s.visits.filter((x) => x.id !== v.id), v] })); setDialog(null); showToast && showToast("Visit saved"); }
     catch { fail(); }
@@ -388,6 +450,7 @@ export default function DocLog({ api, showToast, userName = "", binSignal = 0 })
     window.open(`https://wa.me/${num}?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
   };
   const openVisit = (initial) => setDialog({ kind: "visit", initial });
+  const startDay = () => (clinics.length === 0 ? setDialog({ kind: "clinics" }) : setDialog({ kind: "day" }));
   const startVisit = () => (clinics.length === 0 ? setDialog({ kind: "clinics" }) : openVisit(null));
   const logNext = (v) => openVisit({ clinicId: v.clinicId, date: v.nextVisit <= today ? v.nextVisit : today, patient: v.patient, age: v.age === "" ? "" : String(v.age), phone: v.phone, treatment: v.treatment, tooth: v.tooth, status: v.status === "completed" ? "completed" : "inprogress", fee: v.feeP ? String(v.feeP / 100) : "" });
 
@@ -408,6 +471,7 @@ export default function DocLog({ api, showToast, userName = "", binSignal = 0 })
           <button type="button" onClick={() => setDialog({ kind: "clinics" })} className={`${btn} border border-rule bg-white text-slate-700 inline-flex items-center gap-1.5`}><Building2 className="w-3.5 h-3.5" /> My clinics</button>
           <button type="button" onClick={() => setDialog({ kind: "bin" })} className={`${btn} border border-rule bg-white text-slate-700 inline-flex items-center gap-1.5`} data-testid="doclog-bin-open"><Trash2 className="w-3.5 h-3.5" /> Recently deleted</button>
           <button type="button" disabled={!visits.length} onClick={() => download(docLogCsv(visits, ym), `doclog-${ym || "all"}.csv`)} className={`${btn} border border-rule bg-white text-slate-700 disabled:opacity-50 inline-flex items-center gap-1.5`}><Download className="w-3.5 h-3.5" /> Download spreadsheet</button>
+          <button type="button" onClick={startDay} className={`${btn} border border-blue-300 bg-blue-50 text-blue-800 inline-flex items-center gap-1.5`} data-testid="doclog-add-day">Add a day (one total)</button>
           <button type="button" onClick={startVisit} className={primary}><Plus className="w-4 h-4" /> Add visit</button>
         </div>
       </div>
@@ -537,6 +601,7 @@ export default function DocLog({ api, showToast, userName = "", binSignal = 0 })
       {dialog && dialog.kind === "profile" && <ProfileDialog profile={profile} onSave={saveProfile} onClose={() => setDialog(null)} />}
       {dialog && dialog.kind === "clinics" && <ClinicsDialog clinics={clinics} onSave={saveClinic} onDelete={deleteClinic} onClose={() => setDialog(null)} />}
       {dialog && dialog.kind === "visit" && <VisitDialog clinics={clinics} visits={visits} profile={profile} initial={dialog.initial} onSave={saveVisit} onClose={() => setDialog(null)} onClinics={() => setDialog({ kind: "clinics" })} />}
+      {dialog && dialog.kind === "day" && <DayDialog clinics={clinics} visits={visits} profile={profile} onSave={saveDay} onClose={() => setDialog(null)} />}
       {dialog && dialog.kind === "receive" && <ReceiveDialog due={dialog.due} onSave={(p, m) => receive(dialog.due, p, m)} onClose={() => setDialog(null)} />}
     </div>
   );

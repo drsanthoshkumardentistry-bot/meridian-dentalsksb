@@ -269,3 +269,28 @@ describe("DocLog for visiting consultants", () => {
     open.mockRestore();
   });
 });
+
+describe("DocLog: a day paid as one total", () => {
+  it("saves 5 patients and Rs 5,000 as five visits of Rs 1,000 in one write", async () => {
+    const m = mount({ clinics: [clinic], visits: [visit({ id: "OLD", feeP: 0 })] });
+    fireEvent.click(await screen.findByTestId("doclog-add-day"));
+    type(screen.getByLabelText("Number of patients"), "5");
+    type(screen.getByLabelText(/Total for the day/), "5000");
+    expect(screen.getByTestId("day-preview").textContent).toContain("5 patients");
+    expect(screen.getByTestId("day-preview").textContent).toContain("₹1,000 each");
+    fireEvent.click(screen.getByText("Save the day"));
+    await waitFor(() => expect(m.dl.saveVisits).toHaveBeenCalledTimes(1));
+    const saved = m.dl.saveVisits.mock.calls[0][0];
+    expect(saved).toHaveLength(5);
+    expect(saved.every((v) => v.feeP === 100000 && v.clinicId === "C1")).toBe(true);
+    expect(new Set(saved.map((v) => v.id)).size).toBe(5);
+    await waitFor(() => expect(screen.getByTestId("summary-pending").textContent).toContain("5,000"));
+  });
+  it("explains a missing patient count instead of saving", async () => {
+    const m = mount({ clinics: [clinic], visits: [visit()] });
+    fireEvent.click(await screen.findByTestId("doclog-add-day"));
+    fireEvent.click(screen.getByText("Save the day"));
+    expect((await screen.findByRole("alert")).textContent).toMatch(/how many patients/);
+    expect(m.dl.saveVisits).not.toHaveBeenCalled();
+  });
+});
