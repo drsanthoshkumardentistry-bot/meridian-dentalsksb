@@ -1,0 +1,54 @@
+# MeriDent runbook
+
+What to do when something breaks, and what to check every month. No secrets live in this file.
+
+## Where things live
+
+| Thing | Where |
+|---|---|
+| Website and API | Cloudflare Pages (project from this repo, `main` deploys to www.meridiandentalos.com) |
+| Database and sign-in | Firebase project `meridian-dental` (Firestore, Auth) |
+| Secrets | Cloudflare Pages, Settings, Variables and secrets. Public Firebase web config is in `.env.production` |
+| Email | Resend (sender set by `MAIL_FROM`); company email on Titan (root DNS records, do not touch) |
+| Monitoring | Better Stack, plus `.github/workflows/uptime.yml` (hourly) |
+| Backups | `.github/workflows/backup.yml` (weekly, encrypted), see `docs/cloudflare-pages.md` |
+| DNS and domain | Cloudflare DNS; registrar BigRock; renew before 18 Oct 2027 |
+
+## When the site is down
+
+1. Open Cloudflare, Workers & Pages, the project, Deployments. If the newest deployment failed, open the previous good one and choose Rollback.
+2. If the deployment is fine, check Cloudflare status and Firebase status pages.
+3. Check Better Stack for which URL failed (/, /login, /api/ai, /logo.png) and when it started.
+4. Find the last change on `main` (`git log -5`). If it is the cause, revert it with a pull request. CI must pass before merging.
+
+## When sign-in fails
+
+- "Sign-in is only available on the official MeriDent website": the host is not in `src/allowedHosts.js`. Preview links do not sign in unless added through `VITE_EXTRA_AUTH_HOSTS`.
+- "Sign-in is not set up": the `VITE_FIREBASE_*` values did not reach the build. Check `.env.production`.
+- Firebase console, Authentication, Settings, Authorized domains must list the live domain.
+
+## When email is not arriving
+
+Check Resend, Emails, for the failure reason. If the domain shows "Not verified", recheck the DNS records in Cloudflare (set to DNS only).
+
+## Restoring from backup
+
+Backups are encrypted. Only the offline private key opens them.
+1. Download the latest `merident-backup` artifact from the GitHub Actions run.
+2. `node scripts/restore-backup.mjs <file> <private-key.pem>` prints counts per collection.
+3. To restore, point `FIREBASE_SERVICE_ACCOUNT` at a TEST project and add `--restore --yes`. Restore into live only if live data is really lost.
+
+## If a secret leaks
+
+Rotate it in the provider first (Resend, Google AI, Firebase service account), then update the Cloudflare secret, then redeploy. Never paste secrets into chat, issues or pull requests.
+
+## Monthly checklist
+
+- [ ] Weekly backup ran four times and the artifact opens (`restore-backup.mjs` with no `--restore`).
+- [ ] Better Stack: no unexplained incidents; uptime workflow green.
+- [ ] Cloudflare Pages: last deployment healthy.
+- [ ] Firebase: usage and billing still inside the free plan; budget alert set.
+- [ ] Resend: monthly sends well under 3,000.
+- [ ] Open Dependabot pull requests reviewed (test major upgrades on a preview first).
+- [ ] Full test run green; stress run (`scripts/stress.mjs`) shows 0 failures.
+- [ ] Domain and certificate expiry dates still comfortably away.
