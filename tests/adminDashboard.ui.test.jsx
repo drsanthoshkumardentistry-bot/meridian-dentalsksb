@@ -156,3 +156,15 @@ describe("heartbeat", () => {
     stop();
   });
 });
+
+describe("heartbeat session id", () => {
+  it("is a 32-character random hex id that stays the same during a browser session", async () => {
+    const seen = [];
+    const mk = () => startHeartbeat({ fetchFn: async (_u, init) => { seen.push(JSON.parse(init.body).sessionId); return { ok: true }; }, getToken: async () => "t", doc: { visibilityState: "visible", addEventListener() {}, removeEventListener() {} }, intervalMs: 999999 });
+    sessionStorage.clear();
+    const s1 = mk(); await new Promise((r) => setTimeout(r, 5)); s1();
+    const s2 = mk(); await new Promise((r) => setTimeout(r, 5)); s2();
+    expect(seen[0]).toMatch(/^[0-9a-f]{32}$/);
+    expect(seen[1]).toBe(seen[0]);
+  });
+});

@@ -1,7 +1,11 @@
 import { auth } from "./firebase.js";
 
 const sessionId = () => {
-  const mk = () => Array.from({ length: 24 }, () => "abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 36)]).join("");
+  const mk = () => {
+    const bytes = new Uint8Array(16);
+    globalThis.crypto.getRandomValues(bytes);
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  };
   try { const k = "merident.sessionId"; let v = sessionStorage.getItem(k); if (!v) { v = mk(); sessionStorage.setItem(k, v); } return v; } catch { return mk(); }
 };
 
