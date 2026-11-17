@@ -127,8 +127,22 @@ export const splitPaise = (total, n) => {
  * per patient, with the total split evenly (to the paise) and any money received split the same way, so dues, statements
  * and the spreadsheet keep working. Returns { error } or { visits, perPatientP }.
  */
+/**
+ * Reads the "patient names" box of a lump-sum day: one patient per line, and an optional
+ * treatment after a comma ("Ramesh K, Scaling") for days with mixed treatments.
+ */
+export function dayLines(text) {
+  return String(text || "").split(/\n/).map((line) => {
+    const at = line.indexOf(",");
+    const name = clean(at < 0 ? line : line.slice(0, at), 80);
+    const treatment = at < 0 ? "" : clean(line.slice(at + 1), 40);
+    return { name, treatment };
+  }).filter((l) => l.name);
+}
+
 export function buildDay(form, makeId, clinics, now = new Date()) {
-  const names = String((form && form.names) || "").split(/\n/).map((x) => clean(x, 80)).filter(Boolean);
+  const lines = dayLines(form && form.names);
+  const names = lines.map((l) => l.name);
   const asked = Number(form && form.count);
   if (form && form.count !== "" && form.count != null && (!Number.isInteger(asked) || asked < 0)) return { error: "Enter the number of patients as a whole number." };
   const n = Math.max(Number.isInteger(asked) ? asked : 0, names.length);
@@ -146,7 +160,7 @@ export function buildDay(form, makeId, clinics, now = new Date()) {
   const visits = [];
   for (let i = 0; i < n; i++) {
     const r = buildVisit({
-      clinicId: form.clinicId, date: form.date, patient: names[i] || `Patient ${i + 1}`, treatment: form.treatment || "Consultation", status: "completed",
+      clinicId: form.clinicId, date: form.date, patient: names[i] || `Patient ${i + 1}`, treatment: (lines[i] && lines[i].treatment) || form.treatment || "Consultation", status: "completed",
       fee: fees[i], received: recs[i], payMode: form.payMode, payOther: form.payOther, note,
     }, makeId(i), clinics, now);
     if (r.error) return { error: r.error };
