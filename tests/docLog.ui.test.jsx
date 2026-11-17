@@ -312,3 +312,16 @@ describe("DocLog: usual days", () => {
     expect(screen.queryByTestId("usual-today")).toBeNull();
   });
 });
+
+describe("DocLog: monthly statement", () => {
+  it("sends the month's statement for a clinic on WhatsApp", async () => {
+    const open = vi.spyOn(window, "open").mockImplementation(() => null);
+    const c2 = { ...clinic, id: "C2", name: "Smile Care", phone: "9123456780" };
+    mount({ clinics: [clinic, c2], visits: [visit({ feeP: 100000, receivedP: 100000 }), visit({ id: "V2", clinicId: "C2", clinicName: "Smile Care", feeP: 50000 })] });
+    fireEvent.click(await screen.findByLabelText(/statement to Smile Care/));
+    const url = open.mock.calls[0][0];
+    expect(url.startsWith("https://wa.me/919123456780?text=")).toBe(true);
+    expect(decodeURIComponent(url)).toContain("Pending: ₹500");
+    open.mockRestore();
+  });
+});

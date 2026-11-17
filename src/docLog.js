@@ -252,6 +252,31 @@ export function statementText({ visits, clinic, doctor = "", today, fmt = (p) =>
   ].join("\n");
 }
 
+/** A month's statement for one clinic: one line per visiting date (patients and amount), then billed, received, pending and the doctor's share. Returns "" when there were no visits. */
+export function monthlyStatementText({ visits, clinic, ym, doctor = "", fmt = (p) => String(p / 100), monthName = (m) => m }) {
+  const rows = list(visits).filter((v) => clinic && v.clinicId === clinic.id && ym && monthOf(v.date) === ym);
+  if (!rows.length) return "";
+  const byDate = new Map();
+  for (const v of rows) { const r = byDate.get(v.date) || { n: 0, fee: 0 }; r.n += 1; r.fee += v.feeP || 0; byDate.set(v.date, r); }
+  const billed = rows.reduce((n, v) => n + (v.feeP || 0), 0);
+  const received = rows.reduce((n, v) => n + (v.receivedP || 0), 0);
+  const pending = rows.reduce((n, v) => n + pendingP(v), 0);
+  const name = doctorName(doctor);
+  const out = [
+    `Statement for ${monthName(ym)}${name ? ` from Dr. ${name}` : ""}`,
+    `To: ${clinic.name}${clinic.place ? `, ${clinic.place}` : ""}`,
+    "",
+    ...[...byDate.keys()].sort().map((d) => `${d}: ${byDate.get(d).n} patient${byDate.get(d).n === 1 ? "" : "s"}, ${fmt(byDate.get(d).fee)}`),
+    "",
+    `Total: ${rows.length} patient${rows.length === 1 ? "" : "s"}, ${fmt(billed)}`,
+    `Received: ${fmt(received)}`,
+    `Pending: ${fmt(pending)}`,
+  ];
+  if (Number(clinic.sharePct) > 0 && Number(clinic.sharePct) < 100) out.push(`Doctor's share (${clinic.sharePct}%): ${fmt(rows.reduce((n, v) => n + sharePOf(v, [clinic]), 0))}`);
+  if (pending > 0) out.push("", "Please let me know once the pending amount is paid. Thank you.");
+  return out.join("\n");
+}
+
 /** Money still owed, per clinic, across all months, biggest first. */
 export function duesByClinic(visits, today) {
   const map = new Map();

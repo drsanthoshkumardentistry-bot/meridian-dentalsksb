@@ -6,7 +6,7 @@ import { dateKey } from "../reminders.js";
 import {
   treatmentsFor, specialtyOptions, buildProfile, CASE_STATUSES, PAY_MODES, MAX_CLINICS, buildClinic, buildVisit, pendingP, paymentState, summary, duesByClinic, comingUp,
   visitNumber, filterVisits, monthsPresent, allocatePayment, docLogCsv, statusLabel, modeLabel, sortVisits, greeting, todayLine, describeBin, binDaysLeft,
-  expectedToday, usualDays, weekdayName, buildDay, splitPaise, MAX_DAY_PATIENTS, clinicBreakdown, hasShares, myShareTotalP, whatsappNumber, statementText,
+  expectedToday, usualDays, weekdayName, buildDay, splitPaise, MAX_DAY_PATIENTS, clinicBreakdown, hasShares, myShareTotalP, whatsappNumber, statementText, monthlyStatementText,
 } from "../docLog.js";
 
 const field = "w-full px-3 py-2 border border-rule rounded-lg bg-white text-sm text-ink";
@@ -449,6 +449,13 @@ export default function DocLog({ api, showToast, userName = "", binSignal = 0 })
     const num = whatsappNumber(clinic.phone);
     window.open(`https://wa.me/${num}?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
   };
+  const sendMonthly = (clinicId) => {
+    const clinic = clinics.find((c) => c.id === clinicId);
+    if (!clinic || !ym) return;
+    const text = monthlyStatementText({ visits, clinic, ym, doctor: (profile && profile.name) || userName, fmt: rs, monthName: monthLabel });
+    if (!text) return;
+    window.open(`https://wa.me/${whatsappNumber(clinic.phone)}?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+  };
   const openVisit = (initial) => setDialog({ kind: "visit", initial });
   const startDay = (clinicId = "") => (clinics.length === 0 ? setDialog({ kind: "clinics" }) : setDialog({ kind: "day", clinicId }));
   const expected = expectedToday(visits, clinics, today);
@@ -515,9 +522,9 @@ export default function DocLog({ api, showToast, userName = "", binSignal = 0 })
               <h3 className="text-xs font-bold text-slate-800 mb-2">By clinic{ym ? `, ${monthLabel(ym)}` : ""}</h3>
               <div className="bg-white border border-rule rounded-2xl overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead><tr className="text-left text-xs text-slate-500"><th className="p-3 font-semibold">Clinic</th><th className="p-3 font-semibold text-right">Visits</th><th className="p-3 font-semibold text-right">Billed</th>{shares && <th className="p-3 font-semibold text-right">Your share</th>}<th className="p-3 font-semibold text-right">Still to receive</th></tr></thead>
+                  <thead><tr className="text-left text-xs text-slate-500"><th className="p-3 font-semibold">Clinic</th><th className="p-3 font-semibold text-right">Visits</th><th className="p-3 font-semibold text-right">Billed</th>{shares && <th className="p-3 font-semibold text-right">Your share</th>}<th className="p-3 font-semibold text-right">Still to receive</th>{ym && <th className="p-3"><span className="sr-only">Statement</span></th>}</tr></thead>
                   <tbody className="divide-y divide-rule">{perClinic.map((r) => (
-                    <tr key={r.clinicId}><td className="p-3 font-semibold text-ink">{r.name}</td><td className="p-3 text-right tabular">{r.visits}</td><td className="p-3 text-right tabular">{rs(r.billedP)}</td>{shares && <td className="p-3 text-right tabular text-blue-800">{rs(r.shareP)}</td>}<td className="p-3 text-right tabular text-amber-700">{r.pendingP ? rs(r.pendingP) : "-"}</td></tr>
+                    <tr key={r.clinicId}><td className="p-3 font-semibold text-ink">{r.name}</td><td className="p-3 text-right tabular">{r.visits}</td><td className="p-3 text-right tabular">{rs(r.billedP)}</td>{shares && <td className="p-3 text-right tabular text-blue-800">{rs(r.shareP)}</td>}<td className="p-3 text-right tabular text-amber-700">{r.pendingP ? rs(r.pendingP) : "-"}</td>{ym && <td className="p-3 text-right"><button type="button" onClick={() => sendMonthly(r.clinicId)} className="text-[11px] font-semibold text-emerald-700 hover:underline whitespace-nowrap" aria-label={`Send ${monthLabel(ym)} statement to ${r.name}`}>Send statement</button></td>}</tr>
                   ))}</tbody>
                 </table>
               </div>
