@@ -2419,10 +2419,6 @@ export default function App() {
         </div>
       )}
 
-      {adminData && (
-        <button type="button" onClick={() => setAdminView(true)} data-testid="back-to-admin" className="fixed top-3 right-3 z-50 px-3 py-1.5 rounded-lg bg-blue-700 text-white text-xs font-semibold shadow-lg">Admin dashboard</button>
-      )}
-
       {/* Toast Notifier */}
       {toastMessage && (
         <div className="fixed bottom-20 right-5 z-50 bg-ink text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2.5 text-xs border border-slate-700 animate-fade-in">
@@ -2520,6 +2516,12 @@ export default function App() {
                 </button>
               );
             })}
+            {adminData && (
+              <button type="button" onClick={() => { setSidebarOpen(false); setAdminView(true); }} data-testid="back-to-admin" className="nav-item group w-full flex items-center gap-3 px-3.5 py-2.5 rounded-full text-[13px] font-medium text-blue-100/80 hover:text-white">
+                <span className="nav-icon" title="Admin profile"><ShieldCheck className="w-4 h-4" /></span>
+                <span className="rail-label">Admin profile</span>
+              </button>
+            )}
             {docLogOnly && (
               <button type="button" onClick={leaveDocLogOnly} className="w-full text-left px-3.5 py-2 text-xs text-blue-200/80 hover:text-white">I also run a clinic: show the clinic software</button>
             )}
