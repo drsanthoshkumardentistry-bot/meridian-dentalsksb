@@ -335,3 +335,32 @@ describe("DocLog: usual visiting days", () => {
   });
   it("names weekdays", () => { expect(weekdayName(0)).toBe("Sunday"); expect(weekdayName(4)).toBe("Thursday"); expect(weekdayName(9)).toBe(""); });
 });
+
+import { monthlyStatementText } from "../src/docLog.js";
+
+describe("DocLog: monthly clinic statement", () => {
+  const c = { id: "C1", name: "Sri Sai Dental", place: "Pollachi", sharePct: 40 };
+  const v = (date, fee, rec, o = {}) => ({ id: date + fee + Math.random(), clinicId: "C1", date, feeP: fee, receivedP: rec, ...o });
+  it("lists each visiting date once with its patients and amount, then the totals", () => {
+    const vis = [v("2026-11-12", 100000, 100000), v("2026-11-12", 100000, 0), v("2026-11-05", 250000, 250000), v("2026-10-30", 999, 0), v("2026-11-05", 500, 0, { clinicId: "C2" })];
+    const t = monthlyStatementText({ visits: vis, clinic: c, ym: "2026-11", doctor: "dr.priya", fmt: (p) => `Rs ${p / 100}`, monthName: () => "November 2026" });
+    expect(t).toContain("Statement for November 2026 from Dr. Priya");
+    expect(t).toContain("2026-11-12: 2 patients, Rs 2000");
+    expect(t).toContain("2026-11-05: 1 patient, Rs 2500");
+    expect(t.indexOf("2026-11-05")).toBeLessThan(t.indexOf("2026-11-12"));
+    expect(t).toContain("Total: 3 patients, Rs 4500");
+    expect(t).toContain("Received: Rs 3500");
+    expect(t).toContain("Pending: Rs 1000");
+    expect(t).toContain("Doctor's share (40%): Rs 1800");
+    expect(t).toContain("Please let me know once the pending amount is paid");
+    expect(t).not.toContain("10-30");
+  });
+  it("leaves out the share line when there is no share and the reminder when all is paid; empty when no visits", () => {
+    const t = monthlyStatementText({ visits: [v("2026-11-01", 1000, 1000)], clinic: { ...c, sharePct: 0 }, ym: "2026-11" });
+    expect(t).not.toContain("share");
+    expect(t).not.toContain("Please let me know");
+    expect(monthlyStatementText({ visits: [], clinic: c, ym: "2026-11" })).toBe("");
+    expect(monthlyStatementText({ visits: [v("2026-11-01", 1, 0)], clinic: c, ym: "" })).toBe("");
+    expect(monthlyStatementText({ visits: null, clinic: null, ym: "2026-11" })).toBe("");
+  });
+});
