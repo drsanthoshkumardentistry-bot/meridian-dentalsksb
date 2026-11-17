@@ -259,7 +259,7 @@ export default function AdminDashboard({ email = "", initial = null, loadFn = lo
 
           {view === "clinics" && <Section title="Clinics" label="Clinics" testId="clinics" right={<span className="text-[11px] text-slate-500">{shown.length} of {counts.all}</span>}>
             <div className="space-y-2">
-              <input type="search" aria-label="Search clinics" placeholder="Search by sign-in email" value={query} onChange={(e) => { setQuery(e.target.value); setShowAll(false); }} className="w-full rounded-xl border border-rule bg-white px-3.5 py-2.5 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100" />
+              <input type="search" aria-label="Search clinics" maxLength={100} placeholder="Search by sign-in email" value={query} onChange={(e) => { setQuery(e.target.value); setShowAll(false); }} className="w-full rounded-xl border border-rule bg-white px-3.5 py-2.5 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100" />
               <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter clinics">
                 {FILTERS.map(([id, text]) => (
                   <button key={id} type="button" aria-pressed={filter === id} onClick={() => { setFilter(id); setShowAll(false); }} className={`rounded-full border px-3 py-1 text-xs font-semibold ${filter === id ? "border-brand-600 bg-brand-600 text-white" : "border-rule bg-white text-slate-700"}`}>
