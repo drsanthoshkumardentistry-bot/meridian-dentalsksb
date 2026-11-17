@@ -2419,10 +2419,6 @@ export default function App() {
         </div>
       )}
 
-      {adminData && (
-        <button type="button" onClick={() => setAdminView(true)} data-testid="back-to-admin" aria-label="Admin dashboard" title="Admin dashboard" className="fixed bottom-24 right-5 z-40 print:hidden grid h-12 w-12 place-items-center rounded-full bg-navy-900 text-white shadow-lift ring-2 ring-white hover:bg-brand-700 focus:outline-none focus-visible:ring-brand-400"><LayoutDashboard className="h-5 w-5" aria-hidden="true" /></button>
-      )}
-
       {/* Toast Notifier */}
       {toastMessage && (
         <div className="fixed bottom-20 right-5 z-50 bg-ink text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2.5 text-xs border border-slate-700 animate-fade-in">
@@ -2520,6 +2516,12 @@ export default function App() {
                 </button>
               );
             })}
+            {adminData && (
+              <button type="button" onClick={() => { setSidebarOpen(false); setAdminView(true); }} data-testid="back-to-admin" className="nav-item group w-full flex items-center gap-3 px-3.5 py-2.5 rounded-full text-[13px] font-medium text-blue-100/80 hover:text-white">
+                <span className="nav-icon" title="Admin profile"><ShieldCheck className="w-4 h-4" /></span>
+                <span className="rail-label">Admin profile</span>
+              </button>
+            )}
             {docLogOnly && (
               <button type="button" onClick={leaveDocLogOnly} className="w-full text-left px-3.5 py-2 text-xs text-blue-200/80 hover:text-white">I also run a clinic: show the clinic software</button>
             )}
