@@ -134,6 +134,61 @@ export function summary(visits, ym) {
   };
 }
 
+/** The doctor's own part of one visit's fee. A clinic with no share set (0) means the whole fee is the doctor's. */
+export const sharePOf = (visit, clinics) => {
+  const fee = Math.max(0, (visit && visit.feeP) || 0);
+  const c = (Array.isArray(clinics) ? clinics : []).find((x) => x && visit && x.id === visit.clinicId);
+  const pct = c && Number(c.sharePct) > 0 && Number(c.sharePct) <= 100 ? Math.round(Number(c.sharePct) * 100) : 10000;
+  return Math.round((fee * pct) / 10000);
+};
+
+/** One row per clinic for a month (ym = "" for all time): visits, billed, the doctor's share, received and still owed. Biggest share first. */
+export function clinicBreakdown(visits, clinics, ym = "") {
+  const map = new Map();
+  for (const v of list(visits)) {
+    if (ym && monthOf(v.date) !== ym) continue;
+    const r = map.get(v.clinicId) || { clinicId: v.clinicId, name: v.clinicName, visits: 0, billedP: 0, shareP: 0, receivedP: 0, pendingP: 0 };
+    r.visits += 1;
+    r.billedP += v.feeP || 0;
+    r.shareP += sharePOf(v, clinics);
+    r.receivedP += v.receivedP || 0;
+    r.pendingP += pendingP(v);
+    map.set(v.clinicId, r);
+  }
+  return [...map.values()].sort((a, b) => b.shareP - a.shareP || String(a.name).localeCompare(String(b.name)));
+}
+
+/** True when at least one clinic has a share below 100 percent set, so a separate "your share" figure means something. */
+export const hasShares = (clinics) => (Array.isArray(clinics) ? clinics : []).some((c) => c && Number(c.sharePct) > 0 && Number(c.sharePct) < 100);
+
+/** Total of the doctor's share over a month (or all time). */
+export const myShareTotalP = (visits, clinics, ym = "") => list(visits).filter((v) => !ym || monthOf(v.date) === ym).reduce((n, v) => n + sharePOf(v, clinics), 0);
+
+/** Phone digits for a WhatsApp link: a 10 digit Indian number gets 91 in front. Empty when it cannot be a number. */
+export const whatsappNumber = (phone) => {
+  const d = String(phone || "").replace(/\D/g, "").replace(/^00/, "");
+  if (d.length === 10) return "91" + d;
+  return d.length >= 11 && d.length <= 15 ? d : "";
+};
+
+/** A plain-text statement of the unpaid visits at one clinic, ready to send. Returns "" when nothing is owed. */
+export function statementText({ visits, clinic, doctor = "", today, fmt = (p) => String(p / 100) }) {
+  const open = sortVisits(list(visits).filter((v) => clinic && v.clinicId === clinic.id && pendingP(v) > 0)).reverse();
+  if (!open.length) return "";
+  const total = open.reduce((n, v) => n + pendingP(v), 0);
+  const name = doctorName(doctor);
+  const lines = open.map((v) => `${v.date}  ${v.patient || "Patient"}, ${v.treatment}${v.tooth ? ` (tooth ${v.tooth})` : ""}: ${fmt(pendingP(v))}`);
+  return [
+    `Payment statement${name ? ` from Dr. ${name}` : ""}${today ? `, as on ${today}` : ""}`,
+    `To: ${clinic.name}${clinic.place ? `, ${clinic.place}` : ""}`,
+    "",
+    ...lines,
+    "",
+    `Total pending: ${fmt(total)} (${open.length} visit${open.length === 1 ? "" : "s"})`,
+    "Please let me know once it is paid. Thank you.",
+  ].join("\n");
+}
+
 /** Money still owed, per clinic, across all months, biggest first. */
 export function duesByClinic(visits, today) {
   const map = new Map();

@@ -201,3 +201,56 @@ describe("DocLog recently deleted helpers", () => {
     expect(sortedBin([null, {}, makeBinEntry("visits", "V1", rec, now)]).length).toBe(1);
   });
 });
+
+import { sharePOf, clinicBreakdown, hasShares, myShareTotalP, whatsappNumber, statementText } from "../src/docLog.js";
+
+describe("DocLog: consultant share and statements", () => {
+  const cl = [{ id: "C1", name: "Sri Sai Dental", place: "Pollachi", sharePct: 40 }, { id: "C2", name: "Smile Care", place: "Tiruppur", sharePct: 0 }];
+  const v = (o) => ({ id: "x" + Math.random(), clinicId: "C1", clinicName: "Sri Sai Dental", date: "2026-11-05", patient: "Ramesh K", treatment: "RCT", tooth: "36", feeP: 350000, receivedP: 0, createdAt: "2026-11-05T10:00:00Z", ...o });
+
+  it("works out the doctor's share in whole paise; no share set means the whole fee", () => {
+    expect(sharePOf(v(), cl)).toBe(140000);
+    expect(sharePOf(v({ clinicId: "C2" }), cl)).toBe(350000);
+    expect(sharePOf(v({ clinicId: "gone" }), cl)).toBe(350000);
+    expect(sharePOf(v({ feeP: 333 }), [{ id: "C1", sharePct: 33.33 }])).toBe(111);
+    expect(sharePOf(v({ feeP: 0 }), cl)).toBe(0);
+    expect(sharePOf(null, null)).toBe(0);
+    expect(Number.isInteger(sharePOf(v({ feeP: 1000000000 }), [{ id: "C1", sharePct: 99.99 }]))).toBe(true);
+  });
+  it("never gives a share above the fee, even with a bad share value", () => {
+    for (const pct of [-5, 250, NaN, "abc", null, 100]) expect(sharePOf(v(), [{ id: "C1", sharePct: pct }])).toBeLessThanOrEqual(350000);
+  });
+  it("breaks a month down by clinic and totals the share", () => {
+    const vis = [v({ receivedP: 100000 }), v({ date: "2026-11-09", feeP: 100000 }), v({ clinicId: "C2", clinicName: "Smile Care", feeP: 200000, receivedP: 200000 }), v({ date: "2026-10-01" })];
+    const r = clinicBreakdown(vis, cl, "2026-11");
+    expect(r.map((x) => x.clinicId)).toEqual(["C2", "C1"]);
+    expect(r[1]).toMatchObject({ visits: 2, billedP: 450000, shareP: 180000, receivedP: 100000, pendingP: 350000 });
+    expect(myShareTotalP(vis, cl, "2026-11")).toBe(380000);
+    expect(clinicBreakdown(vis, cl, "").reduce((n, x) => n + x.visits, 0)).toBe(4);
+    expect(clinicBreakdown(null, null, "")).toEqual([]);
+  });
+  it("shows a separate share figure only when some clinic keeps part of the bill", () => {
+    expect(hasShares(cl)).toBe(true);
+    expect(hasShares([{ id: "a", sharePct: 0 }, { id: "b", sharePct: 100 }])).toBe(false);
+    expect(hasShares(undefined)).toBe(false);
+  });
+  it("makes a WhatsApp number from an Indian mobile or an international one", () => {
+    expect(whatsappNumber("98765 43210")).toBe("919876543210");
+    expect(whatsappNumber("+91 98765-43210")).toBe("919876543210");
+    expect(whatsappNumber("0044 7700 900123")).toBe("447700900123");
+    expect(whatsappNumber("12345")).toBe("");
+    expect(whatsappNumber(undefined)).toBe("");
+  });
+  it("writes a statement of unpaid visits, oldest first, and nothing when nothing is owed", () => {
+    const vis = [v({ date: "2026-11-09", patient: "Latha", treatment: "Extraction", tooth: "", feeP: 100000, receivedP: 40000 }), v(), v({ feeP: 500000, receivedP: 500000 }), v({ clinicId: "C2", clinicName: "Smile Care" })];
+    const t = statementText({ visits: vis, clinic: cl[0], doctor: "Dr.priyanka", today: "2026-11-14", fmt: (p) => `Rs ${p / 100}` });
+    expect(t).toContain("from Dr. Priyanka, as on 2026-11-14");
+    expect(t).toContain("To: Sri Sai Dental, Pollachi");
+    expect(t.indexOf("2026-11-05")).toBeLessThan(t.indexOf("2026-11-09"));
+    expect(t).toContain("Ramesh K, RCT (tooth 36): Rs 3500");
+    expect(t).toContain("Latha, Extraction: Rs 600");
+    expect(t).toContain("Total pending: Rs 4100 (2 visits)");
+    expect(statementText({ visits: [v({ receivedP: 350000 })], clinic: cl[0], today: "2026-11-14" })).toBe("");
+    expect(statementText({ visits: null, clinic: null })).toBe("");
+  });
+});
