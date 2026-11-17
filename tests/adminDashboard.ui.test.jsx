@@ -9,6 +9,8 @@ import { startHeartbeat } from "../src/heartbeat.js";
 
 afterEach(() => { cleanup(); vi.useRealTimers(); });
 
+const go = async (name) => { fireEvent.click(await screen.findByRole("button", { name: new RegExp(`^${name}`) })); };
+
 const NOW = Date.now();
 const data = () => ({
   users: { total: 3, newLast7: 1, quiet30: 1 },
@@ -31,10 +33,12 @@ describe("admin dashboard", () => {
     const act = await screen.findByLabelText("Activity");
     expect(within(act).getByText("Online now").previousSibling.textContent).toBe("2");
     expect(within(act).getByText("Hours online today").previousSibling.textContent).toBe("4.5");
+    await go("Billing & approvals");
     expect(within(screen.getByLabelText("Billing")).getByText("Monthly value").previousSibling.textContent).toBe("₹999");
+    await go("Clinics");
     const t = within(screen.getByTestId("clinics"));
     expect(t.getByText("a@x.com")).toBeTruthy();
-    expect(t.getByText("Online")).toBeTruthy();
+    expect(t.getAllByText("Online").length).toBeGreaterThan(1); // the filter button and the clinic's own status
     expect(t.getByText("1h 30m")).toBeTruthy();
     expect(t.getByText(/Pro until/)).toBeTruthy();
     expect(t.getByText(/ended/)).toBeTruthy();
@@ -44,6 +48,7 @@ describe("admin dashboard", () => {
   it("approves only after asking whether the payment arrived", async () => {
     const decide = vi.fn(async () => ({ status: "approved", paidUntil: NOW + 30 * 86400000 }));
     render(<AdminDashboard loadFn={async () => data()} decideFn={decide} refreshMs={0} />);
+    await go("Billing & approvals");
     const box = within(await screen.findByTestId("requests"));
     fireEvent.click(box.getByLabelText("Approve b@x.com"));
     expect(decide).not.toHaveBeenCalled();
@@ -56,6 +61,7 @@ describe("admin dashboard", () => {
   it("can reject, and can cancel an approval", async () => {
     const decide = vi.fn(async () => ({ status: "rejected" }));
     render(<AdminDashboard loadFn={async () => data()} decideFn={decide} refreshMs={0} />);
+    await go("Billing & approvals");
     const box = within(await screen.findByTestId("requests"));
     fireEvent.click(box.getByLabelText("Approve b@x.com"));
     fireEvent.click(box.getByText("Cancel"));
@@ -66,6 +72,7 @@ describe("admin dashboard", () => {
   it("shows server errors in words and keeps working", async () => {
     const decide = vi.fn(async () => { throw new Error("That request was already decided."); });
     render(<AdminDashboard loadFn={async () => data()} decideFn={decide} refreshMs={0} />);
+    await go("Billing & approvals");
     const box = within(await screen.findByTestId("requests"));
     fireEvent.click(box.getByLabelText("Reject b@x.com"));
     expect((await screen.findByRole("status")).textContent).toContain("already decided");
@@ -166,5 +173,67 @@ describe("heartbeat session id", () => {
     const s2 = mk(); await new Promise((r) => setTimeout(r, 5)); s2();
     expect(seen[0]).toMatch(/^[0-9a-f]{32}$/);
     expect(seen[1]).toBe(seen[0]);
+  });
+});
+
+describe("admin dashboard: finding clinics", () => {
+  it("filters by status and searches by email", async () => {
+    render(<AdminDashboard loadFn={async () => data()} refreshMs={0} />);
+    await go("Clinics");
+    const t = within(await screen.findByTestId("clinics"));
+    expect(t.getByText("3 of 3")).toBeTruthy();
+    fireEvent.click(t.getByRole("button", { name: /^Paying/ }));
+    expect(t.getByText("a@x.com")).toBeTruthy();
+    expect(t.queryByText("b@x.com")).toBeNull();
+    fireEvent.click(t.getByRole("button", { name: /^Requested/ }));
+    expect(t.getByText("b@x.com")).toBeTruthy();
+    expect(t.queryByText("a@x.com")).toBeNull();
+    fireEvent.click(t.getByRole("button", { name: /^Quiet/ }));
+    expect(t.getByText("c@x.com")).toBeTruthy();
+    fireEvent.click(t.getByRole("button", { name: /^All/ }));
+    fireEvent.change(t.getByLabelText("Search clinics"), { target: { value: "C@X" } });
+    expect(t.getByText("1 of 3")).toBeTruthy();
+    fireEvent.change(t.getByLabelText("Search clinics"), { target: { value: "nobody" } });
+    expect(t.getByText("No clinics match.")).toBeTruthy();
+  });
+  it("shows a friendly note instead of an empty chart, and collapses a long list", async () => {
+    const d = data();
+    d.presence.dayTotals = d.presence.dayTotals.map((x) => ({ ...x, hours: 0 }));
+    d.clinics = Array.from({ length: 30 }, (_, i) => ({ ...d.clinics[1], uid: "u" + i, email: `clinic${i}@x.com` }));
+    render(<AdminDashboard loadFn={async () => d} refreshMs={0} />);
+    expect(await screen.findByText(/No online time recorded yet/)).toBeTruthy();
+    await go("Clinics");
+    const t = within(screen.getByTestId("clinics"));
+    expect(t.getAllByRole("listitem")).toHaveLength(24);
+    fireEvent.click(t.getByText("Show all 30"));
+    expect(t.getAllByRole("listitem")).toHaveLength(30);
+  });
+});
+
+describe("admin dashboard: sidebar", () => {
+  it("switches sections from the side menu, shows the waiting count, and opens and closes on mobile", async () => {
+    render(<AdminDashboard email="boss@x.com" initial={data()} loadFn={async () => data()} refreshMs={0} />);
+    const nav = within(screen.getByLabelText("Admin sections"));
+    expect(screen.getByLabelText("Admin menu").textContent).toContain("boss@x.com");
+    expect(screen.getByLabelText("1 waiting")).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Overview");
+    expect(screen.queryByTestId("clinics")).toBeNull();
+    fireEvent.click(nav.getByText("Clinics"));
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Clinics");
+    expect(screen.getByTestId("clinics")).toBeTruthy();
+    expect(screen.queryByLabelText("Activity")).toBeNull();
+    fireEvent.click(nav.getByText("Billing & approvals"));
+    expect(screen.getByTestId("requests")).toBeTruthy();
+    fireEvent.click(screen.getByLabelText("Open menu"));
+    expect(screen.getAllByLabelText("Close menu").length).toBeGreaterThan(0);
+  });
+
+  it("has an app-style bell that lists waiting requests and jumps to billing", () => {
+    render(<AdminDashboard email="a@b.in" initial={data()} loadFn={vi.fn()} refreshMs={0} />);
+    const bell = screen.getByRole("button", { name: /^Notifications, \d+/ });
+    fireEvent.click(bell);
+    const item = within(screen.getByRole("menu", { name: "Notifications" })).getAllByRole("menuitem")[0];
+    fireEvent.click(item);
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Billing & approvals");
   });
 });
