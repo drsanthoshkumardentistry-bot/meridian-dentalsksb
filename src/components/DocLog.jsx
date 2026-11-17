@@ -6,7 +6,7 @@ import { dateKey } from "../reminders.js";
 import {
   treatmentsFor, specialtyOptions, buildProfile, CASE_STATUSES, PAY_MODES, MAX_CLINICS, buildClinic, buildVisit, pendingP, paymentState, summary, duesByClinic, comingUp,
   visitNumber, filterVisits, monthsPresent, allocatePayment, docLogCsv, statusLabel, modeLabel, sortVisits, greeting, todayLine, describeBin, binDaysLeft,
-  buildDay, splitPaise, MAX_DAY_PATIENTS, clinicBreakdown, hasShares, myShareTotalP, whatsappNumber, statementText,
+  expectedToday, usualDays, weekdayName, buildDay, splitPaise, MAX_DAY_PATIENTS, clinicBreakdown, hasShares, myShareTotalP, whatsappNumber, statementText,
 } from "../docLog.js";
 
 const field = "w-full px-3 py-2 border border-rule rounded-lg bg-white text-sm text-ink";
@@ -237,10 +237,10 @@ function VisitDialog({ clinics, initial, visits, profile, onSave, onClose, onCli
   );
 }
 
-function DayDialog({ clinics, visits, profile, onSave, onClose }) {
+function DayDialog({ clinics, visits, profile, startClinic, onSave, onClose }) {
   const last = sortVisits(visits)[0];
   const [form, setForm] = useState({
-    clinicId: (last && clinics.some((c) => c.id === last.clinicId) ? last.clinicId : clinics[0]?.id) || "", date: dateKey(), count: "", names: "",
+    clinicId: (startClinic && clinics.some((c) => c.id === startClinic) ? startClinic : last && clinics.some((c) => c.id === last.clinicId) ? last.clinicId : clinics[0]?.id) || "", date: dateKey(), count: "", names: "",
     treatment: "Consultation", total: "", received: "", payMode: "cash", note: "",
   });
   const [error, setError] = useState("");
@@ -450,7 +450,8 @@ export default function DocLog({ api, showToast, userName = "", binSignal = 0 })
     window.open(`https://wa.me/${num}?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
   };
   const openVisit = (initial) => setDialog({ kind: "visit", initial });
-  const startDay = () => (clinics.length === 0 ? setDialog({ kind: "clinics" }) : setDialog({ kind: "day" }));
+  const startDay = (clinicId = "") => (clinics.length === 0 ? setDialog({ kind: "clinics" }) : setDialog({ kind: "day", clinicId }));
+  const expected = expectedToday(visits, clinics, today);
   const startVisit = () => (clinics.length === 0 ? setDialog({ kind: "clinics" }) : openVisit(null));
   const logNext = (v) => openVisit({ clinicId: v.clinicId, date: v.nextVisit <= today ? v.nextVisit : today, patient: v.patient, age: v.age === "" ? "" : String(v.age), phone: v.phone, treatment: v.treatment, tooth: v.tooth, status: v.status === "completed" ? "completed" : "inprogress", fee: v.feeP ? String(v.feeP / 100) : "" });
 
@@ -471,7 +472,7 @@ export default function DocLog({ api, showToast, userName = "", binSignal = 0 })
           <button type="button" onClick={() => setDialog({ kind: "clinics" })} className={`${btn} border border-rule bg-white text-slate-700 inline-flex items-center gap-1.5`}><Building2 className="w-3.5 h-3.5" /> My clinics</button>
           <button type="button" onClick={() => setDialog({ kind: "bin" })} className={`${btn} border border-rule bg-white text-slate-700 inline-flex items-center gap-1.5`} data-testid="doclog-bin-open"><Trash2 className="w-3.5 h-3.5" /> Recently deleted</button>
           <button type="button" disabled={!visits.length} onClick={() => download(docLogCsv(visits, ym), `doclog-${ym || "all"}.csv`)} className={`${btn} border border-rule bg-white text-slate-700 disabled:opacity-50 inline-flex items-center gap-1.5`}><Download className="w-3.5 h-3.5" /> Download spreadsheet</button>
-          <button type="button" onClick={startDay} className={`${btn} border border-blue-300 bg-blue-50 text-blue-800 inline-flex items-center gap-1.5`} data-testid="doclog-add-day">Add a day (one total)</button>
+          <button type="button" onClick={() => startDay()} className={`${btn} border border-blue-300 bg-blue-50 text-blue-800 inline-flex items-center gap-1.5`} data-testid="doclog-add-day">Add a day (one total)</button>
           <button type="button" onClick={startVisit} className={primary}><Plus className="w-4 h-4" /> Add visit</button>
         </div>
       </div>
@@ -484,6 +485,16 @@ export default function DocLog({ api, showToast, userName = "", binSignal = 0 })
         </div>
       ) : (
         <>
+          {expected.length > 0 && (
+            <section aria-label="Usually today" data-testid="usual-today" className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm">
+              <p className="font-semibold text-blue-900">You usually visit on {weekdayName(new Date().getDay())}s. Nothing logged yet today:</p>
+              <ul className="mt-2 flex flex-wrap gap-2">{expected.map((c) => (
+                <li key={c.id} className="flex items-center gap-2 bg-white border border-blue-200 rounded-full pl-3 pr-1 py-1">
+                  <span className="text-xs font-bold text-ink">{c.name}</span>
+                  <button type="button" onClick={() => startDay(c.id)} className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-700 text-white">Add the day</button>
+                </li>))}</ul>
+            </section>
+          )}
           <div>
             <label htmlFor="dl-month" className="sr-only">Month</label>
             <select id="dl-month" value={ym} onChange={(e) => setYm(e.target.value)} className="px-3 py-2 border border-rule rounded-lg bg-white text-sm font-semibold text-slate-700">
@@ -601,7 +612,7 @@ export default function DocLog({ api, showToast, userName = "", binSignal = 0 })
       {dialog && dialog.kind === "profile" && <ProfileDialog profile={profile} onSave={saveProfile} onClose={() => setDialog(null)} />}
       {dialog && dialog.kind === "clinics" && <ClinicsDialog clinics={clinics} onSave={saveClinic} onDelete={deleteClinic} onClose={() => setDialog(null)} />}
       {dialog && dialog.kind === "visit" && <VisitDialog clinics={clinics} visits={visits} profile={profile} initial={dialog.initial} onSave={saveVisit} onClose={() => setDialog(null)} onClinics={() => setDialog({ kind: "clinics" })} />}
-      {dialog && dialog.kind === "day" && <DayDialog clinics={clinics} visits={visits} profile={profile} onSave={saveDay} onClose={() => setDialog(null)} />}
+      {dialog && dialog.kind === "day" && <DayDialog clinics={clinics} visits={visits} profile={profile} startClinic={dialog.clinicId} onSave={saveDay} onClose={() => setDialog(null)} />}
       {dialog && dialog.kind === "receive" && <ReceiveDialog due={dialog.due} onSave={(p, m) => receive(dialog.due, p, m)} onClose={() => setDialog(null)} />}
     </div>
   );
