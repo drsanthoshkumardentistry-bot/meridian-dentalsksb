@@ -782,6 +782,7 @@ export default function App() {
     loadOverview().then((d) => { if (live && d) setAdminData(d); }).catch(() => {});
     return () => { live = false; };
   }, [isVerified, authUser?.uid]);
+  const [adminStart, setAdminStart] = useState("overview");
   const setAdminView = (open) => { setAdminOpen(open); try { sessionStorage.setItem("merident.admin", open ? "admin" : "clinic"); } catch { /* ignore */ } };
 
   useEffect(() => {
@@ -2384,7 +2385,7 @@ export default function App() {
   }
 
   if (adminData && adminOpen) {
-    return <AdminDashboard email={authUser.email} initial={adminData} onOpenApp={() => setAdminView(false)} onLogout={() => handleLogout()} />;
+    return <AdminDashboard email={authUser.email} user={authUser} startView={adminStart} initial={adminData} onOpenApp={() => setAdminView(false)} onLogout={() => handleLogout()} />;
   }
 
   const nowNext = diaryView(appointments, { view: "upcoming" }).find((a) => a.date === dateKey()) || null;
@@ -2517,7 +2518,7 @@ export default function App() {
               );
             })}
             {adminData && (
-              <button type="button" onClick={() => { setSidebarOpen(false); setAdminView(true); }} data-testid="back-to-admin" className="nav-item group w-full flex items-center gap-3 px-3.5 py-2.5 rounded-full text-[13px] font-medium text-blue-100/80 hover:text-white">
+              <button type="button" onClick={() => { setSidebarOpen(false); setAdminStart("profile"); setAdminView(true); }} data-testid="back-to-admin" className="nav-item group w-full flex items-center gap-3 px-3.5 py-2.5 rounded-full text-[13px] font-medium text-blue-100/80 hover:text-white">
                 <span className="nav-icon" title="Admin profile"><ShieldCheck className="w-4 h-4" /></span>
                 <span className="rail-label">Admin profile</span>
               </button>
