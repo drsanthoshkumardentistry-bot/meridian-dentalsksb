@@ -254,3 +254,55 @@ describe("DocLog: consultant share and statements", () => {
     expect(statementText({ visits: null, clinic: null })).toBe("");
   });
 });
+
+import { splitPaise, buildDay } from "../src/docLog.js";
+
+describe("DocLog: lump-sum day at a clinic", () => {
+  const day = (o = {}) => ({ clinicId: "C1", date: "2026-11-14", count: "5", total: "5000", treatment: "Consultation", ...o });
+  const ids = (i) => "D" + i;
+  it("splits money exactly, with no paise lost or invented", () => {
+    expect(splitPaise(500000, 5)).toEqual([100000, 100000, 100000, 100000, 100000]);
+    expect(splitPaise(10, 4)).toEqual([3, 3, 2, 2]);
+    expect(splitPaise(0, 3)).toEqual([0, 0, 0]);
+    for (const [t, n] of [[500001, 7], [1, 50], [999999999, 13], [333, 3]]) expect(splitPaise(t, n).reduce((a, b) => a + b, 0)).toBe(t);
+  });
+  it("turns Rs 5,000 for 5 patients into five visits of Rs 1,000", () => {
+    const r = buildDay(day(), ids, clinics, NOW);
+    expect(r.visits).toHaveLength(5);
+    expect(r.visits.map((v) => v.feeP)).toEqual([100000, 100000, 100000, 100000, 100000]);
+    expect(r.visits.map((v) => v.patient)).toEqual(["Patient 1", "Patient 2", "Patient 3", "Patient 4", "Patient 5"]);
+    expect(r.visits[0]).toMatchObject({ clinicId: "C1", clinicName: "Sri Sai Dental", date: "2026-11-14", treatment: "Consultation", status: "completed", receivedP: 0 });
+    expect(r.visits[0].note).toBe("Day total Rs 5000 for 5 patients");
+    expect(summary(r.visits, "2026-11").pendingP).toBe(500000);
+  });
+  it("uses typed names and pads with numbered patients when the count is higher", () => {
+    const r = buildDay(day({ count: "3", names: "Ramesh\n\n Latha  " }), ids, clinics, NOW);
+    expect(r.visits.map((v) => v.patient)).toEqual(["Ramesh", "Latha", "Patient 3"]);
+    expect(buildDay(day({ count: "", names: "A\nB" }), ids, clinics, NOW).visits).toHaveLength(2);
+  });
+  it("splits received money the same way and never lets a visit be over-paid", () => {
+    for (const [t, rcv, n] of [["10", "9", 4], ["5000", "5000", 5], ["0.07", "0.05", 3], ["1000", "333.33", 7]]) {
+      const r = buildDay(day({ total: t, received: rcv, count: String(n) }), ids, clinics, NOW);
+      expect(r.error).toBeUndefined();
+      const fee = r.visits.reduce((a, v) => a + v.feeP, 0), got = r.visits.reduce((a, v) => a + v.receivedP, 0);
+      expect(fee).toBe(Math.round(Number(t) * 100));
+      expect(got).toBe(Math.round(Number(rcv) * 100));
+      r.visits.forEach((v) => expect(v.receivedP).toBeLessThanOrEqual(v.feeP));
+    }
+    expect(buildDay(day({ received: "2000", payMode: "upi" }), ids, clinics, NOW).visits[0].payMode).toBe("upi");
+  });
+  it("refuses bad input with a clear message", () => {
+    expect(buildDay(day({ count: "", names: "" }), ids, clinics, NOW).error).toMatch(/how many patients/);
+    expect(buildDay(day({ count: "2.5" }), ids, clinics, NOW).error).toMatch(/whole number/);
+    expect(buildDay(day({ count: "51" }), ids, clinics, NOW).error).toMatch(/up to 50/);
+    expect(buildDay(day({ total: "-5" }), ids, clinics, NOW).error).toMatch(/total/);
+    expect(buildDay(day({ total: "99999999999" }), ids, clinics, NOW).error).toMatch(/too large/);
+    expect(buildDay(day({ received: "6000" }), ids, clinics, NOW).error).toMatch(/more than the day/);
+    expect(buildDay(day({ clinicId: "nope" }), ids, clinics, NOW).error).toMatch(/clinic/);
+    expect(buildDay(day({ date: "2026-02-30" }), ids, clinics, NOW).error).toMatch(/date/);
+    expect(buildDay(null, ids, clinics, NOW).error).toBeTruthy();
+  });
+  it("allows a free day (total 0)", () => {
+    expect(buildDay(day({ total: "" }), ids, clinics, NOW).visits.every((v) => v.feeP === 0)).toBe(true);
+  });
+});

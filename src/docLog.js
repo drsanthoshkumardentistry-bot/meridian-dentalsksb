@@ -111,6 +111,50 @@ export function buildVisit(form, id, clinics, now = new Date()) {
   };
 }
 
+export const MAX_DAY_PATIENTS = 50;
+
+/** Splits whole paise into n parts that add up exactly; the first parts take the extra paise. */
+export const splitPaise = (total, n) => {
+  const t = Math.max(0, Math.round(total || 0));
+  const k = Math.max(1, Math.floor(n || 1));
+  const base = Math.floor(t / k);
+  const extra = t - base * k;
+  return Array.from({ length: k }, (_, i) => base + (i < extra ? 1 : 0));
+};
+
+/**
+ * A clinic pays one lump sum for a whole day (for example Rs 5,000 for five patients). This turns that day into one visit
+ * per patient, with the total split evenly (to the paise) and any money received split the same way, so dues, statements
+ * and the spreadsheet keep working. Returns { error } or { visits, perPatientP }.
+ */
+export function buildDay(form, makeId, clinics, now = new Date()) {
+  const names = String((form && form.names) || "").split(/\n/).map((x) => clean(x, 80)).filter(Boolean);
+  const asked = Number(form && form.count);
+  if (form && form.count !== "" && form.count != null && (!Number.isInteger(asked) || asked < 0)) return { error: "Enter the number of patients as a whole number." };
+  const n = Math.max(Number.isInteger(asked) ? asked : 0, names.length);
+  if (n < 1) return { error: "Enter how many patients you saw, or type their names." };
+  if (n > MAX_DAY_PATIENTS) return { error: `A day can have up to ${MAX_DAY_PATIENTS} patients.` };
+  const total = form.total === "" || form.total == null ? 0 : toPaise(form.total);
+  if (!Number.isFinite(total) || total < 0) return { error: "Enter the day's total as an amount of 0 or more." };
+  if (total > MAX_AMOUNT_P) return { error: "That total is too large. Check the zeros." };
+  const received = form.received === "" || form.received == null ? 0 : toPaise(form.received);
+  if (!Number.isFinite(received) || received < 0) return { error: "Enter the amount received as 0 or more." };
+  if (received > total) return { error: "The amount received is more than the day's total." };
+  const fees = splitPaise(total, n);
+  const recs = splitPaise(received, n);
+  const note = clean(`Day total Rs ${(total / 100).toFixed(2).replace(/\.00$/, "")} for ${n} patient${n === 1 ? "" : "s"}${form.note ? ". " + clean(form.note, 200) : ""}`, 300);
+  const visits = [];
+  for (let i = 0; i < n; i++) {
+    const r = buildVisit({
+      clinicId: form.clinicId, date: form.date, patient: names[i] || `Patient ${i + 1}`, treatment: form.treatment || "Consultation", status: "completed",
+      fee: fees[i], received: recs[i], payMode: form.payMode, payOther: form.payOther, note,
+    }, makeId(i), clinics, now);
+    if (r.error) return { error: r.error };
+    visits.push(r.visit);
+  }
+  return { visits, perPatientP: fees[n - 1] };
+}
+
 export const pendingP = (v) => Math.max(0, (v.feeP || 0) - (v.receivedP || 0));
 /** "paid", "part", "pending", or "free" when there was no fee. */
 export const paymentState = (v) => (!(v.feeP > 0) ? "free" : pendingP(v) === 0 ? "paid" : (v.receivedP || 0) > 0 ? "part" : "pending");
