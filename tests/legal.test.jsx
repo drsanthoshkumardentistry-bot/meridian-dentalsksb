@@ -30,6 +30,6 @@ describe("legal pages", () => {
   });
   it("covers what the app really does", () => {
     const text = JSON.stringify([PRIVACY, TERMS]);
-    for (const w of ["Firebase", "Vercel", "WhatsApp", "consent", "download a full copy", "delete", "Connect", "Coimbatore"]) expect(text).toContain(w);
+    for (const w of ["Firebase", "Cloudflare", "WhatsApp", "consent", "download a full copy", "delete", "Connect", "Coimbatore"]) expect(text).toContain(w);
   });
 });
