@@ -38,7 +38,7 @@ describe("PlanCard", () => {
     expect(screen.getByTestId("plan-card").textContent).toMatch(/trial run/);
     expect(screen.getByTestId("plan-card").textContent).toMatch(/nobody is being charged/);
     fireEvent.click(screen.getByLabelText("Pro plan"));
-    const href = screen.getByText(/Tell us you are interested/).getAttribute("href");
+    const href = screen.getByText(/Message us on WhatsApp/).getAttribute("href");
     expect(decodeURIComponent(href)).toContain("Pro plan");
     expect(decodeURIComponent(href)).toContain("Smile Dental");
   });
