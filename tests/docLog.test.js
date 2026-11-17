@@ -306,3 +306,32 @@ describe("DocLog: lump-sum day at a clinic", () => {
     expect(buildDay(day({ total: "" }), ids, clinics, NOW).visits.every((v) => v.feeP === 0)).toBe(true);
   });
 });
+
+import { usualDays, expectedToday, weekdayName } from "../src/docLog.js";
+
+describe("DocLog: usual visiting days", () => {
+  // 2026-11-14 is a Saturday. Thursdays: 5, 12 Nov; 29 Oct; 22 Oct. Mondays: 9 Nov, 2 Nov.
+  const at = (date, clinicId = "C1") => ({ id: date + clinicId, clinicId, date });
+  const vis = ["2026-11-12", "2026-11-05", "2026-10-29", "2026-10-22", "2026-11-09", "2026-11-02"].map((d) => at(d));
+  it("finds a weekday seen on at least 3 different dates in the last 90 days", () => {
+    expect(usualDays(vis, "C1", "2026-11-14")).toEqual([4]);
+    expect(usualDays(vis, "C2", "2026-11-14")).toEqual([]);
+    expect(usualDays([...vis, ...vis], "C1", "2026-11-14")).toEqual([4]);
+    expect(usualDays([at("2026-11-12"), at("2026-11-12"), at("2026-11-12")], "C1", "2026-11-14")).toEqual([]);
+    expect(usualDays(vis, "C1", "2027-06-01")).toEqual([]);
+    expect(usualDays(null, "C1", "2026-11-14")).toEqual([]);
+  });
+  it("lists Monday before Sunday", () => {
+    const more = ["2026-11-01", "2026-10-25", "2026-10-18", "2026-11-09", "2026-11-02", "2026-10-26"].map((d) => at(d));
+    expect(usualDays(more, "C1", "2026-11-14")).toEqual([1, 0]);
+  });
+  it("suggests the clinic on its usual weekday until the day is logged", () => {
+    const cl2 = [{ id: "C1", name: "Sri Sai" }, { id: "C2", name: "Smile" }];
+    expect(expectedToday(vis, cl2, "2026-11-19").map((c) => c.id)).toEqual(["C1"]);
+    expect(expectedToday([...vis, at("2026-11-19")], cl2, "2026-11-19")).toEqual([]);
+    expect(expectedToday(vis, cl2, "2026-11-18")).toEqual([]);
+    expect(expectedToday(vis, cl2, "bad")).toEqual([]);
+    expect(expectedToday(vis, null, "2026-11-19")).toEqual([]);
+  });
+  it("names weekdays", () => { expect(weekdayName(0)).toBe("Sunday"); expect(weekdayName(4)).toBe("Thursday"); expect(weekdayName(9)).toBe(""); });
+});

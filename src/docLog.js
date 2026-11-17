@@ -155,6 +155,25 @@ export function buildDay(form, makeId, clinics, now = new Date()) {
   return { visits, perPatientP: fees[n - 1] };
 }
 
+const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+export const weekdayName = (n) => WEEKDAYS[n] || "";
+const weekdayOf = (s) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d).getDay(); };
+
+/** The weekdays (0 = Sunday) a clinic is usually visited: a weekday with at least 3 different visit dates in the last 90 days. */
+export function usualDays(visits, clinicId, today) {
+  const dates = new Set(list(visits).filter((v) => v.clinicId === clinicId && validDate(v.date) && daysBetween(v.date, today) >= 0 && daysBetween(v.date, today) <= 90).map((v) => v.date));
+  const count = {};
+  for (const d of dates) { const w = weekdayOf(d); count[w] = (count[w] || 0) + 1; }
+  return Object.keys(count).map(Number).filter((w) => count[w] >= 3).sort((a, b) => ((a + 6) % 7) - ((b + 6) % 7));
+}
+
+/** Clinics the doctor usually visits on today's weekday and has not logged yet today. */
+export function expectedToday(visits, clinics, today) {
+  if (!validDate(today)) return [];
+  const w = weekdayOf(today);
+  return (Array.isArray(clinics) ? clinics : []).filter((c) => c && c.id && usualDays(visits, c.id, today).includes(w) && !list(visits).some((v) => v.clinicId === c.id && v.date === today));
+}
+
 export const pendingP = (v) => Math.max(0, (v.feeP || 0) - (v.receivedP || 0));
 /** "paid", "part", "pending", or "free" when there was no fee. */
 export const paymentState = (v) => (!(v.feeP > 0) ? "free" : pendingP(v) === 0 ? "paid" : (v.receivedP || 0) > 0 ? "part" : "pending");

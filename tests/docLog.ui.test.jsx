@@ -294,3 +294,21 @@ describe("DocLog: a day paid as one total", () => {
     expect(m.dl.saveVisits).not.toHaveBeenCalled();
   });
 });
+
+describe("DocLog: usual days", () => {
+  it("offers 'Add the day' for a clinic usually visited today and opens it with that clinic chosen", async () => {
+    const dk = (n) => { const d = new Date(); d.setDate(d.getDate() - 7 * n); return dateKey(d); };
+    const clinics2 = [clinic, { ...clinic, id: "C2", name: "Smile Care" }];
+    const visits = [1, 2, 3].map((n) => visit({ id: "H" + n, clinicId: "C2", clinicName: "Smile Care", date: dk(n), feeP: 0 }));
+    mount({ clinics: clinics2, visits });
+    const box = await screen.findByTestId("usual-today");
+    expect(box.textContent).toContain("Smile Care");
+    fireEvent.click(within(box).getByText("Add the day"));
+    expect(within(screen.getByRole("dialog")).getByLabelText("Clinic").value).toBe("C2");
+  });
+  it("shows nothing when today is not a usual day", async () => {
+    mount({ clinics: [clinic], visits: [visit()] });
+    await screen.findByTestId("doclog-summary");
+    expect(screen.queryByTestId("usual-today")).toBeNull();
+  });
+});
