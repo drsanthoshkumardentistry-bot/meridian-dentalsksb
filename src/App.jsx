@@ -2591,7 +2591,7 @@ export default function App() {
       {/* --- WORKSPACE --- */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto work-panel">
         <AnnouncementBanner />
-        <header className="h-16 bg-white/55 backdrop-blur-md border-b border-white/70 px-3 sm:px-6 flex items-center justify-between gap-2 sticky top-0 z-30">
+        <header className="h-16 bg-white/95 border-b border-white/70 px-3 sm:px-6 flex items-center justify-between gap-2 sticky top-0 z-30">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0 shrink">
             <button
               onClick={() => setSidebarOpen(true)}

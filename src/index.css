@@ -320,11 +320,10 @@ main .bg-white.rounded-xl.border { box-shadow: 0 1px 2px rgba(17, 24, 39, 0.05),
     radial-gradient(50% 45% at 6% 30%, rgba(147, 197, 253, 0.3) 0%, transparent 70%),
     radial-gradient(55% 45% at 85% 95%, rgba(191, 219, 254, 0.35) 0%, transparent 70%),
     linear-gradient(160deg, #f4f8ff 0%, #eaf1fc 45%, #dbe7f8 100%);
-  background-attachment: fixed;
 }
+/* Plain, mostly-solid white: a fixed background and a blur behind every section made long pages (Settings) repaint blank on laptops. */
 main section.bg-white {
-  background-color: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(6px);
+  background-color: rgba(255, 255, 255, 0.95);
 }
 
 /* Pop-up windows: start at the top and scroll when taller than the screen. Plain centring pushed the top out of reach. */
