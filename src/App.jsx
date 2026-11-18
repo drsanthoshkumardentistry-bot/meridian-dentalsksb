@@ -1333,7 +1333,7 @@ export default function App() {
       guardianPhone: newPatientForm.guardianPhone ? normalizePhone(newPatientForm.guardianPhone) : "",
       emergencyPhone: newPatientForm.emergencyPhone ? normalizePhone(newPatientForm.emergencyPhone) : "",
       abhaNumber: digitsOnly(newPatientForm.abhaNumber),
-      consent: { treatment: false, whatsapp: false, recordedAt: null },
+      consent: { treatment: false, whatsapp: true, recordedAt: null },
       systemic: {},
       habits: {},
       registeredDate: new Date().toLocaleDateString("en-IN"),
@@ -6018,7 +6018,7 @@ export default function App() {
               </div>
             </details>
 
-            <p className="text-[11px] text-slate-500" data-testid="consent-later">Consent is not asked here. Record it later in Patient details or with a consent form. WhatsApp messages stay off until you switch them on for that patient.</p>
+            <p className="text-[11px] text-slate-500" data-testid="consent-later">Consent is not asked here. Record it later in Patient details or with a consent form. WhatsApp reminders and prescriptions are on for every patient. Switch them off in Patient details for anyone who says no.</p>
             <p className="text-[10px] text-slate-500">Only collect what you need. Never enter Aadhaar numbers.</p>
 
             <div className="pt-2 flex justify-end gap-2">

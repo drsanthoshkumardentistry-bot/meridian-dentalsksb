@@ -74,7 +74,7 @@ describe("demographics and required data", () => {
     await waitFor(() => expect(stored("patients").length).toBe(1));
     const p = stored("patients")[0];
     expect(p.phone).toBe("9876543210");
-    expect(p.consent).toEqual({ treatment: false, whatsapp: false, recordedAt: null }); // recorded later, on purpose
+    expect(p.consent).toEqual({ treatment: false, whatsapp: true, recordedAt: null }); // WhatsApp on by default; treatment consent recorded later
     expect(p.id).toMatch(/^P-[0-9a-z]{8,}/);
     expect(p.city).toBe("Coimbatore");
     fireEvent.click(await screen.findByText("Patient Details"));
