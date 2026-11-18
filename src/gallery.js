@@ -64,3 +64,13 @@ export const fileDateKey = (file, now = new Date()) => {
   const k = dateKey(new Date(t));
   return k > dateKey(now) ? dateKey(now) : k;
 };
+
+const IMAGE_NAME = /\.(jpe?g|png|bmp|tiff?|webp)$/i;
+/** The newest pictures in a folder listing: image files only, saved in the last few days, newest first. */
+export const recentImageFiles = (files = [], now = new Date(), days = 3, max = 24) => {
+  const cutoff = now.getTime() - days * 24 * 60 * 60 * 1000;
+  return Array.from(files || [])
+    .filter((f) => f && IMAGE_NAME.test(String(f.name || "")) && Number(f.lastModified) >= cutoff && Number(f.lastModified) <= now.getTime() + 60000)
+    .sort((a, b) => b.lastModified - a.lastModified)
+    .slice(0, max);
+};
