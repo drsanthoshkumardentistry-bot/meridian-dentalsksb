@@ -40,21 +40,19 @@ async function fillPatient(form, o = {}) {
   type(input(form, "Age"), o.age ?? "34");
   type(input(form, "Gender"), o.gender ?? "Female");
   type(input(form, "WhatsApp Phone"), o.phone ?? "+91 98765 43210");
-  if (o.consent !== false) fireEvent.click(within(form).getByLabelText(/agrees to dental examination/i));
 }
 
 describe("demographics and required data", () => {
-  it("validates patient registration, guardian rule and consent", async () => {
+  it("validates patient registration and the guardian rule; no consent ticks on the form", async () => {
     await openApp();
     nav("Patients & Odontogram");
     fireEvent.click(await screen.findByText("Add Patient"));
     const form = (await screen.findByText("Add New Patient")).closest("form");
-    await fillPatient(form, { consent: false });
-    fireEvent.submit(form);
-    expect(await screen.findByText(/Consent for examination/i)).toBeTruthy();
-    expect(stored("patients").length).toBe(0);
+    await fillPatient(form);
+    expect(within(form).queryByLabelText(/agrees to dental examination/i)).toBeNull(); // no consent ticks on the form
+    expect(within(form).queryByLabelText(/agrees to receive appointment reminders/i)).toBeNull();
+    expect(within(form).getByTestId("consent-later")).toBeTruthy();
     type(input(form, "WhatsApp Phone"), "12345");
-    fireEvent.click(within(form).getByLabelText(/agrees to dental examination/i));
     fireEvent.submit(form);
     expect(await screen.findByText(/valid 10-digit Indian mobile/i)).toBeTruthy();
     type(input(form, "WhatsApp Phone"), "9876543210");
@@ -65,23 +63,18 @@ describe("demographics and required data", () => {
     expect(stored("patients").length).toBe(0);
   });
 
-  it("registers an adult with clean phone, consent record and unique id; details are editable", async () => {
+  it("registers an adult with clean phone and unique id, consent left to record later; details are editable", async () => {
     await openApp();
     nav("Patients & Odontogram");
     fireEvent.click(await screen.findByText("Add Patient"));
     const form = (await screen.findByText("Add New Patient")).closest("form");
     await fillPatient(form);
     type(input(form, "City"), "Coimbatore");
-    const wa = within(form).getByLabelText(/agrees to receive appointment reminders/i);
-    expect(wa.checked).toBe(false); // WhatsApp consent must be ticked on purpose
-    fireEvent.click(wa);
     fireEvent.submit(form);
     await waitFor(() => expect(stored("patients").length).toBe(1));
     const p = stored("patients")[0];
     expect(p.phone).toBe("9876543210");
-    expect(p.consent.treatment).toBe(true);
-    expect(p.consent.whatsapp).toBe(true);
-    expect(typeof p.consent.recordedAt).toBe("string");
+    expect(p.consent).toEqual({ treatment: false, whatsapp: false, recordedAt: null }); // recorded later, on purpose
     expect(p.id).toMatch(/^P-[0-9a-z]{8,}/);
     expect(p.city).toBe("Coimbatore");
     fireEvent.click(await screen.findByText("Patient Details"));
@@ -311,6 +304,7 @@ describe("demographics and required data", () => {
     await openApp();
     nav("Patients & Odontogram");
     fireEvent.click(await screen.findByText("Chart Patient"));
+    fireEvent.click(await screen.findByRole("button", { name: "Choose a finding first" }));
     fireEvent.click(await screen.findByRole("radio", { name: /Caries/ }));
     const tooth16 = () => screen.getByLabelText(/^Tooth 16, Upper right first molar/);
     fireEvent.click(tooth16());
@@ -332,6 +326,7 @@ describe("demographics and required data", () => {
     await openApp();
     nav("Patients & Odontogram");
     fireEvent.click(await screen.findByText("Multi Patient"));
+    fireEvent.click(await screen.findByRole("button", { name: "Choose a finding first" }));
     fireEvent.click(await screen.findByRole("radio", { name: /RCT Done/ }));
     fireEvent.click(screen.getByLabelText(/^Tooth 36,/));
     await waitFor(() => expect(stored("patients")[0].toothConditions[36]).toEqual(["CAR", "RCT"]));
