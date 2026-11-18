@@ -43,7 +43,7 @@ export const toothInfo = (num) => {
 export const EXCLUSIVE = ["HLT", "MIS"];
 
 /** Which finding drives the tooth colour when several are present (most urgent first). */
-const DISPLAY_PRIORITY = ["FRC", "CAR", "RCT", "IMP", "CRW", "BRG", "RES", "PRM", "DEF", "MAL", "ATT", "SPC", "SCL", "BND", "MIS", "HLT"];
+const DISPLAY_PRIORITY = ["FRC", "CAR", "PAL", "ROT", "RCT", "IMP", "CRW", "BRG", "RES", "VNR", "SEA", "MOB", "IPC", "UNE", "RET", "SUP", "ABR", "PRM", "DEF", "MAL", "ATT", "SPC", "SCL", "BND", "MIS", "HLT"];
 
 /** A tooth's findings as an array. Old charts stored a single code string; both forms are read. */
 export const codesOf = (value) => (Array.isArray(value) ? value : value ? [value] : []);
@@ -122,6 +122,16 @@ export const STATUS_COLORS = {
   SCL: { fill: "#fef08a", stroke: "#ca8a04" },
   DEF: { fill: "#ddd6fe", stroke: "#7c3aed" },
   BND: { fill: "#e2e8f0", stroke: "#64748b" },
+  PAL: { fill: "#fecaca", stroke: "#b91c1c" },
+  ROT: { fill: "#e7e5e4", stroke: "#78716c" },
+  MOB: { fill: "#fed7aa", stroke: "#c2410c" },
+  IPC: { fill: "#d9f99d", stroke: "#65a30d" },
+  UNE: { fill: "#e0f2fe", stroke: "#0369a1" },
+  RET: { fill: "#fef3c7", stroke: "#b45309" },
+  SUP: { fill: "#fae8ff", stroke: "#a21caf" },
+  ABR: { fill: "#ffedd5", stroke: "#9a3412" },
+  SEA: { fill: "#dcfce7", stroke: "#15803d" },
+  VNR: { fill: "#ccfbf1", stroke: "#0f766e" },
   MIS: { fill: "none", stroke: "#94a3b8", dash: "3 3" }
 };
 
