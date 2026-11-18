@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CARIES_CLASSES, SURFACES, DEPTHS, surfaceName, cariesText } from "../caries.js";
 import { toothInfo, groupFindings, STATUS_COLORS, archLayout, codesOf, primaryCode, normalizeConditions } from "../odontogram.js";
 
@@ -14,7 +14,7 @@ function ToothImpl({ t, codes, labelOf, onTap, planned, activeLabel }) {
   const charted = codes.length > 0;
   const extras = codes.filter((c) => c !== code);
   const names = codes.map(labelOf).join(" + ");
-  const aria = `Tooth ${t.num}, ${info.name}, ${charted ? names : "healthy"}${planned ? ", treatment planned" : ""}. Press to toggle ${activeLabel}.`;
+  const aria = `Tooth ${t.num}, ${info.name}, ${charted ? names : "healthy"}${planned ? ", treatment planned" : ""}. ${activeLabel === "choose findings" ? "Press to choose its findings." : `Press to toggle ${activeLabel}.`}`;
   const label = names;
   const press = (e) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -119,9 +119,43 @@ export default function Odontogram({
 }) {
   const conditions = useMemo(() => normalizeConditions(rawConditions), [rawConditions]);
   const labelOf = useCallback((code) => palette.find((p) => p.id === code)?.label || code, [palette]);
+  const readMode = () => { try { return localStorage.getItem("merident.odo.mode") === "finding" ? "finding" : "tooth"; } catch { return "tooth"; } };
+  const [mode, setModeState] = useState(readMode);
+  const [full, setFull] = useState(false);
+  const [sheet, setSheet] = useState(null); // tooth number whose finding sheet is open
+  const setMode = (m) => { setModeState(m); setSheet(null); try { localStorage.setItem("merident.odo.mode", m); } catch { /* ignore */ } };
   const tapRef = useRef(onTap);
   tapRef.current = onTap;
-  const stableTap = useCallback((num) => tapRef.current(num), []); // the latest tap handler, without redrawing every tooth
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
+  // "Finding first" paints the chosen finding on every tooth you tap. "Tooth first" opens a sheet for that one tooth.
+  const stableTap = useCallback((num) => { if (modeRef.current === "finding") tapRef.current(num); else setSheet(num); }, []);
+
+  // Full screen: cover the page, lock page scrolling, ask the browser for real full screen where it allows it, and leave on Esc.
+  useEffect(() => {
+    if (!full) return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    try { const el = document.documentElement; if (el.requestFullscreen && !document.fullscreenElement) el.requestFullscreen().catch(() => {}); } catch { /* optional */ }
+    const onFs = () => { if (!document.fullscreenElement) setFull(false); };
+    const onKey = (e) => { if (e.key === "Escape") { if (sheetRef.current !== null) setSheet(null); else setFull(false); } };
+    document.addEventListener("fullscreenchange", onFs);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      document.removeEventListener("fullscreenchange", onFs);
+      document.removeEventListener("keydown", onKey);
+      try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {}); } catch { /* optional */ }
+    };
+  }, [full]);
+  const sheetRef = useRef(null);
+  sheetRef.current = sheet;
+  useEffect(() => {
+    if (full || sheet === null) return undefined;
+    const onKey = (e) => { if (e.key === "Escape") setSheet(null); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [full, sheet]);
   const active = palette.find((p) => p.id === activeStatus) || palette[0];
 
   const upper = useMemo(
@@ -135,16 +169,100 @@ export default function Odontogram({
   const findings = groupFindings(conditions, palette);
   const count = Object.keys(conditions).length;
 
+  const sheetInfo = sheet !== null ? toothInfo(sheet) : null;
+  const sheetCodes = sheet !== null ? codesOf(conditions[sheet]) : [];
+  const toggleOn = (code) => { if (sheet === null) return; if (onRemoveFinding) onRemoveFinding(sheet, code); };
+
+  const modeSwitch = (
+    <div role="group" aria-label="How to mark teeth" className="inline-flex rounded-lg border border-rule bg-white p-0.5 text-xs font-semibold">
+      {[["tooth", "Tap a tooth first"], ["finding", "Choose a finding first"]].map(([id, label]) => (
+        <button key={id} type="button" aria-pressed={mode === id} onClick={() => setMode(id)} className={`rounded-md px-2.5 py-1.5 ${mode === id ? "bg-ink text-white" : "text-slate-600 hover:bg-mist"}`}>{label}</button>
+      ))}
+    </div>
+  );
+
+  const findingChips = (
+    <div role="radiogroup" aria-label="Finding to apply" className="flex flex-wrap gap-1.5">
+      {palette.map((item) => {
+        const c = STATUS_COLORS[item.id] || STATUS_COLORS.HLT;
+        const selected = activeStatus === item.id;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            onClick={() => onSelectStatus(item.id)}
+            className={`inline-flex items-center gap-1.5 pl-2 pr-2.5 py-1.5 rounded-full text-xs border transition-colors ${
+              selected ? "bg-ink text-white border-ink font-bold" : "bg-white text-slate-700 border-rule hover:bg-mist font-medium"
+            }`}
+          >
+            <svg width="12" height="12" aria-hidden="true">
+              <rect x="1" y="1" width="10" height="10" rx="3.5" fill={c.fill} stroke={c.stroke} strokeWidth="1.5" strokeDasharray={c.dash} />
+            </svg>
+            {item.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  const chartSvg = (big) => (
+    <svg
+      viewBox="0 0 600 425"
+      role="group"
+      aria-label={isDeciduous ? "Primary dentition chart" : "Adult dentition chart"}
+      className={big ? "mx-auto block h-full w-full max-h-full select-none" : "w-full h-auto min-w-[520px] max-w-[760px] mx-auto block select-none"}
+    >
+      <text x="300" y="192" textAnchor="middle" fontSize="11" fill="#6b7fa8">Upper jaw</text>
+      <text x="300" y="212" textAnchor="middle" fontSize="12" fontWeight="700" fill="#0b1b3a">{mode === "finding" ? `Marking: ${active.label}` : sheet !== null ? `Tooth ${sheet} selected` : "Tap a tooth"}</text>
+      <text x="300" y="232" textAnchor="middle" fontSize="11" fill="#6b7fa8">Lower jaw</text>
+      <text x="10" y="212" fontSize="11" fill="#6b7fa8">Patient's right</text>
+      <text x="590" y="212" textAnchor="end" fontSize="11" fill="#6b7fa8">Patient's left</text>
+      {[...upper, ...lower].map((t) => (
+        <Tooth key={t.num} t={t} codes={conditions[t.num] || []} labelOf={labelOf} activeLabel={mode === "finding" ? active.label : "choose findings"} onTap={stableTap} planned={plannedTeeth.has(t.num)} />
+      ))}
+    </svg>
+  );
+
+  // One tooth's findings, all in one place: no scrolling back to a list above the chart.
+  const toothSheet = sheet !== null && (
+    <div role="dialog" aria-label={`Findings for tooth ${sheet}`} data-testid="tooth-sheet" className={`fixed inset-x-0 bottom-0 mx-auto w-full rounded-t-2xl border border-rule bg-white p-4 shadow-2xl overflow-y-auto ${full ? "z-[70] max-h-[58vh] md:inset-x-auto md:bottom-0 md:right-0 md:top-14 md:mx-0 md:max-h-none md:w-[24rem] md:rounded-none md:rounded-tl-2xl" : "z-40 max-w-2xl max-h-[60vh]"}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="font-display text-base font-bold text-ink">Tooth {sheet}</div>
+          <div className="text-xs text-slate-500">{sheetInfo.name}. Tap to add or remove. A tooth can have several findings.</div>
+        </div>
+        <button type="button" onClick={() => setSheet(null)} className="rounded-lg bg-ink px-4 py-2 text-xs font-bold text-white">Done</button>
+      </div>
+      <div className={`mt-3 grid grid-cols-2 gap-2 ${full ? "md:grid-cols-2" : "sm:grid-cols-3"}`} role="group" aria-label={`Findings on tooth ${sheet}`}>
+        {palette.map((item) => {
+          const c = STATUS_COLORS[item.id] || STATUS_COLORS.HLT;
+          const on = sheetCodes.includes(item.id);
+          return (
+            <button key={item.id} type="button" aria-pressed={on} onClick={() => toggleOn(item.id)} className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm ${on ? "border-ink bg-ink text-white font-bold" : "border-rule bg-white text-slate-800 hover:bg-mist"}`}>
+              <svg width="14" height="14" aria-hidden="true" className="shrink-0"><rect x="1" y="1" width="12" height="12" rx="4" fill={c.fill} stroke={c.stroke} strokeWidth="1.6" strokeDasharray={c.dash} /></svg>
+              <span className="min-w-0 flex-1">{item.label}</span>
+              {on && <span aria-hidden="true">✓</span>}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           <div className="font-display text-base font-bold text-ink">Dental chart</div>
           <div className="text-xs text-slate-500">
-            Pick a finding, then tap teeth to add it. A tooth can have several findings. Tap again to remove that one. Healthy and Missing stand alone.
+            {mode === "tooth"
+              ? "Tap a tooth, then choose its findings. A tooth can have several findings. Healthy and Missing stand alone."
+              : "Pick a finding, then tap teeth to add it. Tap again to remove that one. Healthy and Missing stand alone."}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-slate-500">{isDeciduous ? "Primary teeth (20)" : "Adult teeth (32)"}</span>
           <button
             type="button"
@@ -153,52 +271,37 @@ export default function Odontogram({
           >
             {isDeciduous ? "Switch to adult (32)" : "Switch to primary (20)"}
           </button>
+          <button type="button" onClick={() => { setSheet(null); setFull(true); }} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-ink text-white hover:bg-slate-800">Full screen</button>
         </div>
       </div>
 
-      {/* Finding picker */}
-      <div role="radiogroup" aria-label="Finding to apply" className="flex flex-wrap gap-1.5">
-        {palette.map((item) => {
-          const c = STATUS_COLORS[item.id] || STATUS_COLORS.HLT;
-          const selected = activeStatus === item.id;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              role="radio"
-              aria-checked={selected}
-              onClick={() => onSelectStatus(item.id)}
-              className={`inline-flex items-center gap-1.5 pl-2 pr-2.5 py-1.5 rounded-full text-xs border transition-colors ${
-                selected ? "bg-ink text-white border-ink font-bold" : "bg-white text-slate-700 border-rule hover:bg-mist font-medium"
-              }`}
-            >
-              <svg width="12" height="12" aria-hidden="true">
-                <rect x="1" y="1" width="10" height="10" rx="3.5" fill={c.fill} stroke={c.stroke} strokeWidth="1.5" strokeDasharray={c.dash} />
-              </svg>
-              {item.label}
-            </button>
-          );
-        })}
-      </div>
+      <div className="flex flex-wrap items-center gap-2">{modeSwitch}</div>
+
+      {/* Finding picker (only when you choose the finding first) */}
+      {mode === "finding" && !full && findingChips}
 
       {/* Chart */}
-      <div className="rounded-xl border border-rule bg-enamel p-3 sm:p-4 overflow-x-auto">
-        <svg
-          viewBox="0 0 600 425"
-          role="group"
-          aria-label={isDeciduous ? "Primary dentition chart" : "Adult dentition chart"}
-          className="w-full h-auto min-w-[520px] max-w-[760px] mx-auto block select-none"
-        >
-          <text x="300" y="192" textAnchor="middle" fontSize="11" fill="#6b7fa8">Upper jaw</text>
-          <text x="300" y="212" textAnchor="middle" fontSize="12" fontWeight="700" fill="#0b1b3a">Marking: {active.label}</text>
-          <text x="300" y="232" textAnchor="middle" fontSize="11" fill="#6b7fa8">Lower jaw</text>
-          <text x="10" y="212" fontSize="11" fill="#6b7fa8">Patient's right</text>
-          <text x="590" y="212" textAnchor="end" fontSize="11" fill="#6b7fa8">Patient's left</text>
-          {[...upper, ...lower].map((t) => (
-            <Tooth key={t.num} t={t} codes={conditions[t.num] || []} labelOf={labelOf} activeLabel={active.label} onTap={stableTap} planned={plannedTeeth.has(t.num)} />
-          ))}
-        </svg>
-      </div>
+      {full ? (
+        <p className="rounded-xl border border-dashed border-rule p-4 text-center text-xs text-slate-500">The chart is open in full screen.</p>
+      ) : (
+        <div className="rounded-xl border border-rule bg-enamel p-3 sm:p-4 overflow-x-auto">{chartSvg(false)}</div>
+      )}
+
+      {full && (
+        <div role="dialog" aria-label="Dental chart, full screen" className="fixed inset-0 z-[60] flex flex-col bg-white" data-testid="odo-full">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-rule px-3 py-2">
+            <div className="text-sm font-bold text-ink">Dental chart <span className="font-normal text-slate-500">{count > 0 ? `· ${count} ${count === 1 ? "tooth" : "teeth"} charted` : ""}</span></div>
+            <div className="flex flex-wrap items-center gap-2">
+              {modeSwitch}
+              <button type="button" onClick={onToggleDeciduous} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">{isDeciduous ? "Adult (32)" : "Primary (20)"}</button>
+              <button type="button" onClick={() => { setSheet(null); setFull(false); }} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-ink text-white">Exit full screen</button>
+            </div>
+          </div>
+          <div className={`min-h-0 flex-1 bg-enamel p-2 ${sheet !== null ? "pb-[58vh] md:pb-2 md:pr-[25rem]" : ""}`}>{chartSvg(true)}</div>
+          {mode === "finding" && <div className="shrink-0 border-t border-rule bg-white p-2 overflow-x-auto" data-testid="odo-dock"><div className="min-w-max sm:min-w-0">{findingChips}</div></div>}
+        </div>
+      )}
+      {toothSheet}
 
       {plannedTeeth.size > 0 && (
         <p className="flex items-center gap-2 text-xs text-slate-600">

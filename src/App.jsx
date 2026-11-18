@@ -589,7 +589,6 @@ const EMPTY_PATIENT_FORM = {
   emergencyName: "", emergencyPhone: "", abhaNumber: "",
   pregnancy: "Not applicable", chiefComplaint: "",
   conditions: "", allergies: "", medicalAlert: "",
-  consentTreatment: false, consentWhatsapp: false,
 };
 
 // Returns the first problem found, or an empty string when the form is valid
@@ -605,7 +604,6 @@ const validatePatientForm = (f) => {
   if (f.guardianPhone && !isValidMobile(f.guardianPhone)) return "Guardian phone must be a valid 10-digit mobile number";
   if (f.emergencyPhone && !isValidMobile(f.emergencyPhone)) return "Emergency contact phone must be a valid 10-digit mobile number";
   if (f.abhaNumber && !isValidAbha(f.abhaNumber)) return "ABHA number must have 14 digits";
-  if (!f.consentTreatment) return "Consent for examination, treatment and record keeping is required";
   return "";
 };
 
@@ -1326,7 +1324,7 @@ export default function App() {
       if (warn) { dupAckRef.current = dupKey; showToast(warn); return; }
     }
     dupAckRef.current = "";
-    const { consentTreatment, consentWhatsapp, ...formFields } = newPatientForm;
+    const formFields = newPatientForm;
     const created = {
       id: newId("P"),
       ...formFields,
@@ -1335,11 +1333,7 @@ export default function App() {
       guardianPhone: newPatientForm.guardianPhone ? normalizePhone(newPatientForm.guardianPhone) : "",
       emergencyPhone: newPatientForm.emergencyPhone ? normalizePhone(newPatientForm.emergencyPhone) : "",
       abhaNumber: digitsOnly(newPatientForm.abhaNumber),
-      consent: {
-        treatment: Boolean(consentTreatment),
-        whatsapp: Boolean(consentWhatsapp),
-        recordedAt: new Date().toISOString(),
-      },
+      consent: { treatment: false, whatsapp: false, recordedAt: null },
       systemic: {},
       habits: {},
       registeredDate: new Date().toLocaleDateString("en-IN"),
@@ -6024,27 +6018,7 @@ export default function App() {
               </div>
             </details>
 
-            <SectionTitle>Consent</SectionTitle>
-            <label className="flex items-start gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={newPatientForm.consentTreatment}
-                onChange={(e) => setNewPatientForm({ ...newPatientForm, consentTreatment: e.target.checked })}
-                className="mt-0.5 rounded text-blue-600 focus:ring-0"
-              />
-              <span className="text-slate-700">
-                The patient (or guardian) agrees to dental examination, treatment, and storage of this record. *
-              </span>
-            </label>
-            <label className="flex items-start gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={newPatientForm.consentWhatsapp}
-                onChange={(e) => setNewPatientForm({ ...newPatientForm, consentWhatsapp: e.target.checked })}
-                className="mt-0.5 rounded text-blue-600 focus:ring-0"
-              />
-              <span className="text-slate-700">The patient agrees to receive appointment reminders and prescriptions on WhatsApp. Tick only after asking.</span>
-            </label>
+            <p className="text-[11px] text-slate-500" data-testid="consent-later">Consent is not asked here. Record it later in Patient details or with a consent form. WhatsApp messages stay off until you switch them on for that patient.</p>
             <p className="text-[10px] text-slate-500">Only collect what you need. Never enter Aadhaar numbers.</p>
 
             <div className="pt-2 flex justify-end gap-2">

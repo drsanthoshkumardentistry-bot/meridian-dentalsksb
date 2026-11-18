@@ -66,7 +66,6 @@ describe("role-based logins in the app", () => {
     const form = (await screen.findByText("Add New Patient")).closest("form");
     const field = (label) => within(form).getAllByText(new RegExp("^" + label))[0].parentElement.querySelector("input,select");
     type(field("Full Name"), "Role Patient"); type(field("Age"), "30"); type(field("Gender"), "Female"); type(field("WhatsApp Phone"), "9876543210");
-    fireEvent.click(within(form).getByLabelText(/agrees to dental examination/i));
     fireEvent.submit(form);
     await waitFor(() => expect(h.writes.some((w) => w[1].startsWith("clinics/clinicA/patients/"))).toBe(true));
     // the member's own cache, never the owner's
@@ -125,7 +124,6 @@ describe("activity log", () => {
     const form = (await screen.findByText("Add New Patient")).closest("form");
     const field = (label) => within(form).getAllByText(new RegExp("^" + label))[0].parentElement.querySelector("input,select");
     type(field("Full Name"), name); type(field("Age"), "30"); type(field("Gender"), "Female"); type(field("WhatsApp Phone"), "9876543210");
-    fireEvent.click(within(form).getByLabelText(/agrees to dental examination/i));
     fireEvent.submit(form);
   };
 
