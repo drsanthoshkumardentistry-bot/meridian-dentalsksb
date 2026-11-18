@@ -22,7 +22,7 @@ import ActivityLog from "./components/ActivityLog.jsx";
 import { buildAuditEntry } from "./audit.js";
 import { writeAudit, watchAudit } from "./auditStore.js";
 import TeamCard from "./components/TeamCard.jsx";
-import { canRead, canWrite, navFor, NAV_BY_ROLE, firstScreen, branchScope, ROLE_LABEL, SCREENS, safeScreen } from "./roles.js";
+import { canRead, canWrite, navFor, NAV_BY_ROLE, firstScreen, branchScope, ROLE_LABEL, SCREENS, safeScreen, screenFromShortcut } from "./roles.js";
 import { isActiveMember, isPendingInvite, buildInvite, inviteMessage } from "./team.js";
 import { watchMyMembership, watchTeam, createInvite, acceptInvite, updateMember, removeMember } from "./teamStore.js";
 import BranchesCard from "./components/BranchesCard.jsx";
@@ -940,6 +940,11 @@ export default function App() {
   // Remember the open screen across a refresh (this tab only); a fresh sign-in starts on the Dashboard.
   const [, setBackupTick] = useState(0);
   const [activeNav, setActiveNav] = useState(() => {
+    const fromShortcut = typeof window !== "undefined" ? screenFromShortcut(window.location.search) : null;
+    if (fromShortcut) {
+      try { window.history.replaceState(null, "", window.location.pathname); } catch (e) { /* keep the address as it is */ }
+      return fromShortcut;
+    }
     try { const v = window.sessionStorage.getItem("merident_nav"); return v === "Today" ? "Appointments Diary" : safeScreen(v); } catch (e) { return "Dashboard"; }
   });
   useEffect(() => {

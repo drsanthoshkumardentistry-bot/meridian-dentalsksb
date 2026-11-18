@@ -1,7 +1,7 @@
 {
   "name": "MeriDent dental practice management",
   "short_name": "MeriDent",
-  "description": "Dental practice management for Indian clinics.",
+  "description": "Chart the tooth, bill the visit, remind the patient. Cloud practice management for dental clinics in India: odontogram, treatment plans, GST invoices with UPI QR, stock and WhatsApp reminders.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -25,6 +25,63 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "/icon-monochrome-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "monochrome"
+    }
+  ],
+  "id": "/",
+  "lang": "en-IN",
+  "dir": "ltr",
+  "orientation": "any",
+  "categories": [
+    "medical",
+    "business",
+    "productivity"
+  ],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Appointments",
+      "short_name": "Diary",
+      "description": "Open today's appointment diary",
+      "url": "/?go=appointments",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Patients",
+      "short_name": "Patients",
+      "description": "Find a patient or open the odontogram",
+      "url": "/?go=patients",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Billing",
+      "short_name": "Billing",
+      "description": "Invoices and payments",
+      "url": "/?go=billing",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }

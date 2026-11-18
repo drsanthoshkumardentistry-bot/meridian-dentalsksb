@@ -38,3 +38,9 @@ export const branchScope = (member) => (member && Array.isArray(member.branchIds
 // screen after leaving that mode) would show an empty page, so it falls back to the Dashboard.
 export const SCREENS = ["Dashboard", "Appointments Diary", "Patients & Odontogram", "OPG & Diagnosis Studio", "Billing & Invoices", "MeriDent Connect", "Memberships & Leads", "Reports", "Stock Maintenance", "Employee Roles & Roster", "Practice Profile", "Settings"];
 export const safeScreen = (v) => (typeof v === "string" && SCREENS.includes(v) ? v : "Dashboard");
+
+// Home-screen shortcuts (long-press the installed app icon) open the app with ?go=<name>.
+export const SHORTCUT_SCREENS = { appointments: "Appointments Diary", patients: "Patients & Odontogram", billing: "Billing & Invoices" };
+export const screenFromShortcut = (search) => {
+  try { return SHORTCUT_SCREENS[new URLSearchParams(search || "").get("go")] || null; } catch (e) { return null; }
+};
