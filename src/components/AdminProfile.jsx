@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import { Copy, Download, Plus, Trash2, Hospital, LogOut, Mail, StickyNote, ListChecks, Settings2, TrendingUp, MessageCircle, ShieldCheck, Rocket, UserRound } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Copy, Download, Plus, Trash2, Hospital, LogOut, Mail, StickyNote, ListChecks, Settings2, TrendingUp, MessageCircle, ShieldCheck, Rocket, UserRound, Megaphone } from "lucide-react";
 import UserAvatar from "./UserAvatar.jsx";
 import { clinicsCsv, requestsCsv, followUps, emailList, REFRESH_CHOICES, readLocal, writeLocal, cleanTodos, businessStats, goalProgress, TEMPLATES, fillTemplate, whatsappLink, LAUNCH_ITEMS, securityInfo } from "../adminTools.js";
 
@@ -21,7 +21,7 @@ function saveFile(name, text) {
 }
 
 /** Founder's own page: account, who to follow up with, exports, refresh speed, private to-dos and notes. */
-export default function AdminProfile({ user, email = "", data, now, every, onEvery, onToast, onOpenApp, onLogout }) {
+export default function AdminProfile({ announceLoad, announceSave, user, email = "", data, now, every, onEvery, onToast, onOpenApp, onLogout }) {
   const t0 = now || Date.now();
   const clinics = data ? data.clinics : [];
   const lists = useMemo(() => followUps(clinics, t0), [clinics, t0]);
@@ -29,6 +29,23 @@ export default function AdminProfile({ user, email = "", data, now, every, onEve
   const [draft, setDraft] = useState("");
   const [note, setNote] = useState(() => String(readLocal(NOTE_KEY, "")).slice(0, 2000));
   const [open, setOpen] = useState("");
+  const [ann, setAnn] = useState({ text: "", level: "info", live: false, busy: false, loaded: false });
+  useEffect(() => {
+    let alive = true;
+    if (announceLoad) announceLoad().then((a) => { if (alive) setAnn((x) => (x.touched ? { ...x, live: !!a.active, loaded: true } : { ...x, text: a.text || "", level: a.level || "info", live: !!a.active, loaded: true })); }).catch(() => { if (alive) setAnn((x) => ({ ...x, loaded: true })); });
+    return () => { alive = false; };
+  }, [announceLoad]);
+  const publish = async (text) => {
+    setAnn((x) => ({ ...x, busy: true }));
+    try {
+      const out = await announceSave({ text, level: ann.level });
+      setAnn((x) => ({ ...x, busy: false, live: !!out.active, text: out.text || "" }));
+      onToast(out.active ? "Published. Clinics see it within 10 minutes." : "Banner removed.");
+    } catch (e) {
+      setAnn((x) => ({ ...x, busy: false }));
+      onToast((e && e.message) || "Could not save.");
+    }
+  };
   const [details, setDetails] = useState(() => { const d = readLocal(DETAILS_KEY, {}); return { name: String((d && d.name) || "").slice(0, 60), phone: String((d && d.phone) || "").slice(0, 20) }; });
   const [goal, setGoal] = useState(() => String(readLocal(GOAL_KEY, "") || ""));
   const [launch, setLaunch] = useState(() => { const l = readLocal(LAUNCH_KEY, {}); return l && typeof l === "object" && !Array.isArray(l) ? l : {}; });
@@ -76,6 +93,22 @@ export default function AdminProfile({ user, email = "", data, now, every, onEve
         </div>
       </section>
 
+
+      {announceSave && (
+        <section aria-label="Announcement" className={card} data-testid="announcement-editor">
+          <h2 className="flex items-center gap-2 font-display text-base font-extrabold text-ink"><Megaphone className="h-4 w-4 text-brand-600" /> Message to all clinics</h2>
+          <p className="mt-1 text-[11px] text-slate-500">Shown as a banner at the top of every clinic's screen. Each clinic can dismiss it. {ann.live ? "A banner is live now." : "No banner is live."}</p>
+          <label htmlFor="ann-text" className="mt-3 block text-xs font-semibold text-slate-700">Banner message</label>
+          <textarea id="ann-text" rows={2} maxLength={240} value={ann.text} onChange={(e) => setAnn({ ...ann, text: e.target.value, touched: true })} placeholder="For example: MeriDent will be updated tonight at 11 pm. Please save your work." className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" />
+          <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500"><span>{ann.text.length}/240. Plain text only. Do not put patient details here.</span></div>
+          <div className="mt-2 flex flex-wrap items-end gap-2 text-xs">
+            <div><label htmlFor="ann-level" className="block font-semibold text-slate-700">Style</label>
+              <select id="ann-level" value={ann.level} onChange={(e) => setAnn({ ...ann, level: e.target.value, touched: true })} className="mt-1 rounded-lg border border-slate-300 bg-white px-2 py-2"><option value="info">Information (blue)</option><option value="success">Good news (green)</option><option value="warning">Important (amber)</option></select></div>
+            <button type="button" disabled={ann.busy || !ann.text.trim()} onClick={() => publish(ann.text)} className="rounded-lg bg-brand-600 px-3 py-2 font-semibold text-white disabled:opacity-50">Publish to all clinics</button>
+            <button type="button" disabled={ann.busy || !ann.live} onClick={() => publish("")} className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-semibold text-slate-700 disabled:opacity-50">Remove banner</button>
+          </div>
+        </section>
+      )}
 
       {stats && (
         <section aria-label="Business snapshot" className={card} data-testid="business-snapshot">
