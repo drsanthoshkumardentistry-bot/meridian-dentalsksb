@@ -1,10 +1,13 @@
 import React, { useMemo, useState } from "react";
-import { Copy, Download, Plus, Trash2, Hospital, LogOut, Mail, StickyNote, ListChecks, Settings2 } from "lucide-react";
+import { Copy, Download, Plus, Trash2, Hospital, LogOut, Mail, StickyNote, ListChecks, Settings2, TrendingUp, MessageCircle, ShieldCheck, Rocket, UserRound } from "lucide-react";
 import UserAvatar from "./UserAvatar.jsx";
-import { clinicsCsv, requestsCsv, followUps, emailList, REFRESH_CHOICES, readLocal, writeLocal, cleanTodos } from "../adminTools.js";
+import { clinicsCsv, requestsCsv, followUps, emailList, REFRESH_CHOICES, readLocal, writeLocal, cleanTodos, businessStats, goalProgress, TEMPLATES, fillTemplate, whatsappLink, LAUNCH_ITEMS, securityInfo } from "../adminTools.js";
 
 const TODO_KEY = "merident.admin.todos";
 const NOTE_KEY = "merident.admin.notes";
+const DETAILS_KEY = "merident.admin.details";
+const GOAL_KEY = "merident.admin.goal";
+const LAUNCH_KEY = "merident.admin.launch";
 const card = "rounded-2xl border border-rule bg-white/80 p-4 shadow-card";
 
 function saveFile(name, text) {
@@ -26,6 +29,17 @@ export default function AdminProfile({ user, email = "", data, now, every, onEve
   const [draft, setDraft] = useState("");
   const [note, setNote] = useState(() => String(readLocal(NOTE_KEY, "")).slice(0, 2000));
   const [open, setOpen] = useState("");
+  const [details, setDetails] = useState(() => { const d = readLocal(DETAILS_KEY, {}); return { name: String((d && d.name) || "").slice(0, 60), phone: String((d && d.phone) || "").slice(0, 20) }; });
+  const [goal, setGoal] = useState(() => String(readLocal(GOAL_KEY, "") || ""));
+  const [launch, setLaunch] = useState(() => { const l = readLocal(LAUNCH_KEY, {}); return l && typeof l === "object" && !Array.isArray(l) ? l : {}; });
+  const [tpl, setTpl] = useState(TEMPLATES[0][0]);
+  const [who, setWho] = useState("");
+  const stats = useMemo(() => businessStats(data), [data]);
+  const progress = stats ? goalProgress(stats.paidActive, goal) : null;
+  const security = securityInfo(user);
+  const message = fillTemplate((TEMPLATES.find((t) => t[0] === tpl) || TEMPLATES[0])[2], { name: who.trim(), sender: details.name.trim() });
+  const setDetail = (k, v) => { const next = { ...details, [k]: v }; setDetails(next); writeLocal(DETAILS_KEY, next); };
+  const tick = (id) => { const next = { ...launch, [id]: !launch[id] }; setLaunch(next); writeLocal(LAUNCH_KEY, next); };
 
   const copy = async (text, what) => {
     try { await navigator.clipboard.writeText(text); onToast(`Copied ${what}.`); } catch { onToast("Could not copy. Select the text and copy it yourself."); }
@@ -59,6 +73,43 @@ export default function AdminProfile({ user, email = "", data, now, every, onEve
           <button type="button" onClick={() => copy(email, "your email")} disabled={!email} className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-700 disabled:opacity-50"><Copy className="h-3.5 w-3.5" /> Copy email</button>
           <button type="button" onClick={onOpenApp} className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-700"><Hospital className="h-3.5 w-3.5" /> Open my clinic</button>
           <button type="button" onClick={onLogout} className="inline-flex items-center gap-1.5 rounded-full border border-red-300 bg-red-50 px-3 py-1.5 font-semibold text-red-700 hover:bg-red-600 hover:text-white"><LogOut className="h-3.5 w-3.5" /> Sign out</button>
+        </div>
+      </section>
+
+
+      {stats && (
+        <section aria-label="Business snapshot" className={card} data-testid="business-snapshot">
+          <h2 className="flex items-center gap-2 font-display text-base font-extrabold text-ink"><TrendingUp className="h-4 w-4 text-brand-600" /> Business snapshot</h2>
+          <dl className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4 text-center">
+            {[["Yearly value", `₹${Math.round(stats.yearlyValue).toLocaleString("en-IN")}`, "monthly value x 12"], ["Paying", `${stats.conversion}%`, `${stats.paidActive} of ${stats.total} clinics`], ["Lapsed", `${stats.churn}%`, "of clinics that ever paid"], ["Hours per clinic", String(stats.hoursPerClinic), "this week"]].map(([k, v, n]) => (
+              <div key={k} className="rounded-xl border border-rule bg-white p-3"><dd className="text-xl font-extrabold text-ink tabular-nums">{v}</dd><dt className="text-[11px] font-semibold text-slate-700">{k}</dt><div className="text-[10px] text-slate-500">{n}</div></div>
+            ))}
+          </dl>
+          <div className="mt-4">
+            <label htmlFor="admin-goal" className="block text-xs font-semibold text-slate-700">My goal: paying clinics</label>
+            <input id="admin-goal" type="number" inputMode="numeric" min="1" max="100000" value={goal} onChange={(e) => { const v = e.target.value.slice(0, 6); setGoal(v); writeLocal(GOAL_KEY, v); }} placeholder="For example 25" className="mt-1 w-32 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" />
+            {progress && (
+              <div className="mt-2" data-testid="goal-progress">
+                <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-emerald-500" style={{ width: `${progress.percent}%` }} /></div>
+                <p className="mt-1 text-xs text-slate-600">{progress.percent}% of the way. {progress.left === 0 ? "Goal reached." : `${progress.left} more paying clinic${progress.left === 1 ? "" : "s"} to go.`}</p>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      <section aria-label="Message templates" className={card}>
+        <h2 className="flex items-center gap-2 font-display text-base font-extrabold text-ink"><MessageCircle className="h-4 w-4 text-brand-600" /> Ready-made messages</h2>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <div><label htmlFor="tpl" className="block text-xs font-semibold text-slate-700">Message</label>
+            <select id="tpl" value={tpl} onChange={(e) => setTpl(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm">{TEMPLATES.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></div>
+          <div><label htmlFor="tpl-who" className="block text-xs font-semibold text-slate-700">Doctor's name</label>
+            <input id="tpl-who" maxLength={60} value={who} onChange={(e) => setWho(e.target.value)} placeholder="For example Dr Ravi" className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" /></div>
+        </div>
+        <p data-testid="template-preview" className="mt-3 whitespace-pre-wrap rounded-xl bg-slate-50 p-3 text-sm text-slate-800">{message}</p>
+        <div className="mt-2 flex flex-wrap gap-2 text-xs">
+          <button type="button" onClick={() => copy(message, "the message")} className="inline-flex items-center gap-1 rounded-lg bg-brand-600 px-3 py-2 font-semibold text-white"><Copy className="h-3.5 w-3.5" /> Copy message</button>
+          <a href={whatsappLink(message)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 font-semibold text-white"><MessageCircle className="h-3.5 w-3.5" /> Send on WhatsApp</a>
         </div>
       </section>
 
@@ -106,6 +157,41 @@ export default function AdminProfile({ user, email = "", data, now, every, onEve
           <p className="mt-1 text-[11px] text-slate-500">Saved on this device.</p>
         </section>
       </div>
+
+
+      <div className="grid gap-5 md:grid-cols-2">
+        <section aria-label="Your details" className={card}>
+          <h2 className="flex items-center gap-2 font-display text-base font-extrabold text-ink"><UserRound className="h-4 w-4 text-brand-600" /> Your details</h2>
+          <label htmlFor="admin-name" className="mt-3 block text-xs font-semibold text-slate-700">Name used when you sign messages</label>
+          <input id="admin-name" maxLength={60} value={details.name} onChange={(e) => setDetail("name", e.target.value)} placeholder="For example Santhoshkumar" className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" />
+          <label htmlFor="admin-phone" className="mt-3 block text-xs font-semibold text-slate-700">Your WhatsApp number</label>
+          <input id="admin-phone" type="tel" inputMode="tel" maxLength={20} value={details.phone} onChange={(e) => setDetail("phone", e.target.value.replace(/[^\d+ ]/g, ""))} placeholder="+91 ..." className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" />
+          <p className="mt-1 text-[11px] text-slate-500">Saved in this browser only.</p>
+        </section>
+
+        <section aria-label="Security" className={card}>
+          <h2 className="flex items-center gap-2 font-display text-base font-extrabold text-ink"><ShieldCheck className="h-4 w-4 text-brand-600" /> Sign-in and security</h2>
+          <dl className="mt-3 space-y-1.5 text-xs">
+            {[["Signed in with", security.method], ["Email verified", security.verified ? "Yes" : "Not shown"], ["This sign-in", security.lastSignIn], ["Account created", security.created]].map(([k, v]) => (
+              <div key={k} className="flex justify-between gap-3"><dt className="text-slate-500">{k}</dt><dd className="font-semibold text-ink text-right">{v}</dd></div>
+            ))}
+          </dl>
+          <p className="mt-3 text-[11px] text-slate-500">Admin access is checked on the server against the founder email list, so nobody else can open this page.</p>
+        </section>
+      </div>
+
+      <section aria-label="Launch checklist" className={card}>
+        <h2 className="flex items-center gap-2 font-display text-base font-extrabold text-ink"><Rocket className="h-4 w-4 text-brand-600" /> Launch checklist</h2>
+        <p className="mt-1 text-[11px] text-slate-500">{LAUNCH_ITEMS.filter(([id]) => launch[id]).length} of {LAUNCH_ITEMS.length} done. Saved in this browser only.</p>
+        <ul className="mt-3 divide-y divide-rule">
+          {LAUNCH_ITEMS.map(([id, text]) => (
+            <li key={id} className="flex items-center gap-3 py-2 text-sm">
+              <input type="checkbox" id={`launch-${id}`} checked={Boolean(launch[id])} onChange={() => tick(id)} className="h-4 w-4" />
+              <label htmlFor={`launch-${id}`} className={`min-w-0 flex-1 break-words ${launch[id] ? "text-slate-400 line-through" : "text-ink"}`}>{text}</label>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <section aria-label="My to-do list" className={card}>
         <h2 className="flex items-center gap-2 font-display text-base font-extrabold text-ink"><ListChecks className="h-4 w-4 text-brand-600" /> My to-do list</h2>

@@ -70,3 +70,60 @@ export function sortClinics(rows = [], key = "seen") {
   };
   return [...rows].sort(by[key] || by.seen);
 }
+
+const pct = (a, b) => (b > 0 ? Math.round((a / b) * 100) : 0);
+/** Business numbers worked out from the overview. Guards every division. */
+export function businessStats(data) {
+  if (!data || !data.billing || !data.users) return null;
+  const { paidActive = 0, expired = 0, monthlyValue = 0 } = data.billing;
+  const total = data.users.total || 0;
+  const hoursWeek = (data.presence && data.presence.hoursWeek) || 0;
+  return {
+    yearlyValue: monthlyValue * 12,
+    conversion: pct(paidActive, total),
+    churn: pct(expired, paidActive + expired),
+    hoursPerClinic: total > 0 ? Math.round((hoursWeek / total) * 10) / 10 : 0,
+    total, paidActive,
+  };
+}
+
+export const goalProgress = (paying, target) => {
+  const t = Math.floor(Number(target));
+  if (!(t > 0)) return null;
+  return { target: t, percent: Math.min(100, pct(paying, t)), left: Math.max(0, t - paying) };
+};
+
+export const TEMPLATES = [
+  ["welcome", "Welcome a new clinic", "Hello {name}, welcome to MeriDent. This is {sender} from MeriDent. If you want a quick walkthrough of patients, billing and the diary, reply here and I will set up a short call."],
+  ["quiet", "Check in on a quiet clinic", "Hello {name}, I noticed you have not opened MeriDent for a while. Is anything confusing or missing? Tell me and I will help you get set up."],
+  ["renewal", "Remind about renewal", "Hello {name}, your MeriDent plan ends soon. To keep everything running, you can renew from Settings, Plan in the app. Reply here if you need help."],
+  ["paid", "Confirm payment received", "Hello {name}, thank you. We received your payment and your MeriDent plan is active. Reply here any time you need help."],
+];
+const DEFAULTS = { name: "doctor", sender: "the MeriDent team" };
+export const fillTemplate = (text, vars = {}) => String(text).replace(/\{(\w+)\}/g, (m, k) => (vars[k] ? String(vars[k]).slice(0, 60) : DEFAULTS[k] || m));
+export const whatsappLink = (text) => `https://wa.me/?text=${encodeURIComponent(text)}`;
+
+export const LAUNCH_ITEMS = [
+  ["resend", "Add the 4 Resend email records in Cloudflare DNS"],
+  ["founder", "Check FOUNDER_EMAILS contains your sign-in email"],
+  ["backup", "Add the FIREBASE_SERVICE_ACCOUNT secret on GitHub, then run the first backup"],
+  ["upi", "Set your UPI ID before turning on paid plans"],
+  ["sentry", "Add the Sentry error-tracking key"],
+  ["budget", "Set Firebase and Cloudflare budget alerts"],
+  ["legal", "Have a lawyer read the privacy and terms pages"],
+  ["domain", "Renew the domain before 18 Oct 2027"],
+];
+
+const PROVIDERS = { "google.com": "Google", password: "Email and password", "apple.com": "Apple" };
+/** What the sign-in session looks like, from the Firebase user object. Missing parts become "Not known". */
+export function securityInfo(user) {
+  const u = user || {};
+  const p = Array.isArray(u.providerData) && u.providerData[0] ? u.providerData[0].providerId : "";
+  const when = (v) => { const t = Date.parse(v); return Number.isFinite(t) ? new Date(t).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "Not known"; };
+  return {
+    method: PROVIDERS[p] || (p ? p : "Not known"),
+    verified: u.emailVerified === true,
+    lastSignIn: when(u.metadata && u.metadata.lastSignInTime),
+    created: when(u.metadata && u.metadata.creationTime),
+  };
+}
