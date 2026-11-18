@@ -1207,9 +1207,12 @@ export default function App() {
     saveLocal(`merident_${CACHE_ID}_profile`, practiceProfile);
   }, [practiceProfile, hydratedFor, CLINIC_ID]);
 
+  const toastTimer = useRef(null);
+  // Sits above every pop-up form, and long notes (such as the duplicate-patient warning) stay long enough to read.
   const showToast = (msg) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToastMessage(null), Math.min(9000, 3500 + String(msg || "").length * 45));
   };
   showToastRef.current = showToast;
 
@@ -2441,7 +2444,7 @@ export default function App() {
 
       {/* Toast Notifier */}
       {toastMessage && (
-        <div className="fixed bottom-20 right-5 z-50 bg-ink text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2.5 text-xs border border-slate-700 animate-fade-in">
+        <div role="status" data-testid="app-toast" className="fixed bottom-24 left-4 right-4 sm:left-auto sm:bottom-20 sm:right-5 sm:max-w-md z-[90] bg-ink text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2.5 text-xs border border-slate-700 animate-fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           <span>{toastMessage}</span>
         </div>

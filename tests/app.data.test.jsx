@@ -42,6 +42,31 @@ async function fillPatient(form, o = {}) {
   type(input(form, "WhatsApp Phone"), o.phone ?? "+91 98765 43210");
 }
 
+describe("registration warnings stay visible", () => {
+  it("shows the duplicate warning above the form, then registers and opens the chart on the second tap", async () => {
+    await openApp();
+    nav("Patients & Odontogram");
+    const addAndFill = async () => {
+      fireEvent.click(await screen.findByText("Add Patient"));
+      const form = (await screen.findByText("Add New Patient")).closest("form");
+      await fillPatient(form, { name: "Ravi K", phone: "9876543210" });
+      return form;
+    };
+    let form = await addAndFill();
+    fireEvent.submit(form);
+    await screen.findByText(/registered successfully/i);
+    cleanup();
+    await openApp();
+    nav("Patients & Odontogram");
+    form = await addAndFill();
+    fireEvent.submit(form);
+    const warn = await screen.findByText(/already registered|already uses this mobile/i);
+    expect(warn.closest("[data-testid='app-toast']").className).toContain("z-[90]");
+    fireEvent.submit(form);
+    expect(await screen.findByTestId("casesheet-full")).toBeTruthy();
+  });
+});
+
 describe("demographics and required data", () => {
   it("validates patient registration and the guardian rule; no consent ticks on the form", async () => {
     await openApp();
