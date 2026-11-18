@@ -1,3 +1,4 @@
+import MoneyInput from "./MoneyInput.jsx";
 import React, { useState } from "react";
 import { Copy, MessageCircle } from "lucide-react";
 import { formatINR } from "../billing.js";
@@ -29,7 +30,7 @@ export default function DayClose({ summary, clinicName, onCopy }) {
       )}
       <div className="flex flex-wrap items-center gap-2 text-xs">
         <label htmlFor="cash-counted" className="font-semibold text-slate-700">Cash counted (₹)</label>
-        <input id="cash-counted" type="number" min="0" step="0.01" value={counted} onChange={(e) => setCounted(e.target.value)} placeholder={`Expected ${formatINR(summary.byMode.Cash)}`} className="w-36 px-3 py-2 border border-rule rounded-lg" />
+        <MoneyInput id="cash-counted" min="0" value={counted} onChange={(e) => setCounted(e.target.value)} placeholder={`Expected ${formatINR(summary.byMode.Cash)}`} className="w-36 px-3 py-2 border border-rule rounded-lg" />
         {cash && <span role="status" className={`font-semibold ${cash.balanced ? "text-emerald-700" : "text-rose-700"}`}>{cash.balanced ? "Matches the invoices" : cash.diffP > 0 ? `₹${formatINR(cash.diffP)} more than expected` : `₹${formatINR(-cash.diffP)} short`}</span>}
       </div>
       <div className="flex flex-wrap gap-2">

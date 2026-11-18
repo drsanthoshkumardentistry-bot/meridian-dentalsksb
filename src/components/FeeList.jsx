@@ -1,3 +1,4 @@
+import MoneyInput from "./MoneyInput.jsx";
 import React, { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { TAX_CATEGORIES, formatINR, toPaise } from "../billing.js";
@@ -43,7 +44,7 @@ export default function FeeList({ fees, onChange, newId }) {
 
       <form onSubmit={add} className="grid grid-cols-2 sm:grid-cols-[2fr_1fr_1.4fr_auto] gap-2 items-center">
         <input aria-label="Procedure name" list="fee-suggestions" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Procedure, e.g. Root canal treatment" className={`${field} col-span-2 sm:col-span-1`} />
-        <input aria-label="Fee in rupees" type="number" min="0" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="Fee ₹" className={`${field} font-bold`} />
+        <MoneyInput aria-label="Fee in rupees" min="0" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="Fee ₹" className={`${field} font-bold`} />
         <select aria-label="Tax type" value={form.taxCategory} onChange={(e) => setForm({ ...form, taxCategory: e.target.value })} className={field}>
           {TAX_CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
         </select>
