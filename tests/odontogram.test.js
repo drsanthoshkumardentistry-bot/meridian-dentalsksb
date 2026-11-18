@@ -81,3 +81,14 @@ describe("extra findings", () => {
     expect(primaryCode(["SEA", "PAL"])).toBe("PAL");
   });
 });
+
+describe("grouped findings", () => {
+  it("puts every finding in exactly one group", async () => {
+    const { groupPalette, STATUS_COLORS } = await import("../src/odontogram.js");
+    const palette = Object.keys(STATUS_COLORS).map((id) => ({ id, label: id }));
+    const groups = groupPalette(palette);
+    const ids = groups.flatMap((g) => g.items.map((i) => i.id));
+    expect(ids.sort()).toEqual(palette.map((p) => p.id).sort());
+    expect(groupPalette([{ id: "ZZZ", label: "New" }]).at(-1).title).toBe("Other");
+  });
+});

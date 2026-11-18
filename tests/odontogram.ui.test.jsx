@@ -75,3 +75,17 @@ describe("odontogram: easier picking", () => {
     expect(screen.queryByTestId("odo-full")).toBeNull();
   });
 });
+
+describe("odontogram: grouped findings and clear tooth", () => {
+  it("shows headings in the tooth sheet and clears every finding on the tooth", () => {
+    render(<Harness />);
+    fireEvent.click(tooth(26));
+    const sheet = within(screen.getByTestId("tooth-sheet"));
+    expect(sheet.getByText("Common")).toBeTruthy();
+    expect(sheet.queryByRole("button", { name: "Clear tooth" })).toBeNull();
+    fireEvent.click(sheet.getByRole("button", { name: /Caries/ }));
+    fireEvent.click(sheet.getByRole("button", { name: /RCT Done/ }));
+    fireEvent.click(sheet.getByRole("button", { name: "Clear tooth" }));
+    expect(tooth(26).getAttribute("aria-label")).not.toMatch(/Caries|RCT/);
+  });
+});
