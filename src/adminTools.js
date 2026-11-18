@@ -40,3 +40,33 @@ export function writeLocal(key, value, storage = typeof localStorage !== "undefi
   try { if (storage) storage.setItem(key, JSON.stringify(value)); return true; } catch { return false; }
 }
 export const cleanTodos = (v) => (Array.isArray(v) ? v : []).filter((t) => t && typeof t.text === "string" && t.text.trim()).slice(0, 50).map((t) => ({ id: String(t.id || t.text).slice(0, 40), text: t.text.slice(0, 140), done: Boolean(t.done) }));
+
+/** New clinics per week, oldest first. The last bar is the current 7 days. */
+export function weeklySignups(clinics = [], now = Date.now(), weeks = 8) {
+  const list = Array.isArray(clinics) ? clinics.filter((c) => c && c.created) : [];
+  return Array.from({ length: weeks }, (_, i) => {
+    const end = now - (weeks - 1 - i) * 7 * DAY;
+    const start = end - 7 * DAY;
+    return { end, count: list.filter((c) => c.created > start && c.created <= end).length };
+  });
+}
+
+/** Paid clinics by how soon the plan ends. daysLeft rounds up; urgent means 7 days or fewer. */
+export function renewalsTimeline(clinics = [], now = Date.now()) {
+  return (Array.isArray(clinics) ? clinics : [])
+    .filter((c) => c && c.state === "paid" && c.paidUntil > now)
+    .map((c) => ({ ...c, daysLeft: Math.ceil((c.paidUntil - now) / DAY) }))
+    .map((c) => ({ ...c, urgent: c.daysLeft <= 7 }))
+    .sort((a, b) => a.paidUntil - b.paidUntil);
+}
+
+export const SORTS = [["seen", "Last signed in"], ["time", "Most time this week"], ["new", "Newest first"], ["email", "Email A to Z"]];
+export function sortClinics(rows = [], key = "seen") {
+  const by = {
+    seen: (a, b) => (b.lastLogin || 0) - (a.lastLogin || 0),
+    time: (a, b) => (b.weekMin || 0) - (a.weekMin || 0),
+    new: (a, b) => (b.created || 0) - (a.created || 0),
+    email: (a, b) => String(a.email || "").localeCompare(String(b.email || "")),
+  };
+  return [...rows].sort(by[key] || by.seen);
+}
