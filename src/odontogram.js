@@ -185,3 +185,28 @@ export const archLayout = (numbers, { upper, cx = 300, cy, rx = 250, ry = 112 })
     };
   });
 };
+
+/** Findings grouped so a long list is easy to scan. Anything not listed falls into "Other". */
+export const FINDING_GROUPS = [
+  { title: "Common", ids: ["HLT", "CAR", "MIS", "RES", "RCT", "CRW"] },
+  { title: "Treatment done", ids: ["BRG", "IMP", "VNR", "SEA"] },
+  { title: "Pain, damage and wear", ids: ["FRC", "PAL", "ROT", "MOB", "ABR", "ATT"] },
+  { title: "Position and eruption", ids: ["IPC", "UNE", "RET", "SUP", "PRM", "SPC", "MAL"] },
+  { title: "Other", ids: ["SCL", "DEF", "BND"] },
+];
+
+export const groupPalette = (palette = []) => {
+  const used = new Set();
+  const out = FINDING_GROUPS.map((g) => ({
+    title: g.title,
+    items: g.ids.map((id) => palette.find((p) => p.id === id)).filter(Boolean),
+  })).filter((g) => g.items.length);
+  out.forEach((g) => g.items.forEach((i) => used.add(i.id)));
+  const rest = palette.filter((p) => !used.has(p.id));
+  if (rest.length) {
+    const other = out.find((g) => g.title === "Other");
+    if (other) other.items.push(...rest);
+    else out.push({ title: "Other", items: rest });
+  }
+  return out;
+};

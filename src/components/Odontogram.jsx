@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CARIES_CLASSES, SURFACES, DEPTHS, surfaceName, cariesText } from "../caries.js";
-import { toothInfo, groupFindings, STATUS_COLORS, archLayout, codesOf, primaryCode, normalizeConditions } from "../odontogram.js";
+import { toothInfo, groupFindings, STATUS_COLORS, archLayout, codesOf, primaryCode, normalizeConditions, groupPalette } from "../odontogram.js";
 
 const PERMANENT_UPPER = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
 const PERMANENT_LOWER = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
@@ -182,8 +182,12 @@ export default function Odontogram({
   );
 
   const findingChips = (
-    <div role="radiogroup" aria-label="Finding to apply" className="flex flex-wrap gap-1.5">
-      {palette.map((item) => {
+    <div role="radiogroup" aria-label="Finding to apply" className="space-y-2">
+      {groupPalette(palette).map((g) => (
+      <div key={g.title}>
+      <div className="mb-1 text-[11px] font-semibold text-slate-500">{g.title}</div>
+      <div className="flex flex-wrap gap-1.5">
+      {g.items.map((item) => {
         const c = STATUS_COLORS[item.id] || STATUS_COLORS.HLT;
         const selected = activeStatus === item.id;
         return (
@@ -204,6 +208,9 @@ export default function Odontogram({
           </button>
         );
       })}
+      </div>
+      </div>
+      ))}
     </div>
   );
 
@@ -233,10 +240,14 @@ export default function Odontogram({
           <div className="font-display text-base font-bold text-ink">Tooth {sheet}</div>
           <div className="text-xs text-slate-500">{sheetInfo.name}. Tap to add or remove. A tooth can have several findings.</div>
         </div>
-        <button type="button" onClick={() => setSheet(null)} className="rounded-lg bg-ink px-4 py-2 text-xs font-bold text-white">Done</button>
+        <div className="flex shrink-0 items-center gap-2">{sheetCodes.length > 0 && <button type="button" onClick={() => sheetCodes.forEach((c) => toggleOn(c))} className="rounded-lg border border-rule px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-mist">Clear tooth</button>}<button type="button" onClick={() => setSheet(null)} className="rounded-lg bg-ink px-4 py-2 text-xs font-bold text-white">Done</button></div>
       </div>
-      <div className={`mt-3 grid grid-cols-2 gap-2 ${full ? "md:grid-cols-2" : "sm:grid-cols-3"}`} role="group" aria-label={`Findings on tooth ${sheet}`}>
-        {palette.map((item) => {
+      <div className="mt-3 max-h-[46vh] space-y-3 overflow-y-auto pr-1" role="group" aria-label={`Findings on tooth ${sheet}`}>
+        {groupPalette(palette).map((g) => (
+        <div key={g.title}>
+        <div className="mb-1 text-[11px] font-semibold text-slate-500">{g.title}</div>
+        <div className={`grid grid-cols-2 gap-2 ${full ? "md:grid-cols-2" : "sm:grid-cols-3"}`}>
+        {g.items.map((item) => {
           const c = STATUS_COLORS[item.id] || STATUS_COLORS.HLT;
           const on = sheetCodes.includes(item.id);
           return (
@@ -247,6 +258,9 @@ export default function Odontogram({
             </button>
           );
         })}
+        </div>
+        </div>
+        ))}
       </div>
     </div>
   );
