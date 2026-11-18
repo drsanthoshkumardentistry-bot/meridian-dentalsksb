@@ -70,3 +70,14 @@ describe("multiple findings per tooth", () => {
     expect(g).toEqual([{ code: "CAR", teeth: [16, 26] }, { code: "RCT", teeth: [16] }]);
   });
 });
+
+describe("extra findings", () => {
+  it("every palette-style code has a colour and can be toggled", async () => {
+    const { STATUS_COLORS, toggleFinding, primaryCode } = await import("../src/odontogram.js");
+    for (const c of ["PAL", "ROT", "MOB", "IPC", "UNE", "RET", "SUP", "ABR", "SEA", "VNR"]) {
+      expect(STATUS_COLORS[c].stroke).toBeTruthy();
+      expect(toggleFinding({}, 16, c)[16]).toEqual([c]);
+    }
+    expect(primaryCode(["SEA", "PAL"])).toBe("PAL");
+  });
+});

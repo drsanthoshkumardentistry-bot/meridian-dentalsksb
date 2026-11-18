@@ -88,3 +88,16 @@ describe("printing and audit", () => {
     expect(e.action).toBe("consent.sign");
   });
 });
+
+describe("IDA-based wording", () => {
+  it("covers the extra procedures and the shared safeguards", () => {
+    for (const id of ["filling", "oralsurgery", "denture", "gum", "child"]) {
+      const text = fillTemplate(id, { patient: "A", teeth: "46", doctor: "Dr B", clinic: "C" });
+      expect(text).toContain("Dr B");
+      expect(text).not.toMatch(/\{(patient|doctor|clinic|tooth|teeth)\}/);
+      expect(text).toContain("of my own free will");
+      expect(text).toContain("add to or change the plan");
+    }
+    expect(fillTemplate("oralsurgery", { teeth: "38" })).toContain("maxillofacial");
+  });
+});

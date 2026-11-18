@@ -294,6 +294,16 @@ const CLINICAL_PALETTE = [
   { id: "SCL", label: "Calculus (scaling)", border: "border-yellow-200", bg: "bg-yellow-50/60", text: "text-yellow-600" },
   { id: "DEF", label: "Deformities", border: "border-purple-200", bg: "bg-purple-50/60", text: "text-purple-600" },
   { id: "BND", label: "Bone Deformations", border: "border-rule", bg: "bg-enamel", text: "text-slate-600" },
+  { id: "PAL", label: "Periapical lesion / abscess", border: "border-red-200", bg: "bg-red-50/60", text: "text-red-600" },
+  { id: "ROT", label: "Root stump", border: "border-stone-200", bg: "bg-stone-50/60", text: "text-stone-600" },
+  { id: "MOB", label: "Mobile tooth", border: "border-orange-200", bg: "bg-orange-50/60", text: "text-orange-600" },
+  { id: "IPC", label: "Impacted", border: "border-lime-200", bg: "bg-lime-50/60", text: "text-lime-600" },
+  { id: "UNE", label: "Unerupted", border: "border-sky-200", bg: "bg-sky-50/60", text: "text-sky-600" },
+  { id: "RET", label: "Retained primary tooth", border: "border-amber-200", bg: "bg-amber-50/60", text: "text-amber-600" },
+  { id: "SUP", label: "Supernumerary", border: "border-fuchsia-200", bg: "bg-fuchsia-50/60", text: "text-fuchsia-600" },
+  { id: "ABR", label: "Abrasion / erosion", border: "border-orange-200", bg: "bg-orange-50/60", text: "text-orange-600" },
+  { id: "SEA", label: "Sealant", border: "border-green-200", bg: "bg-green-50/60", text: "text-green-600" },
+  { id: "VNR", label: "Veneer", border: "border-teal-200", bg: "bg-teal-50/60", text: "text-teal-600" },
   { id: "MIS", label: "Missing / Extracted", border: "border-slate-300", bg: "bg-slate-100", text: "text-slate-600" },
 ];
 

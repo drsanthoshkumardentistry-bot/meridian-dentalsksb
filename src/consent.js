@@ -2,7 +2,8 @@
  * MERIDENT OS - TREATMENT CONSENT FORMS (pure functions, no React)
  * A consent is stored on the patient (patient.consents) with the exact wording that was signed, the
  * signature picture, who signed and when. A signed consent is never edited, only viewed and printed.
- * The wording below is a general starting point: the clinic edits it and should have it reviewed.
+ * The wording below is adapted from the kinds of statements in the Indian Dental Association's model consent forms
+ * (www.ida.org.in). It is a general starting point: the clinic edits it and should have it reviewed by a lawyer.
  * ============================================================================== */
 
 import { parseTeeth } from "./plans.js";
@@ -14,8 +15,8 @@ export const PNG_PREFIX = "data:image/png;base64,";
 export const RELATIONS = ["Father", "Mother", "Legal guardian", "Spouse", "Son or daughter", "Other family member"];
 
 const common = (extra = "") =>
-  `${extra}I have been told about the treatment, why it is advised, how it is done, the other options (including no treatment), and what may happen if it is not done. I have had the chance to ask questions and my questions were answered in a language I understand.\n\n` +
-  `I understand that no dentist can promise a result, and that the treatment may need extra visits or extra cost. I agree to follow the advice given and to come for follow-up visits.\n\n` +
+  `${extra}I have been told about the treatment, why it is advised, how it is done, the other options (including no treatment), and what may happen if it is not done. I have had the chance to ask questions and my questions were answered in a language I understand. I am signing before treatment starts, of my own free will.\n\n` +
+  `I understand that no dentist can promise a result, and that the treatment may need extra visits or extra cost. I agree to follow the advice given and to come for follow-up visits. If a problem is found during treatment, the dentist may add to or change the plan after telling me, and I agree to the extra care needed.\n\n` +
   `I have given true and complete information about my health, medicines and allergies, and I will tell the clinic about any change.`;
 
 export const TEMPLATES = [
@@ -36,8 +37,28 @@ export const TEMPLATES = [
     text: () => common(`I agree to a dental implant at {tooth} by {doctor} at {clinic}.\n\nI understand that a small titanium post is placed in the jawbone and a crown is fitted after healing; that it can fail to fix to the bone or be lost later, especially with smoking, diabetes or poor cleaning; and that risks include pain, swelling, bleeding, infection, numbness of the lip or chin, sinus problems for upper teeth, and the need for a bone graft or a repeat procedure. I will keep my regular check-ups and clean the implant as shown.\n\n`),
   },
   {
+    id: "filling", title: "Fillings",
+    text: () => common(`I agree to have {tooth} filled by {doctor} at {clinic}.\n\nI understand that the new filling can feel high or sensitive to hot, cold or biting for some days or weeks; that I should take care when chewing on it for the first day; that a filling can chip, wear or come loose and may need repair or replacement; and that if decay is deeper than it looked, the tooth may need a root canal treatment or a crown.\n\n`),
+  },
+  {
+    id: "oralsurgery", title: "Oral surgery (impacted or surgical removal)",
+    text: () => common(`I agree to surgical removal of {tooth} by {doctor} at {clinic}.\n\nI understand that the choice of anaesthesia (local only, or with sedation) has been explained, and that I may ask to be referred to an oral and maxillofacial surgeon or for general anaesthesia in a hospital. I understand that my dentist is a general dental surgeon.\n\nI understand the risks: swelling and stiffness of the jaw for about a week; bleeding; pain; infection; dry socket, which is more likely in smokers; damage to a nearby tooth; very rarely a broken jaw; numbness, tingling or changed feeling of the lip, chin, tongue or gums that may last for months and is very rarely permanent; an opening into the sinus or a root pushed into it when an upper back tooth is removed, which may need a second procedure; and reactions to the anaesthetic or sedative medicines. If I have further care or hospital care, I will bear that cost.\n\n`),
+  },
+  {
+    id: "denture", title: "Dentures",
+    text: () => common(`I agree to have dentures made for me by {doctor} at {clinic}.\n\nI understand that a new denture takes time to get used to; that it can feel loose, cause sore spots, change how I speak or eat, and may break; that I must check the fit, shape and shade at the try-in visit before it is finished; and that dentures usually need adjustment or relining as the gums change, which may be charged separately.\n\n`),
+  },
+  {
+    id: "gum", title: "Gum treatment (scaling or surgery)",
+    text: () => common(`I agree to gum treatment by {doctor} at {clinic}.\n\nI understand that I have gum disease which can loosen teeth through loss of the bone around them; that the options are cleaning (scaling and root planing), gum surgery or removal of a tooth; that teeth may feel sensitive, look longer, or show gaps after treatment; and that the result depends on how well I clean at home, come for check-ups, and avoid tobacco.\n\n`),
+  },
+  {
+    id: "child", title: "Treatment of a child",
+    text: () => common(`I am the parent or legal guardian of {patient}. I agree to dental treatment of my child by {doctor} at {clinic}{teeth}.\n\nI understand that a child may cry or move, that treatment may need to be done over more visits, and that the dentist may use gentle behaviour guidance, with my permission. I understand that a baby tooth saved by treatment may still be lost early, and that a space may need to be kept for the adult tooth. I will bring my child for follow-up visits.\n\n`),
+  },
+  {
     id: "anaesthesia", title: "Local anaesthesia",
-    text: () => common(`I agree to local anaesthetic injections for my dental treatment by {doctor} at {clinic}.\n\nI understand that the injection numbs the area for a few hours and I should not bite my lip or cheek while it is numb; that I may have soreness, bruising, a rare allergic reaction, a faint feeling or a racing heart, and rarely longer-lasting numbness; and that I have told the clinic about my allergies, medicines and any heart, blood pressure, diabetes or pregnancy conditions.\n\n`),
+    text: () => common(`I agree to local anaesthetic injections for my dental treatment by {doctor} at {clinic}.\n\nI understand that the injection numbs the area for a few hours and I should not bite my lip or cheek while it is numb; that I may have soreness, bruising, a rare allergic reaction, a faint feeling or a racing heart, and rarely longer-lasting numbness; and that I have told the clinic about my allergies, medicines and any heart, blood pressure, diabetes or pregnancy conditions. If I am given tablets or sedation, I understand they can cause drowsiness, so I should not drive or do risky work for at least 12 hours, should avoid alcohol, and should take medicines only as prescribed; some antibiotics can lower the effect of birth-control pills.\n\n`),
   },
   {
     id: "crown", title: "Crown or bridge",
