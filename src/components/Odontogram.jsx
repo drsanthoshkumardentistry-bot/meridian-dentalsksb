@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CARIES_CLASSES, SURFACES, DEPTHS, surfaceName, cariesText } from "../caries.js";
-import { toothInfo, groupFindings, STATUS_COLORS, archLayout, codesOf, primaryCode, normalizeConditions, groupPalette } from "../odontogram.js";
+import { toothInfo, groupFindings, STATUS_COLORS, archLayout, codesOf, primaryCode, normalizeConditions, groupPalette, colorOf, findingLabel, customCode, isCustomCode, MAX_CUSTOM_CHARS } from "../odontogram.js";
 
 const PERMANENT_UPPER = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
 const PERMANENT_LOWER = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
@@ -10,7 +10,7 @@ const DECIDUOUS_LOWER = [85, 84, 83, 82, 81, 71, 72, 73, 74, 75];
 function ToothImpl({ t, codes, labelOf, onTap, planned, activeLabel }) {
   const info = toothInfo(t.num);
   const code = primaryCode(codes);
-  const colors = STATUS_COLORS[code || "HLT"] || STATUS_COLORS.HLT;
+  const colors = colorOf(code || "HLT");
   const charted = codes.length > 0;
   const extras = codes.filter((c) => c !== code);
   const names = codes.map(labelOf).join(" + ");
@@ -73,7 +73,7 @@ function ToothImpl({ t, codes, labelOf, onTap, planned, activeLabel }) {
             cx={(i - (arr.length - 1) / 2) * 8}
             cy={t.h / 2 - 5}
             r="3"
-            fill={(STATUS_COLORS[c] || STATUS_COLORS.HLT).stroke}
+            fill={colorOf(c).stroke}
             stroke="#fff"
             strokeWidth="1"
           />
@@ -89,7 +89,7 @@ function ToothImpl({ t, codes, labelOf, onTap, planned, activeLabel }) {
           fill={colors.stroke}
           pointerEvents="none"
         >
-          {code}
+          {isCustomCode(code) ? "•" : code}
           {extras.length > 0 ? `+${extras.length}` : ""}
         </text>
       )}
@@ -118,17 +118,19 @@ export default function Odontogram({
   plannedTeeth = new Set()
 }) {
   const conditions = useMemo(() => normalizeConditions(rawConditions), [rawConditions]);
-  const labelOf = useCallback((code) => palette.find((p) => p.id === code)?.label || code, [palette]);
+  const labelOf = useCallback((code) => findingLabel(code, palette), [palette]);
   const readMode = () => { try { return localStorage.getItem("merident.odo.mode") === "finding" ? "finding" : "tooth"; } catch { return "tooth"; } };
   const [mode, setModeState] = useState(readMode);
   const [full, setFull] = useState(false);
   const [sheet, setSheet] = useState(null); // tooth number whose finding sheet is open
+  const [query, setQuery] = useState("");
   const setMode = (m) => { setModeState(m); setSheet(null); try { localStorage.setItem("merident.odo.mode", m); } catch { /* ignore */ } };
   const tapRef = useRef(onTap);
   tapRef.current = onTap;
   const modeRef = useRef(mode);
   modeRef.current = mode;
   // "Finding first" paints the chosen finding on every tooth you tap. "Tooth first" opens a sheet for that one tooth.
+  useEffect(() => { setQuery(""); }, [sheet]);
   const stableTap = useCallback((num) => { if (modeRef.current === "finding") tapRef.current(num); else setSheet(num); }, []);
 
   // Full screen: cover the page, lock page scrolling, ask the browser for real full screen where it allows it, and leave on Esc.
@@ -171,6 +173,13 @@ export default function Odontogram({
 
   const sheetInfo = sheet !== null ? toothInfo(sheet) : null;
   const sheetCodes = sheet !== null ? codesOf(conditions[sheet]) : [];
+  const q = query.trim().toLowerCase();
+  const sheetGroups = groupPalette(palette)
+    .map((g) => ({ ...g, items: q ? g.items.filter((i) => i.label.toLowerCase().includes(q)) : g.items }))
+    .filter((g) => g.items.length);
+  const sheetCustoms = sheetCodes.filter(isCustomCode);
+  const typedCode = customCode(query);
+  const typedExists = !!typedCode && (palette.some((p) => p.label.toLowerCase() === q) || sheetCustoms.some((c) => c.toLowerCase() === typedCode.toLowerCase()));
   const toggleOn = (code) => { if (sheet === null) return; if (onRemoveFinding) onRemoveFinding(sheet, code); };
 
   const modeSwitch = (
@@ -188,7 +197,7 @@ export default function Odontogram({
       <div className="mb-1 text-[11px] font-semibold text-slate-500">{g.title}</div>
       <div className="flex flex-wrap gap-1.5">
       {g.items.map((item) => {
-        const c = STATUS_COLORS[item.id] || STATUS_COLORS.HLT;
+        const c = colorOf(item.id);
         const selected = activeStatus === item.id;
         return (
           <button
@@ -242,13 +251,39 @@ export default function Odontogram({
         </div>
         <div className="flex shrink-0 items-center gap-2">{sheetCodes.length > 0 && <button type="button" onClick={() => sheetCodes.forEach((c) => toggleOn(c))} className="rounded-lg border border-rule px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-mist">Clear tooth</button>}<button type="button" onClick={() => setSheet(null)} className="rounded-lg bg-ink px-4 py-2 text-xs font-bold text-white">Done</button></div>
       </div>
-      <div className="mt-3 max-h-[46vh] space-y-3 overflow-y-auto pr-1" role="group" aria-label={`Findings on tooth ${sheet}`}>
-        {groupPalette(palette).map((g) => (
+      <div className="mt-3">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value.slice(0, MAX_CUSTOM_CHARS))}
+          maxLength={MAX_CUSTOM_CHARS}
+          aria-label="Type a finding"
+          placeholder="Type a finding, e.g. sensitivity"
+          className="w-full rounded-lg border border-rule px-3 py-2 text-sm"
+        />
+        {typedCode && !typedExists && !sheetGroups.some((g) => g.items.some((i) => i.label.toLowerCase() === q)) && (
+          <button type="button" onClick={() => { toggleOn(typedCode); setQuery(""); }} className="mt-2 w-full rounded-lg border border-dashed border-blue-300 bg-blue-50 px-3 py-2 text-left text-sm font-semibold text-blue-700">
+            Add "{typedCode.slice(2)}" as your own finding
+          </button>
+        )}
+        {sheetCustoms.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5" role="group" aria-label="Your own findings on this tooth">
+            {sheetCustoms.map((c) => (
+              <button key={c} type="button" aria-pressed="true" onClick={() => toggleOn(c)} className="rounded-full border border-ink bg-ink px-3 py-1 text-xs font-semibold text-white">
+                {findingLabel(c, palette)} ✕
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="mt-3 max-h-[40vh] space-y-3 overflow-y-auto pr-1" role="group" aria-label={`Findings on tooth ${sheet}`}>
+        {sheetGroups.length === 0 && <p className="text-xs text-slate-500">No ready-made finding matches. Add it as your own above.</p>}
+        {sheetGroups.map((g) => (
         <div key={g.title}>
         <div className="mb-1 text-[11px] font-semibold text-slate-500">{g.title}</div>
         <div className={`grid grid-cols-2 gap-2 ${full ? "md:grid-cols-2" : "sm:grid-cols-3"}`}>
         {g.items.map((item) => {
-          const c = STATUS_COLORS[item.id] || STATUS_COLORS.HLT;
+          const c = colorOf(item.id);
           const on = sheetCodes.includes(item.id);
           return (
             <button key={item.id} type="button" aria-pressed={on} onClick={() => toggleOn(item.id)} className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm ${on ? "border-ink bg-ink text-white font-bold" : "border-rule bg-white text-slate-800 hover:bg-mist"}`}>
@@ -343,7 +378,7 @@ export default function Odontogram({
         ) : (
           <ul className="space-y-1.5">
             {findings.map(({ code, teeth }) => {
-              const c = STATUS_COLORS[code] || STATUS_COLORS.HLT;
+              const c = colorOf(code);
               return (
                 <li key={code} className="flex items-start gap-2.5 text-sm">
                   <svg width="14" height="14" className="mt-0.5 shrink-0" aria-hidden="true">
@@ -373,7 +408,7 @@ export default function Odontogram({
                 <li key={tooth} className="flex flex-wrap items-center gap-1.5 rounded-lg border border-rule bg-white px-2.5 py-1.5 text-sm">
                   <strong className="text-ink tabular-nums w-7">{tooth}</strong>
                   {codes.map((code) => {
-                    const c = STATUS_COLORS[code] || STATUS_COLORS.HLT;
+                    const c = colorOf(code);
                     return (
                       <span key={code} className="inline-flex items-center gap-1 rounded-full pl-2 pr-1 py-0.5 text-xs font-semibold" style={{ background: c.fill === "none" ? "#f1f5f9" : c.fill, color: "#0b1b3a", border: `1px solid ${c.stroke}` }}>
                         {labelOf(code)}
