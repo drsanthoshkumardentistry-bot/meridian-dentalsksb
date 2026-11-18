@@ -293,3 +293,28 @@ describe("admin profile page", () => {
     expect(screen.getByTestId("admin-profile")).toBeTruthy();
   });
 });
+
+describe("admin insights", () => {
+  it("shows weekly signups, renewals and clinic sorting", async () => {
+    render(<AdminDashboard email="a@x.com" initial={data()} loadFn={vi.fn()} refreshMs={0} now={NOW} />);
+    expect(screen.getByTestId("signups-chart")).toBeTruthy();
+    await go("Billing & approvals");
+    const ren = within(screen.getByTestId("renewals"));
+    expect(ren.getByText("a@x.com")).toBeTruthy();
+    expect(ren.getByText("10 days left")).toBeTruthy();
+    expect(ren.queryByText("c@x.com")).toBeNull();
+    await go("Clinics");
+    const names = () => within(screen.getByTestId("clinics")).getAllByText(/@x\.com$/).map((n) => n.textContent);
+    expect(names()[0]).toBe("a@x.com");
+    fireEvent.change(screen.getByLabelText("Sort clinics"), { target: { value: "new" } });
+    expect(names()[0]).toBe("b@x.com");
+    fireEvent.change(screen.getByLabelText("Sort clinics"), { target: { value: "email" } });
+    expect(names()[0]).toBe("a@x.com");
+  });
+  it("shows an empty renewals note when nobody pays", async () => {
+    const d = data(); d.clinics = d.clinics.map((c) => ({ ...c, state: "unpaid" }));
+    render(<AdminDashboard email="a@x.com" initial={d} loadFn={vi.fn()} refreshMs={0} now={NOW} />);
+    await go("Billing & approvals");
+    expect(screen.getByText(/No paid plans yet/)).toBeTruthy();
+  });
+});

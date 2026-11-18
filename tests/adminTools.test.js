@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toCsv, clinicsCsv, requestsCsv, followUps, emailList, readLocal, writeLocal, cleanTodos } from "../src/adminTools.js";
+import { toCsv, clinicsCsv, requestsCsv, followUps, emailList, readLocal, writeLocal, cleanTodos, weeklySignups, renewalsTimeline, sortClinics } from "../src/adminTools.js";
 const DAY = 86400000, NOW = 1_800_000_000_000;
 describe("admin tools", () => {
   it("escapes csv cells and blocks formula injection", () => {
@@ -42,5 +42,30 @@ describe("admin tools", () => {
     expect(writeLocal("k", 1, { setItem() { throw new Error("full"); } })).toBe(false);
     expect(cleanTodos([{ id: 1, text: " buy ", done: 1 }, { text: "  " }, 5, null])).toEqual([{ id: "1", text: " buy ", done: true }]);
     expect(cleanTodos("x")).toEqual([]);
+  });
+  it("counts signups per week, oldest first", () => {
+    const w = weeklySignups([{ created: NOW - DAY }, { created: NOW - 2 * DAY }, { created: NOW - 9 * DAY }, { created: 0 }, null], NOW, 4);
+    expect(w.map((x) => x.count)).toEqual([0, 0, 1, 2]);
+    expect(weeklySignups(undefined, NOW, 2).map((x) => x.count)).toEqual([0, 0]);
+  });
+  it("orders renewals and flags urgent ones", () => {
+    const r = renewalsTimeline([
+      { email: "b", state: "paid", paidUntil: NOW + 20 * DAY },
+      { email: "a", state: "paid", paidUntil: NOW + 2 * DAY - 5 },
+      { email: "x", state: "expired", paidUntil: NOW - DAY },
+      { email: "y", state: "paid", paidUntil: NOW - DAY },
+    ], NOW);
+    expect(r.map((c) => c.email)).toEqual(["a", "b"]);
+    expect(r[0].daysLeft).toBe(2);
+    expect(r[0].urgent).toBe(true);
+    expect(r[1].urgent).toBe(false);
+  });
+  it("sorts clinics", () => {
+    const rows = [{ email: "b", lastLogin: 1, weekMin: 5, created: 3 }, { email: "a", lastLogin: 9, weekMin: 1, created: 1 }];
+    expect(sortClinics(rows, "seen")[0].email).toBe("a");
+    expect(sortClinics(rows, "time")[0].email).toBe("b");
+    expect(sortClinics(rows, "new")[0].email).toBe("b");
+    expect(sortClinics(rows, "email")[0].email).toBe("a");
+    expect(sortClinics(rows, "nope")[0].email).toBe("a");
   });
 });
