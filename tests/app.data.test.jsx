@@ -357,6 +357,7 @@ describe("demographics and required data", () => {
     type(screen.getByLabelText("Plan item 2 tooth"), "36, 37");
     fireEvent.click(screen.getByText("Save plan"));
     await waitFor(() => expect(stored("patients")[0].plans?.length).toBe(1));
+    expect(screen.getByTestId("casesheet-full").className).toContain("inset-0");
     fireEvent.click(screen.getByText("32-Tooth Odontogram"));
     expect(await screen.findByLabelText(/^Tooth 16,.*treatment planned/)).toBeTruthy();
     expect(screen.getByLabelText(/^Tooth 37,.*treatment planned/)).toBeTruthy();

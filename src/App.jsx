@@ -4864,8 +4864,8 @@ export default function App() {
       {/* PATIENT CASESHEET MODAL (WITH SYSTEMIC ALERT & ROUTING)  */}
       {/* ======================================================== */}
       {isChartModalOpen && activePatient && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white rounded-xl shadow-2xl border border-rule w-full max-w-4xl p-6 md:p-7 relative max-h-[92vh] flex flex-col justify-between overflow-y-auto">
+        <div data-testid="casesheet-full" className="fixed inset-0 z-50 bg-white">
+          <div className="bg-white w-full h-full p-4 sm:p-6 lg:px-10 xl:px-16 relative flex flex-col justify-between overflow-y-auto">
             
             <div>
               {/* Header */}
