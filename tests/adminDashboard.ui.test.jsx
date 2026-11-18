@@ -358,3 +358,26 @@ describe("admin profile extras", () => {
     expect(screen.getByText(/1 of 8 done/)).toBeTruthy();
   });
 });
+
+describe("clinic details", () => {
+  it("opens a panel with a message, copy and a private note kept per clinic", async () => {
+    localStorage.clear();
+    const writeText = vi.fn().mockResolvedValue();
+    Object.assign(navigator, { clipboard: { writeText } });
+    render(<AdminDashboard email="a@x.com" initial={data()} loadFn={vi.fn()} refreshMs={0} now={NOW} startView="clinics" />);
+    expect(screen.queryByTestId("clinic-detail")).toBeNull();
+    fireEvent.click(screen.getByLabelText("Show details for c@x.com"));
+    const panel = within(screen.getByTestId("clinic-detail"));
+    expect(panel.getByText(/plan ends soon/)).toBeTruthy(); // expired clinic starts on the renewal message
+    fireEvent.click(panel.getByText("Copy email"));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith("c@x.com"));
+    fireEvent.change(panel.getByLabelText("Private note about this clinic"), { target: { value: "Call Monday" } });
+    expect(JSON.parse(localStorage.getItem("merident.admin.clinicNotes")).uidC1234).toBe("Call Monday");
+    fireEvent.click(screen.getByLabelText("Hide details for c@x.com"));
+    expect(screen.queryByTestId("clinic-detail")).toBeNull();
+    fireEvent.click(screen.getByLabelText("Show details for c@x.com"));
+    expect(screen.getByLabelText("Private note about this clinic").value).toBe("Call Monday");
+    fireEvent.change(screen.getByLabelText("Private note about this clinic"), { target: { value: "" } });
+    expect(JSON.parse(localStorage.getItem("merident.admin.clinicNotes")).uidC1234).toBeUndefined();
+  });
+});
