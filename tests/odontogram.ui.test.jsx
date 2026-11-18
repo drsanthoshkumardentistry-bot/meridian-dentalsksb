@@ -6,11 +6,11 @@ import Odontogram from "../src/components/Odontogram.jsx";
 const PALETTE = [{ id: "HLT", label: "Healthy" }, { id: "CAR", label: "Caries" }, { id: "RCT", label: "RCT Done" }, { id: "MIS", label: "Missing / Extracted" }];
 afterEach(() => { cleanup(); localStorage.clear(); document.body.style.overflow = ""; });
 
-function Harness({ onTapSpy }) {
+function Harness({ onTapSpy, onCaries }) {
   const [cond, setCond] = useState({});
   const [active, setActive] = useState("CAR");
   const toggle = (t, code) => setCond((c) => { const cur = c[t] || []; const next = cur.includes(code) ? cur.filter((x) => x !== code) : [...cur, code]; const n = { ...c }; if (next.length) n[t] = next; else delete n[t]; return n; });
-  return <Odontogram conditions={cond} palette={PALETTE} activeStatus={active} onSelectStatus={setActive} onTap={(t) => { onTapSpy && onTapSpy(t); toggle(t, active); }} onRemoveFinding={toggle} onClear={() => setCond({})} isDeciduous={false} onToggleDeciduous={() => {}} />;
+  return <Odontogram conditions={cond} palette={PALETTE} activeStatus={active} onSelectStatus={setActive} onTap={(t) => { onTapSpy && onTapSpy(t); toggle(t, active); }} onRemoveFinding={toggle} onClear={() => setCond({})} onCaries={onCaries} caries={{}} isDeciduous={false} onToggleDeciduous={() => {}} />;
 }
 const tooth = (n) => screen.getByLabelText(new RegExp(`^Tooth ${n},`));
 
@@ -104,5 +104,21 @@ describe("odontogram: type a finding", () => {
     expect(sheet.getByRole("button", { name: /Cold sensitivity ✕/ })).toBeTruthy();
     fireEvent.click(sheet.getByRole("button", { name: /Cold sensitivity ✕/ }));
     expect(tooth(14).getAttribute("aria-label")).not.toMatch(/Cold sensitivity/);
+  });
+});
+
+describe("odontogram: caries details inside the tooth sheet", () => {
+  it("offers surfaces, class and depth as soon as Caries is picked", () => {
+    const calls = [];
+    render(<Harness onCaries={(t, patch) => calls.push([t, patch])} />);
+    fireEvent.click(tooth(36));
+    const sheet = within(screen.getByTestId("tooth-sheet"));
+    expect(sheet.queryByTestId("caries-editor-sheet")).toBeNull();
+    fireEvent.click(sheet.getByRole("button", { name: /Caries/ }));
+    const ed = within(screen.getByTestId("caries-editor-sheet"));
+    fireEvent.click(ed.getByRole("button", { name: "O" }));
+    fireEvent.click(ed.getByRole("radio", { name: "Class II" }));
+    fireEvent.click(ed.getByRole("radio", { name: "Dentine" }));
+    expect(calls).toEqual([[36, { surfaces: ["O"] }], [36, { cls: "II" }], [36, { depth: "dentine" }]]);
   });
 });

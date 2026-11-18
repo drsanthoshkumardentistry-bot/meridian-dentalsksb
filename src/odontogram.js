@@ -43,7 +43,7 @@ export const toothInfo = (num) => {
 export const EXCLUSIVE = ["HLT", "MIS"];
 
 /** Which finding drives the tooth colour when several are present (most urgent first). */
-const DISPLAY_PRIORITY = ["FRC", "CAR", "PAL", "ROT", "RCT", "IMP", "CRW", "BRG", "RES", "VNR", "SEA", "MOB", "IPC", "UNE", "RET", "SUP", "ABR", "PRM", "DEF", "MAL", "ATT", "SPC", "SCL", "BND", "MIS", "HLT"];
+const DISPLAY_PRIORITY = ["FRC", "PUL", "CAR", "PAL", "ROT", "RCT", "IMP", "CRW", "BRG", "RES", "TMP", "POC", "ORT", "PON", "VNR", "SEA", "REC", "FLU", "MOB", "IPC", "UNE", "RET", "SUP", "ABR", "PRM", "DEF", "MAL", "ATT", "SPC", "SCL", "BND", "MIS", "HLT"];
 
 /** A tooth's findings as an array. Old charts stored a single code string; both forms are read. */
 export const codesOf = (value) => (Array.isArray(value) ? value : value ? [value] : []);
@@ -133,6 +133,13 @@ export const STATUS_COLORS = {
   ABR: { fill: "#ffedd5", stroke: "#9a3412" },
   SEA: { fill: "#dcfce7", stroke: "#15803d" },
   VNR: { fill: "#ccfbf1", stroke: "#0f766e" },
+  PUL: { fill: "#fecdd3", stroke: "#be123c" },
+  TMP: { fill: "#fef9c3", stroke: "#a16207" },
+  POC: { fill: "#e9d5ff", stroke: "#7e22ce" },
+  ORT: { fill: "#cffafe", stroke: "#0e7490" },
+  PON: { fill: "#e5e7eb", stroke: "#4b5563" },
+  REC: { fill: "#ffe4e6", stroke: "#9f1239" },
+  FLU: { fill: "#fef3c7", stroke: "#92400e" },
   MIS: { fill: "none", stroke: "#94a3b8", dash: "3 3" }
 };
 
@@ -190,8 +197,8 @@ export const archLayout = (numbers, { upper, cx = 300, cy, rx = 250, ry = 112 })
 /** Findings grouped so a long list is easy to scan. Anything not listed falls into "Other". */
 export const FINDING_GROUPS = [
   { title: "Common", ids: ["HLT", "CAR", "MIS", "RES", "RCT", "CRW"] },
-  { title: "Treatment done", ids: ["BRG", "IMP", "VNR", "SEA"] },
-  { title: "Pain, damage and wear", ids: ["FRC", "PAL", "ROT", "MOB", "ABR", "ATT"] },
+  { title: "Treatment done", ids: ["BRG", "IMP", "POC", "TMP", "PON", "ORT", "VNR", "SEA"] },
+  { title: "Pain, damage and wear", ids: ["PUL", "FRC", "PAL", "ROT", "MOB", "REC", "ABR", "ATT", "FLU"] },
   { title: "Position and eruption", ids: ["IPC", "UNE", "RET", "SUP", "PRM", "SPC", "MAL"] },
   { title: "Other", ids: ["SCL", "DEF", "BND"] },
 ];

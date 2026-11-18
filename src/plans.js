@@ -47,7 +47,11 @@ const SUGGESTIONS = {
   CAR: "Restoration (filling)",
   FRC: "Repair of fractured tooth",
   SCL: "Scaling and polishing",
-  MIS: "Replacement of missing tooth"
+  MIS: "Replacement of missing tooth",
+  PUL: "Root canal treatment",
+  PAL: "Root canal treatment or extraction (review)",
+  ROT: "Extraction of root stump",
+  IPC: "Surgical removal of impacted tooth"
 };
 
 /** One blank-priced plan row per charted finding that usually needs treatment. */

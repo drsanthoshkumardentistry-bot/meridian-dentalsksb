@@ -74,7 +74,7 @@ describe("multiple findings per tooth", () => {
 describe("extra findings", () => {
   it("every palette-style code has a colour and can be toggled", async () => {
     const { STATUS_COLORS, toggleFinding, primaryCode } = await import("../src/odontogram.js");
-    for (const c of ["PAL", "ROT", "MOB", "IPC", "UNE", "RET", "SUP", "ABR", "SEA", "VNR"]) {
+    for (const c of ["PAL", "ROT", "MOB", "IPC", "UNE", "RET", "SUP", "ABR", "SEA", "VNR", "PUL", "TMP", "POC", "ORT", "PON", "REC", "FLU"]) {
       expect(STATUS_COLORS[c].stroke).toBeTruthy();
       expect(toggleFinding({}, 16, c)[16]).toEqual([c]);
     }
