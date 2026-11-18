@@ -358,6 +358,11 @@ describe("demographics and required data", () => {
     fireEvent.click(screen.getByText("Save plan"));
     await waitFor(() => expect(stored("patients")[0].plans?.length).toBe(1));
     expect(screen.getByTestId("casesheet-full").className).toContain("inset-0");
+    const apptTab = screen.getAllByRole("button", { name: /Appointments Diary/ })[0];
+    fireEvent.mouseEnter(apptTab);
+    expect(screen.getByTestId("nav-tip").textContent).toBe("Appointments Diary");
+    fireEvent.mouseLeave(apptTab);
+    expect(screen.queryByTestId("nav-tip")).toBeNull();
     fireEvent.click(screen.getByText("32-Tooth Odontogram"));
     expect(await screen.findByLabelText(/^Tooth 16,.*treatment planned/)).toBeTruthy();
     expect(screen.getByLabelText(/^Tooth 37,.*treatment planned/)).toBeTruthy();
