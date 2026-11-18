@@ -15,7 +15,7 @@ export const recordSheetHtml = (patient, { appointments = [], invoices = [] } = 
   const appts = appointments.filter((a) => mine(a.patientName, a.patientId)).sort((x, y) => `${y.date} ${y.time}`.localeCompare(`${x.date} ${x.time}`));
   const invs = invoices.map(normalizeInvoice).filter((i) => mine(i.patient, i.patientId));
   const due = invs.reduce((s, i) => s + balancePaise(i), 0);
-  const teeth = Object.entries(patient.toothConditions || {}).map(([t, c]) => `${t}: ${Array.isArray(c) ? c.join(", ") : typeof c === "object" ? Object.values(c || {}).join(", ") : c}`);
+  const teeth = Object.entries(patient.toothConditions || {}).map(([t, c]) => `${t}: ${Array.isArray(c) ? c.map((x) => String(x).replace(/^X:/, "")).join(", ") : typeof c === "object" ? Object.values(c || {}).join(", ") : c}`);
   const visits = patient.visits || [];
   const plans = patient.plans || [];
   const section = (title, body) => (body ? `<h2>${esc(title)}</h2>${body}` : "");

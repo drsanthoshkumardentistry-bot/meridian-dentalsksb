@@ -11,7 +11,7 @@ import { profileGaps } from "./profileGaps.js";
 import { todaySummary } from "./today.js";
 import { memberDiscountRupees, membershipInvoice, leadPatientPrefill, setLeadStatus, activeMembershipFor } from "./growth.js";
 import { AGING_BUCKETS, agingSummary, filterInvoices, invoiceAgeDays } from "./receivables.js";
-import { toggleFinding, normalizeConditions, chartedCount as chartedTeeth } from "./odontogram.js";
+import { toggleFinding, normalizeConditions, chartedCount as chartedTeeth, findingLabel } from "./odontogram.js";
 import { billingSummary, invoiceView, invoicesCsv, buildInvoiceMessage, isOverdue, daysOverdue, dueDateIn } from "./billingView.js";
 import { adjustStock, buildStockItem, stockState, stockSummary, stockView, buildReorderMessage } from "./stock.js";
 import { APPT_STATUSES, findClash, diarySummary, diaryView, withStatus, needsUpdate } from "./diary.js";
@@ -1481,7 +1481,7 @@ export default function App() {
     const chartedList = Object.entries(normalizeConditions(activePatient.toothConditions))
       .sort((a, b) => Number(a[0]) - Number(b[0]))
       .map(([tooth, codes]) => {
-        const labels = codes.map((code) => (CLINICAL_PALETTE.find((p) => p.id === code) || { label: code }).label);
+        const labels = codes.map((code) => findingLabel(code, CLINICAL_PALETTE));
         const detail = codes.includes("CAR") ? cariesText((activePatient.cariesDetails || {})[tooth]) : "";
         return `#${tooth} (${labels.join(" + ")}${detail ? `: ${detail}` : ""})`;
       })

@@ -89,3 +89,20 @@ describe("odontogram: grouped findings and clear tooth", () => {
     expect(tooth(26).getAttribute("aria-label")).not.toMatch(/Caries|RCT/);
   });
 });
+
+describe("odontogram: type a finding", () => {
+  it("filters the list, and adds your own finding that can be removed again", () => {
+    render(<Harness />);
+    fireEvent.click(tooth(14));
+    const sheet = within(screen.getByTestId("tooth-sheet"));
+    fireEvent.change(sheet.getByLabelText("Type a finding"), { target: { value: "carie" } });
+    expect(sheet.getByRole("button", { name: /Caries/ })).toBeTruthy();
+    expect(sheet.queryByRole("button", { name: /RCT Done/ })).toBeNull();
+    fireEvent.change(sheet.getByLabelText("Type a finding"), { target: { value: "Cold sensitivity" } });
+    fireEvent.click(sheet.getByRole("button", { name: /Add "Cold sensitivity" as your own finding/ }));
+    expect(tooth(14).getAttribute("aria-label")).toMatch(/Cold sensitivity/);
+    expect(sheet.getByRole("button", { name: /Cold sensitivity ✕/ })).toBeTruthy();
+    fireEvent.click(sheet.getByRole("button", { name: /Cold sensitivity ✕/ }));
+    expect(tooth(14).getAttribute("aria-label")).not.toMatch(/Cold sensitivity/);
+  });
+});

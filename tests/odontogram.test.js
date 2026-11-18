@@ -92,3 +92,22 @@ describe("grouped findings", () => {
     expect(groupPalette([{ id: "ZZZ", label: "New" }]).at(-1).title).toBe("Other");
   });
 });
+
+describe("your own findings", () => {
+  it("builds a safe custom code, labels it and gives it a colour", async () => {
+    const { customCode, isCustomCode, findingLabel, colorOf, toggleFinding, primaryCode } = await import("../src/odontogram.js");
+    expect(customCode("  Cold   sensitivity <b> ")).toBe("X:Cold sensitivity b");
+    expect(customCode("   ")).toBe("");
+    expect(customCode("x".repeat(80)).length).toBe(42);
+    const code = customCode("Sensitivity");
+    expect(isCustomCode(code)).toBe(true);
+    expect(isCustomCode("X:")).toBe(false);
+    expect(findingLabel(code, [])).toBe("Sensitivity");
+    expect(findingLabel("CAR", [{ id: "CAR", label: "Caries" }])).toBe("Caries");
+    expect(colorOf(code).stroke).toBeTruthy();
+    const next = toggleFinding({}, 16, code);
+    expect(next[16]).toEqual([code]);
+    expect(primaryCode(["CAR", code])).toBe("CAR");
+    expect(toggleFinding(next, 16, code)).toEqual({});
+  });
+});

@@ -62,7 +62,8 @@ export const normalizeConditions = (conditions = {}) => {
 export const primaryCode = (value) => {
   const codes = codesOf(value);
   if (!codes.length) return null;
-  return [...codes].sort((a, b) => DISPLAY_PRIORITY.indexOf(a) - DISPLAY_PRIORITY.indexOf(b))[0];
+  const rank = (c) => { const i = DISPLAY_PRIORITY.indexOf(c); return i === -1 ? DISPLAY_PRIORITY.length - 3 : i; };
+  return [...codes].sort((a, b) => rank(a) - rank(b))[0];
 };
 
 /**
@@ -210,3 +211,19 @@ export const groupPalette = (palette = []) => {
   }
   return out;
 };
+
+/** A finding the clinic types in itself (e.g. "Sensitivity"). Stored as "X:" plus the text, so it never clashes with a built-in code. */
+export const CUSTOM_PREFIX = "X:";
+export const MAX_CUSTOM_CHARS = 40;
+export const isCustomCode = (code) => typeof code === "string" && code.startsWith(CUSTOM_PREFIX) && code.length > CUSTOM_PREFIX.length;
+export const customCode = (text) => {
+  const clean = String(text || "").replace(/[\u0000-\u001f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, MAX_CUSTOM_CHARS).trim();
+  return clean ? CUSTOM_PREFIX + clean : "";
+};
+export const findingLabel = (code, palette = []) => {
+  const hit = palette.find((p) => p.id === code);
+  if (hit) return hit.label;
+  return isCustomCode(code) ? code.slice(CUSTOM_PREFIX.length) : code;
+};
+const CUSTOM_COLOR = { fill: "#f1f5f9", stroke: "#475569" };
+export const colorOf = (code) => STATUS_COLORS[code] || (isCustomCode(code) ? CUSTOM_COLOR : STATUS_COLORS.HLT);

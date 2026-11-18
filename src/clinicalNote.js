@@ -1,4 +1,4 @@
-import { normalizeConditions, groupFindings, toothInfo } from "./odontogram.js";
+import { normalizeConditions, findingLabel, groupFindings, toothInfo } from "./odontogram.js";
 import { parseTeeth } from "./plans.js";
 import { dateKey } from "./reminders.js";
 
@@ -17,7 +17,7 @@ const ADVICE = {
  */
 export const draftVisitNote = (patient = {}, palette = [], now = new Date()) => {
   const conditions = normalizeConditions(patient.toothConditions || {});
-  const label = (code) => (palette.find((p) => p.id === code) || {}).label || code;
+  const label = (code) => findingLabel(code, palette);
   const groups = groupFindings(conditions, palette).filter((g) => g.code !== "HLT");
   const findings = groups.map((g) => `${label(g.code)}: ${g.teeth.join(", ")}`).join(". ");
 
