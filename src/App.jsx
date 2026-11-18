@@ -16,6 +16,7 @@ import { billingSummary, invoiceView, invoicesCsv, buildInvoiceMessage, isOverdu
 import { adjustStock, buildStockItem, stockState, stockSummary, stockView, buildReorderMessage } from "./stock.js";
 import { APPT_STATUSES, findClash, diarySummary, diaryView, withStatus, needsUpdate } from "./diary.js";
 import { LEAVE_TYPES, buildLeave, setLeaveStatus, removeLeave, leaveDays, onLeaveOn, buildReview, averageRating, staffAlerts } from "./staff.js";
+import MoneyInput from "./components/MoneyInput.jsx";
 import GlobalSearch from "./components/GlobalSearch.jsx";
 import ActivityLog from "./components/ActivityLog.jsx";
 import { buildAuditEntry } from "./audit.js";
@@ -6285,11 +6286,9 @@ export default function App() {
                       className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none bg-white"
                     />
                     <div className="grid grid-cols-[1fr_1.4fr_auto] gap-2 items-center">
-                      <input
-                        type="number"
+                      <MoneyInput
                         required
                         min="0"
-                        step="0.01"
                         aria-label={`Treatment ${idx + 1} amount before tax`}
                         value={it.amount}
                         onChange={(e) => setItem({ amount: e.target.value })}
@@ -6358,10 +6357,8 @@ export default function App() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block font-semibold text-slate-600 mb-1">Discount (₹)</label>
-                <input
-                  type="number"
+                <MoneyInput
                   min="0"
-                  step="0.01"
                   value={newInvoiceForm.discount}
                   onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, discount: e.target.value })}
                   placeholder="0"
@@ -6370,10 +6367,8 @@ export default function App() {
               </div>
               <div>
                 <label className="block font-semibold text-slate-600 mb-1">Advance received now (₹)</label>
-                <input
-                  type="number"
+                <MoneyInput
                   min="0"
-                  step="0.01"
                   value={newInvoiceForm.advance}
                   onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, advance: e.target.value })}
                   placeholder="0 (optional)"
@@ -6572,10 +6567,8 @@ export default function App() {
 
                 <form onSubmit={handleCollectPayment} className="space-y-2 text-left text-xs">
                   <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="number"
+                    <MoneyInput
                       min="0"
-                      step="0.01"
                       required
                       value={payForm.amount}
                       onChange={(e) => setPayForm({ ...payForm, amount: e.target.value })}

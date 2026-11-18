@@ -1,3 +1,4 @@
+import MoneyInput from "./MoneyInput.jsx";
 import { useState, useEffect, useRef } from "react";
 import { Plus, Trash2, Send, Printer, Check, X, Link2, RefreshCw } from "lucide-react";
 import { TAX_CATEGORIES, formatINR } from "../billing.js";
@@ -200,10 +201,8 @@ export default function TreatmentPlans({ patient, practiceProfile, onChange, onB
                 inputMode="numeric"
                 className="px-3 py-2 border border-slate-300 rounded-lg bg-white"
               />
-              <input
-                type="number"
+              <MoneyInput
                 min="0"
-                step="0.01"
                 aria-label={`Plan item ${i + 1} amount`}
                 value={it.amount}
                 onChange={(e) => setItem(it.id, { amount: e.target.value })}
@@ -261,10 +260,8 @@ export default function TreatmentPlans({ patient, practiceProfile, onChange, onB
             </button>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <input
-              type="number"
+            <MoneyInput
               min="0"
-              step="0.01"
               aria-label="Plan discount"
               value={draft.discount}
               onChange={(e) => setDraft({ ...draft, discount: e.target.value })}
