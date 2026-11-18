@@ -163,3 +163,11 @@ describe("patient recall", () => {
     expect(msg).toContain("9840100001");
   });
 });
+
+describe("WhatsApp is on unless a patient is switched off", () => {
+  it("treats a new registration as on, and an explicit no as off", () => {
+    expect(hasWhatsAppConsent({ consent: { treatment: false, whatsapp: true, recordedAt: null } })).toBe(true);
+    expect(hasWhatsAppConsent({})).toBe(true);
+    expect(hasWhatsAppConsent({ consent: { whatsapp: false } })).toBe(false);
+  });
+});
