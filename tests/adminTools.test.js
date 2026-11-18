@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toCsv, clinicsCsv, requestsCsv, followUps, emailList, readLocal, writeLocal, cleanTodos, weeklySignups, renewalsTimeline, sortClinics } from "../src/adminTools.js";
+import { toCsv, clinicsCsv, requestsCsv, followUps, emailList, readLocal, writeLocal, cleanTodos, weeklySignups, renewalsTimeline, sortClinics, businessStats, goalProgress, TEMPLATES, fillTemplate, whatsappLink, securityInfo } from "../src/adminTools.js";
 const DAY = 86400000, NOW = 1_800_000_000_000;
 describe("admin tools", () => {
   it("escapes csv cells and blocks formula injection", () => {
@@ -67,5 +67,34 @@ describe("admin tools", () => {
     expect(sortClinics(rows, "new")[0].email).toBe("b");
     expect(sortClinics(rows, "email")[0].email).toBe("a");
     expect(sortClinics(rows, "nope")[0].email).toBe("a");
+  });
+  it("works out business numbers without dividing by zero", () => {
+    const d = { users: { total: 10 }, billing: { paidActive: 3, expired: 1, monthlyValue: 2000 }, presence: { hoursWeek: 25 } };
+    expect(businessStats(d)).toMatchObject({ yearlyValue: 24000, conversion: 30, churn: 25, hoursPerClinic: 2.5 });
+    expect(businessStats({ users: { total: 0 }, billing: {}, presence: {} })).toMatchObject({ conversion: 0, churn: 0, hoursPerClinic: 0 });
+    expect(businessStats(null)).toBeNull();
+  });
+  it("tracks a clinic goal", () => {
+    expect(goalProgress(3, 10)).toEqual({ target: 10, percent: 30, left: 7 });
+    expect(goalProgress(12, 10)).toEqual({ target: 10, percent: 100, left: 0 });
+    expect(goalProgress(3, 0)).toBeNull();
+    expect(goalProgress(3, "abc")).toBeNull();
+  });
+  it("fills message templates and builds a whatsapp link", () => {
+    expect(fillTemplate("Hi {name}", { name: "Dr Ravi" })).toBe("Hi Dr Ravi");
+    expect(fillTemplate("Hi {name}", {})).toBe("Hi doctor");
+    expect(fillTemplate("Hi {other}", {})).toBe("Hi {other}");
+    expect(fillTemplate("From {sender}", {})).toBe("From the MeriDent team");
+    expect(TEMPLATES.length).toBeGreaterThanOrEqual(4);
+    expect(whatsappLink("a b&c")).toBe("https://wa.me/?text=a%20b%26c");
+  });
+  it("describes the sign-in session", () => {
+    const i = securityInfo({ emailVerified: true, providerData: [{ providerId: "google.com" }], metadata: { lastSignInTime: "2026-11-18T08:00:00Z", creationTime: "bad" } });
+    expect(i.method).toBe("Google");
+    expect(i.verified).toBe(true);
+    expect(i.created).toBe("Not known");
+    expect(i.lastSignIn).not.toBe("Not known");
+    expect(securityInfo(null)).toMatchObject({ method: "Not known", verified: false });
+    expect(securityInfo({ providerData: [{ providerId: "password" }] }).method).toBe("Email and password");
   });
 });

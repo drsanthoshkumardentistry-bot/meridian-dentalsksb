@@ -318,3 +318,43 @@ describe("admin insights", () => {
     expect(screen.getByText(/No paid plans yet/)).toBeTruthy();
   });
 });
+
+describe("admin profile extras", () => {
+  const open = async (user) => {
+    localStorage.clear();
+    render(<AdminDashboard email="boss@x.com" user={user} initial={data()} loadFn={vi.fn()} refreshMs={0} now={NOW} startView="profile" />);
+  };
+  it("shows business numbers and tracks a goal", async () => {
+    await open();
+    const snap = within(screen.getByTestId("business-snapshot"));
+    expect(snap.getByText("₹11,988")).toBeTruthy();
+    expect(snap.getByText("33%")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("My goal: paying clinics"), { target: { value: "4" } });
+    expect(screen.getByTestId("goal-progress").textContent).toMatch(/25%.*3 more paying clinics/);
+    expect(localStorage.getItem("merident.admin.goal")).toBe('"4"');
+    fireEvent.change(screen.getByLabelText("My goal: paying clinics"), { target: { value: "1" } });
+    expect(screen.getByTestId("goal-progress").textContent).toMatch(/Goal reached/);
+  });
+  it("fills message templates with the doctor and founder names", async () => {
+    await open();
+    fireEvent.change(screen.getByLabelText("Doctor's name"), { target: { value: "Dr Ravi" } });
+    fireEvent.change(screen.getByLabelText("Name used when you sign messages"), { target: { value: "Santhosh" } });
+    expect(screen.getByTestId("template-preview").textContent).toMatch(/Hello Dr Ravi.*This is Santhosh from MeriDent/);
+    fireEvent.change(screen.getByLabelText("Message"), { target: { value: "renewal" } });
+    expect(screen.getByTestId("template-preview").textContent).toMatch(/plan ends soon/);
+    expect(screen.getByText("Send on WhatsApp").closest("a").getAttribute("href")).toMatch(/^https:\/\/wa\.me\/\?text=/);
+    expect(JSON.parse(localStorage.getItem("merident.admin.details")).name).toBe("Santhosh");
+  });
+  it("only keeps digits in the phone box", async () => {
+    await open();
+    fireEvent.change(screen.getByLabelText("Your WhatsApp number"), { target: { value: "+91 98a<b>76" } });
+    expect(screen.getByLabelText("Your WhatsApp number").value).toBe("+91 9876");
+  });
+  it("shows sign-in details and a launch checklist that remembers ticks", async () => {
+    await open({ emailVerified: true, providerData: [{ providerId: "google.com" }], metadata: {} });
+    expect(within(screen.getByLabelText("Security")).getByText("Google")).toBeTruthy();
+    fireEvent.click(screen.getByLabelText(/Add the 4 Resend email records/));
+    expect(JSON.parse(localStorage.getItem("merident.admin.launch")).resend).toBe(true);
+    expect(screen.getByText(/1 of 8 done/)).toBeTruthy();
+  });
+});
