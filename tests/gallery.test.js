@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildImageDoc, sortImages, suggestPair, canAddMore, countByKind, MAX_IMAGES_PER_PATIENT, MAX_DATA_CHARS } from "../src/gallery.js";
+import { buildImageDoc, sortImages, suggestPair, canAddMore, countByKind, MAX_IMAGES_PER_PATIENT, MAX_DATA_CHARS, batchPlan, fileDateKey } from "../src/gallery.js";
 
 const now = new Date(2026, 10, 12, 12);
 const data = "data:image/jpeg;base64,AAAA";
@@ -45,5 +45,20 @@ describe("physician NOC", () => {
     expect(nocImages(list).map((i) => i.id)).toEqual(["3", "2"]);
     expect(nocImages([])).toEqual([]);
     expect(nocImages(null)).toEqual([]);
+  });
+});
+
+describe("batch import helpers", () => {
+  it("keeps what fits under the limit", () => {
+    expect(batchPlan([1, 2, 3], MAX_IMAGES_PER_PATIENT - 2)).toEqual({ take: [1, 2], skipped: 1 });
+    expect(batchPlan([1], MAX_IMAGES_PER_PATIENT)).toEqual({ take: [], skipped: 1 });
+    expect(batchPlan(undefined, 0)).toEqual({ take: [], skipped: 0 });
+  });
+  it("reads the day from a file, never the future", () => {
+    const now = new Date(2026, 10, 18, 10);
+    expect(fileDateKey({ lastModified: new Date(2026, 9, 1, 8).getTime() }, now)).toBe("2026-10-01");
+    expect(fileDateKey({ lastModified: new Date(2027, 0, 1).getTime() }, now)).toBe("2026-11-18");
+    expect(fileDateKey({}, now)).toBe("2026-11-18");
+    expect(fileDateKey(null, now)).toBe("2026-11-18");
   });
 });

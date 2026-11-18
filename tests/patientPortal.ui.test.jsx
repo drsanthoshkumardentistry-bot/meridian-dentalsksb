@@ -19,6 +19,7 @@ describe("PatientPortal", () => {
     expect(screen.getByText(/Pay ₹600.00 with UPI/).getAttribute("href")).toContain("upi://pay");
     expect(screen.getByText("Root canal")).toBeTruthy();
     expect(screen.getByText("Avoid hard food")).toBeTruthy();
+    expect(screen.getByTestId("portal-install-tip").textContent).toMatch(/Add to Home screen/);
   });
   it("explains a missing or expired link", async () => {
     const { unmount } = render(<PatientPortal token="t" loadPage={async () => null} />);

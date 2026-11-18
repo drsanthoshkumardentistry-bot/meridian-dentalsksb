@@ -49,3 +49,18 @@ export const prePostTeeth = (images = []) =>
 
 /** Physician NOC (no objection or medical clearance) certificates for one patient, newest first. */
 export const nocImages = (images = []) => sortImages(images).filter((i) => i.kind === NOC_KIND);
+
+/** Splits a chosen batch into the pictures that fit under the per-patient limit and the ones left over. */
+export const batchPlan = (files = [], existing = 0) => {
+  const list = Array.from(files || []).filter(Boolean);
+  const room = Math.max(0, MAX_IMAGES_PER_PATIENT - existing);
+  return { take: list.slice(0, room), skipped: Math.max(0, list.length - room) };
+};
+
+/** The day a picture file was saved (RVG software stamps this at capture). Falls back to today when it is missing or in the future. */
+export const fileDateKey = (file, now = new Date()) => {
+  const t = file && Number(file.lastModified);
+  if (!Number.isFinite(t) || t <= 0) return dateKey(now);
+  const k = dateKey(new Date(t));
+  return k > dateKey(now) ? dateKey(now) : k;
+};

@@ -114,6 +114,7 @@ export default function PatientPortal({ token, loadPage }) {
         </section>
       )}
 
+      <p className="text-center text-[11px] text-slate-500" data-testid="portal-install-tip">Tip: keep this page like an app. In your phone's browser menu, choose Add to Home screen.</p>
       <p className="text-center text-[11px] text-slate-400">Updated {new Date(page.updatedAt).toLocaleDateString("en-IN")} · Sent by {page.clinicName} using MeriDent</p>
     </>
   );

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Plus, X } from "lucide-react";
-import { MAX_IMAGES_PER_PATIENT, buildImageDoc, canAddMore, sortImages } from "../gallery.js";
+import { MAX_IMAGES_PER_PATIENT, buildImageDoc, canAddMore, sortImages, batchPlan, fileDateKey } from "../gallery.js";
 import { formatDateLong, dateKey } from "../reminders.js";
 import DmyDateInput from "./DmyDateInput.jsx";
 
@@ -15,6 +15,7 @@ export default function ExtraRadiographs({ patient, api, compress, canWrite = tr
   const [takenOn, setTakenOn] = useState(dateKey());
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
+  const [useFileDates, setUseFileDates] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [open, setOpen] = useState(null);
   const fileRef = useRef(null);
@@ -26,23 +27,35 @@ export default function ExtraRadiographs({ patient, api, compress, canWrite = tr
 
   const { images } = state;
   const onFile = async (e) => {
-    const file = e.target.files && e.target.files[0];
+    const files = Array.from((e.target.files) || []);
     e.target.value = "";
-    if (!file) return;
-    if (!canAddMore(images.length)) return showToast(`Up to ${MAX_IMAGES_PER_PATIENT} pictures per patient. Delete one in Photos and X-rays first.`);
+    if (!files.length) return;
+    const { take, skipped } = batchPlan(files, images.length);
+    if (!take.length) return showToast(`Up to ${MAX_IMAGES_PER_PATIENT} pictures per patient. Delete one in Photos and X-rays first.`);
     setBusy(true);
-    try {
-      const data = await compress(file);
-      const r = buildImageDoc({ patientId: patient.id, kind, caption: note, tooth, takenOn, data }, newId("IMG"), new Date(), authorName);
-      if (!r.ok) return showToast(r.error);
-      await api.add(r.image);
-      setNote("");
-      setShowForm(false);
-      showToast(`${kind} saved`);
-      await load();
-    } catch (err) {
-      showToast(err && err.message ? err.message : "Could not save the picture. Try again.");
-    } finally { setBusy(false); }
+    let saved = 0;
+    let failed = 0;
+    let lastError = "";
+    for (const file of take) {
+      try {
+        const data = await compress(file);
+        const day = take.length > 1 && useFileDates ? fileDateKey(file) : takenOn;
+        const r = buildImageDoc({ patientId: patient.id, kind, caption: take.length > 1 ? "" : note, tooth: take.length > 1 ? "" : tooth, takenOn: day, data }, newId("IMG"), new Date(), authorName);
+        if (!r.ok) { failed += 1; lastError = r.error; continue; }
+        await api.add(r.image);
+        saved += 1;
+      } catch (err) {
+        failed += 1;
+        lastError = err && err.message ? err.message : "Could not save the picture. Try again.";
+      }
+    }
+    if (saved) { setNote(""); setShowForm(false); await load(); }
+    setBusy(false);
+    if (files.length === 1) return showToast(saved ? `${kind} saved` : lastError);
+    const parts = [`Saved ${saved} of ${files.length} pictures`];
+    if (skipped) parts.push(`${skipped} not added because the limit is ${MAX_IMAGES_PER_PATIENT} per patient`);
+    if (failed) parts.push(`${failed} failed: ${lastError}`);
+    showToast(parts.join(". ") + ".");
   };
 
   if (!patient) return null;
@@ -81,10 +94,12 @@ export default function ExtraRadiographs({ patient, api, compress, canWrite = tr
               <DmyDateInput id="xr-date" ariaLabel="Taken on (dd/mm/yyyy)" max={dateKey()} value={takenOn} onChange={setTakenOn} className={`${field} w-32`} />
             </div>
           </div>
-          <input ref={fileRef} type="file" accept="image/*" aria-label="Choose a radiograph" onChange={onFile} className="hidden" />
+          <input ref={fileRef} type="file" accept="image/*" multiple aria-label="Choose a radiograph" onChange={onFile} className="hidden" />
           <button type="button" disabled={busy} onClick={() => fileRef.current && fileRef.current.click()} className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-semibold">
-            {busy ? "Saving…" : `Choose ${kind} picture`}
+            {busy ? "Saving…" : `Choose ${kind} pictures`}
           </button>
+          <label className="flex items-center gap-2 text-[11px] text-slate-600"><input type="checkbox" checked={useFileDates} onChange={(e) => setUseFileDates(e.target.checked)} /> When I choose several, use the date each file was saved (RVG software stamps it at capture)</label>
+          <p className="text-[11px] text-slate-500">Export from your RVG software to a folder, then select all the images at once. Tooth and note apply when you add one picture.</p>
         </div>
       )}
 
