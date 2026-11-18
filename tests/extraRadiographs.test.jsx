@@ -29,4 +29,37 @@ describe("ExtraRadiographs", () => {
     expect(await screen.findAllByRole("img")).toHaveLength(1);
     expect(screen.queryByRole("button", { name: /^Add/ })).toBeNull();
   });
+  const open = async (over) => { const r = setup(over); await screen.findByText(/No extra radiographs yet/); fireEvent.click(screen.getByRole("button", { name: /Add/ })); return r; };
+  const pics = (n, extra = {}) => Array.from({ length: n }, (_, i) => Object.assign(new File(["x"], `r${i}.jpg`, { type: "image/jpeg" }), extra));
+  it("imports a whole folder at once, using each file's own date", async () => {
+    let n = 0;
+    const { api, props } = await open({ newId: () => `IMG${++n}` });
+    const day = (y, m, d) => new Date(y, m, d, 12).getTime();
+    const files = [new File(["x"], "a.jpg", { type: "image/jpeg", lastModified: day(2026, 0, 5) }), new File(["x"], "b.jpg", { type: "image/jpeg", lastModified: day(2026, 1, 9) })];
+    fireEvent.change(screen.getByLabelText("Choose a radiograph"), { target: { files } });
+    await waitFor(() => expect(api.add).toHaveBeenCalledTimes(2));
+    expect(api.add.mock.calls.map((c) => c[0].takenOn)).toEqual(["2026-01-05", "2026-02-09"]);
+    expect(props.showToast).toHaveBeenCalledWith("Saved 2 of 2 pictures.");
+  });
+  it("can ignore file dates, and reports one that fails", async () => {
+    const compress = vi.fn().mockResolvedValueOnce("data:image/jpeg;base64,abc").mockRejectedValueOnce(new Error("Could not read that image"));
+    const { api, props } = await open({ compress });
+    fireEvent.click(screen.getByLabelText(/use the date each file was saved/));
+    fireEvent.change(screen.getByLabelText("Choose a radiograph"), { target: { files: pics(2, {}) } });
+    await waitFor(() => expect(props.showToast).toHaveBeenCalled());
+    expect(api.add).toHaveBeenCalledTimes(1);
+    expect(props.showToast.mock.calls.at(-1)[0]).toBe("Saved 1 of 2 pictures. 1 failed: Could not read that image.");
+  });
+  it("stops at the per-patient limit and says how many were left out", async () => {
+    const existing = Array.from({ length: 29 }, (_, i) => ({ id: `e${i}`, kind: "IOPA", takenOn: "2026-01-01", data: "data:image/jpeg;base64,x" }));
+    const api = { list: vi.fn().mockResolvedValue(existing), add: vi.fn().mockResolvedValue() };
+    const showToast = vi.fn();
+    render(<ExtraRadiographs patient={{ id: "P1" }} api={api} compress={vi.fn().mockResolvedValue("data:image/jpeg;base64,abc")} showToast={showToast} newId={() => "n"} />);
+    await screen.findAllByRole("img");
+    fireEvent.click(screen.getByRole("button", { name: /Add/ }));
+    fireEvent.change(screen.getByLabelText("Choose a radiograph"), { target: { files: pics(3) } });
+    await waitFor(() => expect(showToast).toHaveBeenCalled());
+    expect(api.add).toHaveBeenCalledTimes(1);
+    expect(showToast.mock.calls.at(-1)[0]).toBe("Saved 1 of 3 pictures. 2 not added because the limit is 30 per patient.");
+  });
 });
