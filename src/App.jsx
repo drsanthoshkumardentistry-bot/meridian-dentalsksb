@@ -305,6 +305,13 @@ const CLINICAL_PALETTE = [
   { id: "ABR", label: "Abrasion / erosion", border: "border-orange-200", bg: "bg-orange-50/60", text: "text-orange-600" },
   { id: "SEA", label: "Sealant", border: "border-green-200", bg: "bg-green-50/60", text: "text-green-600" },
   { id: "VNR", label: "Veneer", border: "border-teal-200", bg: "bg-teal-50/60", text: "text-teal-600" },
+  { id: "PUL", label: "Pulpitis (toothache from the nerve)", border: "border-rose-200", bg: "bg-rose-50/60", text: "text-rose-600" },
+  { id: "TMP", label: "Temporary filling", border: "border-yellow-200", bg: "bg-yellow-50/60", text: "text-yellow-600" },
+  { id: "POC", label: "Post and core", border: "border-purple-200", bg: "bg-purple-50/60", text: "text-purple-600" },
+  { id: "ORT", label: "Braces / orthodontic band", border: "border-cyan-200", bg: "bg-cyan-50/60", text: "text-cyan-600" },
+  { id: "PON", label: "Pontic / denture tooth", border: "border-gray-200", bg: "bg-gray-50/60", text: "text-gray-600" },
+  { id: "REC", label: "Gum recession", border: "border-rose-200", bg: "bg-rose-50/60", text: "text-rose-600" },
+  { id: "FLU", label: "Fluorosis / stain", border: "border-amber-200", bg: "bg-amber-50/60", text: "text-amber-600" },
   { id: "MIS", label: "Missing / Extracted", border: "border-slate-300", bg: "bg-slate-100", text: "text-slate-600" },
 ];
 

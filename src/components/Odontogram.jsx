@@ -103,6 +103,66 @@ function ToothImpl({ t, codes, labelOf, onTap, planned, activeLabel }) {
 // Only a tooth whose own findings changed is drawn again, so a 32-tooth chart stays smooth on a low-spec tablet.
 const Tooth = React.memo(ToothImpl, (a, b) => a.t === b.t && a.planned === b.planned && a.activeLabel === b.activeLabel && a.codes.join("|") === b.codes.join("|") && a.labelOf === b.labelOf && a.onTap === b.onTap);
 
+// Surfaces, G.V. Black class (one tap) and depth for one carious tooth. Used in the tooth pop-up and in the list under the chart.
+function CariesEditor({ tooth, d, onCaries, compact = false }) {
+  const front = ["incisor", "canine"].includes((toothInfo(tooth) || {}).type);
+  const depth = DEPTHS.find((x) => x.id === d.depth);
+  const cls = CARIES_CLASSES.find((c) => c.id === d.cls);
+  const set = (patch) => onCaries(Number(tooth), patch);
+  return (
+    <div className="rounded-xl border border-rule bg-white p-3 text-sm space-y-2.5" aria-label={`Caries details for tooth ${tooth}`} data-testid={compact ? "caries-editor-sheet" : undefined}>
+      <div className="flex flex-wrap items-center gap-2">
+        <strong className="text-ink">Caries details ({tooth})</strong>
+        <span className="text-xs text-slate-600">{cariesText(d) || "Not detailed yet"}</span>
+      </div>
+      <div>
+        <div className="mb-1 text-[11px] font-semibold text-slate-500">Surfaces (tap all that are affected)</div>
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label={`Surfaces on tooth ${tooth}`}>
+          {SURFACES.map((sf) => {
+            const on = (d.surfaces || []).includes(sf);
+            return (
+              <button key={sf} type="button" aria-pressed={on} title={surfaceName(sf, tooth)} onClick={() => set({ surfaces: on ? (d.surfaces || []).filter((x) => x !== sf) : [...(d.surfaces || []), sf] })}
+                className={`min-w-[2.75rem] px-3 py-2 rounded-full border text-xs font-semibold ${on ? "bg-[#1d4ed8] text-white border-[#1d4ed8]" : "bg-white text-slate-700 border-rule"}`}>
+                {sf === "O" && front ? "I" : sf}
+              </button>
+            );
+          })}
+          <label className="inline-flex items-center gap-1 text-xs text-slate-700 ml-1">
+            <input type="checkbox" checked={!!d.cervical} onChange={(e) => set({ cervical: e.target.checked })} /> Near the gum
+          </label>
+          <label className="inline-flex items-center gap-1 text-xs text-slate-700">
+            <input type="checkbox" checked={!!d.tip} onChange={(e) => set({ tip: e.target.checked })} /> {front ? "Incisal edge" : "Cusp tip"}
+          </label>
+        </div>
+      </div>
+      <div>
+        <div className="mb-1 text-[11px] font-semibold text-slate-500">G.V. Black class (suggested from the surfaces; tap to change)</div>
+        <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={`Black class for tooth ${tooth}`}>
+          {CARIES_CLASSES.map((c) => (
+            <button key={c.id} type="button" role="radio" aria-checked={d.cls === c.id} onClick={() => set({ cls: d.cls === c.id ? "" : c.id })}
+              className={`px-3 py-2 rounded-lg border text-xs font-semibold ${d.cls === c.id ? "bg-ink text-white border-ink" : "bg-white text-slate-700 border-rule"}`}>
+              {c.label}
+            </button>
+          ))}
+        </div>
+        {cls && <p className="mt-1 text-[11px] text-slate-500">{cls.text}.</p>}
+      </div>
+      <div>
+        <div className="mb-1 text-[11px] font-semibold text-slate-500">Depth</div>
+        <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={`Depth for tooth ${tooth}`}>
+          {DEPTHS.map((x) => (
+            <button key={x.id} type="button" role="radio" aria-checked={d.depth === x.id} onClick={() => set({ depth: d.depth === x.id ? "" : x.id })}
+              className={`px-3 py-2 rounded-lg border text-xs font-semibold ${d.depth === x.id ? "bg-ink text-white border-ink" : "bg-white text-slate-700 border-rule"}`}>
+              {x.label}
+            </button>
+          ))}
+        </div>
+        {depth && <p className="mt-1 text-[11px] text-slate-500">{depth.hint}.</p>}
+      </div>
+    </div>
+  );
+}
+
 export default function Odontogram({
   conditions: rawConditions = {},
   palette,
@@ -276,7 +336,10 @@ export default function Odontogram({
           </div>
         )}
       </div>
-      <div className="mt-3 max-h-[40vh] space-y-3 overflow-y-auto pr-1" role="group" aria-label={`Findings on tooth ${sheet}`}>
+      {onCaries && sheetCodes.includes("CAR") && (
+        <div className="mt-3"><CariesEditor tooth={sheet} d={(caries && caries[sheet]) || {}} onCaries={onCaries} compact /></div>
+      )}
+      <div className="mt-3 max-h-[34vh] space-y-3 overflow-y-auto pr-1" role="group" aria-label={`Findings on tooth ${sheet}`}>
         {sheetGroups.length === 0 && <p className="text-xs text-slate-500">No ready-made finding matches. Add it as your own above.</p>}
         {sheetGroups.map((g) => (
         <div key={g.title}>
@@ -430,56 +493,14 @@ export default function Odontogram({
         <div data-testid="caries-details">
           <div className="text-sm font-bold text-ink mb-1">Caries details</div>
           <p className="text-xs text-slate-500 mb-2">Mark the surfaces and MeriDent suggests the G.V. Black class. You can change the class. A guide only: the dentist decides.</p>
-          <ul className="space-y-2">
+          <div className="space-y-2">
             {Object.entries(conditions)
               .filter(([, codes]) => codes.includes("CAR"))
               .sort((a, b) => Number(a[0]) - Number(b[0]))
               .map(([tooth]) => {
-                const d = (caries && caries[tooth]) || {};
-                const front = ["incisor", "canine"].includes((toothInfo(tooth) || {}).type);
-                const depth = DEPTHS.find((x) => x.id === d.depth);
-                return (
-                  <li key={tooth} className="rounded-xl border border-rule bg-white p-3 text-sm space-y-2" aria-label={`Caries details for tooth ${tooth}`}>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <strong className="text-ink">Tooth {tooth}</strong>
-                      <span className="text-xs text-slate-600">{cariesText(d) || "Not detailed yet"}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5" role="group" aria-label={`Surfaces on tooth ${tooth}`}>
-                      {SURFACES.map((sf) => {
-                        const on = (d.surfaces || []).includes(sf);
-                        return (
-                          <button key={sf} type="button" aria-pressed={on} title={surfaceName(sf, tooth)} onClick={() => onCaries(Number(tooth), { surfaces: on ? (d.surfaces || []).filter((x) => x !== sf) : [...(d.surfaces || []), sf] })}
-                            className={`px-2.5 py-1 rounded-full border text-xs font-semibold ${on ? "bg-[#1d4ed8] text-white border-[#1d4ed8]" : "bg-white text-slate-700 border-rule"}`}>
-                            {sf === "O" && front ? "I" : sf}
-                          </button>
-                        );
-                      })}
-                      <label className="inline-flex items-center gap-1 text-xs text-slate-700 ml-1">
-                        <input type="checkbox" checked={!!d.cervical} onChange={(e) => onCaries(Number(tooth), { cervical: e.target.checked })} /> Near the gum
-                      </label>
-                      <label className="inline-flex items-center gap-1 text-xs text-slate-700">
-                        <input type="checkbox" checked={!!d.tip} onChange={(e) => onCaries(Number(tooth), { tip: e.target.checked })} /> {front ? "Incisal edge" : "Cusp tip"}
-                      </label>
-                    </div>
-                    <div className="grid sm:grid-cols-2 gap-2">
-                      <label className="text-xs text-slate-600">Black class
-                        <select value={d.cls || ""} onChange={(e) => onCaries(Number(tooth), { cls: e.target.value })} className="mt-0.5 w-full rounded-lg border border-rule bg-white px-2 py-1.5 text-sm text-slate-900">
-                          <option value="">Not set</option>
-                          {CARIES_CLASSES.map((c) => <option key={c.id} value={c.id}>{c.label}: {c.text}</option>)}
-                        </select>
-                      </label>
-                      <label className="text-xs text-slate-600">Depth
-                        <select value={d.depth || ""} onChange={(e) => onCaries(Number(tooth), { depth: e.target.value })} className="mt-0.5 w-full rounded-lg border border-rule bg-white px-2 py-1.5 text-sm text-slate-900">
-                          <option value="">Not set</option>
-                          {DEPTHS.map((x) => <option key={x.id} value={x.id}>{x.label}</option>)}
-                        </select>
-                      </label>
-                    </div>
-                    {depth && <p className="text-[11px] text-slate-500">{depth.hint}.</p>}
-                  </li>
-                );
+                return <CariesEditor key={tooth} tooth={tooth} d={(caries && caries[tooth]) || {}} onCaries={onCaries} />;
               })}
-          </ul>
+          </div>
         </div>
       )}
     </div>
