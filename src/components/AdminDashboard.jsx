@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { LayoutDashboard, IndianRupee, Users, Menu, X, LogOut, Hospital, UserCog, RefreshCw, CheckCircle2 } from "lucide-react";
 import NotificationBell from "./NotificationBell.jsx";
+import ClinicDetail from "./ClinicDetail.jsx";
 import AdminProfile from "./AdminProfile.jsx";
 import { readLocal, writeLocal, weeklySignups, renewalsTimeline, sortClinics, SORTS } from "../adminTools.js";
 import FullscreenButton from "./FullscreenButton.jsx";
@@ -55,6 +56,7 @@ export default function AdminDashboard({ email = "", initial = null, loadFn = lo
   const [filter, setFilter] = useState("all");
   const [showAll, setShowAll] = useState(false);
   const [sort, setSort] = useState("seen");
+  const [openId, setOpenId] = useState("");
   const [view, setView] = useState(NAV.some((n) => n[0] === startView) ? startView : "overview");
   const [menu, setMenu] = useState(false);
   const [every, setEvery] = useState(() => { const v = readLocal("merident.admin.refresh", null); return Number.isFinite(v) ? v : refreshMs; });
@@ -328,6 +330,8 @@ export default function AdminDashboard({ email = "", initial = null, loadFn = lo
                         <span>7 days <b className="text-slate-800 tabular-nums">{mins(c.weekMin)}</b></span>
                         <span>Joined {date(c.created)}</span>
                       </div>
+                      <button type="button" aria-expanded={openId === c.uid} aria-label={`${openId === c.uid ? "Hide" : "Show"} details for ${c.email}`} onClick={() => setOpenId(openId === c.uid ? "" : c.uid)} className="mt-2 text-[11px] font-semibold text-brand-700 underline underline-offset-2">{openId === c.uid ? "Hide details" : "Details and message"}</button>
+                      {openId === c.uid && <ClinicDetail clinic={c} onToast={setMsg} />}
                     </div>
                   </li>
                 ))}
