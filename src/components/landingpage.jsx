@@ -111,7 +111,9 @@ const FEATURE_GROUPS = [
       { icon: MessagesSquare, title: "MeriDent Connect", text: "A professional network for dentists verified by our team. Discuss cases, ask peers, mark the best answer, save posts, follow colleagues, add events to your calendar, and send a consult request to a nearby specialist. Patient names are never shared." },
       { icon: ClipboardList, title: "MeriDent DocLog", text: "For doctors who visit other clinics as a consultant. Log each visit, the treatment, the next visit and the payment, and see which clinic still owes you money. It is private to you and replaces the paper diary." },
       { icon: Bell, title: "WhatsApp reminders & recall", text: "See who to remind for tomorrow, who owes a balance, and who is due for a 6-month check-up. One tap opens WhatsApp with the message ready. Patients can opt out." },
-      { icon: WifiOff, title: "Works with weak internet", text: "Keep working when the connection drops. Your changes save on the device and sync to the cloud when you are back online." }
+      { icon: WifiOff, title: "Works with weak internet", text: "Keep working when the connection drops. Your changes save on the device and sync to the cloud when you are back online." },
+      { icon: ScanSearch, title: "Add X-rays from your RVG folder", text: "On a computer with Chrome or Edge, pick the folder your RVG software saves to, tick the newest pictures and add them to the patient in one go. Each keeps the date it was saved." },
+      { icon: Bell, title: "A patient page they can install", text: "Send a private link with the patient's visits, balance and advice. On a phone they can install it like an app, with no sign-in needed." },
     ]
   }
 ];

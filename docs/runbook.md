@@ -16,10 +16,12 @@ What to do when something breaks, and what to check every month. No secrets live
 
 ## Admin dashboard (founder)
 
-Signing in with an address listed in the `FOUNDER_EMAILS` secret opens the admin dashboard: who is online, hours online, plans and billing, and subscription requests. "Open my clinic" goes to the normal app; "Admin dashboard" (top right) comes back.
+Signing in with an address listed in the `FOUNDER_EMAILS` secret opens the admin dashboard: who is online, hours online, plans and billing, and subscription requests. "Open my clinic" goes to the normal app; "Admin profile" at the bottom of the sidebar (under Settings) comes back. Sections: Overview (online now, hours, new clinics per week), Billing and approvals (renewals list, requests), Clinics (search, filter, sort, details and messages), Admin profile (follow-ups, CSV exports, goal, message templates, launch checklist, to-dos, notes).
 - Clinics ask for a plan from Settings, Your plan. Approve only after the payment (UPI) has arrived; approving switches the plan on for 30 days (365 yearly).
 - Online time comes from a small message every 5 minutes while a tab is open (collection `presence`). Each active clinic user costs about 12 reads and 12 writes per hour, so the free Firebase daily limits (50,000 reads, 20,000 writes) allow roughly 150 to 200 users online for 8 hours. Watch Firebase usage as the user count grows.
-- The collections `presence`, `planRequests` and `plans` are server-only. Browsers cannot read or write them (rules test: "plans, planRequests and presence are closed to every browser").
+- Announcement banner: Admin profile, "Message to all clinics". Up to 240 characters of plain text, stored in `announcements/current` (server-only). Clinics check every 10 minutes and can dismiss it; a new message shows again. Needs `FIREBASE_SERVICE_ACCOUNT`. To remove it fast, press "Remove banner".
+- To-dos, notes, goal, details and checklist ticks on the Admin profile are saved in the browser only (they do not follow you to another device).
+- The collections `presence`, `planRequests`, `plans` and `announcements` are server-only. Browsers cannot read or write them (rules test: "plans, planRequests and presence are closed to every browser").
 
 ## When the site is down
 
