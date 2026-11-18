@@ -41,6 +41,7 @@ import Assessments from "./components/Assessments.jsx";
 import { draftVisitNote } from "./clinicalNote.js";
 import { askAi } from "./aiClient.js";
 import HelpChat from "./components/HelpChat.jsx";
+import AnnouncementBanner from "./components/AnnouncementBanner.jsx";
 import DmyDateInput from "./components/DmyDateInput.jsx";
 import BulkMessage from "./components/BulkMessage.jsx";
 import ReferralPanel from "./components/ReferralPanel.jsx";
@@ -2584,6 +2585,7 @@ export default function App() {
 
       {/* --- WORKSPACE --- */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto work-panel">
+        <AnnouncementBanner />
         <header className="h-16 bg-white/55 backdrop-blur-md border-b border-white/70 px-3 sm:px-6 flex items-center justify-between gap-2 sticky top-0 z-30">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0 shrink">
             <button

@@ -6,6 +6,7 @@ import AdminProfile from "./AdminProfile.jsx";
 import { readLocal, writeLocal, weeklySignups, renewalsTimeline, sortClinics, SORTS } from "../adminTools.js";
 import FullscreenButton from "./FullscreenButton.jsx";
 import { loadOverview, decideRequest } from "../adminApi.js";
+import { loadAnnouncement, saveAnnouncement } from "../announcementApi.js";
 
 export const mins = (m) => (m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : m > 0 ? `${m}m` : "-");
 const date = (ms) => (ms ? new Date(ms).toLocaleDateString("en-GB") : "never");
@@ -45,7 +46,7 @@ const Section = ({ title, label, children, right, testId }) => (
 const Chip = ({ children, tone = "bg-slate-100 text-slate-700" }) => <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${tone}`}>{children}</span>;
 
 /** Founder-only home screen: who is online, time spent, billing, and subscription approvals. No patient data. */
-export default function AdminDashboard({ email = "", initial = null, loadFn = loadOverview, decideFn = decideRequest, onOpenApp, onLogout, refreshMs = 60000, now, user = null, startView = "overview" }) {
+export default function AdminDashboard({ email = "", initial = null, loadFn = loadOverview, decideFn = decideRequest, announceLoad = loadAnnouncement, announceSave = saveAnnouncement, onOpenApp, onLogout, refreshMs = 60000, now, user = null, startView = "overview" }) {
   const [data, setData] = useState(initial);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
@@ -341,7 +342,7 @@ export default function AdminDashboard({ email = "", initial = null, loadFn = lo
               <button type="button" onClick={() => setShowAll(true)} className="w-full rounded-xl border border-rule bg-white py-2.5 text-xs font-semibold text-brand-700">Show all {shown.length}</button>
             )}
           </Section>}
-          {view === "profile" && <AdminProfile user={user} email={email} data={data} now={now} every={every} onEvery={(ms) => { setEvery(ms); writeLocal("merident.admin.refresh", ms); }} onToast={setMsg} onOpenApp={onOpenApp} onLogout={onLogout} />}
+          {view === "profile" && <AdminProfile announceLoad={announceLoad} announceSave={announceSave} user={user} email={email} data={data} now={now} every={every} onEvery={(ms) => { setEvery(ms); writeLocal("merident.admin.refresh", ms); }} onToast={setMsg} onOpenApp={onOpenApp} onLogout={onLogout} />}
         </>)}
         </main>
       </div>
