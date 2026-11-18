@@ -62,4 +62,36 @@ describe("ExtraRadiographs", () => {
     expect(api.add).toHaveBeenCalledTimes(1);
     expect(showToast.mock.calls.at(-1)[0]).toBe("Saved 1 of 3 pictures. 2 not added because the limit is 30 per patient.");
   });
+  const dirOf = (files) => ({ name: "RVG", entries: async function* () { for (const f of files) yield [f.name, { kind: "file", getFile: async () => f }]; yield ["sub", { kind: "directory" }]; } });
+  it("hides the folder picker where the browser cannot do it", async () => {
+    delete window.showDirectoryPicker;
+    await open();
+    expect(screen.queryByText("Pick my RVG folder")).toBeNull();
+  });
+  it("lists recent pictures from the RVG folder and adds only the ticked ones", async () => {
+    const now = Date.now();
+    const f = (name, ago) => new File(["x"], name, { type: "image/jpeg", lastModified: now - ago });
+    window.showDirectoryPicker = vi.fn().mockResolvedValue(dirOf([f("new.jpg", 3600000), f("old.jpg", 9 * 86400000), f("notes.txt", 1000), f("newer.png", 600000)]));
+    const { api } = await open();
+    fireEvent.click(screen.getByText("Pick my RVG folder"));
+    const list = await screen.findByLabelText("Recent pictures in the folder");
+    expect(list.querySelectorAll("li").length).toBe(2);
+    expect(list.textContent).toMatch(/newer\.png[\s\S]*new\.jpg/); // newest first
+    expect(list.textContent).not.toMatch(/old\.jpg|notes\.txt/);
+    fireEvent.click(screen.getByLabelText("newer.png"));
+    fireEvent.click(screen.getByText(/Add ticked pictures as IOPA/));
+    await waitFor(() => expect(api.add).toHaveBeenCalledTimes(1));
+    delete window.showDirectoryPicker;
+  });
+  it("says so when the folder has nothing recent, and stays quiet if the dentist cancels", async () => {
+    const old = new File(["x"], "old.jpg", { type: "image/jpeg", lastModified: Date.now() - 20 * 86400000 });
+    window.showDirectoryPicker = vi.fn().mockResolvedValueOnce(dirOf([old])).mockRejectedValueOnce(Object.assign(new Error("x"), { name: "AbortError" }));
+    const { props } = await open();
+    fireEvent.click(screen.getByText("Pick my RVG folder"));
+    expect((await screen.findByRole("status")).textContent).toMatch(/No pictures from the last 3 days in "RVG"/);
+    fireEvent.click(screen.getByText("Pick my RVG folder"));
+    await waitFor(() => expect(window.showDirectoryPicker).toHaveBeenCalledTimes(2));
+    expect(props.showToast).not.toHaveBeenCalled();
+    delete window.showDirectoryPicker;
+  });
 });

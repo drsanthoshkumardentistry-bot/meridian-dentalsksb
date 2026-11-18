@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildImageDoc, sortImages, suggestPair, canAddMore, countByKind, MAX_IMAGES_PER_PATIENT, MAX_DATA_CHARS, batchPlan, fileDateKey } from "../src/gallery.js";
+import { buildImageDoc, sortImages, suggestPair, canAddMore, countByKind, MAX_IMAGES_PER_PATIENT, MAX_DATA_CHARS, batchPlan, fileDateKey, recentImageFiles } from "../src/gallery.js";
 
 const now = new Date(2026, 10, 12, 12);
 const data = "data:image/jpeg;base64,AAAA";
@@ -60,5 +60,16 @@ describe("batch import helpers", () => {
     expect(fileDateKey({ lastModified: new Date(2027, 0, 1).getTime() }, now)).toBe("2026-11-18");
     expect(fileDateKey({}, now)).toBe("2026-11-18");
     expect(fileDateKey(null, now)).toBe("2026-11-18");
+  });
+});
+
+describe("recent pictures in a folder", () => {
+  const now = new Date(2026, 10, 18, 12);
+  const f = (name, hoursAgo) => ({ name, lastModified: now.getTime() - hoursAgo * 3600000 });
+  it("keeps recent image files, newest first, and caps the list", () => {
+    const r = recentImageFiles([f("a.jpg", 5), f("b.PNG", 1), f("c.txt", 1), f("d.jpg", 24 * 5), f("e.jpg", -48)], now);
+    expect(r.map((x) => x.name)).toEqual(["b.PNG", "a.jpg"]);
+    expect(recentImageFiles(Array.from({ length: 40 }, (_, i) => f(`p${i}.jpg`, i + 1)), now, 3, 24).length).toBe(24);
+    expect(recentImageFiles(undefined, now)).toEqual([]);
   });
 });

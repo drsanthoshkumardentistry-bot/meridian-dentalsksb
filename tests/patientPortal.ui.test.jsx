@@ -19,7 +19,7 @@ describe("PatientPortal", () => {
     expect(screen.getByText(/Pay ₹600.00 with UPI/).getAttribute("href")).toContain("upi://pay");
     expect(screen.getByText("Root canal")).toBeTruthy();
     expect(screen.getByText("Avoid hard food")).toBeTruthy();
-    expect(screen.getByTestId("portal-install-tip").textContent).toMatch(/Add to Home screen/);
+    expect(screen.getByTestId("portal-install-tip").textContent).toMatch(/Install app or Add to Home screen/);
   });
   it("explains a missing or expired link", async () => {
     const { unmount } = render(<PatientPortal token="t" loadPage={async () => null} />);
@@ -27,5 +27,17 @@ describe("PatientPortal", () => {
     unmount();
     render(<PatientPortal token="t" loadPage={async () => page({ expiresAt: new Date(Date.now() - 1000) })} />);
     await waitFor(() => expect(screen.getByText("This link has expired")).toBeTruthy());
+  });
+  it("points the install prompt at the patient's own page, and puts the clinic app back after", async () => {
+    document.head.innerHTML = '<link rel="manifest" href="/manifest.webmanifest">';
+    const { unmount } = render(<PatientPortal token="abcd1234efgh" loadPage={async () => page()} />);
+    expect(document.querySelector('link[rel="manifest"]').getAttribute("href")).toBe("/portal-manifest?t=abcd1234efgh");
+    unmount();
+    expect(document.querySelector('link[rel="manifest"]').getAttribute("href")).toBe("/manifest.webmanifest");
+    document.head.innerHTML = "";
+    const again = render(<PatientPortal token="abcd1234efgh" loadPage={async () => page()} />);
+    expect(document.querySelectorAll('link[rel="manifest"]').length).toBe(1);
+    again.unmount();
+    expect(document.querySelectorAll('link[rel="manifest"]').length).toBe(0);
   });
 });

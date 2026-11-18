@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Plus, X } from "lucide-react";
-import { MAX_IMAGES_PER_PATIENT, buildImageDoc, canAddMore, sortImages, batchPlan, fileDateKey } from "../gallery.js";
+import { MAX_IMAGES_PER_PATIENT, buildImageDoc, canAddMore, sortImages, batchPlan, fileDateKey, recentImageFiles } from "../gallery.js";
 import { formatDateLong, dateKey } from "../reminders.js";
 import DmyDateInput from "./DmyDateInput.jsx";
 
@@ -19,6 +19,28 @@ export default function ExtraRadiographs({ patient, api, compress, canWrite = tr
   const [showForm, setShowForm] = useState(false);
   const [open, setOpen] = useState(null);
   const fileRef = useRef(null);
+  const [folder, setFolder] = useState(null); // { name, files } picked from the RVG export folder
+  const [picked, setPicked] = useState({});
+  const canPickFolder = typeof window !== "undefined" && typeof window.showDirectoryPicker === "function";
+  const pickFolder = async () => {
+    try {
+      const dir = await window.showDirectoryPicker({ mode: "read" });
+      const found = [];
+      for await (const [, handle] of dir.entries()) {
+        if (handle.kind === "file") { try { found.push(await handle.getFile()); } catch { /* skip unreadable file */ } }
+      }
+      const files = recentImageFiles(found);
+      setFolder({ name: dir.name, files });
+      setPicked(Object.fromEntries(files.map((f, i) => [i, true])));
+    } catch (err) {
+      if (!err || err.name !== "AbortError") showToast("Could not open that folder. Use Choose pictures instead.");
+    }
+  };
+  const addFromFolder = async () => {
+    const chosen = folder.files.filter((_, i) => picked[i]);
+    await importFiles(chosen);
+    setFolder(null);
+  };
 
   const load = useCallback(async () => {
     try { setState({ status: "ready", images: sortImages(await api.list(patient.id)).filter((i) => RADIOGRAPH_KINDS.includes(i.kind)) }); } catch { setState({ status: "error", images: [] }); }
@@ -29,6 +51,9 @@ export default function ExtraRadiographs({ patient, api, compress, canWrite = tr
   const onFile = async (e) => {
     const files = Array.from((e.target.files) || []);
     e.target.value = "";
+    await importFiles(files);
+  };
+  const importFiles = async (files) => {
     if (!files.length) return;
     const { take, skipped } = batchPlan(files, images.length);
     if (!take.length) return showToast(`Up to ${MAX_IMAGES_PER_PATIENT} pictures per patient. Delete one in Photos and X-rays first.`);
@@ -99,6 +124,28 @@ export default function ExtraRadiographs({ patient, api, compress, canWrite = tr
             {busy ? "Saving…" : `Choose ${kind} pictures`}
           </button>
           <label className="flex items-center gap-2 text-[11px] text-slate-600"><input type="checkbox" checked={useFileDates} onChange={(e) => setUseFileDates(e.target.checked)} /> When I choose several, use the date each file was saved (RVG software stamps it at capture)</label>
+          {canPickFolder && (
+            <div className="rounded-lg border border-dashed border-slate-300 bg-white p-2.5 space-y-2">
+              <button type="button" disabled={busy} onClick={pickFolder} className="px-3 py-2 rounded-lg border border-blue-600 text-blue-700 font-semibold disabled:opacity-60">Pick my RVG folder</button>
+              <p className="text-[11px] text-slate-500">Choose the folder your RVG software saves to. MeriDent lists pictures saved in the last 3 days. It only reads the files you tick.</p>
+              {folder && (folder.files.length === 0
+                ? <p role="status" className="text-[11px] text-amber-800">No pictures from the last 3 days in "{folder.name}".</p>
+                : (
+                  <div>
+                    <ul aria-label="Recent pictures in the folder" className="max-h-40 overflow-y-auto divide-y divide-rule">
+                      {folder.files.map((f, i) => (
+                        <li key={`${f.name}-${i}`} className="flex items-center gap-2 py-1">
+                          <input type="checkbox" id={`rvg-${i}`} checked={!!picked[i]} onChange={() => setPicked({ ...picked, [i]: !picked[i] })} />
+                          <label htmlFor={`rvg-${i}`} className="min-w-0 flex-1 truncate">{f.name}</label>
+                          <span className="text-[11px] text-slate-500">{new Date(f.lastModified).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <button type="button" disabled={busy || !Object.values(picked).some(Boolean)} onClick={addFromFolder} className="mt-2 px-3 py-2 rounded-lg bg-emerald-600 text-white font-semibold disabled:opacity-60">Add ticked pictures as {kind}</button>
+                  </div>
+                ))}
+            </div>
+          )}
           <p className="text-[11px] text-slate-500">Export from your RVG software to a folder, then select all the images at once. Tooth and note apply when you add one picture.</p>
         </div>
       )}

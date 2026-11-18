@@ -4,7 +4,21 @@ import { formatDateLong, formatTime12 } from "../reminders.js";
 import { isPortalExpired } from "../portal.js";
 
 /** Public page a patient opens from the clinic's private link. No sign-in; it shows only the published snapshot. */
+/** Points the browser's install prompt at this patient's own page instead of the clinic app. Restores the original on leave. */
+export const useInstallManifest = (token) => {
+  useEffect(() => {
+    if (!token || typeof document === "undefined") return undefined;
+    const link = document.querySelector('link[rel="manifest"]');
+    const old = link ? link.getAttribute("href") : null;
+    const el = link || Object.assign(document.createElement("link"), { rel: "manifest" });
+    el.setAttribute("href", `/portal-manifest?t=${encodeURIComponent(token)}`);
+    if (!link) document.head.appendChild(el);
+    return () => { if (old === null) el.remove(); else el.setAttribute("href", old); };
+  }, [token]);
+};
+
 export default function PatientPortal({ token, loadPage }) {
+  useInstallManifest(token);
   const [state, setState] = useState({ status: "loading", page: null });
   useEffect(() => {
     let alive = true;
@@ -114,7 +128,7 @@ export default function PatientPortal({ token, loadPage }) {
         </section>
       )}
 
-      <p className="text-center text-[11px] text-slate-500" data-testid="portal-install-tip">Tip: keep this page like an app. In your phone's browser menu, choose Add to Home screen.</p>
+      <p className="text-center text-[11px] text-slate-500" data-testid="portal-install-tip">Tip: keep this page like an app. In your phone's browser menu, choose Install app or Add to Home screen.</p>
       <p className="text-center text-[11px] text-slate-400">Updated {new Date(page.updatedAt).toLocaleDateString("en-IN")} · Sent by {page.clinicName} using MeriDent</p>
     </>
   );
