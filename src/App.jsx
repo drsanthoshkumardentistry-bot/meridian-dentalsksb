@@ -946,6 +946,9 @@ export default function App() {
     try { window.sessionStorage.setItem("merident_nav", activeNav); } catch (e) { /* storage unavailable */ }
   }, [activeNav]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [navTip, setNavTip] = useState(null); // name of the menu icon under the pointer, shown beside the slim rail
+  const showNavTip = (e, label) => { if (sidebarOpen || typeof window === "undefined" || window.innerWidth < 768) return; const r = e.currentTarget.getBoundingClientRect(); setNavTip({ label, top: r.top + r.height / 2, left: r.right + 8 }); };
+  const hideNavTip = () => setNavTip(null);
   useEffect(() => {
     if (!sidebarOpen) return undefined;
     const onKey = (e) => { if (e.key === "Escape") setSidebarOpen(false); };
@@ -2403,6 +2406,11 @@ export default function App() {
   const openNewAppointment = () => { setActiveNav("Appointments Diary"); setIsAddApptOpen(true); };
   return (
     <div className="flex h-screen app-backdrop text-slate-800 font-sans overflow-hidden app-shell">
+      {navTip && !sidebarOpen && (
+        <div role="tooltip" data-testid="nav-tip" style={{ top: navTip.top, left: navTip.left }} className="pointer-events-none fixed z-[70] hidden -translate-y-1/2 whitespace-nowrap rounded-lg bg-ink px-2.5 py-1.5 text-xs font-semibold text-white shadow-lift md:block">
+          {navTip.label}
+        </div>
+      )}
       
       {idleSecondsLeft !== null && (
         <IdleWarning secondsLeft={idleSecondsLeft} onStay={staySignedIn} onLogout={() => handleLogout()} />
@@ -2510,7 +2518,12 @@ export default function App() {
               return (
                 <button
                   key={item.label}
+                  onMouseEnter={(e) => showNavTip(e, item.label)}
+                  onMouseLeave={hideNavTip}
+                  onFocus={(e) => showNavTip(e, item.label)}
+                  onBlur={hideNavTip}
                   onClick={() => {
+                    hideNavTip();
                     setActiveNav(item.label);
                     setSidebarOpen(false);
                   }}
@@ -2518,14 +2531,14 @@ export default function App() {
                     isActive ? "nav-item-active text-white font-semibold" : "text-blue-100/80 hover:text-white"
                   }`}
                 >
-                  <span className="nav-icon" title={item.label}>{item.icon}</span>
+                  <span className="nav-icon">{item.icon}</span>
                   <span className="rail-label">{item.label}</span>
                 </button>
               );
             })}
             {adminData && (
-              <button type="button" onClick={() => { setSidebarOpen(false); setAdminStart("profile"); setAdminView(true); }} data-testid="back-to-admin" className="nav-item group w-full flex items-center gap-3 px-3.5 py-2.5 rounded-full text-[13px] font-medium text-blue-100/80 hover:text-white">
-                <span className="nav-icon" title="Admin profile"><ShieldCheck className="w-4 h-4" /></span>
+              <button type="button" onMouseEnter={(e) => showNavTip(e, "Admin profile")} onMouseLeave={hideNavTip} onFocus={(e) => showNavTip(e, "Admin profile")} onBlur={hideNavTip} onClick={() => { hideNavTip(); setSidebarOpen(false); setAdminStart("profile"); setAdminView(true); }} data-testid="back-to-admin" className="nav-item group w-full flex items-center gap-3 px-3.5 py-2.5 rounded-full text-[13px] font-medium text-blue-100/80 hover:text-white">
+                <span className="nav-icon"><ShieldCheck className="w-4 h-4" /></span>
                 <span className="rail-label">Admin profile</span>
               </button>
             )}
