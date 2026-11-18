@@ -804,19 +804,22 @@ export default function LandingPage({
         <p className="mt-2 text-base text-slate-600 max-w-xl">We study dentistry and write the code ourselves, so the app is shaped around real clinic work.</p>
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
           {[
-            { init: "SS", name: "Santhoshkumar S", role: "Founder", bio: "BDS student, Sri Ramakrishna Dental College & Hospital, Coimbatore. Full-stack developer and product lead." },
-            { init: "SG", name: "Sivasabari G", role: "Co-Founder", bio: "BDS student, Dhanalakshmi Srinivasan Dental College & Hospital, Perambalur. Leads clinical workflow requirements and testing." }
+            { init: "SS", name: "Santhoshkumar S", role: "Founder", does: "Builds the app and leads the product.", college: "BDS, Sri Ramakrishna Dental College & Hospital, Coimbatore", extra: "" },
+            { init: "SG", name: "Sivasabari G", role: "Co-Founder", does: "Leads clinical workflow and testing.", college: "BDS, Dhanalakshmi Srinivasan Dental College & Hospital, Perambalur", extra: "" }
           ].map((p) => (
             <div key={p.name} className="flex gap-4 rounded-2xl border border-white bg-white/80 shadow-[0_14px_36px_-24px_rgba(17,24,39,.5)] p-5">
               <div className="shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-sky-400 to-blue-600 text-white font-display font-bold flex items-center justify-center">{p.init}</div>
               <div>
                 <h3 className="font-display font-bold text-lg leading-tight">{p.name}</h3>
                 <p className="text-sm font-semibold text-brand-700">{p.role}</p>
-                <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">{p.bio}</p>
+                <p className="mt-1.5 text-sm text-slate-700 leading-relaxed">{p.does}</p>
+                <p className="mt-1 text-xs text-slate-500 leading-relaxed">{p.college}</p>
+                {p.extra && <p className="mt-1.5 text-xs text-slate-600 leading-relaxed">{p.extra}</p>}
               </div>
             </div>
           ))}
         </div>
+        <p className="mt-5 text-sm text-slate-600">Registered in India: on the StartupTN portal and under MSME Udyam.</p>
       </section>
 
       {/* FINAL CTA */}
