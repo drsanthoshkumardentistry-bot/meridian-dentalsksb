@@ -234,7 +234,9 @@ input::placeholder, textarea::placeholder { color: #64748b; opacity: 1; }
 }
 
 /* ---- Meridee, the tooth fairy ---- */
-.fairy { overflow: visible; filter: drop-shadow(0 14px 16px rgba(29, 78, 216, 0.22)); }
+.fairy { overflow: visible; }
+/* Meridee only moves while the pointer is on her. A drop-shadow filter on an always-moving SVG made the page repaint on every frame and blank out while scrolling on laptops. */
+.fairy-wrap:not(:hover):not(:focus-within) .fairy *, .fairy-wrap:not(:hover):not(:focus-within) .fairy-float { animation-play-state: paused; }
 .fairy-float { animation: fairy-bob 3.6s ease-in-out infinite; transform-origin: 85px 100px; }
 @keyframes fairy-bob { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-7px) rotate(1.5deg); } }
 .fairy-wing-l { animation: wing-l 0.9s ease-in-out infinite alternate; }
