@@ -168,13 +168,13 @@ export default function DataPortability({ data, newId, onDownloadFile, onImporte
           <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="new-password" className={`${field} mt-1`} />
         </label>
         <p className="text-xs text-slate-500 flex items-start gap-1"><Lock className="w-3.5 h-3.5 mt-0.5 shrink-0" aria-hidden="true" /> There is no way to recover a forgotten password. Keep it safe.</p>
-        <button type="button" onClick={downloadBackup} disabled={busy} className={primary}><Download className="w-3.5 h-3.5" /> Download full backup</button>
+        <button type="button" id="download-full-backup" onClick={downloadBackup} disabled={busy} className={primary}><Download className="w-3.5 h-3.5" /> Download full backup</button>
       </div>
 
       {restore && (
         <div className="space-y-2" data-testid="restore-points">
           <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5"><History className="w-3.5 h-3.5" aria-hidden="true" /> Automatic restore points</h3>
-          <p className="text-xs text-slate-500">MeriDent saves a copy of your records once a day, inside your own private space, and keeps the last 3. Restoring brings back anything deleted by mistake. Records already here are kept as they are.</p>
+          <p className="text-xs text-slate-500">MeriDent saves a copy of your records once a day, inside your own private space, and keeps the newest 7, plus one a week for a month and one a month for six months. Restoring brings back anything deleted by mistake. Records already here are kept as they are.</p>
           {restore.points.length === 0 ? (
             <p className="text-xs text-slate-600">No restore point yet. The first one is saved a minute or two after you sign in.</p>
           ) : (

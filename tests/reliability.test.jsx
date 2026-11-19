@@ -20,9 +20,9 @@ describe("backup reminder", () => {
     expect(backupNotification(daysAgo(BACKUP_REMIND_DAYS - 1), now)).toBeNull();
     expect(backupNotification("", now, { hasData: false })).toBeNull();
   });
-  it("asks after a week, and more urgently after a month or when never saved", () => {
-    expect(backupNotification(daysAgo(8), now).tone).toBe("amber");
-    expect(backupNotification(daysAgo(8), now).text).toMatch(/8 days ago/);
+  it("asks after three days, and more urgently after a month or when never saved", () => {
+    expect(backupNotification(daysAgo(4), now).tone).toBe("amber");
+    expect(backupNotification(daysAgo(4), now).text).toMatch(/4 days ago/);
     expect(backupNotification(daysAgo(40), now).tone).toBe("red");
     const never = backupNotification("", now);
     expect(never.tone).toBe("red");

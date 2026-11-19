@@ -2697,7 +2697,7 @@ export default function App() {
                   ? backupNotification(readLastBackup(CACHE_ID, window.localStorage), new Date(), { hasData: allPatients.length + allInvoices.length > 0 })
                   : null,
               })}
-              onOpen={(to, n) => { setActiveNav(to); if (n && n.kind === "backup") scrollToWhenReady("data-backup"); }}
+              onOpen={(to, n) => { setActiveNav(to); if (n && n.kind === "backup") scrollToWhenReady("download-full-backup", 3000, document, true); }}
             />
             <AccountMenu
               user={authUser}
