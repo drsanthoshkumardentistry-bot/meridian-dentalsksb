@@ -27,6 +27,7 @@ function ToothImpl({ t, codes, labelOf, onTap, planned, activeLabel }) {
     <g>
       <g
         className="odo-tooth"
+        data-tooth={t.num}
         role="button"
         tabIndex={0}
         aria-label={aria}
@@ -191,7 +192,37 @@ export default function Odontogram({
   modeRef.current = mode;
   // "Finding first" paints the chosen finding on every tooth you tap. "Tooth first" opens a sheet for that one tooth.
   useEffect(() => { setQuery(""); }, [sheet]);
-  const stableTap = useCallback((num) => { if (modeRef.current === "finding") tapRef.current(num); else setSheet(num); }, []);
+  const conditionsRef = useRef(conditions);
+  conditionsRef.current = conditions;
+  const activeIdRef = useRef(activeStatus);
+  activeIdRef.current = activeStatus;
+  const dragRef = useRef(null); // slide-to-mark in progress: { adding, seen }
+  const skipClickRef = useRef(false);
+  const stableTap = useCallback((num) => {
+    if (modeRef.current !== "finding") { setSheet(num); return; }
+    if (skipClickRef.current) { skipClickRef.current = false; return; } // the press already marked this tooth
+    tapRef.current(num);
+  }, []);
+  const toothAt = (target) => { const el = target && target.closest ? target.closest("[data-tooth]") : null; return el ? Number(el.getAttribute("data-tooth")) : null; };
+  const hasActive = (num) => (conditionsRef.current[num] || []).includes(activeIdRef.current);
+  // Finding first: press a tooth and slide across the others to mark them all (or to clear them all, if the first one already had it).
+  const paintDown = (e) => {
+    if (modeRef.current !== "finding" || (e.pointerType === "mouse" && e.button !== 0)) return;
+    const num = toothAt(e.target);
+    if (num === null) return;
+    dragRef.current = { adding: !hasActive(num), seen: new Set([num]) };
+    skipClickRef.current = true;
+    tapRef.current(num);
+  };
+  const paintMove = (e) => {
+    const d = dragRef.current;
+    if (!d || typeof document.elementFromPoint !== "function") return;
+    const num = toothAt(document.elementFromPoint(e.clientX, e.clientY));
+    if (num === null || d.seen.has(num)) return;
+    d.seen.add(num);
+    if (hasActive(num) !== d.adding) tapRef.current(num);
+  };
+  const paintEnd = () => { dragRef.current = null; setTimeout(() => { skipClickRef.current = false; }, 60); }; // the click that follows the release has fired by then
 
   // Full screen: cover the page, lock page scrolling, ask the browser for real full screen where it allows it, and leave on Esc.
   useEffect(() => {
@@ -289,9 +320,15 @@ export default function Odontogram({
       role="group"
       aria-label={isDeciduous ? "Primary dentition chart" : "Adult dentition chart"}
       className={big ? "mx-auto block h-full w-full max-h-full select-none" : "w-full h-auto min-w-[520px] max-w-[760px] mx-auto block select-none"}
+      style={mode === "finding" ? { touchAction: "none" } : undefined}
+      onPointerDown={paintDown}
+      onPointerMove={paintMove}
+      onPointerUp={paintEnd}
+      onPointerCancel={paintEnd}
+      onPointerLeave={paintEnd}
     >
       <text x="300" y="192" textAnchor="middle" fontSize="11" fill="#6b7fa8">Upper jaw</text>
-      <text x="300" y="212" textAnchor="middle" fontSize="12" fontWeight="700" fill="#0b1b3a">{mode === "finding" ? `Marking: ${active.label}` : sheet !== null ? `Tooth ${sheet} selected` : "Tap a tooth"}</text>
+      <text x="300" y="212" textAnchor="middle" fontSize="12" fontWeight="700" fill="#0b1b3a">{mode === "finding" ? `Marking: ${active.label} (slide across teeth)` : sheet !== null ? `Tooth ${sheet} selected` : "Tap a tooth"}</text>
       <text x="300" y="232" textAnchor="middle" fontSize="11" fill="#6b7fa8">Lower jaw</text>
       <text x="10" y="212" fontSize="11" fill="#6b7fa8">Patient's right</text>
       <text x="590" y="212" textAnchor="end" fontSize="11" fill="#6b7fa8">Patient's left</text>
