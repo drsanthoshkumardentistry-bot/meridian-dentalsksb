@@ -37,14 +37,15 @@ describe("restore point store", () => {
     mem.delete(`clinics/c1/restorePointParts/${entry.id}_1`);
     await expect(loadRestorePoint({}, "c1", entry)).rejects.toThrow("missing-part");
   });
-  it("prunes to the newest three and removes their parts", async () => {
-    const times = ["09", "10", "11", "12"].map((h) => new Date(`2026-11-13T${h}:00:00Z`));
+  it("prunes old copies and removes their parts", async () => {
+    const times = Array.from({ length: 12 }, (_, i) => new Date(Date.UTC(2026, 10, 1 + i, 9)));
     for (const t of times) await saveRestorePoint({}, "c1", backup(5), t);
     const all = await listRestorePoints({}, "c1");
-    expect(all.length).toBe(4);
+    expect(all.length).toBe(12);
     await pruneRestorePoints({}, "c1", all);
     const left = await listRestorePoints({}, "c1");
-    expect(left.length).toBe(3);
-    expect([...mem.keys()].filter((k) => k.includes("restorePointParts")).length).toBe(3);
+    expect(left.length).toBeLessThan(12);
+    expect(left.length).toBeGreaterThanOrEqual(7); // the newest seven always stay
+    expect([...mem.keys()].filter((k) => k.includes("restorePointParts")).length).toBe(left.length);
   });
 });

@@ -11,7 +11,7 @@ What to do when something breaks, and what to check every month. No secrets live
 | Secrets | Cloudflare Pages, Settings, Variables and secrets. Public Firebase web config is in `.env.production` |
 | Email | Resend (sender set by `MAIL_FROM`); company email on Titan (root DNS records, do not touch) |
 | Monitoring | Better Stack, plus `.github/workflows/uptime.yml` (hourly) |
-| Backups | `.github/workflows/backup.yml` (weekly, encrypted), see `docs/cloudflare-pages.md` |
+| Backups | `.github/workflows/backup.yml` (daily, encrypted), see `docs/cloudflare-pages.md` |
 | DNS and domain | Cloudflare DNS; registrar BigRock; renew before 18 Oct 2027 |
 
 ## Admin dashboard (founder)
@@ -53,7 +53,7 @@ Rotate it in the provider first (Resend, Google AI, Firebase service account), t
 
 ## Monthly checklist
 
-- [ ] Weekly backup ran four times and the artifact opens (`restore-backup.mjs` with no `--restore`).
+- [ ] Daily backup ran for a week and the artifact opens (`restore-backup.mjs` with no `--restore`).
 - [ ] Better Stack: no unexplained incidents; uptime workflow green.
 - [ ] Cloudflare Pages: last deployment healthy.
 - [ ] Firebase: usage and billing still inside the free plan; budget alert set.

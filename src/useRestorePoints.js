@@ -7,6 +7,7 @@ import { listRestorePoints, saveRestorePoint, loadRestorePoint, pruneRestorePoin
  * a restore point is a safety net, never a reason to interrupt work. */
 export default function useRestorePoints({ db, clinicId, enabled, getData, delayMs = 90000 }) {
   const [points, setPoints] = useState([]);
+  const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const dataRef = useRef(getData);
@@ -16,6 +17,7 @@ export default function useRestorePoints({ db, clinicId, enabled, getData, delay
     if (!db || !clinicId) return [];
     const list = await listRestorePoints(db, clinicId);
     setPoints(list);
+    setLoaded(true);
     return list;
   }, [db, clinicId]);
 
@@ -53,5 +55,5 @@ export default function useRestorePoints({ db, clinicId, enabled, getData, delay
     finally { setBusy(false); }
   }, [db, clinicId]);
 
-  return { points, busy, error, saveNow, load, refresh };
+  return { points, loaded, busy, error, saveNow, load, refresh };
 }

@@ -3,7 +3,7 @@ import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import DataPortability from "../src/components/DataPortability.jsx";
 import { buildBackup } from "../src/portability.js";
-import { dueForRestorePoint, looksComplete, chunkText, joinChunks, toDelete, pointId, describePoint, CHUNK_CHARS, MIN_GAP_HOURS } from "../src/restorePoints.js";
+import { dueForRestorePoint, looksComplete, chunkText, joinChunks, toDelete, daysSinceNewest, pointId, describePoint, CHUNK_CHARS, MIN_GAP_HOURS } from "../src/restorePoints.js";
 
 afterEach(() => cleanup());
 const now = new Date("2026-11-13T10:00:00Z");
@@ -32,10 +32,20 @@ describe("restore point rules", () => {
     expect(joinChunks(parts)).toBe(text);
     expect(chunkText("")).toEqual([""]);
   });
-  it("keeps only the newest three", () => {
-    const list = [pt("old", 100), pt("c", 10), pt("a", 1), pt("b", 5)];
-    expect(toDelete(list)).toEqual(["old"]);
-    expect(toDelete([pt("a", 1)])).toEqual([]);
+  it("keeps the newest seven, then one a week for four weeks and one a month for six months", () => {
+    expect(toDelete([pt("a", 1), pt("b", 5)])).toEqual([]);
+    const daily = Array.from({ length: 12 }, (_, i) => pt(`d${i}`, 24 * i + 1)); // 12 days, one a day
+    const gone = toDelete(daily);
+    expect(gone.length).toBeGreaterThan(0);
+    for (let i = 0; i < 7; i++) expect(gone).not.toContain(`d${i}`);
+    const old = [...daily, pt("m1", 24 * 40), pt("m2", 24 * 41), pt("m3", 24 * 400)];
+    const out = toDelete(old);
+    expect(out).toContain("m3"); // older than six months
+    expect(out.includes("m1") && out.includes("m2")).toBe(false); // one of the two same-month copies stays
+  });
+  it("says how many days since the newest copy", () => {
+    expect(daysSinceNewest([])).toBeNull();
+    expect(daysSinceNewest([pt("a", 30)], now)).toBe(1);
   });
   it("names points by time and describes them in plain words", () => {
     expect(pointId(now)).toBe("rp-20261113100000");

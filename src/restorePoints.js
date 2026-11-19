@@ -1,6 +1,8 @@
 // Automatic restore points (pure helpers). Once a day the owner's session saves a copy of the clinic's records inside
 // the clinic's own private space, and keeps the last few. Restoring brings back records that were deleted by mistake.
-export const RESTORE_KEEP = 3;
+export const RESTORE_KEEP = 7; // the newest seven, plus one per week for four weeks and one per month for six months (see toDelete)
+export const KEEP_WEEKS = 4;
+export const KEEP_MONTHS = 6;
 export const MIN_GAP_HOURS = 20;
 export const CHUNK_CHARS = 250000; // one Firestore document holds under 1 MB, even if every character takes 3 bytes
 export const MAX_CHARS = 6000000;
@@ -36,8 +38,41 @@ export const chunkText = (rawText, rawSize = CHUNK_CHARS) => {
 };
 export const joinChunks = (parts) => (Array.isArray(parts) ? parts.join("") : "");
 
-/** Ids of the restore points to remove so only the newest `keep` remain. */
-export const toDelete = (points, keep = RESTORE_KEEP) => newestFirst(points).slice(keep).map((p) => p.id);
+const weekKey = (iso) => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? "" : `${new Date(d.getTime() - ((d.getUTCDay() + 6) % 7) * 86400000).toISOString().slice(0, 10)}`; };
+const monthKey = (iso) => String(iso).slice(0, 7);
+
+/**
+ * Ids of the restore points to remove. Kept: the newest `keep`, then the newest copy of each of the next four weeks,
+ * then the newest copy of each of the next six months. So a mistake noticed weeks later can still be undone.
+ */
+export const toDelete = (points, keep = RESTORE_KEEP) => {
+  const list = newestFirst(points);
+  const kept = new Set(list.slice(0, keep).map((p) => p.id));
+  const rest = list.slice(keep);
+  const weeks = new Set();
+  const topAt = list.length ? Date.parse(list[0].at) : NaN;
+  for (const p of rest) {
+    if (Number.isFinite(topAt) && topAt - Date.parse(p.at) > (KEEP_WEEKS + 1) * 7 * 86400000) continue; // older than about a month: left to the monthly rule
+    const k = weekKey(p.at);
+    if (k && !weeks.has(k) && weeks.size < KEEP_WEEKS) { weeks.add(k); kept.add(p.id); }
+  }
+  const months = new Set();
+  const newestAt = list.length ? Date.parse(list[0].at) : NaN;
+  for (const p of rest) {
+    if (kept.has(p.id)) continue;
+    if (Number.isFinite(newestAt) && newestAt - Date.parse(p.at) > KEEP_MONTHS * 31 * 86400000) continue; // older than six months
+    const k = monthKey(p.at);
+    if (!months.has(k)) { months.add(k); kept.add(p.id); }
+  }
+  return list.filter((p) => !kept.has(p.id)).map((p) => p.id);
+};
+
+/** Whole days since the newest copy, or null when there is none. */
+export const daysSinceNewest = (points, now = new Date()) => {
+  const newest = newestFirst(points)[0];
+  const t = newest ? Date.parse(newest.at) : NaN;
+  return Number.isFinite(t) ? Math.floor((now.getTime() - t) / 86400000) : null;
+};
 
 export const describePoint = (p) => {
   const d = new Date(p.at);
