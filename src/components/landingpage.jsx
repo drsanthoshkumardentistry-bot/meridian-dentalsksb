@@ -666,6 +666,28 @@ export default function LandingPage({
         </div>
       </section>
 
+      {/* DEMO VIDEO */}
+      <section id="demo" className="py-16 bg-white">
+        <div className="max-w-4xl mx-auto px-5">
+          <h2 className="font-display font-extrabold text-3xl text-ink">See it in about a minute</h2>
+          <p className="mt-2 text-slate-600">A quick tour: marking teeth on the chart, prescriptions, treatment plans, letters, billing with stock, and your data backup.</p>
+          <video
+            className="mt-6 w-full rounded-2xl border border-slate-200 bg-slate-900"
+            controls
+            playsInline
+            preload="none"
+            poster="/demo/merident-demo-poster.jpg"
+            data-testid="demo-video"
+          >
+            <source src="/demo/merident-demo-en.mp4" type="video/mp4" />
+          </video>
+          <p className="mt-3 text-sm text-slate-500">
+            Recorded on a test copy with a made-up clinic and patient.{" "}
+            <a href="/demo/merident-demo-ta.mp4" className="font-semibold text-brand-700 underline underline-offset-4" target="_blank" rel="noopener noreferrer">Watch with Tamil captions</a>
+          </p>
+        </div>
+      </section>
+
       {/* GETTING STARTED */}
       <section id="start" className="text-white bg-[radial-gradient(90%_60%_at_100%_0%,rgba(56,189,248,.35),transparent),radial-gradient(70%_60%_at_0%_100%,rgba(37,99,235,.4),transparent),linear-gradient(180deg,#1e3a8a,#0f1f4d)]">
         <div className="max-w-6xl mx-auto px-5 py-20 lg:py-24">
