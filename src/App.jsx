@@ -13,7 +13,7 @@ import { memberDiscountRupees, membershipInvoice, leadPatientPrefill, setLeadSta
 import { AGING_BUCKETS, agingSummary, filterInvoices, invoiceAgeDays } from "./receivables.js";
 import { toggleFinding, normalizeConditions, chartedCount as chartedTeeth, findingLabel } from "./odontogram.js";
 import { billingSummary, invoiceView, invoicesCsv, buildInvoiceMessage, isOverdue, daysOverdue, dueDateIn } from "./billingView.js";
-import { adjustStock, buildStockItem, stockState, stockSummary, stockView, buildReorderMessage } from "./stock.js";
+import { adjustStock, buildStockItem, stockState, stockSummary, stockView, buildReorderMessage, takeStockForBill } from "./stock.js";
 import { APPT_STATUSES, findClash, diarySummary, diaryView, withStatus, needsUpdate } from "./diary.js";
 import { LEAVE_TYPES, buildLeave, setLeaveStatus, removeLeave, leaveDays, onLeaveOn, buildReview, averageRating, staffAlerts } from "./staff.js";
 import MoneyInput from "./components/MoneyInput.jsx";
@@ -63,6 +63,7 @@ import { medicinesOf, upsertMedicine, prescriptionLine } from "./medicines.js";
 import MedicineForm from "./components/MedicineForm.jsx";
 import MedicineLibrary from "./components/MedicineLibrary.jsx";
 import RxSets from "./components/RxSets.jsx";
+import SellFromStock from "./components/SellFromStock.jsx";
 import PatientGallery from "./components/PatientGallery.jsx";
 import { todayActionTiles, totalActions, liveFlow } from "./todayActions.js";
 import { listImages, addImage, removeImage, countImages } from "./galleryStore.js";
@@ -2071,6 +2072,11 @@ export default function App() {
       showToast("Invoice total must be greater than zero");
       return;
     }
+    const taken = takeStockForBill(inventory, items);
+    if (!taken.ok) {
+      showToast(taken.error);
+      return;
+    }
     const advanceP = toPaise(newInvoiceForm.advance);
     if (advanceP > totals.totalP) {
       showToast("Advance cannot be more than the invoice total");
@@ -2094,6 +2100,7 @@ export default function App() {
     };
     setInvoices((prev) => [tagBranch(inv, writeBranch), ...prev]);
     logAudit("invoice.add", inv.id, `${inv.patient}, ₹${formatINR(inv.totalP)}`);
+    if (items.some((it) => it.stockId)) setInventory(taken.inventory);
     if (newInvoiceForm.planId && newInvoiceForm.patientId) {
       setPatients((prev) =>
         prev.map((p) =>
@@ -2205,7 +2212,7 @@ export default function App() {
       return;
     }
     setInventory([...inventory, built.item]);
-    setNewStockForm({ name: "", category: "Restorative", quantity: 10, unit: "Syringes", minThreshold: 5, expiry: "" });
+    setNewStockForm({ name: "", category: "Restorative", quantity: 10, unit: "Syringes", minThreshold: 5, expiry: "", price: "" });
     setIsAddStockOpen(false);
     showToast(`Added ${built.item.name} to stock`);
   };
@@ -6374,6 +6381,13 @@ export default function App() {
                   <Plus className="w-3.5 h-3.5" /> Add another treatment
                 </button>
               )}
+              {newInvoiceForm.items.length < MAX_LINE_ITEMS && (
+                <SellFromStock inventory={inventory} newId={newId} showToast={showToast}
+                  onAdd={(line) => setNewInvoiceForm((f) => {
+                    const only = f.items.length === 1 && !f.items[0].description.trim() && !String(f.items[0].amount).trim();
+                    return { ...f, items: only ? [line] : [...f.items, line] };
+                  })} />
+              )}
             </div>
 
             {(() => {
@@ -6543,6 +6557,11 @@ export default function App() {
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none"
                 />
               </div>
+            </div>
+
+            <div>
+              <label htmlFor="stock-price" className="block font-semibold text-slate-600 mb-1">Selling price per unit in ₹ (optional, to sell it on a bill)</label>
+              <MoneyInput id="stock-price" min="0" value={newStockForm.price ?? ""} onChange={(e) => setNewStockForm({ ...newStockForm, price: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg text-slate-800 focus:outline-none" />
             </div>
 
             <div>
