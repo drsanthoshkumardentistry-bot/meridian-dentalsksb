@@ -1,5 +1,6 @@
 // Firestore side of restore points. Owner only: it lives under clinics/{clinicId}, which only the owner can reach.
 import { collection, doc, getDoc, getDocs, setDoc, deleteDoc } from "firebase/firestore";
+import { packText, unpackText } from "./restoreCompress.js";
 import { chunkText, joinChunks, pointId, toDelete, sortedPoints, MAX_CHARS } from "./restorePoints.js";
 
 const pointsCol = (db, cid) => collection(db, "clinics", cid, "restorePoints");
@@ -12,12 +13,13 @@ export const listRestorePoints = async (db, cid) => {
 
 /** Parts are written first and the listing entry last, so a half-saved copy never shows up. Returns the new entry. */
 export const saveRestorePoint = async (db, cid, backup, now = new Date()) => {
-  const text = JSON.stringify(backup);
+  const packed = await packText(JSON.stringify(backup));
+  const text = packed.text;
   if (text.length > MAX_CHARS) throw new Error("too-large");
   const parts = chunkText(text);
   const id = pointId(now);
   for (let n = 0; n < parts.length; n++) await setDoc(partDoc(db, cid, id, n), { text: parts[n] });
-  const entry = { at: now.toISOString(), parts: parts.length, chars: text.length, counts: backup.counts || {} };
+  const entry = { at: now.toISOString(), parts: parts.length, chars: text.length, counts: backup.counts || {}, ...(packed.enc ? { enc: packed.enc } : {}) };
   await setDoc(doc(pointsCol(db, cid), id), entry);
   return { ...entry, id };
 };
@@ -29,7 +31,7 @@ export const loadRestorePoint = async (db, cid, point) => {
     if (!s.exists()) throw new Error("missing-part");
     parts.push(s.data().text);
   }
-  return JSON.parse(joinChunks(parts));
+  return JSON.parse(await unpackText(joinChunks(parts), point.enc));
 };
 
 export const deleteRestorePoint = async (db, cid, point) => {
