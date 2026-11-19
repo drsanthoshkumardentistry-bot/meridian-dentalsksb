@@ -3993,7 +3993,7 @@ export default function App() {
           {/* SETTINGS: lists and switches the clinic can customise */}
           {activeNav === "Settings" && (
             <ProfileNotesContext.Provider value={{ notes: practiceProfile.notes || {}, setNote: (k, t) => setPracticeProfile(setProfileNote(practiceProfile, k, t)) }}>
-            <div className="max-w-3xl bg-white rounded-xl border border-rule p-6 md:p-8 space-y-6">
+            <div className="w-full bg-white rounded-xl border border-rule p-6 md:p-8 space-y-6">
               <div>
                 <h1 className="text-xl font-bold text-slate-900">Settings</h1>
                 <p className="text-xs text-slate-500">Chairs, medicines, fees, message texts, drop-down lists and switches for this clinic. Clinic details, branches and logins stay in Practice Profile.</p>
@@ -4076,7 +4076,7 @@ export default function App() {
           {/* TAB 7: PRACTICE PROFILE */}
           {activeNav === "Practice Profile" && (
             <ProfileNotesContext.Provider value={{ notes: practiceProfile.notes || {}, setNote: (k, t) => setPracticeProfile(setProfileNote(practiceProfile, k, t)) }}>
-            <div className="max-w-3xl bg-white rounded-xl border border-rule p-6 md:p-8 space-y-6">
+            <div className="w-full bg-white rounded-xl border border-rule p-6 md:p-8 space-y-6">
               <div>
                 <h1 className="text-xl font-bold text-slate-900">Practice Profile & Legal Registration</h1>
                 <p className="text-xs text-slate-500">Clinic details used on prescriptions, invoices, and patient messages</p>
