@@ -62,6 +62,7 @@ import { rxAdviceLines } from "./templates.js";
 import { medicinesOf, upsertMedicine, prescriptionLine } from "./medicines.js";
 import MedicineForm from "./components/MedicineForm.jsx";
 import MedicineLibrary from "./components/MedicineLibrary.jsx";
+import RxSets from "./components/RxSets.jsx";
 import PatientGallery from "./components/PatientGallery.jsx";
 import { todayActionTiles, totalActions, liveFlow } from "./todayActions.js";
 import { listImages, addImage, removeImage, countImages } from "./galleryStore.js";
@@ -1449,6 +1450,13 @@ export default function App() {
     const line = prescriptionLine(med, Date.now());
     patchRx((list) => [...list, line]);
     showToast(`Added ${line.drug} to prescription slip`);
+  };
+  const handleApplyRxSet = (set, lines) => {
+    if (!activePatient) return;
+    if (!lines.length) { showToast(`Everything in "${set.name}" is already on the slip`); return; }
+    const stamp = Date.now();
+    patchRx((list) => [...list, ...lines.map((m, i) => prescriptionLine(m, stamp + i))]);
+    showToast(`Added ${lines.length} from "${set.name}"`);
   };
   // A line written by hand for this patient, optionally kept in the clinic's own medicine list
   const handleCustomPrescription = (med, saveToList) => {
@@ -5436,6 +5444,7 @@ export default function App() {
                     </div>
                   </div>
 
+                  <div className="mb-3"><RxSets profile={practiceProfile} onProfile={setPracticeProfile} slip={activePatient.prescriptions || []} onApply={handleApplyRxSet} newId={newId} showToast={showToast} /></div>
                   <div>
                     <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1.5">
                       Quick-select from your medicine list:
