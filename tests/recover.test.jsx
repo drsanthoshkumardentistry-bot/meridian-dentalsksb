@@ -13,6 +13,8 @@ describe("stale page recovery", () => {
     expect(isChunkError(new Error("Importing a module script failed."))).toBe(true);
     expect(isChunkError({ message: "Loading chunk 12 failed." })).toBe(true);
     expect(isChunkError(new Error("Cannot read properties of undefined"))).toBe(false);
+    expect(isChunkError(new Error("Cannot read properties of undefined (reading 'default')"))).toBe(true);
+    expect(isChunkError(new Error("undefined is not an object (evaluating 'e._result.default')"))).toBe(true);
     expect(isChunkError(null)).toBe(false);
   });
   it("reloads at most once a minute, so an outage cannot loop", () => {
