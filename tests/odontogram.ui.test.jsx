@@ -122,3 +122,37 @@ describe("odontogram: caries details inside the tooth sheet", () => {
     expect(calls).toEqual([[36, { surfaces: ["O"] }], [36, { cls: "II" }], [36, { depth: "dentine" }]]);
   });
 });
+
+describe("odontogram: slide across teeth to mark several", () => {
+  const toothEl = (n) => screen.getByLabelText(new RegExp(`^Tooth ${n},`));
+  const marked = (n) => toothEl(n).getAttribute("aria-label").split(". Press")[0].includes("Caries");
+  const slide = (from, over) => {
+    const group = screen.getByRole("group", { name: /dentition chart/ });
+    fireEvent.pointerDown(toothEl(from), { pointerType: "touch", button: 0 });
+    for (const n of over) {
+      document.elementFromPoint = () => toothEl(n);
+      fireEvent.pointerMove(group, { pointerType: "touch", clientX: 1, clientY: 1 });
+    }
+    fireEvent.pointerUp(group, { pointerType: "touch" });
+    fireEvent.click(toothEl(from)); // the click a browser sends after the release
+  };
+  it("marks every tooth the finger passes over, and a slide from a marked tooth clears them", async () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: "Choose a finding first" }));
+    slide(11, [21, 22, 23]);
+    for (const n of [11, 21, 22, 23]) expect(marked(n)).toBe(true);
+    expect(marked(24)).toBe(false);
+    await new Promise((r) => setTimeout(r, 80));
+    slide(21, [22, 23]);
+    for (const n of [21, 22, 23]) expect(marked(n)).toBe(false);
+    expect(marked(11)).toBe(true);
+  });
+  it("a plain tap still toggles one tooth once", () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: "Choose a finding first" }));
+    fireEvent.pointerDown(toothEl(12), { pointerType: "mouse", button: 0 });
+    fireEvent.pointerUp(screen.getByRole("group", { name: /dentition chart/ }));
+    fireEvent.click(toothEl(12));
+    expect(marked(12)).toBe(true);
+  });
+});
