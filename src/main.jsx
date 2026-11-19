@@ -24,9 +24,12 @@ const SeoPage = lazyWithRetry(() => import('./components/SeoPage.jsx'));
 const LandingShell = lazyWithRetry(() => import('./components/LandingShell.jsx'));
 const EarlyAccessPage = lazyWithRetry(() => import('./components/EarlyAccessPage.jsx'));
 
+// Sentry client key. It is public by design (every browser sends it), so it can live in the code; VITE_SENTRY_DSN overrides it.
+const SENTRY_DSN = 'https://d6c012db9e16a1d159f2582a53878adf@o4512460295438336.ingest.us.sentry.io/4512460299763712';
+
 if (!import.meta.env.DEV) {
   installErrorReporting();
-  window.addEventListener('load', () => { startSentry(import.meta.env.VITE_SENTRY_DSN); });
+  window.addEventListener('load', () => { startSentry(import.meta.env.VITE_SENTRY_DSN || SENTRY_DSN); });
 }
 
 // After an update, a tab left open can ask for a file that is gone. Reload once to pick up the new version.
