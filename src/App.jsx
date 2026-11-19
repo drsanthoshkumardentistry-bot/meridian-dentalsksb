@@ -2638,7 +2638,7 @@ export default function App() {
           <BackupNudge points={restorePoints.points} loaded={restorePoints.loaded} busy={restorePoints.busy} hasData={allPatients.length > 0} onSave={() => restorePoints.saveNow({ force: true })} />
         )}
         <AnnouncementBanner />
-        <header className="h-16 bg-white/95 border-b border-white/70 px-3 sm:px-6 flex items-center justify-between gap-2 sticky top-0 z-30">
+        <header className="h-16 bg-white border-b border-slate-200 px-3 sm:px-6 flex items-center justify-between gap-2 sticky top-0 z-30">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0 shrink">
             <button
               onClick={() => setSidebarOpen(true)}

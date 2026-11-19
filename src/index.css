@@ -310,22 +310,19 @@ input::placeholder, textarea::placeholder { color: #64748b; opacity: 1; }
 .side-scroll::-webkit-scrollbar-track { background: transparent; }
 main .rounded-xl { border-radius: 1rem; }
 main section.bg-white.rounded-xl,
-main .bg-white.rounded-xl.border { box-shadow: 0 1px 2px rgba(17, 24, 39, 0.05), 0 8px 20px -12px rgba(17, 24, 39, 0.2); }
+main .bg-white.rounded-xl.border { box-shadow: 0 1px 2px rgba(17, 24, 39, 0.08); }
 @media (prefers-reduced-motion: no-preference) {
   .stat-card { transition: transform 0.18s ease, box-shadow 0.18s ease; }
   .stat-card:hover { transform: translateY(-2px); }
 }
 .work-panel {
-  background-color: #eaf1fc;
-  background-image:
-    radial-gradient(55% 45% at 92% 0%, rgba(56, 189, 248, 0.22) 0%, transparent 70%),
-    radial-gradient(50% 45% at 6% 30%, rgba(147, 197, 253, 0.3) 0%, transparent 70%),
-    radial-gradient(55% 45% at 85% 95%, rgba(191, 219, 254, 0.35) 0%, transparent 70%),
-    linear-gradient(160deg, #f4f8ff 0%, #eaf1fc 45%, #dbe7f8 100%);
+  /* One flat colour: stacked large gradients on the scrolling panel made weak laptop graphics leave blank patches while scrolling. */
+  background-color: #eef3fc;
+  overscroll-behavior: contain;
 }
 /* Plain, mostly-solid white: a fixed background and a blur behind every section made long pages (Settings) repaint blank on laptops. */
 main section.bg-white {
-  background-color: rgba(255, 255, 255, 0.95);
+  background-color: #fff;
 }
 
 /* Pop-up windows: start at the top and scroll when taller than the screen. Plain centring pushed the top out of reach. */
