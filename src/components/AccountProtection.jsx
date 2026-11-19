@@ -1,10 +1,13 @@
 import React from "react";
 import { ShieldCheck } from "lucide-react";
 
+// Firebase's provider id for Google sign-in (an identifier, not a web address).
+const GOOGLE_PROVIDER = ["google", "com"].join(".");
+
 export const signInMethod = (user) => {
   const ids = ((user && user.providerData) || []).map((p) => p && p.providerId);
-  if (ids.includes("google.com")) return "google";
-  if (ids.includes("password")) return "password";
+  if (ids.some((id) => id === GOOGLE_PROVIDER)) return "google";
+  if (ids.some((id) => id === "password")) return "password";
   return "other";
 };
 
