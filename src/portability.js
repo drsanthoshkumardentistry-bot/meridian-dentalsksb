@@ -305,3 +305,29 @@ export const patientsFromRows = (rows, existing = [], makeId, now = new Date()) 
 
 /** A header-only CSV the clinic can fill in Excel and bring back with "Choose file". */
 export const patientTemplateCsv = () => toCsv([["Name", "Phone", "Age", "Gender", "Email", "Address", "Medical alert", "Allergies"]]);
+
+/* ------------------------------- Archive of old records (download only; nothing is deleted) ------------------------------- */
+
+/** Reads 2026-03-05 or 05/03/2026 into a Date, or null. */
+export const recordDate = (v) => {
+  const t = String(v || "").trim();
+  let m = /^(\d{4})-(\d{2})-(\d{2})/.exec(t);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(t);
+  return m ? new Date(+m[3], +m[2] - 1, +m[1]) : null;
+};
+
+/** Invoices and appointments older than `years` years, as a normal backup file. Patients are included only so the records can be read on their own. */
+export const buildArchive = (data = {}, years = 2, now = new Date()) => {
+  const cutoff = new Date(now.getFullYear() - years, now.getMonth(), now.getDate());
+  const old = (r) => { const d = recordDate(r && r.date); return !!d && d < cutoff; };
+  const invoices = (data.invoices || []).filter(old);
+  const appointments = (data.appointments || []).filter(old);
+  const names = new Set([...invoices.map((i) => i.patientId), ...appointments.map((a) => a.patientId)].filter(Boolean));
+  const patients = (data.patients || []).filter((p) => names.has(p.id));
+  const b = buildBackup({ patients, appointments, invoices }, now);
+  b.kind = "archive";
+  b.archiveBefore = localDay(cutoff);
+  return b;
+};
+export const archiveFileName = (b, now = new Date()) => `merident-archive-before-${b.archiveBefore}-made-${localDay(now)}.json`;

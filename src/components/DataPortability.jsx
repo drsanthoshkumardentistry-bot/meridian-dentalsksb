@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import { Download, Upload, Lock, ShieldAlert, History } from "lucide-react";
 import {
   buildBackup, backupFileName, encryptBackup, decryptBackup, validatePassword, parseBackupText, validateBackup, mergeBackup,
-  patientsCsv, appointmentsCsv, invoicesDetailCsv, patientsFromCsv, patientsFromRows, patientTemplateCsv,
+  buildArchive, archiveFileName, patientsCsv, appointmentsCsv, invoicesDetailCsv, patientsFromCsv, patientsFromRows, patientTemplateCsv,
 } from "../portability.js";
 import { describePoint } from "../restorePoints.js";
 
@@ -53,6 +53,15 @@ export default function DataPortability({ data, newId, onDownloadFile, onImporte
       setError("Could not create the backup on this device.");
     }
     setBusy(false);
+  };
+
+  const downloadArchive = () => {
+    const a = buildArchive(data, 2);
+    const n = a.counts.invoices + a.counts.appointments;
+    if (!n) { setError("No records older than 2 years yet."); return; }
+    setError("");
+    onDownloadFile(JSON.stringify(a), archiveFileName(a), "application/json");
+    onAudit("data.export", "Archive of old records", `${a.counts.invoices} invoices, ${a.counts.appointments} appointments`);
   };
 
   const sheet = (which) => {
@@ -189,6 +198,7 @@ export default function DataPortability({ data, newId, onDownloadFile, onImporte
           <button type="button" onClick={() => sheet("patients")} className={btn}><Download className="w-3.5 h-3.5" /> Patients</button>
           <button type="button" onClick={() => sheet("appointments")} className={btn}><Download className="w-3.5 h-3.5" /> Appointments</button>
           <button type="button" onClick={() => sheet("invoices")} className={btn}><Download className="w-3.5 h-3.5" /> Invoices</button>
+          <button type="button" onClick={downloadArchive} className={btn}><Download className="w-3.5 h-3.5" /> Archive: records older than 2 years</button>
         </div>
       </div>
 
