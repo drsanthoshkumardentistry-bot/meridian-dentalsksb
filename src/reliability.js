@@ -1,6 +1,6 @@
 // Reliability helpers (pure): how old the last backup is, and the reminder for the bell.
 const DAY = 24 * 60 * 60 * 1000;
-export const BACKUP_REMIND_DAYS = 7;
+export const BACKUP_REMIND_DAYS = 3;
 export const backupKey = (clinicId = "") => `merident_${clinicId || "device"}_lastBackup`;
 
 export const readLastBackup = (clinicId, storage = globalThis.localStorage) => {
