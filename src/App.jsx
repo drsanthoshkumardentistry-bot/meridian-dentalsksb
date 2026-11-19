@@ -113,6 +113,7 @@ import { hasLock as pinLockOn, readLock as readPinLock } from "./appLock";
 import FullscreenButton from "./components/FullscreenButton.jsx";
 import ConnectionBar from "./components/ConnectionBar.jsx";
 import useRestorePoints from "./useRestorePoints.js";
+import BackupNudge from "./components/BackupNudge.jsx";
 import { AreaLine } from "./components/Sparkline.jsx";
 import { StatCard, ActionTile } from "./components/DashCards.jsx";
 import PerioChart from "./components/PerioChart.jsx";
@@ -2618,6 +2619,9 @@ export default function App() {
 
       {/* --- WORKSPACE --- */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto work-panel">
+        {role === "owner" && !allowedBranchIds && (
+          <BackupNudge points={restorePoints.points} loaded={restorePoints.loaded} busy={restorePoints.busy} hasData={allPatients.length > 0} onSave={() => restorePoints.saveNow({ force: true })} />
+        )}
         <AnnouncementBanner />
         <header className="h-16 bg-white/95 border-b border-white/70 px-3 sm:px-6 flex items-center justify-between gap-2 sticky top-0 z-30">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0 shrink">
