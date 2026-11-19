@@ -99,6 +99,7 @@ const LazyOpgViewer = lazyWithRetry(() => import("./components/OpgViewer.jsx"));
 import ExtraRadiographs from "./components/ExtraRadiographs.jsx";
 import { NowStrip } from "./components/NowPanel.jsx";
 import NotificationBell from "./components/NotificationBell.jsx";
+import AccountProtection from "./components/AccountProtection.jsx";
 import AccountMenu from "./components/AccountMenu.jsx";
 import { buildNotifications } from "./notifications.js";
 import { backupNotification, markBackupDone, readLastBackup } from "./reliability.js";
@@ -4094,6 +4095,8 @@ export default function App() {
                   logAudit("patient.move", patient.name, `to ${toName}, ${r.counts.appointments} appointments, ${r.counts.invoices} invoices`);
                 }}
               />}
+
+              {role === "owner" && !activeMember && <AccountProtection user={authUser} />}
 
               {!allowedBranchIds && (role === "owner" || role === "manager") && <DataPortability
                 data={{ patients: allPatients, appointments: allAppointments, invoices: allInvoices, inventory, employees, profile: practiceProfile }}
