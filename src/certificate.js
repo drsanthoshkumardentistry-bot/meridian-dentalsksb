@@ -3,6 +3,8 @@ export const CERT_TYPES = [
   { id: "rest", label: "Medical certificate (rest advised)" },
   { id: "treatment", label: "Dental treatment certificate" },
   { id: "fitness", label: "Dental fitness certificate" },
+  { id: "referral", label: "Referral letter to a specialist" },
+  { id: "summary", label: "Treatment summary letter" },
 ];
 
 const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -17,11 +19,13 @@ export const validateCertificate = ({ type, issuedOn, days, from, treatment } = 
     if (!Number.isFinite(d) || d < 1 || d > 90) return "Enter the days of rest, from 1 to 90.";
     if (!/^\d{4}-\d{2}-\d{2}$/.test(from || "")) return "Choose the first day of rest.";
   }
-  if (type !== "fitness" && !String(treatment || "").trim()) return "Write the treatment or procedure done.";
+  if (type === "referral" && !String(treatment || "").trim()) return "Write the reason for referral.";
+  if (type === "summary" && !String(treatment || "").trim()) return "Write a summary of the treatment done.";
+  if (!["fitness", "referral", "summary"].includes(type) && !String(treatment || "").trim()) return "Write the treatment or procedure done.";
   return "";
 };
 
-export const buildCertificateHtml = ({ type, patient = {}, profile = {}, issuedOn, days, from, treatment = "", remarks = "" } = {}) => {
+export const buildCertificateHtml = ({ type, patient = {}, profile = {}, issuedOn, days, from, treatment = "", remarks = "", to = "" } = {}) => {
   const name = esc(patient.name);
   const who = `${name}${patient.age ? `, ${esc(patient.age)} years` : ""}${patient.gender ? `, ${esc(patient.gender)}` : ""}`;
   const t = esc(String(treatment).trim());
@@ -32,6 +36,14 @@ export const buildCertificateHtml = ({ type, patient = {}, profile = {}, issuedO
       <p>Rest for <strong>${d} day${d === 1 ? "" : "s"}</strong> is advised from <strong>${dmy(from)}</strong>.</p>`;
   } else if (type === "treatment") {
     body = `<p>This is to certify that <strong>${who}</strong> was treated at this clinic on <strong>${dmy(issuedOn)}</strong>. Treatment done: <strong>${t}</strong>.</p>`;
+  } else if (type === "referral") {
+    body = `<p>${to ? `To, <strong>${esc(to)}</strong><br>` : ""}Dear Colleague,</p>
+      <p>I am referring <strong>${who}</strong> for your opinion and management.</p>
+      <p><strong>Reason for referral:</strong> ${t}</p>
+      <p>Please advise and send a note on the treatment done. Thank you.</p>`;
+  } else if (type === "summary") {
+    body = `<p>This letter summarises the dental care of <strong>${who}</strong> at this clinic up to <strong>${dmy(issuedOn)}</strong>.</p>
+      <p><strong>Treatment done:</strong> ${t}</p>`;
   } else {
     body = `<p>This is to certify that <strong>${who}</strong> was examined on <strong>${dmy(issuedOn)}</strong> and found dentally fit.${t ? ` ${t}` : ""}</p>`;
   }

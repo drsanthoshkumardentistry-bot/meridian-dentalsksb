@@ -30,3 +30,15 @@ describe("pharmacy billing", () => {
     expect(takeStockForBill(inv, [{ description: "x" }]).inventory).toBe(inv);
   });
 });
+
+import { validateCertificate, buildCertificateHtml } from "../src/certificate.js";
+describe("patient letters", () => {
+  it("validates and builds a referral and a summary", () => {
+    expect(validateCertificate({ type: "referral", issuedOn: "2026-11-19", treatment: "" })).toMatch(/reason/);
+    expect(validateCertificate({ type: "summary", issuedOn: "2026-11-19", treatment: "RCT 36" })).toBe("");
+    const h = buildCertificateHtml({ type: "referral", patient: { name: "A" }, issuedOn: "2026-11-19", treatment: "Impacted <8>", to: "Dr Rao" });
+    expect(h).toContain("Dr Rao");
+    expect(h).toContain("Impacted &lt;8&gt;");
+    expect(buildCertificateHtml({ type: "summary", patient: { name: "A" }, issuedOn: "2026-11-19", treatment: "RCT 36" })).toContain("RCT 36");
+  });
+});
