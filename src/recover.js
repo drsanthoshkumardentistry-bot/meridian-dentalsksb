@@ -4,7 +4,7 @@ const KEY = "merident_autoreload_at";
 
 export const isChunkError = (error) => {
   const msg = String((error && (error.message || error)) || "");
-  return /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|ChunkLoadError|Loading chunk [\w-]+ failed|Unable to preload CSS/i.test(msg);
+  return /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|ChunkLoadError|Loading chunk [\w-]+ failed|Unable to preload CSS|reading 'default'|_result\.default/i.test(msg); // the last two: a screen file that came back empty on a phone (Chrome and Safari wording)
 };
 
 /** True at most once per window, so a real outage cannot cause a reload loop. Records the time when it says yes. */
