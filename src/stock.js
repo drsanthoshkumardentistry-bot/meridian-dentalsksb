@@ -46,6 +46,8 @@ export const buildStockItem = (form, id) => {
   if (!Number.isFinite(min) || min < 0) return { ok: false, error: "Reorder level cannot be negative" };
   const quantity = Math.floor(qty);
   const minThreshold = Math.floor(min);
+  const price = Math.round(Number(form.price === "" || form.price == null ? 0 : form.price) * 100) / 100;
+  if (!Number.isFinite(price) || price < 0) return { ok: false, error: "Selling price cannot be negative" };
   const item = {
     id,
     name,
@@ -54,7 +56,8 @@ export const buildStockItem = (form, id) => {
     unit: String(form.unit || "").trim(),
     minThreshold,
     status: quantity <= minThreshold ? "Low Stock" : "In Stock",
-    ...(form.expiry ? { expiry: form.expiry } : {})
+    ...(form.expiry ? { expiry: form.expiry } : {}),
+    ...(price > 0 ? { price } : {})
   };
   return { ok: true, item };
 };
@@ -106,4 +109,34 @@ export const buildReorderMessage = ({ clinicName, items = [] }, now = new Date()
     return `- ${i.name}: ${wholeNumber(i.quantity)} left, please send ${top}${i.unit ? ` ${i.unit}` : ""}`;
   });
   return `Hello, this is ${clinicName || "our dental clinic"}. We would like to reorder:\n\n${lines.join("\n")}\n\nPlease confirm availability and price. Thank you.`;
+};
+
+/* Pharmacy: items with a selling price can be sold on a bill, and the stock drops when the bill is saved. */
+
+/** Items that can be sold right now: a selling price and something on the shelf. */
+export const sellableItems = (inventory = []) =>
+  (Array.isArray(inventory) ? inventory : []).filter((i) => i && Number(i.price) > 0 && wholeNumber(i.quantity) > 0);
+
+/** A bill line for selling `qty` of an item, or { error }. */
+export const stockBillLine = (item, qty, makeId = () => "") => {
+  const n = Math.floor(Number(qty));
+  if (!item) return { error: "Choose an item" };
+  if (!Number.isFinite(n) || n < 1) return { error: "Quantity must be at least 1" };
+  if (n > wholeNumber(item.quantity)) return { error: `Only ${wholeNumber(item.quantity)} ${item.unit || "in stock"} of ${item.name} left` };
+  const price = Number(item.price);
+  if (!(price > 0)) return { error: `${item.name} has no selling price yet` };
+  return { line: { id: makeId(), description: `${item.name} x ${n}`, amount: String(Math.round(price * n * 100) / 100), taxCategory: "therapeutic", stockId: item.id, stockQty: n } };
+};
+
+/** Takes the sold quantities off the shelf. Refuses when any item would go below zero. */
+export const takeStockForBill = (inventory = [], items = []) => {
+  const need = new Map();
+  for (const it of items) if (it && it.stockId) need.set(it.stockId, (need.get(it.stockId) || 0) + wholeNumber(it.stockQty));
+  if (!need.size) return { ok: true, inventory };
+  for (const [id, qty] of need) {
+    const item = inventory.find((x) => x.id === id);
+    if (!item) return { ok: false, error: "An item on this bill is no longer in stock records" };
+    if (qty > wholeNumber(item.quantity)) return { ok: false, error: `Only ${wholeNumber(item.quantity)} of ${item.name} left in stock` };
+  }
+  return { ok: true, inventory: inventory.map((x) => (need.has(x.id) ? adjustStock(x, -need.get(x.id)) : x)) };
 };
