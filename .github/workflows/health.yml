@@ -1,0 +1,46 @@
+name: Daily health check
+
+# Every day 3:00 AM IST (after the backup): estimated storage against the free 1 GB, clinics whose records dropped
+# sharply since yesterday, and a self-test of the backup encryption. Fails (so GitHub emails the owner) on a problem.
+# Needs the repository secret FIREBASE_SERVICE_ACCOUNT. Prints counts only, never patient data.
+on:
+  schedule:
+    - cron: "30 21 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check the secret exists
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SA" ]; then echo "::error::Repository secret FIREBASE_SERVICE_ACCOUNT is not set."; exit 1; fi
+      - name: Load yesterday's counts
+        uses: actions/cache/restore@v4
+        with:
+          path: health-prev.json
+          key: health-none
+          restore-keys: health-snapshot-
+      - name: Run the checks
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node scripts/health-check.mjs health-prev.json health-now.json
+      - name: Save today's counts
+        if: always() && hashFiles('health-now.json') != ''
+        run: mv health-now.json health-prev.json
+      - name: Keep today's counts
+        if: always() && hashFiles('health-prev.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: health-prev.json
+          key: health-snapshot-${{ github.run_id }}
