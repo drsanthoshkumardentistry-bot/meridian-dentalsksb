@@ -100,6 +100,7 @@ import ExtraRadiographs from "./components/ExtraRadiographs.jsx";
 import { NowStrip } from "./components/NowPanel.jsx";
 import NotificationBell from "./components/NotificationBell.jsx";
 import AccountProtection from "./components/AccountProtection.jsx";
+import RecordsSafetyCard from "./components/RecordsSafetyCard.jsx";
 import AccountMenu from "./components/AccountMenu.jsx";
 import { buildNotifications } from "./notifications.js";
 import { backupNotification, markBackupDone, readLastBackup } from "./reliability.js";
@@ -4096,6 +4097,7 @@ export default function App() {
                 }}
               />}
 
+              {role === "owner" && !activeMember && <RecordsSafetyCard points={restorePoints.points} loaded={restorePoints.loaded} lastBackupIso={readLastBackup(CACHE_ID, window.localStorage)} patients={allPatients.length} />}
               {role === "owner" && !activeMember && <AccountProtection user={authUser} />}
 
               {!allowedBranchIds && (role === "owner" || role === "manager") && <DataPortability
