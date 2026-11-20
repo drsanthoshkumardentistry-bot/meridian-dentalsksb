@@ -4,6 +4,7 @@
 import { makeLimiter } from "./_lib/aiCore.js";
 import { buildAlert, lookupUser } from "./_lib/loginAlertCore.js";
 import { readServiceAccount, buildLink } from "./_lib/blockCore.js";
+import { postResend } from "./_lib/mailCore.js";
 
 const allow = makeLimiter(4, 60 * 60 * 1000); // one person cannot make more than 4 alerts an hour
 
@@ -31,11 +32,7 @@ export default async function handler(req, res) {
   const blockUrl = sa ? buildLink(process.env.SITE_URL || "https://www.meridiandentalos.com", sa, user.uid, "block", user.email) : "";
   const msg = buildAlert({ email: user.email, name: user.name, firstTime, blockUrl });
   try {
-    const r = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: "MeriDent <onboarding@resend.dev>", to: [to], subject: msg.subject, text: msg.text, html: msg.html }),
-    });
+    const r = await postResend({ to, subject: msg.subject, text: msg.text, html: msg.html });
     return send(res, r.ok ? 200 : 502, r.ok ? { ok: true } : { error: "Email service refused the message." });
   } catch (e) {
     return send(res, 502, { error: "Could not reach the email service." });

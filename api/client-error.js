@@ -3,6 +3,7 @@
 import { makeLimiter } from "./_lib/aiCore.js";
 import { sanitizeReport, buildErrorEmail } from "./_lib/clientErrorCore.js";
 import { istTime } from "./_lib/loginAlertCore.js";
+import { postResend } from "./_lib/mailCore.js";
 
 const perVisitor = makeLimiter(10, 60 * 60 * 1000); // 10 reports an hour per visitor
 const emails = makeLimiter(12, 60 * 60 * 1000);     // at most 12 emails an hour in total
@@ -30,11 +31,7 @@ export default async function handler(req, res) {
 
   const msg = buildErrorEmail(report, istTime(new Date()));
   try {
-    await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: "MeriDent <onboarding@resend.dev>", to: [to], subject: msg.subject, text: msg.text, html: msg.html }),
-    });
+    await postResend({ to, subject: msg.subject, text: msg.text, html: msg.html });
   } catch { /* the log line above is enough */ }
   return done(res);
 }
