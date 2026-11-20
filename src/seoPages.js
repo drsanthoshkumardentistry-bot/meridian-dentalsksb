@@ -52,6 +52,39 @@ export const SEO_PAGES = [
     ]
   },
   {
+    path: "/records-safety",
+    nav: "Records safety",
+    title: "How MeriDent keeps your dental records safe, and how to check | MeriDent",
+    description: "Daily cloud restore points, an encrypted daily backup, 3-day download reminders and a recycle bin. Each safeguard comes with a way to check it yourself.",
+    h1: "Built so your clinic records are not lost, with ways to check",
+    lead: "Patient records are the hardest thing to replace in a clinic. Below is every safeguard MeriDent has today, how to see it working, and what it cannot promise.",
+    sections: [
+      { h: "Safeguards in place today", items: [
+        "A cloud restore point of your clinic is saved once a day. We keep the newest 7, then one a week for 4 weeks and one a month for 6 months.",
+        "You can download a full backup file any time, with an optional password. The bell reminds you every 3 days.",
+        "We also keep our own encrypted daily copy of the whole database for 90 days. Only a private key we hold can open it.",
+        "A deleted patient or invoice goes to Recently deleted for 30 days, so it can be brought back.",
+        "Each clinic's records sit under its own account. The database rules that keep clinics apart are tested automatically.",
+        "Branch-limited staff see only their branch, and an activity log shows who changed what."] },
+      { h: "How to check it yourself", items: [
+        "Open Practice Profile as the owner. The Records safety card shows the time of your newest cloud restore point and the patients it holds next to your live count.",
+        "The same card shows when this device last downloaded a backup, and warns in plain words when it is overdue.",
+        "Download a backup and open it. It lists your patient, appointment and invoice counts.",
+        "Every day an automatic check confirms our backup ran, did not shrink, and that our encryption still locks and unlocks correctly. It also watches storage and sudden drops in a clinic's record count, and alerts us the same day.",
+        "Ask us on WhatsApp and we will walk you through a restore test."] },
+      { h: "What we cannot promise", items: [
+        "No system is perfectly safe. That is why you can keep your own copy and why we keep several.",
+        "A backup covers patients, appointments, invoices, stock, staff and your clinic profile. Keep your original radiograph and photo files too.",
+        "A backup file you download holds private health details. Set a password, and store it somewhere only you can reach.",
+        "MeriDent runs on free-tier cloud services during early access. We watch the storage limits daily and will tell you before they matter."] }
+    ],
+    faqs: [
+      { q: "Can MeriDent lose my records?", a: "We cannot promise that nothing will ever go wrong. We keep a daily cloud restore point, a daily encrypted copy of our own and a recycle bin, and you can download your own backup. Several copies in different places is the protection." },
+      { q: "Who can open my clinic's records?", a: "Only the people you invite, with the role you choose. We do not read patient records unless you ask us for support and agree to it." },
+      { q: "Can I leave and take my data with me?", a: "Yes. A full backup and spreadsheets of patients, appointments and invoices can be downloaded at any time from Practice Profile." }
+    ]
+  },
+  {
     path: "/dental-billing-gst",
     nav: "GST billing & UPI QR",
     title: "Dental billing software with GST invoices and UPI QR | MeriDent",
