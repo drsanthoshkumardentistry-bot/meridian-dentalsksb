@@ -6,7 +6,7 @@ import fs from "node:fs";
 import crypto from "node:crypto";
 import { readServiceAccount } from "../api/_lib/blockCore.js";
 import { crawl, encryptBackup, decryptBackup } from "./backupCore.js";
-import { newTally, addDoc, storageLevel, findDrops, topClinics, snapshot } from "./healthCore.js";
+import { newTally, addDoc, storageLevel, findDrops, topClinics, snapshot, checkBackup } from "./healthCore.js";
 
 const sa = readServiceAccount();
 if (!sa) { console.error("FIREBASE_SERVICE_ACCOUNT is missing or not valid JSON."); process.exit(1); }
@@ -39,7 +39,23 @@ try {
   else lines.push(`Backup self-test passed (${sample.length} documents encrypted and opened again). Opening the real daily file still needs your private key.`);
 } catch (e) { problems.push("Backup self-test failed: " + e.message); }
 
-if (outPath) fs.writeFileSync(outPath, JSON.stringify(snapshot(tally)));
+// Backup freshness and size, from GitHub's own record of the daily backup job (needs GITHUB_TOKEN and GITHUB_REPOSITORY).
+let backupBytes = 0;
+const [ghToken, ghRepo] = [process.env.GITHUB_TOKEN, process.env.GITHUB_REPOSITORY];
+if (ghToken && ghRepo) {
+  try {
+    const gh = async (path) => (await fetch(`https://api.github.com/repos/${ghRepo}/${path}`, { headers: { Authorization: `Bearer ${ghToken}`, Accept: "application/vnd.github+json" } })).json();
+    const runs = await gh("actions/workflows/backup.yml/runs?status=success&per_page=1");
+    const run = runs.workflow_runs && runs.workflow_runs[0];
+    const art = run ? ((await gh(`actions/runs/${run.id}/artifacts`)).artifacts || [])[0] : null;
+    backupBytes = art ? art.size_in_bytes : 0;
+    const bp = checkBackup({ lastSuccessAt: run && run.created_at, bytes: backupBytes, expired: art && art.expired, prevBytes: prev && prev.backupBytes });
+    problems.push(...bp);
+    lines.push(bp.length ? "Backup check found a problem." : `Backup check passed: last success ${run.created_at}, file ${backupBytes} bytes.`);
+  } catch (e) { lines.push("Backup check skipped (could not reach GitHub): " + e.message); }
+} else lines.push("Backup check skipped (no GitHub token).");
+
+if (outPath) fs.writeFileSync(outPath, JSON.stringify({ ...snapshot(tally), backupBytes }));
 const report = [...lines, ...(problems.length ? ["", "PROBLEMS:", ...problems.map((p) => "- " + p)] : ["", "All checks passed."])].join("\n");
 console.log(report);
 if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, "## MeriDent daily health check\n\n```\n" + report + "\n```\n");

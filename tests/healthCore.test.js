@@ -31,3 +31,20 @@ describe("daily health check helpers", () => {
     expect(JSON.stringify(snapshot(t))).not.toContain("aaaa");
   });
 });
+
+import { checkBackup } from "../scripts/healthCore.js";
+describe("backup check", () => {
+  const now = Date.parse("2026-11-20T12:00:00Z");
+  it("passes for a recent backup of normal size", () => {
+    expect(checkBackup({ lastSuccessAt: "2026-11-20T01:49:00Z", bytes: 90000, prevBytes: 88000, now })).toEqual([]);
+  });
+  it("flags a missing, stale, expired or shrunken backup", () => {
+    expect(checkBackup({ now }).length).toBe(1);
+    expect(checkBackup({ lastSuccessAt: "2026-11-18T01:00:00Z", bytes: 1000, now })[0]).toMatch(/hours ago/);
+    expect(checkBackup({ lastSuccessAt: "2026-11-20T01:00:00Z", bytes: 0, expired: true, now })[0]).toMatch(/missing or expired/);
+    expect(checkBackup({ lastSuccessAt: "2026-11-20T01:00:00Z", bytes: 30000, prevBytes: 100000, now })[0]).toMatch(/shrank/);
+  });
+  it("ignores shrinkage for tiny early backups", () => {
+    expect(checkBackup({ lastSuccessAt: "2026-11-20T01:00:00Z", bytes: 500, prevBytes: 5000, now })).toEqual([]);
+  });
+});

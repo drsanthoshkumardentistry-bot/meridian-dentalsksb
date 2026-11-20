@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   health:
@@ -34,6 +35,8 @@ jobs:
       - name: Run the checks
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: node scripts/health-check.mjs health-prev.json health-now.json
       - name: Save today's counts
         if: always() && hashFiles('health-now.json') != ''
