@@ -45,3 +45,16 @@ export const topClinics = (tally, n = 5) =>
 
 /** What gets saved for tomorrow's comparison: counts only. */
 export const snapshot = (tally) => ({ takenAt: new Date().toISOString(), clinics: Object.fromEntries(Object.entries(tally.clinics).map(([id, c]) => [id, { counts: c.counts }])) });
+
+/** Did the daily encrypted backup run lately, and did its file stay about the same size? Pure: the caller fetches the data. */
+export const checkBackup = ({ lastSuccessAt, bytes, expired, prevBytes, now = Date.now(), maxAgeHours = 30, minRatio = 0.5, minPrevBytes = 20000 }) => {
+  const problems = [];
+  if (!lastSuccessAt) problems.push("No successful daily backup run was found.");
+  else {
+    const hours = (now - new Date(lastSuccessAt).getTime()) / 3600000;
+    if (hours > maxAgeHours) problems.push(`The last successful backup was ${Math.round(hours)} hours ago.`);
+  }
+  if (lastSuccessAt && (expired || !bytes)) problems.push("The latest backup file is missing or expired.");
+  if (bytes && prevBytes && prevBytes >= minPrevBytes && bytes < prevBytes * minRatio) problems.push(`The backup file shrank from ${prevBytes} to ${bytes} bytes. Records may be missing.`);
+  return problems;
+};
