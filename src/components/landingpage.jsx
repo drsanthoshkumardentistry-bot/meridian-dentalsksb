@@ -45,7 +45,7 @@ import {
 } from "lucide-react";
 
 const WHATSAPP_NUMBER = "919043205927";
-const VIDEO_LINK = "https://youtu.be/V6_z6LEbqNU";
+const VIDEO_LINK = "https://youtu.be/BVowp-T5nJQ";
 const DEMO_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
   "Hi, I'd like a demo of MeriDent for my dental clinic."
 )}`;
