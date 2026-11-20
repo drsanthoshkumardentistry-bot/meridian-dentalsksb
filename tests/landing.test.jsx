@@ -77,7 +77,7 @@ describe("landing page content", () => {
   it("links to the demo video", () => {
     render(<LandingPage firebaseConfigured onLoginClick={() => {}} />);
     const a = screen.getByText("Watch the 9-minute demo").closest("a");
-    expect(a.getAttribute("href")).toBe("https://youtu.be/V6_z6LEbqNU");
+    expect(a.getAttribute("href")).toBe("https://youtu.be/BVowp-T5nJQ");
     expect(a.getAttribute("target")).toBe("_blank");
     expect(a.getAttribute("rel")).toMatch(/noopener/);
   });
