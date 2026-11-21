@@ -72,7 +72,7 @@ export default function PrePostOp({ patient, api, compress, canWrite = true, aut
           </div>
           <input ref={fileRef} type="file" accept="image/*" aria-label="Choose a picture" onChange={onFile} className="hidden" />
           <div className="flex flex-wrap gap-2">
-            <button type="button" disabled={busy} onClick={() => choose("Pre-op")} className="px-3 py-2 rounded-lg bg-[#1d4ed8] hover:bg-blue-700 disabled:opacity-60 text-white font-semibold inline-flex items-center gap-1.5">
+            <button type="button" disabled={busy} onClick={() => choose("Pre-op")} className="px-3 py-2 rounded-lg bg-[#2563eb] hover:bg-blue-700 disabled:opacity-60 text-white font-semibold inline-flex items-center gap-1.5">
               <Camera className="w-3.5 h-3.5" /> {busy && pending === "Pre-op" ? "Saving…" : "Add pre-op"}
             </button>
             <button type="button" disabled={busy} onClick={() => choose("Post-op")} className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-semibold inline-flex items-center gap-1.5">

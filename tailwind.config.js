@@ -12,13 +12,13 @@ export default {
         lift: "0 8px 24px -8px rgba(15,23,42,.12)"
       },
       colors: {
-        brand: { 50: "#eff6ff", 100: "#dbeafe", 500: "#2563eb", 600: "#1d4ed8", 700: "#1e40af", 900: "#1e3a8a" },
+        brand: { 50: "#eff6ff", 100: "#dbeafe", 500: "#3b82f6", 600: "#2563eb", 700: "#1d4ed8", 900: "#1e3a8a" },
         aqua: { 50: "#f0f9ff", 100: "#e0f2fe", 300: "#7dd3fc", 400: "#38bdf8", 500: "#0ea5e9", 600: "#0284c7", 700: "#0369a1" },
         gold: { 50: "#fff8e6", 500: "#f5a524", 700: "#9a5200" },
         sky: { 50: "#f3f8ff", 100: "#e6f1ff", 200: "#cfe3ff" },
         ink: "#0f172a",
         enamel: "#f8fafc",
-        mist: "#eaf0fa",
+        mist: "#eff6ff",
         rule: "#e3eaf6",
         navy: { 700: "#14295c", 800: "#0f2046", 900: "#0a1733", 950: "#070f24" }
       }

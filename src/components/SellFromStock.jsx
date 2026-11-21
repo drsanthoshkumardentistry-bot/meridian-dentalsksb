@@ -26,7 +26,7 @@ export default function SellFromStock({ inventory, onAdd, newId, showToast }) {
       <label className="w-20 text-[11px] font-semibold text-slate-600">Qty
         <input type="number" min="1" step="1" value={qty} onChange={(e) => setQty(e.target.value)} aria-label="Quantity to sell" className="mt-0.5 w-full rounded-lg border border-rule bg-white px-2 py-1.5 text-xs text-slate-900" />
       </label>
-      <button type="button" onClick={add} className="rounded-lg bg-[#1d4ed8] px-3 py-2 text-xs font-semibold text-white">Add to bill</button>
+      <button type="button" onClick={add} className="rounded-lg bg-[#2563eb] px-3 py-2 text-xs font-semibold text-white">Add to bill</button>
     </div>
   );
 }
