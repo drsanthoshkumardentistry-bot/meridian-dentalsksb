@@ -26,7 +26,7 @@ describe("backup reminder", () => {
     expect(backupNotification(daysAgo(40), now).tone).toBe("red");
     const never = backupNotification("", now);
     expect(never.tone).toBe("red");
-    expect(never.to).toBe("Settings");
+    expect(never.to).toBe("Practice Profile");
   });
   it("remembers the last backup per clinic and survives broken storage", () => {
     const mem = {}; const storage = { getItem: (k) => mem[k] ?? null, setItem: (k, v) => { mem[k] = v; } };
