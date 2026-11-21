@@ -78,9 +78,9 @@ const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", 
 export const referralSlipHtml = (r, patient = {}, profile = {}) => `<!doctype html><html><head><meta charset="utf-8"><meta name="color-scheme" content="light only"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Referral slip</title>
 <style>html,body{background:#fff !important;color:#0f172a;color-scheme:light only;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 body{font-family:Arial,sans-serif;max-width:680px;margin:24px auto;padding:0 16px;line-height:1.5}
-h1{font-size:20px;margin:0;color:#0f172a}.muted{color:#64748b;font-size:12px}.head{border-bottom:2px solid #0f172a;padding-bottom:10px}
+h1{font-size:20px;margin:0;color:#1d4ed8}.muted{color:#64748b;font-size:12px}.head{border-bottom:2px solid #1d4ed8;padding-bottom:10px}
 table{width:100%;border-collapse:collapse;margin-top:14px}td{padding:7px 0;border-bottom:1px solid #e2e8f0;vertical-align:top}td:first-child{width:34%;color:#64748b}
-.tag{display:inline-block;border:1px solid #0f172a;color:#0f172a;border-radius:99px;padding:1px 10px;font-size:12px}
+.tag{display:inline-block;border:1px solid #1d4ed8;color:#1d4ed8;border-radius:99px;padding:1px 10px;font-size:12px}
 .sign{margin-top:48px;text-align:right;font-size:12px}</style></head><body>
 <div class="head"><h1>${esc(profile.name || "Dental Clinic")}</h1><div class="muted">${esc(profile.address || "")}</div>
 <div class="muted">${esc(profile.phone || "")}${profile.regNumber ? " · Reg: " + esc(profile.regNumber) : ""}</div></div>

@@ -5,7 +5,7 @@ import { formatTime12 } from "../reminders.js";
 /** Dashboard card: the next patient, things needing attention, and a quick New appointment button. */
 export function NowStrip({ next = null, alerts = [], onGo, onNewAppointment, canBook = true }) {
   return (
-    <section aria-label="Now" data-testid="now-strip" className="rounded-2xl bg-gradient-to-br from-[#0f172a] to-[#0f1f4d] text-slate-200 p-4 space-y-3">
+    <section aria-label="Now" data-testid="now-strip" className="rounded-2xl bg-gradient-to-br from-[#1e3a8a] to-[#0f1f4d] text-slate-200 p-4 space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="text-[11px] font-bold tracking-wider text-slate-400">NEXT PATIENT</div>

@@ -92,7 +92,7 @@ export default function ExtraRadiographs({ patient, api, compress, canWrite = tr
           <p className="text-[11px] text-slate-500">Add another OPG, IOPA, CBCT or X-ray. They are also kept under Photos and X-rays in the patient's chart.</p>
         </div>
         {canWrite && (
-          <button type="button" onClick={() => setShowForm((v) => !v)} className="shrink-0 px-3 py-2 rounded-lg bg-[#0f172a] hover:bg-blue-700 text-white text-xs font-semibold inline-flex items-center gap-1.5">
+          <button type="button" onClick={() => setShowForm((v) => !v)} className="shrink-0 px-3 py-2 rounded-lg bg-[#1d4ed8] hover:bg-blue-700 text-white text-xs font-semibold inline-flex items-center gap-1.5">
             <Plus className="w-3.5 h-3.5" /> Add
           </button>
         )}
@@ -102,7 +102,7 @@ export default function ExtraRadiographs({ patient, api, compress, canWrite = tr
         <div className="rounded-xl border border-rule bg-enamel p-3 space-y-2 text-xs">
           <div role="group" aria-label="Type of radiograph" className="flex flex-wrap gap-1.5">
             {RADIOGRAPH_KINDS.map((k) => (
-              <button key={k} type="button" aria-pressed={kind === k} onClick={() => setKind(k)} className={`px-3 py-1.5 rounded-full border text-xs font-semibold ${kind === k ? "bg-[#0f172a] text-white border-transparent" : "bg-white text-slate-700 border-slate-300"}`}>{k}</button>
+              <button key={k} type="button" aria-pressed={kind === k} onClick={() => setKind(k)} className={`px-3 py-1.5 rounded-full border text-xs font-semibold ${kind === k ? "bg-[#1d4ed8] text-white border-transparent" : "bg-white text-slate-700 border-slate-300"}`}>{k}</button>
             ))}
           </div>
           <div className="flex flex-wrap items-end gap-2">

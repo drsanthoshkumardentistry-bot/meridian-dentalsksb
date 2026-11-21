@@ -42,7 +42,7 @@ export default function InstalmentPlan({ inv, canEdit, onCreate, onRemove, showT
       <div><label htmlFor="ip-n" className="block text-[11px] font-semibold text-slate-600 mb-1">Number of instalments</label><input id="ip-n" inputMode="numeric" className={field} value={f.count} onChange={(e) => setF({ ...f, count: e.target.value })} /></div>
       <div><label htmlFor="ip-ev" className="block text-[11px] font-semibold text-slate-600 mb-1">Every (months)</label><input id="ip-ev" inputMode="numeric" className={field} value={f.every} onChange={(e) => setF({ ...f, every: e.target.value })} /></div>
       <div><label htmlFor="ip-first" className="block text-[11px] font-semibold text-slate-600 mb-1">First due on</label><DmyDateInput id="ip-first" ariaLabel="First due on (dd/mm/yyyy)" value={f.firstDueOn} onChange={(v) => setF({ ...f, firstDueOn: v })} className={field} /></div>
-      <div className="col-span-2 flex items-center gap-3"><button className="px-4 py-2 rounded-lg bg-[#0f172a] text-white font-semibold">Create plan</button><span className="text-slate-500">Splits the balance of ₹{formatINR(Math.max(0, inv.totalP - paidSoFar))} into 2 to {MAX_INSTALMENTS} equal instalments. Collect any down payment first.</span></div>
+      <div className="col-span-2 flex items-center gap-3"><button className="px-4 py-2 rounded-lg bg-[#1d4ed8] text-white font-semibold">Create plan</button><span className="text-slate-500">Splits the balance of ₹{formatINR(Math.max(0, inv.totalP - paidSoFar))} into 2 to {MAX_INSTALMENTS} equal instalments. Collect any down payment first.</span></div>
     </form>
   );
 }

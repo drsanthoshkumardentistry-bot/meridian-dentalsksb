@@ -4,7 +4,7 @@ import { MiniBars } from "./Sparkline.jsx";
 
 // One soft colour family per card: pale gradient, a coloured circle for the icon, matching bars.
 export const STAT_TONES = {
-  blue: { card: "from-blue-50 to-blue-100/70 border-blue-100", bubble: "bg-blue-500 text-white shadow-blue-300/60", bar: "#1e2b4a" },
+  blue: { card: "from-blue-50 to-blue-100/70 border-blue-100", bubble: "bg-blue-500 text-white shadow-blue-300/60", bar: "#2563eb" },
   mint: { card: "from-emerald-50 to-teal-100/70 border-emerald-100", bubble: "bg-emerald-500 text-white shadow-emerald-300/60", bar: "#10b981" },
   violet: { card: "from-violet-50 to-indigo-100/70 border-violet-100", bubble: "bg-violet-500 text-white shadow-violet-300/60", bar: "#7c3aed" },
   peach: { card: "from-orange-50 to-amber-100/70 border-orange-100", bubble: "bg-orange-400 text-white shadow-orange-300/60", bar: "#f97316" },
