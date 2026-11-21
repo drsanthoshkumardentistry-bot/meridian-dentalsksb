@@ -4,6 +4,15 @@ export const WARN_AT = 0.7;
 export const URGENT_AT = 0.9;
 export const INDEX_FACTOR = 2; // Firestore bills documents plus index entries; this rough factor keeps the estimate on the safe side
 
+// Free plan: 50,000 document reads a day. The app listens to a clinic's records, so each cold open reads them all.
+export const READS_PER_DAY = 50000;
+export const OPENS_PER_DAY = 5; // rough: a couple of devices, a few cold opens each; deliberately on the safe side
+export const readsLevel = (docs, limit = READS_PER_DAY, opens = OPENS_PER_DAY) => {
+  const reads = docs * opens;
+  const used = reads / limit;
+  return { reads, percent: Math.round(used * 1000) / 10, level: used >= URGENT_AT ? "urgent" : used >= WARN_AT ? "warn" : "ok" };
+};
+
 export const newTally = () => ({ docs: 0, bytes: 0, clinics: {} });
 
 /** Adds one document ({ path, fields }) to the running tally. */
