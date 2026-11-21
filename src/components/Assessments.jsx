@@ -34,7 +34,7 @@ export default function Assessments({ patient, onSave, onRemove, newId }) {
             {live.level} risk · recall every {live.recallMonths} months
             <ul className="font-normal mt-1 list-disc ml-4">{live.advice.map((a) => <li key={a}>{a}</li>)}</ul>
           </div>
-          <button type="button" onClick={saveCaries} className="px-4 py-2 rounded-lg bg-[#1d4ed8] text-white font-semibold">Save caries risk</button>
+          <button type="button" onClick={saveCaries} className="px-4 py-2 rounded-lg bg-[#0f172a] text-white font-semibold">Save caries risk</button>
         </section>
 
         <section className="rounded-xl border border-rule bg-enamel/60 p-4 text-xs space-y-3" aria-label="Gum screening (BPE)">
@@ -51,7 +51,7 @@ export default function Assessments({ patient, onSave, onRemove, newId }) {
               </div>
             ))}
           </div>
-          <button type="button" onClick={saveBpe} className="px-4 py-2 rounded-lg bg-[#1d4ed8] text-white font-semibold">Save gum screening</button>
+          <button type="button" onClick={saveBpe} className="px-4 py-2 rounded-lg bg-[#0f172a] text-white font-semibold">Save gum screening</button>
         </section>
       </div>
       {error && <p role="alert" className="text-xs text-rose-600 font-medium">{error}</p>}

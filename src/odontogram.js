@@ -110,7 +110,7 @@ export const groupFindings = (conditions = {}, palette = []) => {
 export const STATUS_COLORS = {
   HLT: { fill: "#ffffff", stroke: "#9fb6e8" },
   CAR: { fill: "#fecaca", stroke: "#e11d48" },
-  RES: { fill: "#bae6fd", stroke: "#0284c7" },
+  RES: { fill: "#c8d3e4", stroke: "#1e2b4a" },
   RCT: { fill: "#e9d5ff", stroke: "#9333ea" },
   CRW: { fill: "#fde68a", stroke: "#d97706" },
   BRG: { fill: "#c7d2fe", stroke: "#4f46e5" },
@@ -127,7 +127,7 @@ export const STATUS_COLORS = {
   ROT: { fill: "#e7e5e4", stroke: "#78716c" },
   MOB: { fill: "#fed7aa", stroke: "#c2410c" },
   IPC: { fill: "#d9f99d", stroke: "#65a30d" },
-  UNE: { fill: "#e0f2fe", stroke: "#0369a1" },
+  UNE: { fill: "#e3e9f2", stroke: "#17233f" },
   RET: { fill: "#fef3c7", stroke: "#b45309" },
   SUP: { fill: "#fae8ff", stroke: "#a21caf" },
   ABR: { fill: "#ffedd5", stroke: "#9a3412" },

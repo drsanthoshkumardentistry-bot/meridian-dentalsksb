@@ -166,7 +166,7 @@ export default function TreatmentPlans({ patient, practiceProfile, onChange, onB
           <button
             type="button"
             onClick={() => setDraft(blankDraft())}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1d4ed8] hover:bg-blue-800 text-white inline-flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#0f172a] hover:bg-blue-800 text-white inline-flex items-center gap-1.5"
           >
             <Plus className="w-3.5 h-3.5" /> New plan
           </button>
@@ -284,7 +284,7 @@ export default function TreatmentPlans({ patient, practiceProfile, onChange, onB
               <button type="button" onClick={() => setDraft(null)} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">
                 Cancel
               </button>
-              <button type="submit" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1d4ed8] text-white">
+              <button type="submit" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#0f172a] text-white">
                 Save plan
               </button>
             </div>
@@ -372,7 +372,7 @@ export default function TreatmentPlans({ patient, practiceProfile, onChange, onB
                 </>
               )}
               {(plan.status === "Proposed" || plan.status === "Declined") && (
-                <button type="button" onClick={() => replace(approvePlan(plan, patient.name))} className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#1d4ed8] text-white inline-flex items-center gap-1">
+                <button type="button" onClick={() => replace(approvePlan(plan, patient.name))} className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#0f172a] text-white inline-flex items-center gap-1">
                   <Check className="w-3 h-3" /> Mark approved
                 </button>
               )}

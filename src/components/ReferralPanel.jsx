@@ -43,7 +43,7 @@ export default function ReferralPanel({ referrals = [], canWrite = true, onAdd, 
           <div><label htmlFor="ref-note" className="font-bold text-slate-600 block mb-1">Reason and notes (optional)</label>
             <textarea id="ref-note" rows={2} className={input} placeholder="Why the patient is being referred, findings, anything the specialist should know" value={f.note} onChange={set("note")} /></div>
           {error && <p role="alert" className="text-rose-700 font-semibold">{error}</p>}
-          <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-bold">Add referral</button>
+          <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#0f172a] text-white font-bold">Add referral</button>
         </form>
       )}
       <div className="space-y-2">

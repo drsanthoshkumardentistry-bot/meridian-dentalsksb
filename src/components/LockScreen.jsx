@@ -32,7 +32,7 @@ export default function LockScreen({ uid, onUnlock, onSignOut }) {
 
   if (forgot) {
     return (
-      <div role="dialog" aria-modal="true" aria-label="Reset your PIN" className="fixed inset-0 z-[200] flex items-center justify-center bg-gradient-to-b from-[#1e3a8a] to-[#0f1f4d] p-6">
+      <div role="dialog" aria-modal="true" aria-label="Reset your PIN" className="fixed inset-0 z-[200] flex items-center justify-center bg-gradient-to-b from-[#0f172a] to-[#0f1f4d] p-6">
         <div className="w-full max-w-xs rounded-3xl bg-white p-6 text-center shadow-2xl space-y-4">
           <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700"><Lock className="h-5 w-5" aria-hidden="true" /></span>
           <h2 className="text-lg font-bold text-slate-900">Forgot your PIN?</h2>
@@ -45,7 +45,7 @@ export default function LockScreen({ uid, onUnlock, onSignOut }) {
   }
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="MeriDent is locked" className="fixed inset-0 z-[200] flex items-center justify-center bg-gradient-to-b from-[#1e3a8a] to-[#0f1f4d] p-6">
+    <div role="dialog" aria-modal="true" aria-label="MeriDent is locked" className="fixed inset-0 z-[200] flex items-center justify-center bg-gradient-to-b from-[#0f172a] to-[#0f1f4d] p-6">
       <form onSubmit={submit} className="w-full max-w-xs rounded-3xl bg-white p-6 text-center shadow-2xl space-y-4">
         <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700"><Lock className="h-5 w-5" aria-hidden="true" /></span>
         <h2 className="text-lg font-bold text-slate-900">MeriDent is locked</h2>

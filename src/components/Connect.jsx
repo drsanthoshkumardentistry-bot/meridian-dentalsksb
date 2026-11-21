@@ -477,7 +477,7 @@ function AdminSetup({ api, onDone, showToast }) {
     <form onSubmit={go} className="mt-3 space-y-2" aria-label="Admin setup">
       <label htmlFor="admin-code" className="block font-semibold text-slate-700">MeriDent owner setup code</label>
       <input id="admin-code" type="password" autoComplete="off" value={code} onChange={(e) => setCode(e.target.value)} className="w-full max-w-xs px-3 py-1.5 border border-slate-300 rounded-lg bg-white" />
-      <button type="submit" disabled={busy || !code.trim()} className={`${btn} bg-[#1d4ed8] text-white disabled:opacity-60`}>{busy ? "Checking..." : "Become admin"}</button>
+      <button type="submit" disabled={busy || !code.trim()} className={`${btn} bg-[#0f172a] text-white disabled:opacity-60`}>{busy ? "Checking..." : "Become admin"}</button>
     </form>
   );
 }

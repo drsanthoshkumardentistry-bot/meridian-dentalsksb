@@ -136,7 +136,7 @@ const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", 
 
 export const consentHtml = (c, patient = {}, profile = {}) => `<!doctype html><html><head><meta charset="utf-8"><meta name="color-scheme" content="light only"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(c.title)}</title>
 <style>html,body{background:#fff !important;color:#0f172a;color-scheme:light only;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{font-family:Arial,sans-serif;color:#0f172a;max-width:720px;margin:24px auto;padding:0 16px;line-height:1.5}
-h1{color:#1d4ed8;font-size:20px;margin:0}h2{font-size:17px;margin:16px 0 4px}.muted{color:#64748b;font-size:12px}
+h1{color:#0f172a;font-size:20px;margin:0}h2{font-size:17px;margin:16px 0 4px}.muted{color:#64748b;font-size:12px}
 .text{white-space:pre-wrap;font-size:14px;margin:12px 0}.sig{margin-top:24px;display:flex;gap:32px;flex-wrap:wrap}
 .sig img{height:70px;border-bottom:1px solid #0f172a}.box{font-size:13px}</style></head><body>
 <h1>${esc(c.clinic || profile.name || "Dental Clinic")}</h1><div class="muted">${esc(profile.address || "")} ${esc(profile.phone || "")}</div>
