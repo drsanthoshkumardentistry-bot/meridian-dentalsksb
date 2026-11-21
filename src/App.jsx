@@ -240,6 +240,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { safePatients, safeAppointments, safeInvoices } from "./safeRecords.js";
 import * as FirestoreModule from "firebase/firestore";
 import { collection, doc, setDoc, onSnapshot, deleteDoc } from "firebase/firestore";
+import { recordReads, serverReadsOf } from "./readCounter.js";
 import { writeDocMerged } from "./cloudWrite.js";
 import { getOpg, saveOpg, deleteOpg, legacyOpgPatients } from "./opgStore.js";
 import { sameJson } from "./syncMerge.js";
@@ -394,6 +395,7 @@ function useCloudCollection({ clinicId, ready, name, items, setItems, sortFn, on
     const unsubscribe = onSnapshot(
       collection(db, "clinics", clinicId, name),
       (snapshot) => {
+        recordReads(serverReadsOf(snapshot));
         const remote = new Map();
         snapshot.docs.forEach((d) => {
           const data = d.data();
@@ -514,6 +516,7 @@ function useCloudDoc({ clinicId, ready, name, value, setValue, onError, readOnly
     const unsubscribe = onSnapshot(
       doc(db, "clinics", clinicId, "store", name),
       (snapshot) => {
+        recordReads(snapshot.metadata?.fromCache ? 0 : 1);
         if (snapshot.exists()) {
           const remote = snapshot.data();
           const remoteJson = stableStringify(remote);
