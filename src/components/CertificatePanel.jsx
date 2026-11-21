@@ -29,7 +29,7 @@ export default function CertificatePanel({ patient, profile, today, defaultTreat
       {f.type === "referral" && <div><label htmlFor="ct-to" className="block text-[11px] font-semibold text-slate-600 mb-1">Refer to (doctor or hospital, optional)</label><input id="ct-to" className={field} maxLength={120} value={f.to} onChange={(e) => setF({ ...f, to: e.target.value })} /></div>}
       <div><label htmlFor="ct-tx" className="block text-[11px] font-semibold text-slate-600 mb-1">{f.type === "fitness" ? "Remarks (optional)" : f.type === "referral" ? "Reason for referral" : f.type === "summary" ? "Treatment summary" : "Treatment or procedure done"}</label>
         <input id="ct-tx" className={field} maxLength={200} value={f.treatment} onChange={(e) => setF({ ...f, treatment: e.target.value })} placeholder={f.type === "fitness" ? "" : "Root canal treatment of tooth 36"} /></div>
-      <button className="px-4 py-2 rounded-lg bg-[#1d4ed8] text-white text-xs font-semibold">{["referral", "summary"].includes(f.type) ? "Print letter" : "Print certificate"}</button>
+      <button className="px-4 py-2 rounded-lg bg-[#2563eb] text-white text-xs font-semibold">{["referral", "summary"].includes(f.type) ? "Print letter" : "Print certificate"}</button>
       <p className="text-[11px] text-slate-500">Prints on a plain page with the clinic name, doctor name and registration number from Practice Profile. Sign and stamp it before handing it over.</p>
     </form>
   );

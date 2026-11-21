@@ -1,4 +1,4 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><defs>
-<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2f5fd8"/><stop offset="1" stop-color="#16327f"/></linearGradient>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#60a5fa"/><stop offset="1" stop-color="#2563eb"/></linearGradient>
 <mask id="cut" maskUnits="userSpaceOnUse" x="0" y="0" width="140" height="130"><rect width="140" height="130" fill="#fff"/><path d="M57 63C57 55 64 53 69.5 57.5C70.8 58.5 72.2 58.5 73.5 57.5C79 53 86 55 86 63C86 74 83 84 81 112H75.5C74.5 94 73.5 87 71.5 87C69.5 87 68.5 94 67.5 112H62C60 84 57 74 57 63Z" fill="#000"/></mask>
 </defs><rect width="128" height="128" rx="28" fill="url(#bg)"/><g transform="translate(-3.5 2.3) scale(.95)"><g mask="url(#cut)" fill="#fff" fill-rule="evenodd"><path d="M18 94V36h11l17 21 17-21h11v58H62V60L46 80 30 60V94z"/><path d="M62 36H92C112 36 124 50 124 65S112 94 92 94H62ZM92 47H96C107 47 112 55 112 65S107 83 96 83H92Z"/></g></g></svg>

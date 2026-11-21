@@ -2461,7 +2461,7 @@ export default function App() {
           <div className="font-bold text-slate-900 text-sm">{pendingInvite.clinicName || "A clinic"} invited you as {ROLE_LABEL[pendingInvite.role]}</div>
           <p className="text-slate-600">Accepting moves you into that clinic's workspace. Your own clinic stays safe and comes back if you leave. Only accept if you know this clinic.</p>
           <div className="flex gap-2">
-            <button type="button" onClick={() => acceptInvite(db, authUser.email).catch(() => showToast("Could not accept. Check your connection."))} className="px-4 py-2 rounded-lg bg-[#1d4ed8] text-white font-semibold">Accept</button>
+            <button type="button" onClick={() => acceptInvite(db, authUser.email).catch(() => showToast("Could not accept. Check your connection."))} className="px-4 py-2 rounded-lg bg-[#2563eb] text-white font-semibold">Accept</button>
             <button type="button" onClick={() => removeMember(db, authUser.email).catch(() => showToast("Could not decline. Check your connection."))} className="px-4 py-2 rounded-lg border border-rule text-slate-700 font-semibold">Decline</button>
           </div>
         </div>
@@ -2730,7 +2730,7 @@ export default function App() {
                 )}
                 <button
                   onClick={() => setIsAddPatientOpen(true)}
-                  className="shrink-0 whitespace-nowrap px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-card"
+                  className="shrink-0 whitespace-nowrap px-4 py-2 bg-[#2563eb] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-card"
                 >
                   <Plus className="w-4 h-4" /> Add Patient
                 </button>
@@ -2986,7 +2986,7 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => showToast("Diagnostic findings saved successfully")}
-                      className="w-full py-2.5 bg-[#1d4ed8] hover:bg-blue-700 text-white font-semibold text-xs rounded-lg flex items-center justify-center gap-1.5"
+                      className="w-full py-2.5 bg-[#2563eb] hover:bg-blue-700 text-white font-semibold text-xs rounded-lg flex items-center justify-center gap-1.5"
                     >
                       <CheckCircle2 className="w-4 h-4" /> Save Diagnostic Findings
                     </button>
@@ -3014,7 +3014,7 @@ export default function App() {
                 </div>
                 <button
                   onClick={() => setIsAddApptOpen(true)}
-                  className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-card"
+                  className="px-4 py-2 bg-[#2563eb] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-card"
                 >
                   <Plus className="w-4 h-4" /> Book Appointment
                 </button>
@@ -3324,7 +3324,7 @@ export default function App() {
                 </div>
                 <button
                   onClick={() => setIsAddInvoiceOpen(true)}
-                  className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-card"
+                  className="px-4 py-2 bg-[#2563eb] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-card"
                 >
                   <Plus className="w-4 h-4" /> New Invoice
                 </button>
@@ -3649,7 +3649,7 @@ export default function App() {
                 </button>
                 <button
                   onClick={printReport}
-                  className="px-3 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold"
+                  className="px-3 py-2 bg-[#2563eb] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold"
                 >
                   Print / save as PDF
                 </button>
@@ -3736,7 +3736,7 @@ export default function App() {
                   )}
                   <button
                     onClick={() => setIsAddStockOpen(true)}
-                    className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-card"
+                    className="px-4 py-2 bg-[#2563eb] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-card"
                   >
                     <Plus className="w-4 h-4" /> Add Stock Item
                   </button>
@@ -3868,7 +3868,7 @@ export default function App() {
                 </div>
                 <button
                   onClick={() => setIsAddStaffOpen(true)}
-                  className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-card cursor-pointer"
+                  className="px-4 py-2 bg-[#2563eb] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-card cursor-pointer"
                 >
                   <Plus className="w-4 h-4" /> Add Staff Member
                 </button>
@@ -4058,7 +4058,7 @@ export default function App() {
                     <BookingShare url={bookingUrl(window.location.origin, CLINIC_ID)} clinicName={shareName(practiceProfile.name, authUser)} onCopy={() => { copyText(bookingUrl(window.location.origin, CLINIC_ID)).then((ok) => showToast(ok ? "Booking link copied" : COPY_FAILED)); }} />
                     <div className="flex flex-wrap gap-2 items-center">
                       <input readOnly aria-label="Booking link" value={bookingUrl(window.location.origin, CLINIC_ID)} onFocus={(e) => e.target.select()} className="flex-1 min-w-[220px] px-3 py-2 border border-slate-300 rounded-lg bg-white" />
-                      <button type="button" onClick={() => { copyText(bookingUrl(window.location.origin, CLINIC_ID)).then((ok) => showToast(ok ? "Booking link copied" : COPY_FAILED)); }} className="px-3 py-2 rounded-lg bg-[#1d4ed8] text-white font-semibold">Copy link</button>
+                      <button type="button" onClick={() => { copyText(bookingUrl(window.location.origin, CLINIC_ID)).then((ok) => showToast(ok ? "Booking link copied" : COPY_FAILED)); }} className="px-3 py-2 rounded-lg bg-[#2563eb] text-white font-semibold">Copy link</button>
                     </div>
                   </>
                 ) : (
@@ -4338,7 +4338,7 @@ export default function App() {
                 </span>
                 <button
                   onClick={() => { const g = profileGaps(practiceProfile); showToast(g.length ? `Saved. Still needed: ${g.join(", ")}` : "Practice credentials saved"); }}
-                  className="px-4 py-2 bg-[#1d4ed8] text-white rounded-lg text-xs font-semibold shadow-card hover:bg-blue-700"
+                  className="px-4 py-2 bg-[#2563eb] text-white rounded-lg text-xs font-semibold shadow-card hover:bg-blue-700"
                 >
                   Update Profile
                 </button>
@@ -5021,7 +5021,7 @@ export default function App() {
                       onClick={() => setActiveModalTab(tab)}
                       className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${
                         isActive
-                          ? "bg-[#1d4ed8] text-white shadow-card font-semibold"
+                          ? "bg-[#2563eb] text-white shadow-card font-semibold"
                           : "text-slate-600 hover:bg-slate-100"
                       }`}
                     >
@@ -5084,7 +5084,7 @@ export default function App() {
                         setVisitForm((f) => ({ ...f, findings: d.findings || f.findings, advice: d.advice || f.advice, nextVisit: d.nextVisit || f.nextVisit }));
                         showToast("Draft added. Review and edit before saving");
                       }}
-                      className="px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-[#1d4ed8] text-xs font-semibold hover:bg-blue-100"
+                      className="px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-[#2563eb] text-xs font-semibold hover:bg-blue-100"
                     >
                       Draft from chart
                     </button>
@@ -5110,7 +5110,7 @@ export default function App() {
                               setAiBusy(false);
                             }
                           }}
-                          className="px-3 py-1.5 rounded-lg bg-[#1d4ed8] hover:bg-blue-700 text-white font-semibold disabled:opacity-60"
+                          className="px-3 py-1.5 rounded-lg bg-[#2563eb] hover:bg-blue-700 text-white font-semibold disabled:opacity-60"
                         >
                           {aiBusy ? "Writing..." : "Tidy with Meridee"}
                         </button>
@@ -5168,7 +5168,7 @@ export default function App() {
                       </div>
                     </div>
                     <div className="sm:col-span-2 flex justify-end">
-                      <button type="submit" className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg font-semibold">Save visit note</button>
+                      <button type="submit" className="px-4 py-2 bg-[#2563eb] hover:bg-blue-700 text-white rounded-lg font-semibold">Save visit note</button>
                     </div>
                   </form>
 
@@ -5642,7 +5642,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => updateActivePatient({ consent: { treatment: true, whatsapp: true, recordedAt: new Date().toISOString() } })}
-                        className="px-3 py-1.5 rounded-lg bg-[#1d4ed8] text-white font-semibold hover:bg-blue-700"
+                        className="px-3 py-1.5 rounded-lg bg-[#2563eb] text-white font-semibold hover:bg-blue-700"
                       >
                         Record consent now
                       </button>
@@ -6093,7 +6093,7 @@ export default function App() {
               >
                 Cancel
               </button>
-              <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold">
+              <button type="submit" className="px-4 py-1.5 rounded-lg bg-[#2563eb] text-white hover:bg-blue-700 font-semibold">
                 Register & Open Odontogram
               </button>
             </div>
@@ -6249,7 +6249,7 @@ export default function App() {
               </button>
               <button
                 type="submit"
-                className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold"
+                className="px-4 py-1.5 rounded-lg bg-[#2563eb] text-white hover:bg-blue-700 font-semibold"
               >
                 Schedule Appointment
               </button>
@@ -6479,7 +6479,7 @@ export default function App() {
               </button>
               <button
                 type="submit"
-                className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold"
+                className="px-4 py-1.5 rounded-lg bg-[#2563eb] text-white hover:bg-blue-700 font-semibold"
               >
                 Generate Invoice
               </button>
@@ -6584,7 +6584,7 @@ export default function App() {
               </button>
               <button
                 type="submit"
-                className="px-4 py-1.5 rounded-lg bg-[#1d4ed8] text-white hover:bg-blue-700 font-semibold"
+                className="px-4 py-1.5 rounded-lg bg-[#2563eb] text-white hover:bg-blue-700 font-semibold"
               >
                 Save item
               </button>
@@ -6654,7 +6654,7 @@ export default function App() {
                     <button type="button" onClick={() => setPayForm({ ...payForm, amount: String(qrBalanceP / 100) })} className="px-3 py-2 rounded-lg border border-rule text-slate-600 font-semibold">
                       Full balance
                     </button>
-                    <button type="submit" className="flex-1 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-lg font-semibold">
+                    <button type="submit" className="flex-1 py-2 bg-[#2563eb] hover:bg-blue-700 text-white rounded-lg font-semibold">
                       Record payment
                     </button>
                   </div>

@@ -55,7 +55,7 @@ export default function BranchesCard({ branches, data, onChange, newId, onTransf
       </table></div>
       <form className="flex flex-wrap gap-2" onSubmit={(e) => { e.preventDefault(); if (apply(addBranch(branches, name, newId("BR")))) setName(""); }}>
         <input aria-label="New branch name" placeholder="New branch name, e.g. Peelamedu" className={`${input} flex-1 min-w-[10rem]`} value={name} maxLength={40} onChange={(e) => setName(e.target.value)} />
-        <button type="submit" className="px-4 py-2 shrink-0 rounded-lg bg-[#1d4ed8] text-white font-semibold">Add branch</button>
+        <button type="submit" className="px-4 py-2 shrink-0 rounded-lg bg-[#2563eb] text-white font-semibold">Add branch</button>
       </form>
       {branches.length > 1 && onTransfer && (
         <form onSubmit={move} className="border-t border-slate-100 pt-3 space-y-2" aria-label="Move a patient">
@@ -70,7 +70,7 @@ export default function BranchesCard({ branches, data, onChange, newId, onTransf
               <option value="">Move to</option>
               {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
-            <button type="submit" className="px-4 py-2 rounded-lg bg-[#1d4ed8] text-white font-semibold">Move patient</button>
+            <button type="submit" className="px-4 py-2 rounded-lg bg-[#2563eb] text-white font-semibold">Move patient</button>
           </div>
           {preview && <p className="text-slate-500">{chosen.name} has {preview.appointments.length} appointment(s) and {preview.invoices.length} invoice(s).</p>}
           {moved && <p role="status" className="text-emerald-700 font-medium">{moved}</p>}

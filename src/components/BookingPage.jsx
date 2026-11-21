@@ -77,7 +77,7 @@ export default function BookingPage({ clinicId, loadPage, submit }) {
       <div><label htmlFor="bk-note" className="block text-xs font-semibold text-slate-600 mb-1">{t("note")}</label>
         <textarea id="bk-note" rows={2} maxLength={300} className={field} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></div>
       {error && <p role="alert" className="text-sm text-rose-600 font-medium">{error}</p>}
-      <button type="submit" disabled={busy} className="w-full py-3 rounded-lg bg-[#1d4ed8] hover:bg-blue-800 text-white font-semibold text-sm disabled:opacity-60">{busy ? t("sending") : t("send")}</button>
+      <button type="submit" disabled={busy} className="w-full py-3 rounded-lg bg-[#2563eb] hover:bg-blue-800 text-white font-semibold text-sm disabled:opacity-60">{busy ? t("sending") : t("send")}</button>
       <p className="text-[11px] text-slate-500">{t("privacy")}</p>
     </form>
   );
