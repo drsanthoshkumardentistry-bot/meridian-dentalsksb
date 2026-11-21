@@ -208,10 +208,10 @@ export const buildInvoiceHtml = (inv, profile = {}, { receipt = false } = {}) =>
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="color-scheme" content="light only"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${receipt ? "Receipt" : "Invoice"} ${esc(inv.id)}</title>
 <style>html,body{background:#fff !important;color:#0f172a;color-scheme:light only;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 body{font-family:Arial,Helvetica,sans-serif;color:#0f172a;margin:32px;font-size:13px}
-h1{font-size:20px;margin:0;color:#1d4ed8}h2{font-size:15px;margin:20px 0 6px}
-.muted{color:#64748b}.head{display:flex;justify-content:space-between;border-bottom:2px solid #1d4ed8;padding-bottom:12px}
+h1{font-size:20px;margin:0;color:#0f172a}h2{font-size:15px;margin:20px 0 6px}
+.muted{color:#64748b}.head{display:flex;justify-content:space-between;border-bottom:2px solid #0f172a;padding-bottom:12px}
 table{width:100%;border-collapse:collapse;margin-top:8px}td{padding:6px 0;border-bottom:1px solid #e2e8f0}.r{text-align:right}
-.total td{font-weight:bold;font-size:15px;border-top:2px solid #0f172a}.badge{display:inline-block;padding:2px 10px;border:1px solid #1d4ed8;color:#1d4ed8;border-radius:99px;font-size:11px}
+.total td{font-weight:bold;font-size:15px;border-top:2px solid #0f172a}.badge{display:inline-block;padding:2px 10px;border:1px solid #0f172a;color:#0f172a;border-radius:99px;font-size:11px}
 @media print{body{margin:12mm}}
 </style></head><body>
 <div class="head"><div><h1>${esc(profile.name || "Dental Clinic")}</h1>

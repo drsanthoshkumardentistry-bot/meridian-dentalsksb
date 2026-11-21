@@ -37,7 +37,7 @@ export default function ActivityLog({ entries }) {
           ))}
         </ul>
       )}
-      {total > rows.length && <button type="button" onClick={() => setMore(more + 1)} className="text-[#1d4ed8] font-semibold">Show more</button>}
+      {total > rows.length && <button type="button" onClick={() => setMore(more + 1)} className="text-[#0f172a] font-semibold">Show more</button>}
     </section>
   );
 }

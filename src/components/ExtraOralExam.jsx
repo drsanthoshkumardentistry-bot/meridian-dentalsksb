@@ -26,7 +26,7 @@ export default function ExtraOralExam({ exams = [], canWrite = true, onSave, new
           {exams.map((x) => <option key={x.id} value={x.id}>{formatDateLong(x.date)}</option>)}
         </select>
         {canWrite && <button type="button" onClick={() => { setExam(newExam(newId(), today)); setDirty(false); }} className="px-3 py-1.5 rounded-lg border border-rule font-semibold text-slate-700">New exam</button>}
-        {canWrite && <button type="button" onClick={save} disabled={!dirty} className="px-3 py-1.5 rounded-lg bg-[#1d4ed8] disabled:opacity-50 text-white font-semibold">Save exam</button>}
+        {canWrite && <button type="button" onClick={save} disabled={!dirty} className="px-3 py-1.5 rounded-lg bg-[#0f172a] disabled:opacity-50 text-white font-semibold">Save exam</button>}
       </div>
 
       <div className="rounded-xl border border-rule bg-white p-3 text-xs" data-testid="eo-summary">

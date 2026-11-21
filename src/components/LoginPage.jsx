@@ -67,8 +67,8 @@ export default function LoginPage({
   const input = "w-full px-3.5 py-2.5 border border-slate-300 rounded-lg text-sm text-slate-900 bg-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-[1fr_1.1fr] bg-gradient-to-b from-[#f4f8ff] to-[#dbe7f8] text-slate-900 font-sans antialiased">
-      <aside className="hidden lg:flex flex-col justify-between p-12 text-white bg-[radial-gradient(90%_60%_at_100%_0%,rgba(56,189,248,.35),transparent),radial-gradient(70%_60%_at_0%_100%,rgba(37,99,235,.4),transparent),linear-gradient(180deg,#1e3a8a,#0f1f4d)]">
+    <div className="min-h-screen grid lg:grid-cols-[1fr_1.1fr] bg-gradient-to-b from-[#f3f6fb] to-[#d5deec] text-slate-900 font-sans antialiased">
+      <aside className="hidden lg:flex flex-col justify-between p-12 text-white bg-[radial-gradient(90%_60%_at_100%_0%,rgba(107,128,163,.35),transparent),radial-gradient(70%_60%_at_0%_100%,rgba(30,43,74,.4),transparent),linear-gradient(180deg,#0f172a,#0f1f4d)]">
         <a href="/" className="flex items-center gap-3">
           <img src="/logo.png" alt="" className="w-11 h-11 object-contain" />
           <span className="font-display font-bold text-2xl tracking-tight">MeriDent</span>
@@ -94,7 +94,7 @@ export default function LoginPage({
           <span className="font-display font-bold text-xl text-blue-900">MeriDent</span>
         </a>
 
-        <div className="w-full max-w-md mx-auto bg-white/90 border border-white rounded-3xl shadow-[0_30px_70px_-30px_rgba(30,58,138,.5)] p-6 sm:p-8 space-y-5">
+        <div className="w-full max-w-md mx-auto bg-white/90 border border-white rounded-3xl shadow-[0_30px_70px_-30px_rgba(15,23,42,.5)] p-6 sm:p-8 space-y-5">
           <div>
             <h2 className="font-display font-bold text-2xl tracking-tight">{mode === "signup" ? "Create your account" : "Log in"}</h2>
             <p className="mt-1 text-sm text-slate-600">{mode === "signup" ? "Set up your clinic workspace in a minute." : "Open your clinic workspace."}</p>

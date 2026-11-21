@@ -35,7 +35,7 @@ export default function RxSets({ profile, onProfile, slip, onApply, newId, showT
       {open && (
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <input value={name} onChange={(e) => setName(e.target.value.slice(0, 40))} aria-label="Set name" placeholder="Set name, e.g. After wisdom tooth surgery" className="min-w-0 flex-1 rounded-lg border border-rule px-3 py-2 text-xs" />
-          <button type="button" onClick={save} className="rounded-lg bg-[#1d4ed8] px-3 py-2 text-xs font-semibold text-white">Save set</button>
+          <button type="button" onClick={save} className="rounded-lg bg-[#0f172a] px-3 py-2 text-xs font-semibold text-white">Save set</button>
         </div>
       )}
       <p className="mt-1.5 text-[10px] text-slate-500">Sets are starting points. You decide what to prescribe for each patient.</p>
