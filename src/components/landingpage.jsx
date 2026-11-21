@@ -781,7 +781,7 @@ export default function LandingPage({
             <Cloud className="w-5 h-5 mt-0.5 shrink-0 text-blue-700" aria-hidden="true" />
             <div>
               <h3 className="font-bold">Cloud backup</h3>
-              <p className="mt-1 text-sm text-slate-600 leading-relaxed">Your data is saved to the cloud and available on any device where you sign in.</p>
+              <p className="mt-1 text-sm text-slate-600 leading-relaxed">Your data is saved to the cloud and available on any device where you sign in. A restore point is saved daily, and your Practice Profile page shows the proof. <a href="/records-safety" className="underline font-semibold text-blue-800">See how we keep records safe</a></p>
             </div>
           </div>
           <div className="flex gap-3.5">
