@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { newTally, addDoc, storageLevel, findDrops, topClinics, snapshot, GIB } from "../scripts/healthCore.js";
+import { newTally, addDoc, storageLevel, readsLevel, findDrops, topClinics, snapshot, GIB } from "../scripts/healthCore.js";
 
 const doc = (path, n = 1) => ({ path, fields: { x: { stringValue: "a".repeat(n) } } });
 
@@ -46,5 +46,13 @@ describe("backup check", () => {
   });
   it("ignores shrinkage for tiny early backups", () => {
     expect(checkBackup({ lastSuccessAt: "2026-11-20T01:00:00Z", bytes: 500, prevBytes: 5000, now })).toEqual([]);
+  });
+});
+
+describe("readsLevel", () => {
+  it("is ok for a few hundred documents", () => expect(readsLevel(210).level).toBe("ok"));
+  it("warns at 70% of the free 50,000 reads", () => {
+    expect(readsLevel(7000).level).toBe("warn");
+    expect(readsLevel(9500).level).toBe("urgent");
   });
 });
