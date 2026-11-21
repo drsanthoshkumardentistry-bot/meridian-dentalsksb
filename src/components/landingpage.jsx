@@ -466,11 +466,11 @@ export default function LandingPage({
             </div>
 
             <a
-              href={`tel:+${WHATSAPP_NUMBER}`}
+              href={`https://wa.me/${WHATSAPP_NUMBER}`}
               className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-brand-700"
             >
               <PhoneCall className="w-4 h-4 text-brand-600" />
-              <span>Questions? Call +91 90432 05927</span>
+              <span>Questions? Message +91 90432 05927</span>
             </a>
             <a
               href="mailto:meridentapp@gmail.com"
@@ -480,11 +480,11 @@ export default function LandingPage({
               <span>or email meridentapp@gmail.com</span>
             </a>
             <a
-              href="tel:+918098318039"
+              href="https://wa.me/918098318039"
               className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-brand-700"
             >
               <PhoneCall className="w-4 h-4 text-brand-600" />
-              <span>or Sivasabari: +91 80983 18039</span>
+              <span>or message Sivasabari: +91 80983 18039</span>
             </a>
           </div>
 
