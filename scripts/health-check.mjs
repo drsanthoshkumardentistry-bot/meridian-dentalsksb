@@ -6,7 +6,7 @@ import fs from "node:fs";
 import crypto from "node:crypto";
 import { readServiceAccount } from "../api/_lib/blockCore.js";
 import { crawl, encryptBackup, decryptBackup } from "./backupCore.js";
-import { newTally, addDoc, storageLevel, findDrops, topClinics, snapshot, checkBackup } from "./healthCore.js";
+import { newTally, addDoc, storageLevel, readsLevel, findDrops, topClinics, snapshot, checkBackup } from "./healthCore.js";
 
 const sa = readServiceAccount();
 if (!sa) { console.error("FIREBASE_SERVICE_ACCOUNT is missing or not valid JSON."); process.exit(1); }
@@ -24,6 +24,9 @@ if (tally.docs === 0) problems.push("The database looks empty.");
 const s = storageLevel(tally.bytes);
 lines.push(`Documents: ${tally.docs}. Estimated storage: ${s.percent}% of 1 GB (${Math.round(tally.bytes / 1048576)} MB of data before index overhead).`);
 if (s.level !== "ok") problems.push(`Storage is about ${s.percent}% of the free 1 GB (${s.level}). Clean up, compress or move to the Blaze plan with a budget alert.`);
+const r = readsLevel(tally.docs);
+lines.push(`Estimated daily reads if everyone opens the app ${5} times: ${r.reads} (${r.percent}% of the free 50,000).`);
+if (r.level !== "ok") problems.push(`Daily reads could reach about ${r.percent}% of the free 50,000 (${r.level}). Move to the Blaze plan with a budget alert before more clinics join.`);
 lines.push("Largest clinics: " + JSON.stringify(topClinics(tally)));
 
 if (prev) {
