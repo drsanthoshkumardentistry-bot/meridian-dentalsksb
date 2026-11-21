@@ -143,6 +143,22 @@ const QUALITY = [
 
 const FAQS = [
   {
+    q: "Can I take my data out if I leave?",
+    a: "Yes. Your patient records, bills and files are yours. You can export them from the app at any time, and the encrypted backup is yours to keep. We will not hold your records back.",
+  },
+  {
+    q: "Will the price go up after my team is trained?",
+    a: "Clinics that join during early access keep their plan price for 12 months. After that, any change comes with at least 30 days' written notice, so you can decide before it applies.",
+  },
+  {
+    q: "MeriDent is new. What if it shuts down?",
+    a: "It is new, and we say so. It is built by two working dental students, and your data stays exportable. If we ever had to stop, you would get at least 90 days' notice and a full export of your records.",
+  },
+  {
+    q: "What if something goes wrong during clinic hours?",
+    a: "Message the founders directly on WhatsApp. During the trial run you reach the people who build it, not a ticket queue. Backups run automatically, and each clinic's data is kept separate from every other clinic's.",
+  },
+  {
     q: "Is MeriDent free?",
     a: "Yes, it is free during our trial run, with no credit card. The planned prices are in the Pricing section. Nobody is charged yet, we will tell you well before that changes, and the first 10 clinics get 3 months free in return for feedback."
   },
