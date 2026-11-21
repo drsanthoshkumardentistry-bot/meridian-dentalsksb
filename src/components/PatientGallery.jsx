@@ -86,7 +86,7 @@ export default function PatientGallery({ patient, api, compress, canWrite = true
             </div>
           </div>
           <input ref={fileRef} type="file" accept="image/*" aria-label="Choose a photo" onChange={onFile} className="hidden" />
-          <button type="button" disabled={busy} onClick={() => fileRef.current && fileRef.current.click()} className="px-3 py-2 rounded-lg bg-[#0f172a] hover:bg-blue-700 disabled:opacity-60 text-white font-semibold inline-flex items-center gap-1.5">
+          <button type="button" disabled={busy} onClick={() => fileRef.current && fileRef.current.click()} className="px-3 py-2 rounded-lg bg-[#1d4ed8] hover:bg-blue-700 disabled:opacity-60 text-white font-semibold inline-flex items-center gap-1.5">
             <Camera className="w-3.5 h-3.5" /> {busy ? "Saving…" : isNoc ? "Take or choose a photo of the NOC" : "Take or choose a photo"}
           </button>
           <button type="button" disabled={busy} onClick={startNoc} className="ml-2 px-3 py-2 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 disabled:opacity-60 text-emerald-900 font-semibold inline-flex items-center gap-1.5">

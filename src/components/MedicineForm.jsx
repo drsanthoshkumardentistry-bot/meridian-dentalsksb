@@ -45,7 +45,7 @@ export default function MedicineForm({ initial, submitLabel = "Save", onSubmit, 
       )}
       {error && <p role="alert" className="text-rose-700 font-semibold">{error}</p>}
       <div className="flex gap-2">
-        <button type="submit" className="px-3 py-1.5 rounded-lg bg-[#0f172a] hover:bg-blue-700 text-white font-semibold">{submitLabel}</button>
+        <button type="submit" className="px-3 py-1.5 rounded-lg bg-[#1d4ed8] hover:bg-blue-700 text-white font-semibold">{submitLabel}</button>
         {onCancel && <button type="button" onClick={onCancel} className="px-3 py-1.5 rounded-lg border border-rule text-slate-600 font-semibold">Cancel</button>}
       </div>
     </form>

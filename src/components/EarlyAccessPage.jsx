@@ -36,7 +36,7 @@ export default function EarlyAccessPage() {
   const label = "block text-sm font-semibold text-slate-700 mb-1";
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#f3f6fb] via-[#e9eef6] to-[#d5deec] text-slate-900 font-sans antialiased">
+    <div className="min-h-screen bg-gradient-to-b from-[#f4f8ff] via-[#eaf1fc] to-[#dbe7f8] text-slate-900 font-sans antialiased">
       <header className="sticky top-0 z-40 bg-white/70 backdrop-blur-xl border-b border-white/70">
         <div className="max-w-5xl mx-auto px-5 h-16 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2.5">
@@ -61,7 +61,7 @@ export default function EarlyAccessPage() {
           <a href="/login" className="mt-8 inline-flex items-center justify-center bg-gradient-to-r from-blue-500 to-blue-700 shadow-lg shadow-blue-700/30 text-white text-[15px] font-semibold px-7 py-3.5 rounded-full">Start free now</a>
         </section>
 
-        <form onSubmit={submit} noValidate className="bg-white/90 border border-white rounded-3xl shadow-[0_30px_70px_-30px_rgba(15,23,42,.5)] p-6 sm:p-8 space-y-4">
+        <form onSubmit={submit} noValidate className="bg-white/90 border border-white rounded-3xl shadow-[0_30px_70px_-30px_rgba(30,58,138,.5)] p-6 sm:p-8 space-y-4">
           <div>
             <h2 className="font-display font-bold text-2xl tracking-tight">Get set up on WhatsApp</h2>
             <p className="mt-1 text-sm text-slate-600">This opens WhatsApp with your details written. You tap Send. We do not store this form.</p>

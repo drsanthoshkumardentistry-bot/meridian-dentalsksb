@@ -55,7 +55,7 @@ export default function PayPage({ search = window.location.search }) {
         {(trust === "unsigned" || trust === "unknown") && <p role="status" className="rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs p-2">{t("unverified")}</p>}
         {req.amountP > 0 && <div className="text-3xl font-bold text-slate-900 tabular-nums">₹{formatINR(req.amountP)}</div>}
         {req.note && <div className="text-xs text-slate-500">{t("for")} {req.note}</div>}
-        {trust !== "checking" && <a href={uri} className="block w-full rounded-xl bg-[#0f172a] text-white font-semibold py-3 text-sm">{t("payBtn")}</a>}
+        {trust !== "checking" && <a href={uri} className="block w-full rounded-xl bg-[#1d4ed8] text-white font-semibold py-3 text-sm">{t("payBtn")}</a>}
         <p className="text-xs text-slate-500">{t("payHint")}</p>
         {qr && trust !== "checking" && (
           <div>

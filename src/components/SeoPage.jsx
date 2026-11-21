@@ -24,7 +24,7 @@ export default function SeoPage({ page }) {
   }, [page]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#f3f6fb] via-[#e9eef6] to-[#d5deec] text-slate-900 font-sans antialiased">
+    <div className="min-h-screen bg-gradient-to-b from-[#f4f8ff] via-[#eaf1fc] to-[#dbe7f8] text-slate-900 font-sans antialiased">
       <header className="sticky top-0 z-40 bg-white/70 backdrop-blur-xl border-b border-white/70">
         <div className="max-w-5xl mx-auto px-5 h-16 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2.5">
@@ -36,7 +36,7 @@ export default function SeoPage({ page }) {
       </header>
 
       <main>
-        <section className="bg-[radial-gradient(70%_80%_at_100%_0%,rgba(107,128,163,.3),transparent)]">
+        <section className="bg-[radial-gradient(70%_80%_at_100%_0%,rgba(56,189,248,.3),transparent)]">
           <div className="max-w-5xl mx-auto px-5 pt-14 pb-12 lg:pt-20">
             <h1 className="font-display font-bold text-[2.2rem] sm:text-5xl leading-[1.08] tracking-[-0.03em] max-w-3xl">{page.h1}</h1>
             <p className="mt-4 text-lg text-slate-600 max-w-2xl leading-relaxed">{page.lead}</p>
@@ -54,7 +54,7 @@ export default function SeoPage({ page }) {
 
         <div className="max-w-5xl mx-auto px-5 pb-8 grid md:grid-cols-2 gap-6">
           {page.sections.map((s) => (
-            <section key={s.h} className="bg-white/80 border border-white rounded-3xl shadow-[0_20px_50px_-30px_rgba(15,23,42,.45)] p-6">
+            <section key={s.h} className="bg-white/80 border border-white rounded-3xl shadow-[0_20px_50px_-30px_rgba(30,58,138,.45)] p-6">
               <h2 className="font-display font-bold text-xl tracking-tight">{s.h}</h2>
               <ul className="mt-4 space-y-3">
                 {s.items.map((t) => (

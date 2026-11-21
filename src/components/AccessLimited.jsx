@@ -8,7 +8,7 @@ export default function AccessLimited({ email, onLogout }) {
         <h1 className="text-lg font-bold text-slate-900">This account is not approved yet</h1>
         <p className="text-slate-600">MeriDent is open only to approved email addresses right now. <strong>{email}</strong> is not on the list, so no clinic data can be opened with it.</p>
         <p className="text-slate-600">Ask the MeriDent team to approve this address, or sign in with the Gmail address you registered.</p>
-        <button type="button" onClick={onLogout} className="px-4 py-2 rounded-lg bg-[#0f172a] text-white font-semibold">Sign out</button>
+        <button type="button" onClick={onLogout} className="px-4 py-2 rounded-lg bg-[#1d4ed8] text-white font-semibold">Sign out</button>
       </div>
     </div>
   );

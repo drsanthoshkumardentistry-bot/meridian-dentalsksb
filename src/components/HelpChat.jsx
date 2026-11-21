@@ -38,7 +38,7 @@ export default function HelpChat() {
     <div className="fixed bottom-5 right-5 z-40 print:hidden" data-testid="help-chat">
       {open && (
         <div role="dialog" aria-label="Meridee help" className="mb-3 w-[min(22rem,calc(100vw-2.5rem))] h-[28rem] max-h-[70vh] rounded-2xl bg-white border border-slate-200 shadow-2xl flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 bg-[#0f172a] text-white">
+          <div className="flex items-center justify-between px-4 py-3 bg-[#1d4ed8] text-white">
             <div className="flex items-center gap-2">
               <span className="w-9 h-9 rounded-full bg-white/95 flex items-center justify-center overflow-hidden shrink-0"><FairySvg still className="w-8 h-8" /></span>
               <div>
@@ -59,7 +59,7 @@ export default function HelpChat() {
             )}
             {messages.map((m, i) => (
               <div key={i} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
-                <div className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-xs leading-relaxed ${m.role === "user" ? "bg-[#0f172a] text-white" : m.error ? "bg-red-50 text-red-700 border border-red-200" : "bg-white text-slate-800 border border-slate-200"}`}>{m.content}</div>
+                <div className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-xs leading-relaxed ${m.role === "user" ? "bg-[#1d4ed8] text-white" : m.error ? "bg-red-50 text-red-700 border border-red-200" : "bg-white text-slate-800 border border-slate-200"}`}>{m.content}</div>
               </div>
             ))}
             {busy && <div role="status" className="flex items-center gap-2 text-xs text-slate-500 px-1"><span className="w-7 h-7 rounded-full bg-white border border-rule flex items-center justify-center overflow-hidden"><FairySvg still className="w-6 h-6" /></span>Meridee is writing<span className="flex gap-1" aria-hidden="true"><span className="loader-dot" /><span className="loader-dot" style={{ animationDelay: "0.15s" }} /><span className="loader-dot" style={{ animationDelay: "0.3s" }} /></span></div>}
@@ -67,14 +67,14 @@ export default function HelpChat() {
           </div>
           <form onSubmit={(e) => { e.preventDefault(); ask(text); }} className="flex gap-2 p-3 border-t border-slate-200 bg-white">
             <input aria-label="Your question" value={text} onChange={(e) => setText(e.target.value)} maxLength={500} placeholder="Type your question" className="flex-1 min-w-0 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none" />
-            <button type="submit" disabled={busy || !text.trim()} aria-label="Send question" className="px-3 rounded-lg bg-[#0f172a] text-white disabled:opacity-50"><Send className="w-4 h-4" /></button>
+            <button type="submit" disabled={busy || !text.trim()} aria-label="Send question" className="px-3 rounded-lg bg-[#1d4ed8] text-white disabled:opacity-50"><Send className="w-4 h-4" /></button>
           </form>
           <p className="px-3 pb-2 text-[10px] text-slate-400 bg-white">AI can make mistakes. For medical decisions, the dentist decides.</p>
         </div>
       )}
       {/* Only the tooth fairy shows until the cursor comes near; the wider padded wrapper makes "near" generous. */}
       <div className="group flex justify-end -m-8 p-8">
-        <button type="button" onClick={() => setOpen((v) => !v)} aria-label={open ? "Close Meridee help" : "Open Meridee help"} className="flex items-center rounded-full bg-[#0f172a] hover:bg-blue-700 text-white shadow-xl font-semibold text-sm p-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+        <button type="button" onClick={() => setOpen((v) => !v)} aria-label={open ? "Close Meridee help" : "Open Meridee help"} className="flex items-center rounded-full bg-[#1d4ed8] hover:bg-blue-700 text-white shadow-xl font-semibold text-sm p-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
           <span className="w-11 h-11 rounded-full bg-white flex items-center justify-center overflow-hidden shrink-0"><FairySvg still className="w-10 h-10" /></span>
           <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ease-out flex items-center ${open ? "max-w-[2rem] px-2" : "max-w-0 group-hover:max-w-[6rem] group-hover:pl-2 group-hover:pr-3 group-focus-within:max-w-[6rem] group-focus-within:pl-2 group-focus-within:pr-3"}`}>{open ? <X className="w-4 h-4" /> : "Meridee"}</span>
         </button>

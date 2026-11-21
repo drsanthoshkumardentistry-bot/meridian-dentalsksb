@@ -33,7 +33,7 @@ export default function QueuePanel({ queue, today, onAdd, onStatus, onRemove, no
         <select aria-label="Triage priority" className={input} value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
           <option>Normal</option><option>Urgent</option>
         </select>
-        <button type="submit" className="px-4 py-2 rounded-lg bg-[#0f172a] hover:bg-blue-800 text-white text-xs font-semibold">Add to queue</button>
+        <button type="submit" className="px-4 py-2 rounded-lg bg-[#1d4ed8] hover:bg-blue-800 text-white text-xs font-semibold">Add to queue</button>
       </form>
       {error && <p role="alert" className="text-xs text-rose-600 font-medium">{error}</p>}
       {rows.length === 0 ? (
