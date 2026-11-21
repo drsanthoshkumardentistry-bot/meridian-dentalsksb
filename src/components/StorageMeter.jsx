@@ -1,4 +1,5 @@
 import React from "react";
+import { readsToday, averageDailyReads, monthlyRupees } from "../readCounter.js";
 import { opgUsage, galleryUpperBytes, formatBytes, usageLevel, CLINIC_WARN_BYTES } from "../storageUsage.js";
 
 /** How much picture space the clinic uses. Small enough for the side menu. */
@@ -6,6 +7,8 @@ export default function StorageMeter({ patients, galleryCount }) {
   const opg = opgUsage(patients);
   const used = opg.bytes + galleryUpperBytes(galleryCount || 0);
   const level = usageLevel(used);
+  const reads = readsToday();
+  const avg = averageDailyReads();
   const pct = Math.min(100, Math.round((used / CLINIC_WARN_BYTES) * 100));
   return (
     <div data-testid="storage-meter">
@@ -16,6 +19,10 @@ export default function StorageMeter({ patients, galleryCount }) {
       <p className="text-[11px] text-slate-500 mt-1">
         {opg.count} OPG{opg.count === 1 ? "" : "s"}{galleryCount === null || galleryCount === undefined ? "" : `, ${galleryCount} photo${galleryCount === 1 ? "" : "s"} and X-rays`}.{" "}
         {level === "ok" ? "Plenty of room on the free plan." : level === "watch" ? "Getting full. Plan to move pictures to bigger storage soon." : "Almost full. Contact MeriDent support to move your pictures to bigger storage."}
+      </p>
+      <p className="text-[11px] text-slate-500 mt-1" data-testid="read-meter">
+        Database reads on this device today: {reads.toLocaleString("en-IN")}
+        {avg > 0 ? `. Daily average about ${avg.toLocaleString("en-IN")}, roughly ₹${monthlyRupees(avg)} a month at paid rates.` : "."}
       </p>
     </div>
   );
