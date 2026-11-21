@@ -10,7 +10,6 @@ import React, { useState } from "react";
 import { isValidEmailAddress } from "../authErrors";
 import { setSignInChoice, signInChoice } from "../connectOnly";
 import { docSignInChoice, setDocSignInChoice } from "../docLogOnly";
-import Hero3D from "./Hero3D.jsx";
 import {
   ArrowRight,
   BarChart3,
@@ -181,146 +180,43 @@ const FAQS = [
   }
 ];
 
-/* ------------------------------------------------------------------------------
- * Hero artwork: an upper dental arch (FDI 18-11, 21-28) plus a sample bill.
- * Teeth sit on an arc; widths follow real anatomy (molars wide, incisors narrow).
- * ---------------------------------------------------------------------------- */
-const ARCH = [
-  ["18", 34, "x"], ["17", 40, "ok"], ["16", 44, "multi"], ["15", 30, "ok"], ["14", 30, "ok"],
-  ["13", 28, "ok"], ["12", 26, "ok"], ["11", 30, "ok"],
-  ["21", 30, "ok"], ["22", 26, "plan"], ["23", 28, "ok"], ["24", 30, "ok"], ["25", 30, "fill"],
-  ["26", 44, "ok"], ["27", 40, "ok"], ["28", 34, "x"]
+/* Floating cards around the hero screen, the marquee strip, and small layout pieces. */
+const FLOATS = [
+  ["Restore point saved today", "left-0 top-[10%]", "0s"],
+  ["Prescription sent on WhatsApp", "left-[2%] top-[42%]", "0.6s"],
+  ["Referral letter ready", "left-0 top-[74%]", "1.2s"],
+  ["Treatment plan shared", "right-0 top-[20%]", "0.3s"],
+  ["Bill ready with GST and UPI QR", "right-[2%] top-[58%]", "0.9s"]
 ];
 
-const TOOTH_STYLE = {
-  ok: { fill: "#ffffff", stroke: "#fcd34d", dash: undefined },
-  fill: { fill: "#b45309", stroke: "#b45309", dash: undefined },
-  crown: { fill: "#1f2937", stroke: "#1f2937", dash: undefined },
-  multi: { fill: "#1f2937", stroke: "#1f2937", dash: undefined },
-  plan: { fill: "#fef3c7", stroke: "#b45309", dash: "3 2" },
-  x: { fill: "none", stroke: "#d6d3d1", dash: "2 3" }
-};
+const MARQUEE = [
+  "Odontogram", "Treatment plans", "GST bills", "UPI QR", "Prescriptions", "WhatsApp reminders", "Lab orders", "Online booking",
+  "Stock alerts", "Staff roster", "Many branches", "Backups", "Referral letters", "Reports"
+];
 
-function archGeometry() {
-  // Occlusal U-shape: lower half of an ellipse, incisors at the bottom centre.
-  const cx = 250, cy = 22, rx = 200, ry = 118;
-  const pts = [];
-  let acc = 0;
-  for (let i = 0; i <= 600; i++) {
-    const phi = Math.PI - (i / 600) * Math.PI;
-    const x = cx + rx * Math.cos(phi);
-    const y = cy + ry * Math.sin(phi);
-    if (i > 0) acc += Math.hypot(x - pts[i - 1].x, y - pts[i - 1].y);
-    pts.push({ x, y, phi, acc });
-  }
-  const widths = ARCH.map((t) => t[1] * 0.92);
-  const gap = 3;
-  const total = widths.reduce((a, w) => a + w + gap, 0) - gap;
-  const start = (acc - total) / 2;
-  let run = start;
-  return ARCH.map(([fdi, , state], i) => {
-    const w = widths[i];
-    const target = run + w / 2;
-    run += w + gap;
-    const pt = pts.find((q) => q.acc >= target) || pts[pts.length - 1];
-    const tx = -rx * Math.sin(pt.phi);
-    const ty = ry * Math.cos(pt.phi);
-    const rot = (Math.atan2(ty, tx) * 180) / Math.PI;
-    const nx = Math.cos(pt.phi) / rx, ny = Math.sin(pt.phi) / ry;
-    const nl = Math.hypot(nx, ny);
-    const front = fdi.endsWith("1") || fdi.endsWith("2") || fdi.endsWith("3");
-    const h = front ? 28 : 36;
-    return { fdi, w, h, x: pt.x, y: pt.y, rot, state, i, lx: pt.x + (nx / nl) * (h / 2 + 12), ly: pt.y + (ny / nl) * (h / 2 + 12) };
-  });
-}
-
-function ToothArch() {
-  const teeth = archGeometry();
+function ChartReel() {
   return (
-    <svg viewBox="0 0 500 190" role="img" aria-label="Sample odontogram: upper arch with a filling, a tooth with a crown and two other findings, a planned treatment and two missing teeth" className="w-full h-auto">
-      {teeth.map((t) => {
-        const st = TOOTH_STYLE[t.state];
-        return (
-          <g key={t.fdi}>
-            <g transform={`translate(${t.x.toFixed(1)} ${t.y.toFixed(1)}) rotate(${t.rot.toFixed(1)})`}>
-              <g className="tooth-in" style={{ animationDelay: `${120 + t.i * 45}ms` }}>
-                <rect
-                  x={-t.w / 2}
-                  y={-t.h / 2}
-                  width={t.w}
-                  height={t.h}
-                  rx={Math.min(t.w, t.h) / 2.4}
-                  fill={st.fill}
-                  stroke={st.stroke}
-                  strokeWidth="1.6"
-                  strokeDasharray={st.dash}
-                />
-                {t.state === "multi" && (
-                  <>
-                    <circle cx={-6} cy={t.h / 2 - 7} r="3.2" fill="#fcd34d" stroke="#fff" strokeWidth="1" />
-                    <circle cx={6} cy={t.h / 2 - 7} r="3.2" fill="#e11d48" stroke="#fff" strokeWidth="1" />
-                  </>
-                )}
-              </g>
-            </g>
-            <text x={t.lx.toFixed(1)} y={(t.ly + 3).toFixed(1)} textAnchor="middle" fontSize="9" fill="#6b7fa8" style={{ fontVariantNumeric: "tabular-nums" }}>
-              {t.fdi}
-            </text>
-          </g>
-        );
-      })}
-    </svg>
-  );
-}
-
-function ChartLegend() {
-  const items = [
-    ["Filling", "#b45309", "#b45309", undefined],
-    ["Several findings", "#1f2937", "#1f2937", undefined],
-    ["Planned", "#fef3c7", "#b45309", "3 2"],
-    ["Missing", "none", "#d6d3d1", "2 3"]
-  ];
-  return (
-    <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-600">
-      {items.map(([label, fill, stroke, dash]) => (
-        <li key={label} className="inline-flex items-center gap-1.5">
-          <svg width="10" height="12" aria-hidden="true">
-            <rect x="1" y="1" width="8" height="10" rx="3" fill={fill} stroke={stroke} strokeWidth="1.4" strokeDasharray={dash} />
-          </svg>
-          {label}
-        </li>
+    <div className="relative overflow-hidden">
+      <img src="/landing/chart-0.jpg" alt="MeriDent tooth chart: pick a finding, then slide across the teeth to mark them" width="980" height="625" loading="lazy" className="block w-full h-auto" />
+      {[1, 2, 3, 4].map((i) => (
+        <img key={i} src={`/landing/chart-${i}.jpg`} alt="" aria-hidden="true" loading="lazy" className={`lp-layer lp-l${i}`} />
       ))}
-    </ul>
+    </div>
   );
 }
 
-function SampleBill() {
-  const row = "flex items-baseline justify-between gap-4 py-1.5";
+function TourRow({ title, text, linkHref, linkText, children, first }) {
   return (
-    <div className="bg-white border border-rule rounded-xl shadow-lift p-4 text-xs w-full max-w-[290px] tabular">
-      <div className="flex items-center justify-between pb-2 border-b border-dashed border-rule">
-        <span className="font-display font-bold text-ink text-sm">Invoice</span>
-        <span className="text-slate-500">INV/2026-27/0042</span>
+    <div className={`flex flex-col lg:flex-row gap-8 lg:gap-12 py-10 lg:py-14 ${first ? "" : "border-t border-slate-200"}`}>
+      <div className="lp-reveal lg:flex-1 min-w-0 flex flex-col justify-between gap-8">
+        <h3 className="font-display font-bold text-3xl sm:text-4xl tracking-[-0.03em] leading-[1.08] text-ink max-w-sm">{title}</h3>
+        <div>
+          <p className="text-slate-600 max-w-sm mb-4">{text}</p>
+          <a href={linkHref} className="text-sm font-semibold text-ink hover:opacity-80" {...(linkHref.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{linkText} &rarr;</a>
+        </div>
       </div>
-      <div className={row}>
-        <span className="text-ink">Root canal, tooth 46<span className="block text-[10px] text-slate-500">GST exempt</span></span>
-        <span className="font-semibold text-ink">₹5,000</span>
-      </div>
-      <div className={row}>
-        <span className="text-ink">Whitening<span className="block text-[10px] text-slate-500">GST 18%</span></span>
-        <span className="font-semibold text-ink">₹2,000</span>
-      </div>
-      <div className="border-t border-dashed border-rule pt-1.5 text-slate-600">
-        <div className="flex justify-between py-0.5"><span>CGST 9%</span><span>₹180</span></div>
-        <div className="flex justify-between py-0.5"><span>SGST 9%</span><span>₹180</span></div>
-      </div>
-      <div className="flex items-baseline justify-between border-t border-rule mt-1.5 pt-2">
-        <span className="font-bold text-ink">Total</span>
-        <span className="font-display font-extrabold text-lg text-brand-600">₹7,360</span>
-      </div>
-      <div className="mt-2 flex items-center justify-between gap-3 rounded-md bg-stone-100 px-2.5 py-1.5 text-brand-700">
-        <span>Advance ₹5,000 paid</span>
-        <span className="font-bold whitespace-nowrap">Balance ₹2,360</span>
+      <div className="lp-reveal lg:flex-[1.15] min-w-0 rounded-[22px] bg-slate-100 p-5 sm:p-8 flex items-center">
+        <div className="lp-lift w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_40px_-24px_rgba(15,23,42,.35)]">{children}</div>
       </div>
     </div>
   );
@@ -386,7 +282,7 @@ export default function LandingPage({
     "w-full px-3.5 py-2.5 border border-rule rounded-lg text-sm text-ink bg-white placeholder:text-slate-500";
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#f4f8ff] via-[#eaf1fc] to-[#dbe7f8] text-ink font-sans antialiased">
+    <div className="min-h-screen bg-white text-ink font-sans antialiased">
       {/* HEADER */}
       <header className="sticky top-0 z-40 bg-white/95 border-b border-white/70 shadow-[0_8px_30px_-18px_rgba(17,24,39,.45)]">
         <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
@@ -419,62 +315,50 @@ export default function LandingPage({
       </header>
 
       {/* HERO */}
-      <section id="top" className="relative overflow-hidden border-b border-white/60 bg-[radial-gradient(60%_60%_at_100%_0%,rgba(56,189,248,.35),transparent),radial-gradient(55%_60%_at_0%_30%,rgba(148,163,184,.3),transparent),radial-gradient(50%_50%_at_80%_100%,rgba(253,224,71,.2),transparent)]">
-        <div className="relative max-w-6xl mx-auto px-5 pt-14 pb-20 lg:pt-28 lg:pb-32 grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-14 lg:gap-16 items-center">
-          <div className="space-y-6">
-            <p className="inline-flex items-center gap-2 text-sm font-semibold text-blue-800 bg-white/80 border border-blue-200 shadow-sm px-3.5 py-1 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-sky-500" aria-hidden="true" />
-              Built by dental students in India. Free during early access.
-            </p>
+      <section id="top" className="relative overflow-hidden bg-gradient-to-b from-white to-blue-50 border-b border-slate-200">
+        <div className="relative max-w-6xl mx-auto px-5 pt-14 sm:pt-20 text-center">
+          <p className="lp-rise inline-flex items-center gap-2 text-sm font-semibold text-blue-800 bg-white border border-blue-200 shadow-sm px-3.5 py-1 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-sky-500" aria-hidden="true" />
+            Built by dental students in India. Free during early access.
+          </p>
+          <h1 className="lp-rise mx-auto mt-6 max-w-4xl font-display font-extrabold text-[2.5rem] sm:text-6xl lg:text-7xl leading-[1.03] tracking-[-0.04em] text-ink" style={{ animationDelay: "0.05s", textWrap: "balance" }}>
+            Run your dental clinic. Lose no records.
+          </h1>
+          <p className="lp-rise mx-auto mt-6 max-w-xl text-base sm:text-lg text-slate-600 leading-[1.7]" style={{ animationDelay: "0.25s" }}>
+            Charting, prescriptions, treatment plans and bills in one place, with a daily restore point you can check yourself.
+          </p>
+          <div className="lp-rise mt-8 flex flex-col sm:flex-row gap-3 justify-center" style={{ animationDelay: "0.45s" }}>
+            <button
+              type="button"
+              onClick={onLoginClick}
+              disabled={loginBusy || !firebaseConfigured}
+              className="lp-ring inline-flex items-center justify-center gap-2 bg-ink hover:bg-slate-800 disabled:opacity-60 text-white text-[15px] font-semibold px-7 py-3.5 rounded-xl transition-colors"
+            >
+              <span>{signInLabel}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <a
+              href={DEMO_LINK}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-ink border border-slate-300 text-[15px] font-semibold px-7 py-3.5 rounded-xl transition-colors"
+            >
+              <MessageCircle className="w-4 h-4 text-ink" />
+              <span>Ask for a demo on WhatsApp</span>
+            </a>
+          </div>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-x-7 gap-y-3">
+            <a href={VIDEO_LINK} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-brand-700 hover:text-brand-900 text-[15px] font-semibold">
+              <PlayCircle className="w-5 h-5" aria-hidden="true" />
+              <span>Watch the 9-minute demo</span>
+            </a>
+            <a href="#app" className="inline-flex items-center gap-2 text-brand-700 hover:text-brand-900 text-[15px] font-semibold">
+              <Download className="w-5 h-5" aria-hidden="true" />
+              <span>Get the app</span>
+            </a>
+          </div>
 
-            <h1 className="font-display font-bold text-[2.5rem] sm:text-[3.4rem] leading-[1.06] tracking-[-0.03em] text-ink">
-              Chart the tooth. Bill the visit. Remind the patient.
-            </h1>
-
-            <p className="text-base sm:text-lg text-slate-600 max-w-lg leading-[1.7]">
-              MeriDent is a practice manager for Indian dental clinics: a 32-tooth odontogram, treatment plans patients can approve from their phone, GST invoices with a UPI QR, stock and staff, online booking, branches, and WhatsApp reminders. It runs in your browser, so there is nothing to install.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-3 pt-1">
-              <button
-                type="button"
-                onClick={onLoginClick}
-                disabled={loginBusy || !firebaseConfigured}
-                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 shadow-lg shadow-blue-700/30 disabled:opacity-60 text-white text-[15px] font-semibold px-7 py-3.5 rounded-full transition-colors"
-              >
-                <span>{signInLabel}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-              <a
-                href={DEMO_LINK}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 bg-white/80 hover:bg-white text-ink border border-white shadow-sm text-[15px] font-semibold px-7 py-3.5 rounded-full transition-colors"
-              >
-                <MessageCircle className="w-4 h-4 text-brand-600" />
-                <span>Ask for a demo on WhatsApp</span>
-              </a>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-x-7 gap-y-3">
-              <a
-                href={VIDEO_LINK}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-brand-700 hover:text-brand-800 text-[15px] font-semibold"
-              >
-                <PlayCircle className="w-5 h-5" aria-hidden="true" />
-                <span>Watch the 9-minute demo</span>
-              </a>
-              <a
-                href="#app"
-                className="inline-flex items-center gap-2 text-brand-700 hover:text-brand-800 text-[15px] font-semibold"
-              >
-                <Download className="w-5 h-5" aria-hidden="true" />
-                <span>Get the app</span>
-              </a>
-            </div>
-
+          <div className="mx-auto mt-8 max-w-lg text-left space-y-5">
             <label className="flex items-start gap-2 max-w-lg text-sm text-slate-600 cursor-pointer">
               <input type="checkbox" checked={specialist} onChange={(e) => pickSpecialist(e.target.checked)} className="mt-1" />
               <span><strong className="text-ink">I am a specialist and only want MeriDent Connect.</strong> You get the dentist network and are told when a dentist sends you a request. No clinic software.</span>
@@ -604,23 +488,43 @@ export default function LandingPage({
             </a>
           </div>
 
-          {/* Product artwork */}
-          <div className="relative pb-10">
-            <Hero3D
-              chart={
-                <div className="bg-white/90 border border-white rounded-3xl shadow-[0_30px_70px_-30px_rgba(17,24,39,.55)] p-5 sm:p-6 pb-8">
-                  <div className="flex items-baseline justify-between mb-1">
-                    <span className="font-display font-bold text-ink">Odontogram</span>
-                    <span className="text-xs text-slate-500">Upper arch, adult</span>
-                  </div>
-                  <ToothArch />
-                  <ChartLegend />
-                </div>
-              }
-              bill={<SampleBill />}
-            />
-            <p className="text-xs text-slate-500 mt-12 max-sm:mt-4">Illustration with sample data, not a real patient or clinic.</p>
+          {/* Product screen with floating cards */}
+          <div className="relative mx-auto mt-14 max-w-[980px] md:h-[430px]">
+            <svg aria-hidden="true" viewBox="0 0 980 430" className="absolute inset-0 hidden md:block w-full h-full"><ellipse cx="490" cy="470" rx="470" ry="330" fill="none" stroke="#cbd5e1" strokeWidth="1.2" /><ellipse cx="490" cy="470" rx="350" ry="240" fill="none" stroke="#cbd5e1" strokeWidth="1.2" /></svg>
+            <a href="#demo" aria-label="Watch the one-minute demo" className="relative md:absolute md:left-1/2 md:top-0 md:-translate-x-1/2 block w-full md:w-[600px] overflow-hidden rounded-t-2xl border border-slate-300 bg-white shadow-[0_40px_90px_-40px_rgba(15,23,42,.5)]">
+              <div className="flex gap-1.5 px-3.5 py-2.5 bg-slate-50 border-b border-slate-200" aria-hidden="true"><i className="w-2.5 h-2.5 rounded-full bg-slate-300" /><i className="w-2.5 h-2.5 rounded-full bg-slate-300" /><i className="w-2.5 h-2.5 rounded-full bg-slate-300" /></div>
+              <div className="relative">
+                <img src="/demo/merident-demo-poster.jpg" alt="MeriDent demo: a patient chart on screen" width="1280" height="720" className="block w-full h-auto" />
+                <span className="absolute inset-0 flex items-center justify-center"><span className="flex items-center justify-center w-16 h-16 rounded-full bg-ink/85 text-white"><PlayCircle className="w-8 h-8" aria-hidden="true" /></span></span>
+              </div>
+            </a>
+            {FLOATS.map(([text, pos, delay]) => (
+              <div key={text} className={`hidden md:block absolute z-[2] ${pos}`}>
+                <div className="lp-bob rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm whitespace-nowrap shadow-[0_18px_40px_-20px_rgba(15,23,42,.4)]" style={{ animationDelay: delay }}>{text}</div>
+              </div>
+            ))}
           </div>
+          <p className="pb-6 pt-3 text-xs text-slate-500">Recorded with sample data, not a real patient or clinic.</p>
+        </div>
+      </section>
+
+      {/* MARQUEE + APP SHOWCASE */}
+      <section aria-label="What MeriDent covers" className="overflow-hidden border-b border-slate-200 bg-white py-7">
+        <div className="lp-marquee">
+          {[0, 1].map((copy) => (
+            <div key={copy} className="flex shrink-0" aria-hidden={copy === 1 ? "true" : undefined}>
+              {MARQUEE.map((m) => <span key={m} className="mx-2 whitespace-nowrap rounded-full border border-slate-200 bg-white px-[18px] py-2 text-[15px] text-slate-700">{m}</span>)}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section aria-label="The MeriDent app" className="bg-ink px-5 pt-20 pb-24 text-center">
+        <h2 className="lp-reveal mx-auto max-w-3xl font-display font-bold text-3xl sm:text-5xl tracking-[-0.03em] leading-[1.06] text-white" style={{ textWrap: "balance" }}>See your whole clinic on one screen.</h2>
+        <p className="lp-reveal mx-auto mt-4 max-w-lg text-slate-300">Patients, diary, billing and stock sit in one menu. It runs in the browser on your phone or laptop.</p>
+        <div className="lp-tilt mx-auto mt-11 max-w-[1000px] overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-[0_60px_110px_-50px_rgba(0,0,0,.7)]">
+          <div className="flex gap-1.5 px-3.5 py-2.5 bg-slate-50 border-b border-slate-200" aria-hidden="true"><i className="w-2.5 h-2.5 rounded-full bg-slate-300" /><i className="w-2.5 h-2.5 rounded-full bg-slate-300" /><i className="w-2.5 h-2.5 rounded-full bg-slate-300" /></div>
+          <img src="/landing/app.jpg" alt="MeriDent patient records screen" width="1280" height="440" loading="lazy" className="block w-full h-auto" />
         </div>
       </section>
 
@@ -634,6 +538,35 @@ export default function LandingPage({
         </ul>
       </section>
 
+
+      {/* TOUR: three product rows */}
+      <section id="tour" className="max-w-6xl mx-auto px-5 pt-16 pb-6">
+        <TourRow
+          first
+          title="Chart a whole arch in one slide."
+          text="Pick a finding, then drag across the teeth. Adult and primary teeth, FDI numbering, every tooth marked."
+          linkHref={DEMO_LINK}
+          linkText="Ask for a demo"
+        >
+          <ChartReel />
+        </TourRow>
+        <TourRow
+          title="A whole prescription in one tap."
+          text="Saved sets such as After extraction add every medicine at once. Print it, or send it to the patient on WhatsApp."
+          linkHref="#features"
+          linkText="See all features"
+        >
+          <img src="/landing/prescription.jpg" alt="MeriDent prescription sets and WhatsApp dispatch" width="1160" height="276" loading="lazy" className="block w-full h-auto" />
+        </TourRow>
+        <TourRow
+          title="Price the plan tooth by tooth. Share it."
+          text="Build a treatment plan and estimate, then share it with the patient. Therapeutic items are marked GST exempt."
+          linkHref="#features"
+          linkText="See all features"
+        >
+          <img src="/landing/plan.jpg" alt="MeriDent treatment plan with a price for each treatment" width="1160" height="278" loading="lazy" className="block w-full h-auto" />
+        </TourRow>
+      </section>
 
       {/* FEATURES */}
       <section id="features" className="max-w-6xl mx-auto px-5 pt-24 pb-20 lg:pt-28">
@@ -666,6 +599,54 @@ export default function LandingPage({
         </div>
       </section>
 
+      {/* RECORDS SAFETY */}
+      <section id="safety" className="max-w-6xl mx-auto px-5 pt-4 pb-20">
+        <div className="flex flex-col lg:flex-row overflow-hidden rounded-3xl bg-slate-100">
+          <div className="lg:flex-1 bg-ink text-white p-8 sm:p-11 flex flex-col justify-center">
+            <p className="text-sm text-slate-300">Records safety</p>
+            <h2 className="mt-3 font-display font-bold text-3xl sm:text-4xl tracking-[-0.03em] leading-[1.1]">A daily encrypted backup, kept for 90 days.</h2>
+            <p className="mt-4 max-w-sm text-slate-300">Your clinic's data is copied every day. You can see the latest restore point on your Practice Profile page.</p>
+            <a href="/records-safety" className="mt-6 inline-block self-start border-b border-white/60 text-sm font-semibold">How the check works &rarr;</a>
+          </div>
+          <div className="lg:flex-1 p-6 sm:p-9 flex flex-col justify-center gap-3.5">
+            {[["Cloud restore point", "Saved today"], ["Backup on this device", "Download from Practice Profile"], ["Copy matches records", "Checked against your live data"]].map(([t, d], i) => (
+              <div key={t} className={`lp-reveal rounded-2xl border border-slate-200 bg-white px-5 py-4 flex gap-3 shadow-[0_18px_40px_-24px_rgba(15,23,42,.35)] ${i === 1 ? "lg:ml-7" : ""}`}>
+                <Check className="w-5 h-5 shrink-0 text-emerald-600 mt-0.5" aria-hidden="true" />
+                <div><p className="font-semibold text-ink">{t}</p><p className="text-sm text-slate-500">{d}</p></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* MADE FOR INDIAN CLINICS */}
+      <section aria-label="Made for Indian clinics" className="bg-slate-100 px-5 py-20">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center">
+            <h2 className="lp-reveal mx-auto max-w-2xl font-display font-bold text-3xl sm:text-4xl tracking-[-0.03em] leading-[1.08]" style={{ textWrap: "balance" }}>Made for how Indian clinics work.</h2>
+            <p className="mx-auto mt-3.5 max-w-lg text-slate-600">Bills, letters and reminders that match daily practice.</p>
+          </div>
+          <div className="lp-reveal mt-12 flex flex-col md:flex-row overflow-hidden rounded-[20px] bg-white">
+            <div className="md:flex-1 min-w-0 bg-sky-100 p-7 flex items-center"><div className="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_40px_-24px_rgba(15,23,42,.35)]"><img src="/landing/letter.jpg" alt="MeriDent referral letter form" width="600" height="240" loading="lazy" className="block w-full h-auto" /></div></div>
+            <div className="md:flex-1 min-w-0 p-8 flex flex-col justify-between gap-8"><h3 className="font-display font-bold text-3xl tracking-[-0.03em] leading-[1.1]">Referral letters, ready to print.</h3><p className="text-slate-600">Referral and treatment summary letters are filled in from the record, so nothing is retyped.</p></div>
+          </div>
+          <div className="lp-reveal mt-5 flex flex-col md:flex-row overflow-hidden rounded-[20px] bg-white">
+            <div className="md:flex-1 min-w-0 p-8 flex flex-col justify-between gap-8"><h3 className="font-display font-bold text-3xl tracking-[-0.03em] leading-[1.1]">Bill the treatment. Sell stock on the same bill.</h3><p className="text-slate-600">Add treatments and stock items to one invoice, take an advance, set a due date, and print it with a UPI QR.</p></div>
+            <div className="md:flex-1 min-w-0 bg-blue-100 p-7 flex justify-center"><div className="w-full max-w-[340px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_40px_-24px_rgba(15,23,42,.35)]"><img src="/landing/bill.jpg" alt="MeriDent invoice form with treatments and stock" width="480" height="656" loading="lazy" className="block w-full h-auto" /></div></div>
+          </div>
+          <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+            {[
+              ["GST and UPI on every bill", "Therapeutic dental care is shown as GST exempt. Cosmetic work is charged 18% GST, split into CGST and SGST. Bills carry a UPI QR."],
+              ["WhatsApp, one tap", "See who to remind, who owes a balance and who is due for a check-up. One tap opens WhatsApp with the message ready. It does not send by itself yet."],
+              ["Your clinic's data stays yours", "Each clinic's records are kept in its own workspace. You can export or delete them any time by asking us."],
+              ["Built by dental students, registered in India", "Made by people who sit in the dental chair every day. On the StartupTN portal and registered with MSME Udyam."]
+            ].map(([t, b]) => (
+              <div key={t} className="lp-reveal lp-lift rounded-[20px] bg-white p-7"><h3 className="font-display font-bold text-2xl tracking-[-0.02em]">{t}</h3><p className="mt-2.5 text-slate-600">{b}</p></div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* DEMO VIDEO */}
       <section id="demo" className="py-16 bg-white">
         <div className="max-w-4xl mx-auto px-5">
@@ -689,7 +670,7 @@ export default function LandingPage({
       </section>
 
       {/* GETTING STARTED */}
-      <section id="start" className="text-white bg-[radial-gradient(90%_60%_at_100%_0%,rgba(56,189,248,.35),transparent),radial-gradient(70%_60%_at_0%_100%,rgba(37,99,235,.4),transparent),linear-gradient(180deg,#1e3a8a,#0f1f4d)]">
+      <section id="start" className="text-white bg-ink">
         <div className="max-w-6xl mx-auto px-5 py-20 lg:py-24">
           <div className="max-w-2xl mb-10">
             <h2 className="font-display font-bold text-3xl sm:text-[2.5rem] tracking-[-0.025em] leading-tight">Getting started</h2>
@@ -719,12 +700,12 @@ export default function LandingPage({
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {PLANS.map((plan) => (
-              <div key={plan.name} className={`rounded-2xl border-2 p-6 bg-white ${plan.hot ? "border-brand-600 shadow-lg shadow-blue-700/10" : "border-slate-200"}`}>
-                <h3 className="font-display font-bold text-lg text-brand-600">{plan.name}</h3>
-                <p className="mt-3 font-display font-extrabold text-4xl text-ink">{plan.price}<span className="text-base font-semibold text-slate-500">{plan.unit}</span></p>
-                <p className="mt-1 text-sm text-slate-500 min-h-[1.25rem]">{plan.sub}</p>
-                <ul className="mt-5 space-y-2.5 text-[15px] text-slate-700">
-                  {plan.points.map((pt) => <li key={pt} className="flex items-start gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0 mt-1" aria-hidden="true" /><span>{pt}</span></li>)}
+              <div key={plan.name} className={`lp-reveal lp-lift rounded-2xl border-2 p-6 ${plan.hot ? "border-ink bg-ink text-white" : "border-slate-200 bg-white"}`}>
+                <h3 className={`font-display font-bold text-lg ${plan.hot ? "text-slate-300" : "text-brand-600"}`}>{plan.name}</h3>
+                <p className={`mt-3 font-display font-extrabold text-4xl ${plan.hot ? "text-white" : "text-ink"}`}>{plan.price}<span className={`text-base font-semibold ${plan.hot ? "text-slate-400" : "text-slate-500"}`}>{plan.unit}</span></p>
+                <p className={`mt-1 text-sm min-h-[1.25rem] ${plan.hot ? "text-slate-400" : "text-slate-500"}`}>{plan.sub}</p>
+                <ul className={`mt-5 space-y-2.5 text-[15px] ${plan.hot ? "text-slate-200" : "text-slate-700"}`}>
+                  {plan.points.map((pt) => <li key={pt} className="flex items-start gap-2"><Check className={`w-4 h-4 shrink-0 mt-1 ${plan.hot ? "text-teal-300" : "text-emerald-600"}`} aria-hidden="true" /><span>{pt}</span></li>)}
                 </ul>
               </div>
             ))}
@@ -821,28 +802,32 @@ export default function LandingPage({
       </section>
 
       {/* FOUNDERS */}
-      <section className="max-w-4xl mx-auto px-5 py-16 lg:py-20">
+      <section id="founders" className="max-w-4xl mx-auto px-5 py-16 lg:py-20">
         <h2 className="font-display font-bold text-3xl tracking-[-0.025em]">Built by dental students</h2>
         <p className="mt-2 text-base text-slate-600 max-w-xl">We study dentistry and write the code ourselves, so the app is shaped around real clinic work.</p>
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
           {[
-            { init: "SS", name: "Santhoshkumar S", role: "Founder", bio: "BDS student, Sri Ramakrishna Dental College & Hospital, Coimbatore. Full-stack developer and product lead." },
-            { init: "SG", name: "Sivasabari G", role: "Co-Founder", bio: "BDS student, Dhanalakshmi Srinivasan Dental College & Hospital, Perambalur. Leads clinical workflow requirements and testing." }
+            { init: "SK", name: "Santhoshkumar S", role: "Founder", college: "Sri Ramakrishna Dental College & Hospital, Coimbatore", bio: "BDS student. Software lead: builds and ships MeriDent's software.", wa: "919043205927" },
+            { init: "SG", name: "Sivasabari G", role: "Co-Founder", college: "Dhanalakshmi Srinivasan Dental College & Hospital, Perambalur", bio: "BDS student. Leads clinical workflow requirements and testing.", wa: "918098318039" }
           ].map((p) => (
-            <div key={p.name} className="flex gap-4 rounded-2xl border border-white bg-white/80 shadow-[0_14px_36px_-24px_rgba(17,24,39,.5)] p-5">
-              <div className="shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-sky-400 to-blue-600 text-white font-display font-bold flex items-center justify-center">{p.init}</div>
-              <div>
-                <h3 className="font-display font-bold text-lg leading-tight">{p.name}</h3>
-                <p className="text-sm font-semibold text-brand-700">{p.role}</p>
-                <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">{p.bio}</p>
+            <div key={p.name} className="lp-reveal lp-lift flex flex-col rounded-[22px] border border-slate-200 bg-slate-50 p-6">
+              <div className="flex items-center gap-4">
+                <div className="shrink-0 w-16 h-16 rounded-full bg-ink text-white font-display font-extrabold text-2xl flex items-center justify-center">{p.init}</div>
+                <div className="min-w-0">
+                  <h3 className="font-display font-bold text-2xl leading-tight tracking-[-0.02em]">{p.name}</h3>
+                  <p className="text-sm font-semibold text-ink">{p.role}</p>
+                  <p className="text-sm text-slate-500">{p.college}</p>
+                </div>
               </div>
+              <p className="mt-4 text-slate-600 leading-relaxed">{p.bio}</p>
+              <a href={`https://wa.me/${p.wa}`} target="_blank" rel="noopener noreferrer" className="mt-4 text-sm font-semibold text-ink hover:opacity-80">Message on WhatsApp &rarr;</a>
             </div>
           ))}
         </div>
       </section>
 
       {/* FINAL CTA */}
-      <section className="text-white bg-[radial-gradient(80%_120%_at_100%_0%,rgba(56,189,248,.35),transparent),linear-gradient(135deg,#1e3a8a,#0f1f4d)]">
+      <section className="text-white bg-ink">
         <div className="max-w-4xl mx-auto px-5 py-14 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <h2 className="font-display font-bold text-3xl tracking-[-0.025em] leading-tight">Try MeriDent with your clinic</h2>
           <button

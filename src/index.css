@@ -369,3 +369,35 @@ main section.bg-white {
 @keyframes mdShimmer { to { background-position: -150% 0; } }
 @keyframes mdShow { to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .md-skel-bar, .md-skel-grid span, .md-skel-rows span { animation: none; } }
+
+/* ---- Landing page (lp-*): reveal-on-scroll, chart reel, marquee, floating cards ---- */
+@keyframes lp-rise { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: none; } }
+@keyframes lp-reveal { from { opacity: 0; transform: translateY(44px) scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes lp-tilt { from { transform: perspective(1400px) rotateX(16deg) scale(0.9); opacity: 0.55; } to { transform: none; opacity: 1; } }
+@keyframes lp-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes lp-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes lp-ring { 0% { box-shadow: 0 0 0 0 rgba(15, 23, 42, 0.35); } 100% { box-shadow: 0 0 0 22px rgba(15, 23, 42, 0); } }
+@keyframes lp-l1 { 0%, 18% { opacity: 0; } 26%, 90% { opacity: 1; } 98%, 100% { opacity: 0; } }
+@keyframes lp-l2 { 0%, 38% { opacity: 0; } 46%, 90% { opacity: 1; } 98%, 100% { opacity: 0; } }
+@keyframes lp-l3 { 0%, 58% { opacity: 0; } 66%, 90% { opacity: 1; } 98%, 100% { opacity: 0; } }
+@keyframes lp-l4 { 0%, 76% { opacity: 0; } 84%, 90% { opacity: 1; } 98%, 100% { opacity: 0; } }
+.lp-rise { animation: lp-rise 0.9s both; }
+.lp-ring { animation: lp-ring 2.2s ease-out infinite; }
+.lp-marquee { display: flex; width: max-content; animation: lp-marquee 60s linear infinite; }
+.lp-bob { animation: lp-bob 6s ease-in-out infinite; }
+.lp-layer { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; animation: 9s linear infinite; }
+.lp-l1 { animation-name: lp-l1; }
+.lp-l2 { animation-name: lp-l2; }
+.lp-l3 { animation-name: lp-l3; }
+.lp-l4 { animation-name: lp-l4; }
+.lp-lift { transition: transform 0.35s ease, box-shadow 0.35s ease; }
+.lp-lift:hover { transform: translateY(-5px); }
+@supports (animation-timeline: view()) {
+  .lp-reveal { animation: lp-reveal linear both; animation-timeline: view(); animation-range: entry 0% entry 60%; }
+  .lp-tilt { animation: lp-tilt linear both; animation-timeline: view(); animation-range: entry 5% cover 40%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-rise, .lp-ring, .lp-marquee, .lp-bob, .lp-reveal, .lp-tilt { animation: none !important; }
+  .lp-layer { animation: none !important; }
+}
+@media (prefers-reduced-motion: reduce) { .lp-l4 { opacity: 1; } }
