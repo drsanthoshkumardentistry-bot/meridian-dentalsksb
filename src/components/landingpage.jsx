@@ -896,10 +896,18 @@ export default function LandingPage({
         href={DEMO_LINK}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="Chat on WhatsApp"
-        className="fixed bottom-5 right-5 z-50 w-14 h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full flex items-center justify-center shadow-xl shadow-emerald-500/30 transition-colors"
+        aria-label="Book a free demo on WhatsApp"
+        data-testid="floating-whatsapp"
+        style={{ bottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))", right: "max(1.25rem, env(safe-area-inset-right, 0px))" }}
+        className="group fixed z-50 flex items-center gap-3 rounded-full focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300"
       >
-        <MessageCircle className="w-7 h-7" />
+        <span className="hidden sm:block rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink shadow-lg ring-1 ring-slate-200 transition group-hover:-translate-x-0.5">
+          Book a free demo
+        </span>
+        <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 text-white shadow-xl shadow-emerald-500/30 transition-colors group-hover:bg-emerald-600">
+          <span aria-hidden="true" className="absolute inset-0 rounded-full bg-emerald-400/50 motion-safe:animate-ping [animation-duration:2.8s]" />
+          <MessageCircle className="relative h-7 w-7" aria-hidden="true" />
+        </span>
       </a>
 
       {/* FOOTER */}
