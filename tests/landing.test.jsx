@@ -181,3 +181,14 @@ describe("security checks list", () => {
     expect(sec.textContent).toContain("not an outside audit");
   });
 });
+
+describe("floating WhatsApp button", () => {
+  it("offers a free demo and opens WhatsApp with a ready message", () => {
+    render(<LandingPage firebaseConfigured onLoginClick={() => {}} />);
+    const a = screen.getByTestId("floating-whatsapp");
+    expect(a.getAttribute("aria-label")).toBe("Book a free demo on WhatsApp");
+    expect(a.getAttribute("href")).toMatch(/^https:\/\/wa\.me\/\d+\?text=/);
+    expect(a.getAttribute("rel")).toContain("noopener");
+    expect(a.textContent).toContain("Book a free demo");
+  });
+});
