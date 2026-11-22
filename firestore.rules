@@ -594,10 +594,15 @@ service cloud.firestore {
     }
 
     // Append-only audit log. Staff can read it; nobody can change or delete an entry.
+    // A status entry (status_<consultId>_<status>) can only be written by the dentist the consult was
+    // sent to, so a sender cannot pre-write it and stop the receiver from answering.
     match /connectAudit/{entryId} {
       allow create: if isVerified() && request.resource.data.actorId == request.auth.uid
                     && request.resource.data.keys().hasOnly(['actorId', 'action', 'targetId', 'meta', 'createdAt'])
-                    && request.resource.data.action is string && request.resource.data.action.size() <= 40;
+                    && request.resource.data.action is string && request.resource.data.action.size() <= 40
+                    && (!entryId.matches('status_.*')
+                        || (exists(/databases/$(database)/documents/connectConsults/$(entryId.split('_')[1]))
+                            && get(/databases/$(database)/documents/connectConsults/$(entryId.split('_')[1])).data.toId == request.auth.uid));
       allow read: if isAdmin();
       allow update, delete: if false;
     }
