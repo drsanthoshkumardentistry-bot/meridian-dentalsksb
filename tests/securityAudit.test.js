@@ -35,3 +35,16 @@ describe("firestore.rules shape lists stay in step with the app", () => {
     for (const k of ["actorId", "action", "targetId", "meta", "createdAt"]) expect(allowed).toContain(k);
   });
 });
+
+describe("storage.rules protect the shared free storage", () => {
+  const rules = readFileSync(resolve(process.cwd(), "storage.rules"), "utf8");
+  it("keeps every file private to the verified owning account", () => {
+    expect(rules).toContain("request.auth.uid == clinicId");
+    expect(rules).toContain("email_verified == true");
+    expect(rules).not.toMatch(/allow [^;]*if true/);
+  });
+  it("only lets new files be pictures or PDFs under 10 MB", () => {
+    expect(rules).toContain("request.resource.size < 10 * 1024 * 1024");
+    expect(rules).toContain("image/.*|application/pdf");
+  });
+});
