@@ -375,7 +375,7 @@ export default function LandingPage({
           <div className="mt-5 flex flex-wrap items-center justify-center gap-x-7 gap-y-3">
             <a href={VIDEO_LINK} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-brand-700 hover:text-brand-900 text-[15px] font-semibold">
               <PlayCircle className="w-5 h-5" aria-hidden="true" />
-              <span>Watch the 9-minute demo</span>
+              <span>Watch quick demo</span>
             </a>
             <a href="#app" className="inline-flex items-center gap-2 text-brand-700 hover:text-brand-900 text-[15px] font-semibold">
               <Download className="w-5 h-5" aria-hidden="true" />
