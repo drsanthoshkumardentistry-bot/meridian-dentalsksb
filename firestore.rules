@@ -173,7 +173,12 @@ service cloud.firestore {
 
       allow create: if signedIn()
                     && request.auth.uid == request.resource.data.clinicId
-                    && request.resource.data.decision == 'pending';
+                    && request.resource.data.decision == 'pending'
+                    && request.resource.data.keys().hasOnly(['clinicId', 'patientId', 'planId', 'clinicName', 'patientFirstName', 'title', 'notes',
+                                                             'items', 'subtotalP', 'discountP', 'taxP', 'totalP', 'decision', 'decidedAt',
+                                                             'decidedName', 'createdAt', 'expiresAt'])
+                    && request.resource.data.get('items', []).size() <= 60
+                    && request.resource.data.get('notes', '').size() <= 3000;
 
       allow delete: if signedIn() && request.auth.uid == resource.data.clinicId;
 
@@ -590,7 +595,9 @@ service cloud.firestore {
 
     // Append-only audit log. Staff can read it; nobody can change or delete an entry.
     match /connectAudit/{entryId} {
-      allow create: if isVerified() && request.resource.data.actorId == request.auth.uid;
+      allow create: if isVerified() && request.resource.data.actorId == request.auth.uid
+                    && request.resource.data.keys().hasOnly(['actorId', 'action', 'targetId', 'meta', 'createdAt'])
+                    && request.resource.data.action is string && request.resource.data.action.size() <= 40;
       allow read: if isAdmin();
       allow update, delete: if false;
     }
