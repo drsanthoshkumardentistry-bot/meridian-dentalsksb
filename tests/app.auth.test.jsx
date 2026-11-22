@@ -47,7 +47,7 @@ const openEmailForm = async () => {
 describe("authentication gate", () => {
   it("signed-out visitors only see the landing page", async () => {
     render(<App />);
-    expect(await screen.findByText(/Run your dental clinic\. Lose no records/i)).toBeTruthy();
+    expect(await screen.findByText(/Less paperwork\. More dentistry/i)).toBeTruthy();
     expect(screen.queryByText("Patients & Odontogram")).toBeNull();
   });
 
@@ -141,7 +141,7 @@ describe("authentication gate", () => {
     expect(screen.getByText("+91 80983 18039").closest("a").getAttribute("href")).toBe("tel:+918098318039");
     fireEvent.click(screen.getByText("Log out"));
     await waitFor(() => expect(h.calls).toContainEqual(["logout"]));
-    expect(await screen.findByText(/Run your dental clinic\. Lose no records/i)).toBeTruthy();
+    expect(await screen.findByText(/Less paperwork\. More dentistry/i)).toBeTruthy();
   });
 
   it("new clinics are asked to complete their profile", async () => {
@@ -173,7 +173,7 @@ describe("idle sign-out", () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(62 * 1000); });
     expect(h.calls).toContainEqual(["logout"]);
     expect(screen.getByText(/signed out after 30 minutes of inactivity/i)).toBeTruthy();
-    expect(screen.getByText(/Run your dental clinic\. Lose no records/i)).toBeTruthy();
+    expect(screen.getByText(/Less paperwork\. More dentistry/i)).toBeTruthy();
   });
 
   it("activity resets the idle timer", async () => {
