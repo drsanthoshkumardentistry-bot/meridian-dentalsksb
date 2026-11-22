@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import { Download, Upload, Lock, ShieldAlert, History } from "lucide-react";
 import {
-  buildBackup, backupFileName, encryptBackup, decryptBackup, validatePassword, parseBackupText, validateBackup, mergeBackup,
+  buildBackup, backupFileName, encryptBackup, decryptBackup, validatePassword, parseBackupText, validateBackup, mergeBackup, normalizeBackup,
   buildArchive, archiveFileName, patientsCsv, appointmentsCsv, invoicesDetailCsv, patientsFromCsv, patientsFromRows, patientTemplateCsv,
 } from "../portability.js";
 import { describePoint } from "../restorePoints.js";
@@ -76,7 +76,8 @@ export default function DataPortability({ data, newId, onDownloadFile, onImporte
     onAudit("data.export", `${which} spreadsheet`, "");
   };
 
-  const prepareBackup = (backup) => {
+  const prepareBackup = (raw) => {
+    const backup = normalizeBackup(raw);
     const v = validateBackup(backup);
     if (!v.ok) { setError(v.error); return; }
     const m = mergeBackup(data, backup, { includeStaff: staff });

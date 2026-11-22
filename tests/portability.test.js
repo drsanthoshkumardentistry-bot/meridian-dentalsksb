@@ -191,3 +191,22 @@ describe("patientsFromCsv", () => {
     expect(patientsFromCsv(big, [], id).error).toMatch(/at most 5,000/);
   });
 });
+
+import { normalizeBackup, safeId, validateBackup as vb, buildBackup as bb } from "../src/portability.js";
+describe("backups from older records", () => {
+  it("accepts numeric and spaced ids by tidying them, and keeps patient links matching", () => {
+    const raw = bb({ patients: [{ id: "p1", name: "Asha" }], appointments: [], invoices: [{ id: 1699999999999, patientId: "p1", items: [] }, { id: "INV 7/2026", patientId: "p 1" }] });
+    expect(vb(raw).ok).toBe(false);
+    const fixed = normalizeBackup(raw);
+    expect(vb(fixed).ok).toBe(true);
+    expect(fixed.data.invoices[0].id).toBe("1699999999999");
+    expect(fixed.data.invoices[1].id).toBe("INV_7_2026");
+    expect(safeId("p 1")).toBe("p_1");
+  });
+  it("leaves good ids alone and does not touch missing ids", () => {
+    expect(safeId("abc-1")).toBe("abc-1");
+    expect(safeId(undefined)).toBe(undefined);
+    const raw = bb({ patients: [{ id: "p1", name: "A" }], invoices: [{ patientId: "p1" }] });
+    expect(vb(normalizeBackup(raw)).ok).toBe(false);
+  });
+});
