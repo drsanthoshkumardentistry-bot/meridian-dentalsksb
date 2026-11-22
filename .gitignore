@@ -63,3 +63,7 @@ coverage/
 # Backup decryption key: never commit it
 *PRIVATE-KEY*.pem
 *private-key*.pem
+
+# Android signing keys must never be committed
+*.keystore
+*.jks
