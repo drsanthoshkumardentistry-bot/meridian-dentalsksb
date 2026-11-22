@@ -103,6 +103,31 @@ export const parseBackupText = (text) => {
   return { ok: true, encrypted: false, backup: obj };
 };
 
+/** Turns an id into a safe one: numbers become text, odd characters become underscores. Same input always gives the same id, so links between records still match. */
+export const safeId = (v) => {
+  if (typeof v === "number" && Number.isFinite(v)) return String(v);
+  if (typeof v !== "string") return v;
+  if (ID_RE.test(v)) return v;
+  const t = v.replace(/[^A-Za-z0-9._-]+/g, "_").replace(/^[^A-Za-z0-9]+/, "").slice(0, 80);
+  return t || v;
+};
+
+/** Older records can carry a number or a spaced id. Tidy the ids (and the patient links) so a real backup is not refused. */
+export const normalizeBackup = (b) => {
+  if (!plain(b) || !plain(b.data)) return b;
+  const data = { ...b.data };
+  for (const key of [...COLLECTIONS, "expenses"]) {
+    if (!Array.isArray(data[key])) continue;
+    data[key] = data[key].map((rec) => {
+      if (!plain(rec)) return rec;
+      const out = { ...rec, id: safeId(rec.id) };
+      if (out.patientId !== undefined && out.patientId !== null) out.patientId = safeId(out.patientId);
+      return out;
+    });
+  }
+  return { ...b, data };
+};
+
 /** Checks the structure so a wrong or damaged file cannot put bad records into the clinic. */
 export const validateBackup = (b) => {
   if (!plain(b) || b.format !== BACKUP_FORMAT) return { ok: false, error: "This file is not a MeriDent backup" };
