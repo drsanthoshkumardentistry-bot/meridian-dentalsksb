@@ -1,5 +1,6 @@
 // Vercel function: GET /api/pay-verify?u=&pa=&pn=&ks=. Public. Tells the patient's pay page whether the clinic's
 // name and UPI ID in the link are the ones the clinic sealed. Reveals nothing else.
+import { visitorIp } from "./_lib/clientIp.js";
 import { makeLimiter } from "./_lib/aiCore.js";
 import { readServiceAccount } from "./_lib/blockCore.js";
 import { verifySeal } from "./_lib/payCore.js";
@@ -15,7 +16,7 @@ const send = (res, status, body) => {
 
 export default async function handler(req, res) {
   if (req.method !== "GET") return send(res, 405, { error: "Use GET." });
-  const ip = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim().slice(0, 64) || "anon";
+  const ip = visitorIp(req.headers);
   if (!allow(ip)) return send(res, 429, { ok: false, error: "Too many requests." });
   const sa = readServiceAccount();
   if (!sa) return send(res, 200, { ok: false, configured: false });

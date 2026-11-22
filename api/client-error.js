@@ -4,6 +4,7 @@ import { makeLimiter } from "./_lib/aiCore.js";
 import { sanitizeReport, buildErrorEmail } from "./_lib/clientErrorCore.js";
 import { istTime } from "./_lib/loginAlertCore.js";
 import { postResend } from "./_lib/mailCore.js";
+import { visitorIp } from "./_lib/clientIp.js";
 
 const perVisitor = makeLimiter(10, 60 * 60 * 1000); // 10 reports an hour per visitor
 const emails = makeLimiter(12, 60 * 60 * 1000);     // at most 12 emails an hour in total
@@ -13,7 +14,7 @@ const done = (res, status = 204) => { res.statusCode = status; res.setHeader("Ca
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return done(res, 405);
-  const ip = String((req.headers && (req.headers["x-forwarded-for"] || req.headers["cf-connecting-ip"])) || "unknown").split(",")[0].trim().slice(0, 64);
+  const ip = visitorIp(req.headers);
   if (!perVisitor(ip)) return done(res, 429); // checked first: a sender repeating big junk bodies is cut off before any work is done on them
   const report = sanitizeReport(req.body);
   if (!report) return done(res, 400);
