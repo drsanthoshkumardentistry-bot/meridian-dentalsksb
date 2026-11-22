@@ -135,10 +135,19 @@ const PLANS = [
 ];
 
 const QUALITY = [
-  { n: "1,250+", label: "automated tests", note: "run before every update goes live" },
+  { n: "1,450+", label: "automated tests", note: "run before every update goes live" },
   { n: "9 crore+", label: "random stress checks", note: "bad input, odd dates, wrong totals, with 0 failures across all recent runs" },
   { n: "Every change", label: "data-access rules tested", note: "the rules that keep each clinic's records private are tested automatically whenever they change" },
   { n: "3 ways", label: "Ways we test", note: "normal order, shuffled order, and random data" },
+];
+
+const SECURITY_CHECKS = [
+  "Each clinic's records are kept apart, and the access rules are tested automatically on every change.",
+  "Our code is scanned for security problems automatically on every change.",
+  "No known security problems in the software libraries the live app uses.",
+  "Uploaded files stay private to the clinic and are limited to pictures and PDFs under 10 MB.",
+  "Passwords, keys and signing files are kept out of the code.",
+  "Two rounds of our own security review in November 2026. The most serious problems found were fixed and tested.",
 ];
 
 const FAQS = [
@@ -760,6 +769,14 @@ export default function LandingPage({
               </div>
             ))}
           </dl>
+          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
+            <h3 className="font-display font-bold text-lg tracking-tight">Security checks, last run 23 November 2026</h3>
+            <ul className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5 text-sm text-slate-700">
+              {SECURITY_CHECKS.map((t) => (
+                <li key={t} className="flex gap-2.5"><Check className="w-4 h-4 shrink-0 text-emerald-600 mt-0.5" aria-hidden="true" /><span>{t}</span></li>
+              ))}
+            </ul>
+          </div>
           <p className="mt-5 text-xs text-slate-500">These are our own checks, not an outside audit. The random stress checks cover the calculation logic (billing, stock, dues, reminders), not every screen. Tests lower the chance of mistakes but cannot promise there are none, so please report any problem you find from Settings.</p>
         </div>
       </section>
