@@ -169,6 +169,9 @@ describe("press feature", () => {
     expect(within(press).getByText("The Kovai Herald, 25 October 2026")).toBeTruthy();
     expect(press.querySelector("img").getAttribute("src")).toBe("/press/kovai-herald-2026-10-25.jpg");
     expect(press.querySelector("img").getAttribute("alt")).toContain("Kovai Herald");
+    const online = within(press).getByText(/Read it on The Kovai Herald website/).closest("a");
+    expect(online.getAttribute("href")).toMatch(/^https:\/\/thekovaiherald\.co\.in\//);
+    expect(online.getAttribute("rel")).toContain("noopener");
   });
 });
 
@@ -190,5 +193,15 @@ describe("floating WhatsApp button", () => {
     expect(a.getAttribute("href")).toMatch(/^https:\/\/wa\.me\/\d+\?text=/);
     expect(a.getAttribute("rel")).toContain("noopener");
     expect(a.textContent).toContain("Book a free demo");
+  });
+});
+
+describe("imaging features", () => {
+  it("lists DICOM import and camera capture, with the compressed-file limit stated", () => {
+    render(<LandingPage firebaseConfigured onLoginClick={() => {}} />);
+    expect(screen.getByText("X-rays from your RVG sensor or scanner")).toBeTruthy();
+    expect(screen.getByText(/DICOM \(\.dcm\) files from digital sensors/)).toBeTruthy();
+    expect(screen.getByText(/If a DICOM file is compressed, export it as JPEG or PNG/)).toBeTruthy();
+    expect(screen.getByText("Take pictures with a USB or intraoral camera")).toBeTruthy();
   });
 });

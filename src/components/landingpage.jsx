@@ -40,10 +40,12 @@ import {
   Network,
   PlayCircle,
   Download,
-  Mail
+  Mail,
+  Camera
 } from "lucide-react";
 
 const WHATSAPP_NUMBER = "919043205927";
+const KOVAI_ARTICLE = "https://thekovaiherald.co.in/%e0%ae%aa%e0%ae%95%e0%ae%b2%e0%af%8d-%e0%ae%a8%e0%af%87%e0%ae%b0%e0%ae%a4%e0%af%8d%e0%ae%a4%e0%ae%bf%e0%ae%b2%e0%af%8d-%e0%ae%aa%e0%ae%b2%e0%af%8d-%e0%ae%ae%e0%ae%b0%e0%af%81%e0%ae%a4%e0%af%8d/";
 const VIDEO_LINK = "https://youtu.be/BVowp-T5nJQ";
 const DEMO_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
   "Hi, I'd like a demo of MeriDent for my dental clinic."
@@ -63,7 +65,7 @@ const FEATURE_GROUPS = [
     tone: "blue",
     items: [
       { icon: Users, title: "32-tooth FDI odontogram", text: "Chart adult and primary teeth. A tooth can hold several findings at once, such as caries, a root canal and a crown, and each one can be removed on its own." },
-      { icon: ScanSearch, title: "OPG & diagnosis studio", text: "Open a panoramic film at full size, zoom in, adjust brightness and contrast, and invert the negative. Calibrate against an object of known length to measure in millimetres." },
+      { icon: ScanSearch, title: "OPG & diagnosis studio", text: "Open a panoramic film (JPG, PNG or DICOM) at full size, zoom in, adjust brightness and contrast, and invert the negative. Calibrate against an object of known length to measure in millimetres." },
       { icon: ClipboardList, title: "Treatment plans & estimates", text: "Price a plan tooth by tooth and send the patient a link on WhatsApp. They approve or decline from their phone, with no sign-in. Approved plans turn into an invoice." },
       { icon: ClipboardList, title: "Draft visit notes from the chart", text: "One tap fills findings, advice and the next planned treatment from the patient's chart. You edit the note before you save it, and treatment done is left for you to write." },
       { icon: Users, title: "Extra-oral examination", text: "Record the face, jaw joints, lymph nodes, lips and skin, plus mouth opening in mm. Each exam is saved with its date, and anything unusual is listed at the top. A new exam is compared with the last one." },
@@ -111,7 +113,8 @@ const FEATURE_GROUPS = [
       { icon: ClipboardList, title: "MeriDent DocLog", text: "For doctors who visit other clinics as a consultant. Log each visit, the treatment, the next visit and the payment, and see which clinic still owes you money. It is private to you and replaces the paper diary." },
       { icon: Bell, title: "WhatsApp reminders & recall", text: "See who to remind for tomorrow, who owes a balance, and who is due for a 6-month check-up. One tap opens WhatsApp with the message ready. Patients can opt out." },
       { icon: WifiOff, title: "Works with weak internet", text: "Keep working when the connection drops. Your changes save on the device and sync to the cloud when you are back online." },
-      { icon: ScanSearch, title: "Add X-rays from your RVG folder", text: "On a computer with Chrome or Edge, pick the folder your RVG software saves to, tick the newest pictures and add them to the patient in one go. Each keeps the date it was saved." },
+      { icon: ScanSearch, title: "X-rays from your RVG sensor or scanner", text: "On a computer with Chrome or Edge, pick the folder your RVG software saves to, tick the newest pictures and add them to the patient in one go. DICOM (.dcm) files from digital sensors and panoramic units open too, and are converted to normal pictures in your browser. Each keeps the date it was saved. If a DICOM file is compressed, export it as JPEG or PNG from your imaging software." },
+      { icon: Camera, title: "Take pictures with a USB or intraoral camera", text: "Use a USB camera, an intraoral camera that appears as a webcam, or your phone or tablet camera, and the photo goes straight into the patient's record. Nothing is recorded until you press Take picture." },
       { icon: Bell, title: "A patient page they can install", text: "Send a private link with the patient's visits, balance and advice. On a phone they can install it like an app, with no sign-in needed." },
     ]
   }
@@ -845,7 +848,8 @@ export default function LandingPage({
           <figcaption className="md:col-span-2 rounded-[22px] border border-slate-200 bg-slate-50 p-6">
             <p className="text-sm font-semibold text-ink">The Kovai Herald, 25 October 2026</p>
             <p className="mt-3 text-slate-700 leading-relaxed">&ldquo;Dental college by day, coding by night.&rdquo; The story, written in Tamil, tells how two second-year dental students from Tamil Nadu built MeriDent for dental clinics.</p>
-            <a href="/press/kovai-herald-2026-10-25.jpg" target="_blank" rel="noopener noreferrer" className="mt-4 inline-block text-sm font-semibold text-ink hover:opacity-80">Read the full page &rarr;</a>
+            <a href={KOVAI_ARTICLE} target="_blank" rel="noopener noreferrer" className="mt-4 inline-block text-sm font-semibold text-ink hover:opacity-80">Read it on The Kovai Herald website &rarr;</a>
+            <a href="/press/kovai-herald-2026-10-25.jpg" target="_blank" rel="noopener noreferrer" className="mt-2 block text-sm font-semibold text-slate-600 hover:opacity-80">See the printed page in full size</a>
           </figcaption>
         </figure>
       </section>

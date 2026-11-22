@@ -82,6 +82,7 @@ import { saveToBin, listBin, restoreFromBin, removeFromBin } from "./recycleStor
 import { CONTACT, CONTACT_CO } from "./legal.js";
 import { setCariesDetail, pruneCariesDetails, cariesText } from "./caries.js";
 import { compressImage } from "./imageCompress.js";
+import { isDicomFile, dicomToImageFile } from "./dicom.js";
 import OptionLists from "./components/OptionLists.jsx";
 import { listOf, withCurrent } from "./optionLists.js";
 import PracticeChairs, { ProfileNote, ProfileNotesContext } from "./components/PracticeChairs.jsx";
@@ -1583,11 +1584,14 @@ export default function App() {
     });
 
   const handleOpgFileChange = async (e) => {
-    const file = e.target.files?.[0];
+    let file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
+    if (await isDicomFile(file)) {
+      try { file = await dicomToImageFile(file); } catch (err) { showToast(err.message || "Could not read that DICOM file"); return; }
+    }
     if (!file.type.startsWith("image/")) {
-      showToast("Please choose an image file (JPG or PNG)");
+      showToast("Please choose an image file (JPG, PNG or DICOM)");
       return;
     }
     const targetId = opgSelectedPatientId || selectedPatientId || (patients[0] && patients[0].id);

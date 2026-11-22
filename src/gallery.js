@@ -65,7 +65,7 @@ export const fileDateKey = (file, now = new Date()) => {
   return k > dateKey(now) ? dateKey(now) : k;
 };
 
-const IMAGE_NAME = /\.(jpe?g|png|bmp|tiff?|webp)$/i;
+const IMAGE_NAME = /\.(jpe?g|png|bmp|tiff?|webp|dcm|dicom)$/i;
 /** The newest pictures in a folder listing: image files only, saved in the last few days, newest first. */
 export const recentImageFiles = (files = [], now = new Date(), days = 3, max = 24) => {
   const cutoff = now.getTime() - days * 24 * 60 * 60 * 1000;
