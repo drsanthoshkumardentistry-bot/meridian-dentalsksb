@@ -24,3 +24,15 @@ describe("OPGs kept in their own documents", () => {
     expect(u).toEqual({ count: 2, bytes: 500300 });
   });
 });
+
+import { uploadGate, CLINIC_STOP_BYTES } from "../src/storageUsage.js";
+describe("uploadGate", () => {
+  it("allows pictures below the stop line and blocks at it", () => {
+    expect(uploadGate(0).allowed).toBe(true);
+    expect(uploadGate(CLINIC_STOP_BYTES - 1).allowed).toBe(true);
+    const g = uploadGate(CLINIC_STOP_BYTES);
+    expect(g.allowed).toBe(false);
+    expect(g.message).toMatch(/existing records are safe/i);
+    expect(uploadGate(undefined).allowed).toBe(true);
+  });
+});

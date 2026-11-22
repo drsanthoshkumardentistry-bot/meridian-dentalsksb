@@ -3,6 +3,7 @@ import { MAX_DATA_CHARS } from "./gallery.js";
 
 export const FREE_PLAN_BYTES = 1024 * 1024 * 1024; // Firestore free quota, shared by every clinic
 export const CLINIC_WARN_BYTES = 300 * 1024 * 1024; // warn one clinic well before the shared quota is a worry
+export const CLINIC_STOP_BYTES = 450 * 1024 * 1024; // new pictures stop here so one clinic cannot use up every clinic's shared space
 
 /** Size of a base64 picture string in bytes. */
 export const dataUrlBytes = (s) => (typeof s === "string" && s.length > 0 ? Math.round(s.length * 0.75) : 0);
@@ -24,3 +25,11 @@ export const formatBytes = (b) => (b >= 1024 * 1024 * 1024 ? `${(b / 1024 / 1024
 
 /** level: ok, watch (70%+), full (90%+) against the per-clinic warning line. */
 export const usageLevel = (bytes) => (bytes >= CLINIC_WARN_BYTES * 0.9 ? "full" : bytes >= CLINIC_WARN_BYTES * 0.7 ? "watch" : "ok");
+
+/** Can this clinic still add pictures? Existing pictures are never touched. */
+export const uploadGate = (usedBytes) => {
+  const used = Number(usedBytes) || 0;
+  return used >= CLINIC_STOP_BYTES
+    ? { allowed: false, message: "Picture storage for your clinic is full, so new pictures cannot be saved. Your existing records are safe. Contact MeriDent support to move your pictures to bigger storage." }
+    : { allowed: true, message: "" };
+};
