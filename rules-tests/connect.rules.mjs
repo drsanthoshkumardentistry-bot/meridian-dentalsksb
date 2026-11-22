@@ -607,3 +607,19 @@ describe("recently deleted copies", () => {
     await assertSucceeds(deleteDoc(doc(as(env, "alice"), "connectDocLog", "alice", "bin", "visits__V1")));
   });
 });
+
+describe("audit log: a sender cannot block the receiver's answer", () => {
+  const entry = (actorId) => ({ actorId, action: "status_change", targetId: "alice", meta: { status: "accepted" }, createdAt: serverTimestamp() });
+  beforeEach(async () => {
+    await seed(env, (db) => setDoc(doc(db, "connectConsults", "c1"), { fromId: "alice", toId: "bob", status: "sent" }));
+  });
+  it("the sender cannot pre-write the receiver's status entry", async () => {
+    await assertFails(setDoc(doc(as(env, "alice"), "connectAudit", "status_c1_accepted"), entry("alice")));
+  });
+  it("another dentist cannot write it either", async () => {
+    await assertFails(setDoc(doc(as(env, "admin"), "connectAudit", "status_c1_accepted"), entry("admin")));
+  });
+  it("the receiver can write it", async () => {
+    await assertSucceeds(setDoc(doc(as(env, "bob"), "connectAudit", "status_c1_accepted"), entry("bob")));
+  });
+});
