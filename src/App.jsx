@@ -66,7 +66,8 @@ import RxSets from "./components/RxSets.jsx";
 import SellFromStock from "./components/SellFromStock.jsx";
 import PatientGallery from "./components/PatientGallery.jsx";
 import { todayActionTiles, totalActions, liveFlow } from "./todayActions.js";
-import { listImages, addImage, removeImage, countImages } from "./galleryStore.js";
+import { listImages, addImage, removeImage, countImages, setClinicUsedBytes } from "./galleryStore.js";
+import { opgUsage, galleryUpperBytes } from "./storageUsage.js";
 import { cleanupPatientRemote } from "./patientCleanup.js";
 import { eraseFromRecords } from "./patientErase.js";
 import { buildPayLink } from "./payLink.js";
@@ -2176,6 +2177,7 @@ export default function App() {
   };
 
   const [galleryCount, setGalleryCount] = useState(null);
+  useEffect(() => { setClinicUsedBytes(opgUsage(allPatients).bytes + galleryUpperBytes(galleryCount || 0)); }, [allPatients, galleryCount]);
   useEffect(() => {
     if (!db || !CLINIC_ID || hydratedFor !== CLINIC_ID) return undefined;
     let off = false;
