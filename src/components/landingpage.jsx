@@ -817,6 +817,22 @@ export default function LandingPage({
         </div>
       </section>
 
+      {/* IN THE NEWS */}
+      <section id="press" aria-label="MeriDent in the news" className="max-w-4xl mx-auto px-5 pt-4 pb-4 lg:pb-8">
+        <h2 className="font-display font-bold text-3xl tracking-[-0.025em]">In the news</h2>
+        <p className="mt-2 text-base text-slate-600 max-w-xl">MeriDent was featured in The Kovai Herald, a Coimbatore weekly, on 25 October 2026.</p>
+        <figure className="mt-8 grid grid-cols-1 md:grid-cols-5 gap-6 items-start">
+          <a href="/press/kovai-herald-2026-10-25.jpg" target="_blank" rel="noopener noreferrer" className="md:col-span-3 block overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm hover:opacity-95" aria-label="Open the full Kovai Herald page">
+            <img src="/press/kovai-herald-2026-10-25.jpg" alt="The Kovai Herald, 25 October 2026: a Tamil news story about two dental students from Tamil Nadu who built MeriDent, with photos of both founders and a screenshot of the patient records screen" width="1080" height="1322" loading="lazy" className="block w-full h-auto" />
+          </a>
+          <figcaption className="md:col-span-2 rounded-[22px] border border-slate-200 bg-slate-50 p-6">
+            <p className="text-sm font-semibold text-ink">The Kovai Herald, 25 October 2026</p>
+            <p className="mt-3 text-slate-700 leading-relaxed">&ldquo;Dental college by day, coding by night.&rdquo; The story, written in Tamil, tells how two second-year dental students from Tamil Nadu built MeriDent for dental clinics.</p>
+            <a href="/press/kovai-herald-2026-10-25.jpg" target="_blank" rel="noopener noreferrer" className="mt-4 inline-block text-sm font-semibold text-ink hover:opacity-80">Read the full page &rarr;</a>
+          </figcaption>
+        </figure>
+      </section>
+
       {/* FOUNDERS */}
       <section id="founders" className="max-w-4xl mx-auto px-5 py-16 lg:py-20">
         <h2 className="font-display font-bold text-3xl tracking-[-0.025em]">Built by dental students</h2>
