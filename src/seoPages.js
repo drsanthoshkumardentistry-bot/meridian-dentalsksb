@@ -47,6 +47,7 @@ export const SEO_PAGES = [
         "Signed treatment consents with on-screen signature, kept on the patient's record."] }
     ],
     faqs: [
+      { q: "Which X-ray files and cameras work with MeriDent?", a: "Pictures saved as JPG or PNG by your RVG software, and DICOM (.dcm) files from digital sensors and panoramic units, can be added. DICOM files are converted to normal pictures in your browser. Compressed DICOM files are not read: export those as JPEG or PNG from your imaging software. A USB camera, an intraoral camera that appears as a webcam, or a phone camera can take pictures straight into the patient's record. MeriDent does not talk to the sensor itself, so it does not capture straight from the sensor." },
       { q: "Where are radiographs stored?", a: "Pictures are kept with the patient's record in your clinic's own workspace. Cloud storage for radiographs is still coming next." },
       { q: "Does the app diagnose?", a: "No. The chart records what you find. Any drafted note is a draft for the dentist to read and edit." }
     ]

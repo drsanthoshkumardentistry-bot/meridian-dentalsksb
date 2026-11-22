@@ -66,6 +66,9 @@ describe("batch import helpers", () => {
 describe("recent pictures in a folder", () => {
   const now = new Date(2026, 10, 18, 12);
   const f = (name, hoursAgo) => ({ name, lastModified: now.getTime() - hoursAgo * 3600000 });
+  it("includes DICOM files from digital sensors", () => {
+    expect(recentImageFiles([f("IOPA_14.dcm", 2), f("pano.DICOM", 3), f("notes.txt", 1)], now).map((x) => x.name)).toEqual(["IOPA_14.dcm", "pano.DICOM"]);
+  });
   it("keeps recent image files, newest first, and caps the list", () => {
     const r = recentImageFiles([f("a.jpg", 5), f("b.PNG", 1), f("c.txt", 1), f("d.jpg", 24 * 5), f("e.jpg", -48)], now);
     expect(r.map((x) => x.name)).toEqual(["b.PNG", "a.jpg"]);

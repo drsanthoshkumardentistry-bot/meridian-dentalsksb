@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Camera, FileCheck2, Trash2, X } from "lucide-react";
 import { IMAGE_KINDS, NOC_KIND, MAX_IMAGES_PER_PATIENT, buildImageDoc, canAddMore, nocImages, sortImages, suggestPair } from "../gallery.js";
 import { formatDateLong, dateKey } from "../reminders.js";
+import CameraCapture, { cameraSupported } from "./CameraCapture.jsx";
 import DmyDateInput from "./DmyDateInput.jsx";
 
 const field = "px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-blue-500 text-xs";
@@ -12,6 +13,7 @@ export default function PatientGallery({ patient, api, compress, canWrite = true
   const [state, setState] = useState({ status: "loading", images: [] });
   const [form, setForm] = useState({ kind: "Before", caption: "", tooth: "", takenOn: dateKey() });
   const [busy, setBusy] = useState(false);
+  const [cam, setCam] = useState(false);
   const [open, setOpen] = useState(null);
   const [pairIds, setPairIds] = useState({ before: "", after: "" });
   const fileRef = useRef(null);
@@ -30,9 +32,7 @@ export default function PatientGallery({ patient, api, compress, canWrite = true
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
   const startNoc = () => { setForm({ ...form, kind: NOC_KIND }); setTimeout(() => fileRef.current && fileRef.current.click(), 0); };
 
-  const onFile = async (e) => {
-    const file = e.target.files && e.target.files[0];
-    e.target.value = "";
+  const saveFile = async (file) => {
     if (!file) return;
     if (!canAddMore(images.length)) return showToast(`Up to ${MAX_IMAGES_PER_PATIENT} pictures per patient. Delete one first.`);
     setBusy(true);
@@ -47,6 +47,11 @@ export default function PatientGallery({ patient, api, compress, canWrite = true
     } catch (err) {
       showToast(err && err.message ? err.message : "Could not save the picture. Try again.");
     } finally { setBusy(false); }
+  };
+  const onFile = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    await saveFile(file);
   };
   const remove = async (img) => {
     try { await api.remove(img.id); setOpen(null); showToast("Picture deleted"); await load(); } catch { showToast("Could not delete. Try again."); }
@@ -85,10 +90,14 @@ export default function PatientGallery({ patient, api, compress, canWrite = true
               <DmyDateInput id="gal-date" ariaLabel="Taken on (dd/mm/yyyy)" max={dateKey()} value={form.takenOn} onChange={(v) => setForm({ ...form, takenOn: v })} className={`${field} w-32`} />
             </div>
           </div>
-          <input ref={fileRef} type="file" accept="image/*" aria-label="Choose a photo" onChange={onFile} className="hidden" />
+          <input ref={fileRef} type="file" accept="image/*,.dcm,.dicom,application/dicom" aria-label="Choose a photo" onChange={onFile} className="hidden" />
           <button type="button" disabled={busy} onClick={() => fileRef.current && fileRef.current.click()} className="px-3 py-2 rounded-lg bg-[#2563eb] hover:bg-blue-700 disabled:opacity-60 text-white font-semibold inline-flex items-center gap-1.5">
             <Camera className="w-3.5 h-3.5" /> {busy ? "Saving…" : isNoc ? "Take or choose a photo of the NOC" : "Take or choose a photo"}
           </button>
+          {cameraSupported() && (
+            <button type="button" disabled={busy} onClick={() => setCam(true)} className="ml-2 px-3 py-2 rounded-lg border border-blue-600 text-blue-700 font-semibold disabled:opacity-60">Use a USB camera</button>
+          )}
+          {cam && <CameraCapture onClose={() => setCam(false)} onCapture={(f) => { setCam(false); saveFile(f); }} />}
           <button type="button" disabled={busy} onClick={startNoc} className="ml-2 px-3 py-2 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 disabled:opacity-60 text-emerald-900 font-semibold inline-flex items-center gap-1.5">
             <FileCheck2 className="w-3.5 h-3.5" /> Add physician NOC
           </button>

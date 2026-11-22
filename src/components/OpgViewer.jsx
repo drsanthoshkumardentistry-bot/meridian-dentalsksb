@@ -68,7 +68,7 @@ export default function OpgViewer({ patient, onUpload, onRemove, onCalibrate, on
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <input type="file" ref={fileRef} onChange={onUpload} accept="image/*" className="hidden" aria-label="Choose OPG image" />
+          <input type="file" ref={fileRef} onChange={onUpload} accept="image/*,.dcm,.dicom,application/dicom" className="hidden" aria-label="Choose OPG image" />
           <button type="button" onClick={() => fileRef.current?.click()} className={`${tool} bg-brand-600 border-brand-600 text-white`}>
             <Upload className="w-3.5 h-3.5" /> {image ? "Replace film" : "Insert film"}
           </button>
@@ -130,7 +130,7 @@ export default function OpgViewer({ patient, onUpload, onRemove, onCalibrate, on
           <div className="text-center p-10 text-blue-100/70">
             <Upload className="w-8 h-8 mx-auto mb-2 opacity-60" aria-hidden="true" />
             <p className="text-sm">No OPG film for this patient yet.</p>
-            <p className="text-xs mt-1">Insert a JPG or PNG of the panoramic film.</p>
+            <p className="text-xs mt-1">Insert a JPG, PNG or DICOM file of the panoramic film.</p>
           </div>
         )}
       </div>

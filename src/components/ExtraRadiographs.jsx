@@ -3,6 +3,7 @@ import { Plus, X } from "lucide-react";
 import { MAX_IMAGES_PER_PATIENT, buildImageDoc, canAddMore, sortImages, batchPlan, fileDateKey, recentImageFiles } from "../gallery.js";
 import { formatDateLong, dateKey } from "../reminders.js";
 import DmyDateInput from "./DmyDateInput.jsx";
+import CameraCapture, { cameraSupported } from "./CameraCapture.jsx";
 
 export const RADIOGRAPH_KINDS = ["OPG", "IOPA", "CBCT", "X-ray"];
 const field = "px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-blue-500 text-xs";
@@ -15,6 +16,7 @@ export default function ExtraRadiographs({ patient, api, compress, canWrite = tr
   const [takenOn, setTakenOn] = useState(dateKey());
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
+  const [cam, setCam] = useState(false);
   const [useFileDates, setUseFileDates] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [open, setOpen] = useState(null);
@@ -119,10 +121,14 @@ export default function ExtraRadiographs({ patient, api, compress, canWrite = tr
               <DmyDateInput id="xr-date" ariaLabel="Taken on (dd/mm/yyyy)" max={dateKey()} value={takenOn} onChange={setTakenOn} className={`${field} w-32`} />
             </div>
           </div>
-          <input ref={fileRef} type="file" accept="image/*" multiple aria-label="Choose a radiograph" onChange={onFile} className="hidden" />
+          <input ref={fileRef} type="file" accept="image/*,.dcm,.dicom,application/dicom" multiple aria-label="Choose a radiograph" onChange={onFile} className="hidden" />
           <button type="button" disabled={busy} onClick={() => fileRef.current && fileRef.current.click()} className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-semibold">
             {busy ? "Saving…" : `Choose ${kind} pictures`}
           </button>
+          {cameraSupported() && (
+            <button type="button" disabled={busy} onClick={() => setCam(true)} className="ml-2 px-3 py-2 rounded-lg border border-emerald-600 text-emerald-800 font-semibold disabled:opacity-60">Use a camera</button>
+          )}
+          {cam && <CameraCapture onClose={() => setCam(false)} onCapture={(f) => { setCam(false); importFiles([f]); }} />}
           <label className="flex items-center gap-2 text-[11px] text-slate-600"><input type="checkbox" checked={useFileDates} onChange={(e) => setUseFileDates(e.target.checked)} /> When I choose several, use the date each file was saved (RVG software stamps it at capture)</label>
           {canPickFolder && (
             <div className="rounded-lg border border-dashed border-slate-300 bg-white p-2.5 space-y-2">

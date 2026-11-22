@@ -1,5 +1,6 @@
 // Shrinks a photo in the browser to a small JPEG text string (data URL) that fits in a clinic record.
 import { MAX_DATA_CHARS } from "./gallery.js";
+import { isDicomFile, dicomToImageFile } from "./dicom.js";
 
 const load = (file) => new Promise((resolve, reject) => {
   const url = URL.createObjectURL(file);
@@ -11,6 +12,7 @@ const load = (file) => new Promise((resolve, reject) => {
 
 /** Returns a JPEG data URL no larger than MAX_DATA_CHARS, trying smaller sizes and lower quality as needed. */
 export const compressImage = async (file) => {
+  if (await isDicomFile(file)) file = await dicomToImageFile(file); // digital sensor and panoramic exports
   if (!file || !/^image\//.test(file.type)) throw new Error("Choose an image file");
   const img = await load(file);
   for (const maxDim of [1400, 1100, 900, 700]) {
