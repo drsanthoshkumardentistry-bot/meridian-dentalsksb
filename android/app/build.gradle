@@ -17,16 +17,20 @@ android {
         }
     }
     signingConfigs {
+        // The signing key is never stored in the repository. The build supplies it through environment variables
+        // (GitHub Actions secrets). Without them the release build fails instead of using a public key.
         sideload {
-            storeFile file('merident-sideload.keystore')
-            storePassword 'merident-sideload'
-            keyAlias 'merident'
-            keyPassword 'merident-sideload'
+            if (System.getenv('ANDROID_KEYSTORE_PATH')) {
+                storeFile file(System.getenv('ANDROID_KEYSTORE_PATH'))
+                storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('ANDROID_KEY_ALIAS')
+                keyPassword System.getenv('ANDROID_KEY_PASSWORD')
+            }
         }
     }
     buildTypes {
         release {
-            signingConfig signingConfigs.sideload
+            if (System.getenv('ANDROID_KEYSTORE_PATH')) { signingConfig signingConfigs.sideload }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
