@@ -335,13 +335,13 @@ export default function LandingPage({
         <div className="relative max-w-6xl mx-auto px-5 pt-14 sm:pt-20 text-center">
           <p className="lp-rise inline-flex items-center gap-2 text-sm font-semibold text-blue-800 bg-white border border-blue-200 shadow-sm px-3.5 py-1 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-sky-500" aria-hidden="true" />
-            Built by dental students in India. Free during early access.
+            Built by dental students in India
           </p>
           <h1 className="lp-rise mx-auto mt-6 max-w-4xl font-display font-extrabold text-[2.5rem] sm:text-6xl lg:text-7xl leading-[1.03] tracking-[-0.04em] text-ink" style={{ animationDelay: "0.05s", textWrap: "balance" }}>
-            Run your dental clinic. Lose no records.
+            Less paperwork. More dentistry.
           </h1>
           <p className="lp-rise mx-auto mt-6 max-w-xl text-base sm:text-lg text-slate-600 leading-[1.7]" style={{ animationDelay: "0.25s" }}>
-            Charting, prescriptions, treatment plans and bills in one place, with a daily restore point you can check yourself.
+            Chart the tooth, bill the visit, and keep every record safe. Free during early access.
           </p>
           <div className="lp-rise mt-8 flex flex-col sm:flex-row gap-3 justify-center" style={{ animationDelay: "0.45s" }}>
             <button

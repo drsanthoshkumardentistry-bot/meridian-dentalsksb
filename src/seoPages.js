@@ -174,6 +174,70 @@ export const SEO_PAGES = [
       { q: "Can patients pay in instalments?", a: "Yes. The Collect window can split a balance into 2 to 24 monthly parts." },
       { q: "Does the patient see other patients' data?", a: "No. The link opens only that patient's estimate." }
     ]
+  },
+  {
+    path: "/dental-software-coimbatore",
+    nav: "For Coimbatore clinics",
+    title: "Dental clinic software in Coimbatore, built by dental students | MeriDent",
+    description: "MeriDent is practice software for dental clinics, built in Coimbatore by two dental students. Odontogram, GST billing, WhatsApp reminders and daily backups. Free during early access.",
+    h1: "Dental clinic software built in Coimbatore",
+    lead: "MeriDent is made by two dental students in Coimbatore who wanted a clinic tool that fits how Indian clinics really work. You can message the founders directly on WhatsApp.",
+    sections: [
+      { h: "What you get", items: [
+        "A 32-tooth odontogram, treatment plans and prescriptions, saved on each patient's record.",
+        "GST invoices with part payments and a scannable UPI QR for the exact balance.",
+        "Appointments by chair and doctor, with WhatsApp reminders that open with the message written.",
+        "Daily cloud restore points and an encrypted backup you can keep."] },
+      { h: "Who it is for", items: [
+        "Single-doctor clinics and small multi-doctor clinics that want one place for charts, billing and recall.",
+        "Clinics that want to try the software before paying, with a founder on WhatsApp for questions."] }
+    ],
+    faqs: [
+      { q: "Can I try it in my own clinic?", a: "Yes. It is free during early access and needs no credit card. Message the founders on WhatsApp if you would like a walk-through." },
+      { q: "Who builds MeriDent?", a: "Two dental students from Coimbatore, Santhoshkumar S and Sivasabari G. Both are second-year BDS students." }
+    ]
+  },
+  {
+    path: "/dental-patient-records",
+    nav: "Patient records & backups",
+    title: "Dental patient record software with backups and data export | MeriDent",
+    description: "Keep dental patient records, charts, bills and pictures in one place, with daily restore points, an encrypted backup and the ability to export your data at any time.",
+    h1: "Dental patient records you can back up and take with you",
+    lead: "Your records stay yours. MeriDent keeps each clinic's data separate from every other clinic's, and gives you ways to copy it out.",
+    sections: [
+      { h: "Keeping records safe", items: [
+        "Each clinic's data is kept separate from every other clinic's.",
+        "Daily cloud restore points, plus an encrypted daily backup you can download and keep.",
+        "A recycle bin for deleted records, so a slip can be undone."] },
+      { h: "Taking your data with you", items: [
+        "Export your patient list, bills and records whenever you want.",
+        "If MeriDent ever had to stop, you would get at least 90 days' notice and a full export."] }
+    ],
+    faqs: [
+      { q: "Can I leave and take my data?", a: "Yes. Your patient records, bills and files are yours, and you can export them from the app at any time." },
+      { q: "Are X-rays included in the backup?", a: "Not yet. Pictures are kept with each patient's record in your clinic's own workspace. Download important radiographs separately for now." }
+    ]
+  },
+  {
+    path: "/dental-software-pricing",
+    nav: "Pricing",
+    title: "Dental clinic software pricing in rupees | MeriDent",
+    description: "MeriDent is free during early access. Planned prices: Free trial, Standard at 499 rupees a month or 4,999 a year, and Pro at 999 rupees a month. Nobody is charged yet.",
+    h1: "Dental clinic software pricing, in rupees",
+    lead: "MeriDent is free during our trial run, with no credit card. These are the planned prices, and nobody is being charged yet.",
+    sections: [
+      { h: "Planned plans", items: [
+        "Free trial: ₹0 for 30 days.",
+        "Standard: ₹499 per month, or ₹4,999 per year.",
+        "Pro: ₹999 per month, with multiple branches and more."] },
+      { h: "What we promise", items: [
+        "Clinics that join during early access keep their plan price for 12 months.",
+        "Any later change comes with at least 30 days' written notice."] }
+    ],
+    faqs: [
+      { q: "Is MeriDent free right now?", a: "Yes. It is free during early access, with no credit card. We will tell you well before that changes." },
+      { q: "Will the price go up after my team is trained?", a: "Clinics that join during early access keep their plan price for 12 months. After that, any change comes with at least 30 days' written notice." }
+    ]
   }
 ];
 

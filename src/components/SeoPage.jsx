@@ -1,7 +1,7 @@
 /* One public feature page. Content comes from src/seoPages.js. */
 import React, { useEffect } from "react";
 import { ArrowRight, Check, MessageCircle } from "lucide-react";
-import { SEO_PAGES } from "../seoPages.js";
+import { SEO_PAGES, SITE } from "../seoPages.js";
 
 const DEMO = `https://wa.me/919043205927?text=${encodeURIComponent("Hi, I would like a demo of MeriDent.")}`;
 
@@ -16,7 +16,11 @@ export default function SeoPage({ page }) {
     ld.type = "application/ld+json";
     ld.text = JSON.stringify({ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: page.faqs.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) });
     document.head.appendChild(ld);
+    const canon = document.querySelector('link[rel="canonical"]');
+    const beforeCanon = canon ? canon.getAttribute("href") : null;
+    if (canon) canon.setAttribute("href", `${SITE}${page.path}`);
     return () => {
+      if (canon && beforeCanon !== null) canon.setAttribute("href", beforeCanon);
       document.title = before;
       if (meta && beforeDesc !== null) meta.setAttribute("content", beforeDesc);
       ld.remove();
