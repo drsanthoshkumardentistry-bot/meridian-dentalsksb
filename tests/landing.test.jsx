@@ -159,3 +159,15 @@ describe("award line", () => {
     expect(t).not.toMatch(/winner|award[- ]winning|won the/i);
   });
 });
+
+describe("press feature", () => {
+  it("shows the Kovai Herald clipping with a dated caption and a link to the full page", () => {
+    render(<LandingPage firebaseConfigured onLoginClick={() => {}} />);
+    const press = document.getElementById("press");
+    expect(press).toBeTruthy();
+    expect(within(press).getByText("In the news")).toBeTruthy();
+    expect(within(press).getByText("The Kovai Herald, 25 October 2026")).toBeTruthy();
+    expect(press.querySelector("img").getAttribute("src")).toBe("/press/kovai-herald-2026-10-25.jpg");
+    expect(press.querySelector("img").getAttribute("alt")).toContain("Kovai Herald");
+  });
+});
