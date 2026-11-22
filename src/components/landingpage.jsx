@@ -823,7 +823,7 @@ export default function LandingPage({
         <p className="mt-2 text-base text-slate-600 max-w-xl">MeriDent was featured in The Kovai Herald, a Coimbatore weekly, on 25 October 2026.</p>
         <figure className="mt-8 grid grid-cols-1 md:grid-cols-5 gap-6 items-start">
           <a href="/press/kovai-herald-2026-10-25.jpg" target="_blank" rel="noopener noreferrer" className="md:col-span-3 block overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm hover:opacity-95" aria-label="Open the full Kovai Herald page">
-            <img src="/press/kovai-herald-2026-10-25.jpg" alt="The Kovai Herald, 25 October 2026: a Tamil news story about two dental students from Tamil Nadu who built MeriDent, with photos of both founders and a screenshot of the patient records screen" width="1080" height="1322" loading="lazy" className="block w-full h-auto" />
+            <img src="/press/kovai-herald-2026-10-25.jpg" alt="The Kovai Herald, 25 October 2026: a Tamil news story about two dental students from Tamil Nadu who built MeriDent, with photos of both founders and a screenshot of the patient records screen" width="1303" height="1600" loading="lazy" className="block w-full h-auto" />
           </a>
           <figcaption className="md:col-span-2 rounded-[22px] border border-slate-200 bg-slate-50 p-6">
             <p className="text-sm font-semibold text-ink">The Kovai Herald, 25 October 2026</p>
