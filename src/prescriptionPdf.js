@@ -67,3 +67,32 @@ export const downloadPrescriptionPdf = async (patient, profile, opts) => {
   const doc = await buildPrescriptionPdf(patient, profile, opts);
   doc.save(rxPdfName(patient));
 };
+
+/** The prescription as a real PDF file (for sharing). */
+export const prescriptionPdfFile = async (patient, profile, opts) => {
+  const doc = await buildPrescriptionPdf(patient, profile, opts);
+  return new File([doc.output("blob")], rxPdfName(patient), { type: "application/pdf" });
+};
+
+/** True when this phone or browser can hand a PDF file to another app (WhatsApp) through its share sheet. */
+export const canSharePdfFile = (nav = globalThis.navigator) => {
+  try {
+    if (!nav || typeof nav.share !== "function" || typeof nav.canShare !== "function") return false;
+    return Boolean(nav.canShare({ files: [new File(["x"], "a.pdf", { type: "application/pdf" })] }));
+  } catch { return false; }
+};
+
+/**
+ * Sends the prescription as a PDF through the share sheet. The person picks WhatsApp (and the patient's chat) there.
+ * Returns "shared", or "cancelled" when they closed the sheet. Throws if the PDF could not be made.
+ */
+export const sharePrescriptionPdf = async ({ patient, profile, text = "", opts, nav = globalThis.navigator }) => {
+  const file = await prescriptionPdfFile(patient, profile, opts);
+  try {
+    await nav.share({ files: [file], title: "Prescription", text });
+    return "shared";
+  } catch (e) {
+    if (e && e.name === "AbortError") return "cancelled";
+    throw e;
+  }
+};
