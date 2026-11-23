@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { visitorIp } from "../api/_lib/clientIp.js";
@@ -46,5 +46,29 @@ describe("storage.rules protect the shared free storage", () => {
   it("only lets new files be pictures or PDFs under 10 MB", () => {
     expect(rules).toContain("request.resource.size < 10 * 1024 * 1024");
     expect(rules).toContain("image/.*|application/pdf");
+  });
+});
+
+describe("expired patient links", () => {
+  it("firestore rules refuse a read after the link has expired", async () => {
+    const rules = readFileSync(resolve(__dirname, "../firestore.rules"), "utf8");
+    for (const coll of ["planShares", "portalPages"]) {
+      const block = rules.slice(rules.indexOf(`match /${coll}/{token}`));
+      const get = block.slice(block.indexOf("allow get:"), block.indexOf("allow list:"));
+      expect(get, coll).toContain("request.time < resource.data.expiresAt");
+      expect(get, coll).not.toMatch(/allow get:\s*if true/);
+    }
+  });
+  it("a refused expired link reads as 'not found' to the patient", async () => {
+    vi.resetModules();
+    vi.doMock("firebase/firestore", () => ({
+      doc: () => ({}), getDoc: () => Promise.reject(Object.assign(new Error("x"), { code: "permission-denied" })),
+      setDoc: vi.fn(), updateDoc: vi.fn(), deleteDoc: vi.fn(), Timestamp: { fromDate: (d) => d, now: () => new Date() },
+    }));
+    const { fetchShare } = await import("../src/planShare.js");
+    const { fetchPortal } = await import("../src/portalStore.js");
+    expect(await fetchShare({}, "t")).toBeNull();
+    expect(await fetchPortal({}, "t")).toBeNull();
+    vi.doUnmock("firebase/firestore");
   });
 });

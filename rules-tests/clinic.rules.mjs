@@ -148,6 +148,8 @@ describe("treatment estimate links", () => {
   it("an expired link cannot be answered", async () => {
     await seed(env, (db) => setDoc(doc(db, "planShares", "old"), share({ expiresAt: new Date(Date.now() - 1000) })));
     await assertFails(updateDoc(doc(anon(env), "planShares", "old"), { decision: "approved", decidedName: "A", decidedAt: 1 }));
+    await assertFails(getDoc(doc(anon(env), "planShares", "old")));
+    await assertSucceeds(getDoc(doc(as(env, OWNER), "planShares", "old")));
   });
 });
 
@@ -234,6 +236,9 @@ describe("patient portal pages", () => {
     await assertSucceeds(setDoc(doc(as(env, OWNER), "portalPages", "tok1"), page()));
     await assertSucceeds(getDoc(doc(anon(env), "portalPages", "tok1")));
     await assertFails(getDocs(collection(anon(env), "portalPages")));
+    await seed(env, (db) => setDoc(doc(db, "portalPages", "old"), page({ expiresAt: new Date(Date.now() - 1000) })));
+    await assertFails(getDoc(doc(anon(env), "portalPages", "old")));
+    await assertSucceeds(getDoc(doc(as(env, OWNER), "portalPages", "old")));
   });
   it("the owner, a manager and a receptionist can publish; a dentist and strangers cannot", async () => {
     await assertSucceeds(setDoc(doc(asEmail("mgr"), "portalPages", "t2"), page()));
