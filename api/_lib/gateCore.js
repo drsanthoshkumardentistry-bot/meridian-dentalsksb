@@ -64,3 +64,31 @@ export const siteDailyHit = async ({ sa, name, limit, fallback, fetchFn = fetch,
     return fallback(name);
   }
 };
+
+/**
+ * Per-caller counter shared by every server instance, in fixed windows (rateLimits/rl_<name>_<key>_<window number>).
+ * Use it where an attacker could otherwise spread guesses across instances (wrong codes, code e-mails).
+ * Returns true while the count is within `limit`; falls back to `fallback(key)` if Firestore cannot be reached.
+ */
+export const sharedHit = async ({ sa, name, key, limit, windowMs, fallback, fetchFn = fetch, now = Date.now() }) => {
+  if (!sa) return fallback(key);
+  try {
+    const safe = (v) => String(v).replace(/[^A-Za-z0-9_-]/g, "").slice(0, 80);
+    if (!safe(key)) return fallback(key);
+    const token = await getAccessToken(sa, fetchFn, now, DATASTORE);
+    const root = `projects/${sa.project_id}/databases/(default)/documents`;
+    const doc = `${root}/rateLimits/rl_${safe(name)}_${safe(key)}_${Math.floor(now / windowMs)}`;
+    const r = await fetchFn(`https://firestore.googleapis.com/v1/${root}:commit`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ writes: [{ transform: { document: doc, fieldTransforms: [{ fieldPath: "n", increment: { integerValue: "1" } }] } }] }),
+    });
+    if (!r.ok) throw new Error("firestore");
+    const j = await r.json();
+    const n = Number(j && j.writeResults && j.writeResults[0] && j.writeResults[0].transformResults && j.writeResults[0].transformResults[0] && j.writeResults[0].transformResults[0].integerValue);
+    if (!Number.isFinite(n)) throw new Error("shape");
+    return n <= limit;
+  } catch (e) {
+    return fallback(key);
+  }
+};
