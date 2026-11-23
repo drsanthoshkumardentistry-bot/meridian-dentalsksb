@@ -1,0 +1,25 @@
+name: Quality gate
+# Every pull request and every push to main must pass: lint (real bugs only), no known high-severity
+# vulnerability in what ships to users, and the whole test suite above the coverage floor.
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Vulnerabilities in what ships to users
+        run: npm audit --omit=dev --audit-level=high
+      - name: Tests with coverage floor
+        run: npm run test:coverage
