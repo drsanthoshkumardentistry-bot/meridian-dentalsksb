@@ -1498,54 +1498,36 @@ export default function App() {
     );
   };
 
-  // WhatsApp Clinical Notifier / Rx Dispatcher
-  const dispatchPatientWhatsApp = () => {
+  // WhatsApp Rx Dispatcher: the prescription goes as a PDF file, not as a long text message.
+  const dispatchPatientWhatsApp = async () => {
     if (!activePatient) return;
     if (activePatient.consent && activePatient.consent.whatsapp === false) {
       showToast("This patient has not agreed to WhatsApp messages");
       return;
     }
-    let cleanPhone = activePatient.phone.replace(/[^0-9]/g, "");
+    if (!(activePatient.prescriptions || []).length) { showToast("Add a medicine first"); return; }
+    let cleanPhone = String(activePatient.phone || "").replace(/[^0-9]/g, "");
     if (cleanPhone.length === 10) cleanPhone = "91" + cleanPhone;
-
     if (!cleanPhone || cleanPhone.length < 10) {
       showToast("Invalid phone number for WhatsApp dispatch");
       return;
     }
-
-    const chartedList = Object.entries(normalizeConditions(activePatient.toothConditions))
-      .sort((a, b) => Number(a[0]) - Number(b[0]))
-      .map(([tooth, codes]) => {
-        const labels = codes.map((code) => findingLabel(code, CLINICAL_PALETTE));
-        const detail = codes.includes("CAR") ? cariesText((activePatient.cariesDetails || {})[tooth]) : "";
-        return `#${tooth} (${labels.join(" + ")}${detail ? `: ${detail}` : ""})`;
-      })
-      .join(", ") || "General Oral Examination";
-
-    const rxList = (activePatient.prescriptions || [])
-      .map((p, idx) => `${idx + 1}. *${p.drug}* - ${p.frequency} (${p.duration})\n   Instruction: ${p.instruction}`)
-      .join("\n\n");
-
-    const message = encodeURIComponent(
-      `🦷 *${practiceProfile.name.toUpperCase()}*\n` +
-      `📍 ${practiceProfile.address} | 📞 ${practiceProfile.phone}\n` +
-      `----------------------------------------\n` +
-      `👤 *Patient:* ${activePatient.name} (Age: ${activePatient.age || "N/A"} Yrs / ${activePatient.gender})\n` +
-      (alertText(activePatient) ? `⚠️ *Medical Alert:* ${alertText(activePatient)}\n` : "") +
-      `📅 *Date:* ${activePatient.registeredDate}\n` +
-      `🩺 *Doctor:* ${practiceProfile.drName}${practiceProfile.qualification ? `, ${practiceProfile.qualification}` : ""}\n` +
-      (practiceProfile.councilRegNumber ? `🪪 *Reg. No:* ${practiceProfile.councilRegNumber}\n` : "") +
-      `----------------------------------------\n` +
-      `📋 *FDI Odontogram Findings:*\n${chartedList}\n\n` +
-      (rxList ? `💊 *Medications Prescribed:*\n${rxList}\n\n` : "") +
-      `----------------------------------------\n` +
-      `⚠️ *Patient Care Advice:*\n` +
-      rxAdviceLines(practiceProfile).map((l) => `• ${l}\n`).join("") + `\n` +
-      `_Sent via MeriDent_`
-    );
-
-    window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank", "noopener,noreferrer");
-    showToast("WhatsApp message dispatched!");
+    const note = `Hello ${activePatient.name}, your prescription from ${practiceProfile.name || "our clinic"} is attached as a PDF.`;
+    try {
+      const pdf = await import("./prescriptionPdf.js");
+      if (pdf.canSharePdfFile()) {
+        // Phone share sheet: pick WhatsApp and the patient's chat, and the PDF goes as a file.
+        const r = await pdf.sharePrescriptionPdf({ patient: activePatient, profile: practiceProfile, text: note });
+        if (r === "shared") showToast("Prescription PDF shared");
+        return;
+      }
+      // No file sharing here (most computers): save the PDF and open the patient's chat, so it can be attached.
+      const win = window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(note)}`, "_blank", "noopener,noreferrer");
+      await pdf.downloadPrescriptionPdf(activePatient, practiceProfile);
+      showToast(win ? "PDF saved. Attach it in the WhatsApp chat that opened." : "PDF saved. Open the patient's WhatsApp chat and attach it.");
+    } catch (e) {
+      showToast("Could not make the PDF. Try again.");
+    }
   };
 
   // OPG Upload for Selected Patient (compressed so it fits in the patient record)
@@ -5460,7 +5442,7 @@ export default function App() {
                       onClick={dispatchPatientWhatsApp}
                       className="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-card transition-all bg-emerald-600 hover:bg-emerald-700 text-white"
                     >
-                      <Send className="w-3.5 h-3.5" /> Dispatch WhatsApp Prescription
+                      <Send className="w-3.5 h-3.5" /> Send Prescription PDF on WhatsApp
                     </button>
                     </div>
                   </div>
