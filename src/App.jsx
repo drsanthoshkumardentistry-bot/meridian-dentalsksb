@@ -86,6 +86,7 @@ import { isDicomFile, dicomToImageFile } from "./dicom.js";
 import OptionLists from "./components/OptionLists.jsx";
 import { listOf, withCurrent } from "./optionLists.js";
 import PracticeChairs, { ProfileNote, ProfileNotesContext } from "./components/PracticeChairs.jsx";
+import ClinicLogoField from "./components/ClinicLogoField.jsx";
 import { chairNames, setProfileNote } from "./chairs.js";
 import PatientLabels, { LabelChips } from "./components/PatientLabels.jsx";
 import AftercareSender from "./components/AftercareSender.jsx";
@@ -729,7 +730,8 @@ const DEFAULT_PROFILE = {
   dentalCouncil: "",
   councilRegNumber: "",
   onlineBooking: false,
-  reviewLink: ""
+  reviewLink: "",
+  logo: ""
 };
 
 export default function App() {
@@ -4281,6 +4283,10 @@ export default function App() {
                     <p className="text-[10px] text-rose-600 mt-1">Check the email address.</p>
                   ) : null}
                 <ProfileNote k="email" />
+                </Field>
+
+                <Field label="Clinic logo" hint="Printed at the top of prescriptions.">
+                  <ClinicLogoField value={practiceProfile.logo || ""} onChange={(logo) => setPracticeProfile({ ...practiceProfile, logo })} />
                 </Field>
 
                 <Field label="Dental Council" hint="Shown on prescriptions with your registration number.">
