@@ -168,7 +168,9 @@ service cloud.firestore {
     // Treatment estimate links for patients. The random token is the key, so a document can be
     // read only by someone holding the link. Nobody can list the collection.
     match /planShares/{token} {
-      allow get: if true;
+      // An expired link stops working on the server too, not only in the app. The clinic can still read its own.
+      allow get: if (resource.data.expiresAt is timestamp && request.time < resource.data.expiresAt)
+                 || (signedIn() && request.auth.uid == resource.data.clinicId);
       allow list: if false;
 
       allow create: if signedIn()
@@ -208,7 +210,8 @@ service cloud.firestore {
     }
     function portalWriter(clinicId) { return isClinicOwner(clinicId) || memberHasRole(clinicId, ['manager', 'receptionist']); }
     match /portalPages/{token} {
-      allow get: if true;
+      allow get: if (resource.data.expiresAt is timestamp && request.time < resource.data.expiresAt)
+                 || portalWriter(resource.data.clinicId);
       allow list: if false;
       allow create: if portalWriter(request.resource.data.clinicId) && portalShapeOk();
       allow update: if portalWriter(resource.data.clinicId)

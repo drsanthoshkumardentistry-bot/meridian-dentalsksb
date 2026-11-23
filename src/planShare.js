@@ -9,8 +9,9 @@ export const createShare = async (db, token, share) => {
 };
 
 export const fetchShare = async (db, token) => {
-  const snap = await getDoc(doc(db, COLLECTION, token));
-  return snap.exists() ? snap.data() : null;
+  // The rules refuse an expired link; to the patient that is the same as a link that no longer exists.
+  const snap = await getDoc(doc(db, COLLECTION, token)).catch((e) => { if (e && e.code === "permission-denied") return null; throw e; });
+  return snap && snap.exists() ? snap.data() : null;
 };
 
 export const decideShare = async (db, token, decision, name) => {
