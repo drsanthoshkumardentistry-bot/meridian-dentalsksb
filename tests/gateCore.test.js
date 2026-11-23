@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import crypto from "node:crypto";
-import { checkAccess, dailyCap, siteDailyHit } from "../api/_lib/gateCore.js";
+import { checkAccess, dailyCap, siteDailyHit, sharedHit } from "../api/_lib/gateCore.js";
 import { readServiceAccount } from "../api/_lib/blockCore.js";
 
 const { privateKey } = crypto.generateKeyPairSync("rsa", { modulusLength: 2048, privateKeyEncoding: { type: "pkcs8", format: "pem" }, publicKeyEncoding: { type: "spki", format: "pem" } });
@@ -95,5 +95,36 @@ describe("siteDailyHit (shared daily counter)", () => {
     expect(await siteDailyHit({ sa, name: "ai", limit: 1, fallback: f1, fetchFn: counterFetch(0, false), now })).toBe("memory");
     const odd = vi.fn(async (u) => String(u).includes("oauth2") ? { ok: true, json: async () => ({ access_token: "t" }) } : { ok: true, json: async () => ({}) });
     expect(await siteDailyHit({ sa, name: "ai", limit: 1, fallback: f2, fetchFn: odd, now })).toBe("memory");
+  });
+});
+
+describe("sharedHit (per-caller counter shared by every server instance)", () => {
+  const counterFetch = (n, ok = true) => vi.fn(async (url) => {
+    if (String(url).includes("oauth2")) return { ok: true, json: async () => ({ access_token: "t" }) };
+    if (!ok) return { ok: false, status: 500 };
+    return { ok: true, json: async () => ({ writeResults: [{ transformResults: [{ integerValue: String(n) }] }] }) };
+  });
+  const fb = () => vi.fn(() => "memory");
+  it("counts per caller and per time window, and blocks above the limit", async () => {
+    const f = counterFetch(1);
+    const t = Date.UTC(2026, 10, 23, 10);
+    expect(await sharedHit({ sa, name: "delwrong", key: "uid1", limit: 10, windowMs: 3600000, fallback: fb(), fetchFn: f, now: t })).toBe(true);
+    const body = JSON.parse(f.mock.calls.find(([u]) => String(u).includes(":commit"))[1].body);
+    expect(body.writes[0].transform.document).toContain(`/rateLimits/rl_delwrong_uid1_${Math.floor(t / 3600000)}`);
+    expect(await sharedHit({ sa, name: "x", key: "u", limit: 3, windowMs: 1000, fallback: fb(), fetchFn: counterFetch(4), now: t })).toBe(false);
+  });
+  it("cannot be steered to another document by a hostile key", async () => {
+    const f = counterFetch(1);
+    await sharedHit({ sa, name: "n", key: "../../clinics/abc/x?y", limit: 3, windowMs: 1000, fallback: fb(), fetchFn: f, now });
+    const doc = JSON.parse(f.mock.calls.find(([u]) => String(u).includes(":commit"))[1].body).writes[0].transform.document;
+    expect(doc).not.toContain("..");
+    expect(doc).not.toContain("?");
+    expect(doc.split("/rateLimits/")[1]).not.toContain("/");
+  });
+  it("falls back without a service account, with an empty key, or when Firestore fails", async () => {
+    const a = fb(), b = fb(), c = fb();
+    expect(await sharedHit({ sa: null, name: "n", key: "u", limit: 1, windowMs: 1000, fallback: a, now })).toBe("memory");
+    expect(await sharedHit({ sa, name: "n", key: "!!!", limit: 1, windowMs: 1000, fallback: b, now })).toBe("memory");
+    expect(await sharedHit({ sa, name: "n", key: "u", limit: 1, windowMs: 1000, fallback: c, fetchFn: counterFetch(0, false), now })).toBe("memory");
   });
 });

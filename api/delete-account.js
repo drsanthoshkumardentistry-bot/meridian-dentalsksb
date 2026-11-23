@@ -4,6 +4,7 @@
 import { makeLimiter } from "./_lib/aiCore.js";
 import { lookupUser } from "./_lib/loginAlertCore.js";
 import { readServiceAccount } from "./_lib/blockCore.js";
+import { sharedHit } from "./_lib/gateCore.js";
 import { eraseClinic } from "./_lib/eraseCore.js";
 import { makeCode, sealTicket, verifyTicket, maskEmail } from "./_lib/codeCore.js";
 import { sendMail, mailReady } from "./_lib/mailCore.js";
@@ -36,7 +37,7 @@ export default async function handler(req, res) {
   // Second step: a code sent to the account's own email address.
   if (body.step === "request") {
     if (!mailReady()) return send(res, 503, { error: "Email codes are not switched on yet. Message us on WhatsApp and we will help you delete the account.", code: "no-mail" });
-    if (!allowCodeMail(user.uid)) return send(res, 429, { error: "Too many codes requested. Try again in an hour." });
+    if (!(await sharedHit({ sa, name: "delcode", key: user.uid, limit: 3, windowMs: 60 * 60 * 1000, fallback: allowCodeMail }))) return send(res, 429, { error: "Too many codes requested. Try again in an hour." });
     const code = makeCode();
     const sent = await sendMail({
       to: user.email,
@@ -47,7 +48,7 @@ export default async function handler(req, res) {
     return send(res, 200, { sent: true, ticket: sealTicket(sa, "delete-account", user.uid, code), to: maskEmail(user.email) });
   }
   if (!verifyTicket(sa, "delete-account", user.uid, body.code, body.ticket)) {
-    if (!allowWrongCode(user.uid)) return send(res, 429, { error: "Too many wrong codes. Try again in an hour." });
+    if (!(await sharedHit({ sa, name: "delwrong", key: user.uid, limit: 10, windowMs: 60 * 60 * 1000, fallback: allowWrongCode }))) return send(res, 429, { error: "Too many wrong codes. Try again in an hour." });
     return send(res, 400, { error: "That code is wrong or has expired. Ask for a new code.", code: "bad-code" });
   }
   if (!allow(user.uid)) return send(res, 429, { error: "Too many attempts. Try again tomorrow." });
