@@ -1,3 +1,5 @@
+import { logoFormat, fitInside } from "./clinicLogo.js";
+
 /* Printable prescription slip (A4 PDF): clinic header, doctor name and council registration number,
  * patient, medicine table, advice and signature line. jsPDF loads only when someone taps the button. */
 
@@ -14,15 +16,29 @@ export const buildPrescriptionPdf = async (patient = {}, profile = {}, { date = 
   const text = (s, x, opts = {}) => doc.text(String(s ?? ""), x, y, opts);
 
   doc.setTextColor(0, 0, 0);
+  // Clinic logo (from Practice Profile) at the top left; the clinic details sit beside it.
+  let textX = L;
+  const fmt = logoFormat(profile.logo);
+  if (fmt) {
+    try {
+      const props = doc.getImageProperties(profile.logo);
+      const box = fitInside(props.width, props.height, 26, 26);
+      if (box.w > 0) { doc.addImage(profile.logo, fmt, L, 12, box.w, box.h); textX = L + Math.max(box.w, 18) + 5; }
+    } catch { /* a logo that cannot be drawn is skipped; the prescription still prints */ }
+  }
   doc.setFont("helvetica", "bold"); doc.setFontSize(16);
-  text(profile.name || "Dental Clinic", L);
+  text(profile.name || "Dental Clinic", textX);
   doc.setFontSize(10);
   text("PRESCRIPTION", R, { align: "right" });
   y += 6; doc.setFont("helvetica", "normal"); doc.setFontSize(9);
   const doctor = [profile.drName, profile.qualification].filter(Boolean).join(", ");
-  [doctor, profile.councilRegNumber ? `Dental Council Reg. No: ${profile.councilRegNumber}` : "", profile.address,
+  const council = profile.councilRegNumber ? `${profile.dentalCouncil ? profile.dentalCouncil + " " : "Dental Council "}Reg. No: ${profile.councilRegNumber}` : "";
+  const place = [profile.address, [profile.city, profile.pincode].filter(Boolean).join(" "), profile.state].filter(Boolean).join(", ");
+  if (profile.tagline) { doc.setFont("helvetica", "italic"); text(String(profile.tagline).slice(0, 90), textX); y += 4.5; doc.setFont("helvetica", "normal"); }
+  [doctor, council, profile.regNumber ? `Clinic Reg. No: ${profile.regNumber}` : "", ...doc.splitTextToSize(place, R - textX),
     [profile.phone, profile.email].filter(Boolean).join("  ")]
-    .filter(Boolean).forEach((s) => { text(s, L); y += 4.5; });
+    .filter(Boolean).forEach((s) => { text(s, textX); y += 4.5; });
+  if (fmt) y = Math.max(y, 12 + 26 + 2); // never let the first rule cut through the logo
   y += 1; doc.line(L, y, R, y); y += 7;
 
   doc.setFontSize(10); doc.setFont("helvetica", "bold");
