@@ -1,0 +1,32 @@
+name: Publish database and storage rules
+# Publishes firestore.rules and storage.rules to Firebase whenever they change on main.
+# It does nothing until the repository secret FIREBASE_SERVICE_ACCOUNT (a service-account JSON) is added.
+on:
+  push:
+    branches: [main]
+    paths: ["firestore.rules", "storage.rules", "firebase.json", ".github/workflows/deploy-rules.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the secret is present
+        id: gate
+        run: |
+          if [ -z "$SA" ]; then echo "FIREBASE_SERVICE_ACCOUNT is not set; skipping."; echo "go=no" >> "$GITHUB_OUTPUT"; else echo "go=yes" >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.go == 'yes'
+        with:
+          node-version: 20
+      - name: Publish rules
+        if: steps.gate.outputs.go == 'yes'
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx --yes firebase-tools@13 deploy --only firestore:rules,storage --project meridian-dental --non-interactive
+          rm -f "$RUNNER_TEMP/sa.json"

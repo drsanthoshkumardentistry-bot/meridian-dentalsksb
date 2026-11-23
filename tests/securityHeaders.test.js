@@ -28,6 +28,29 @@ describe("Content-Security-Policy", () => {
   });
 });
 
+describe("extra response headers", () => {
+  const vercel = () => JSON.parse(read("vercel.json")).headers.flatMap((h) => h.headers);
+  it("both hosts send the same isolation headers and upgrade insecure requests", () => {
+    const headers = read("public/_headers");
+    for (const [k, v] of [["Cross-Origin-Opener-Policy", "same-origin-allow-popups"], ["X-Permitted-Cross-Domain-Policies", "none"]]) {
+      expect(headers).toContain(`${k}: ${v}`);
+      expect(vercel().find((x) => x.key === k)?.value).toBe(v);
+    }
+    expect(cspOf()).toContain("upgrade-insecure-requests");
+  });
+  it("booking requests must be a real mobile number and a dated day", () => {
+    const rules = read("firestore.rules");
+    expect(rules).toContain("phone.matches('[6-9][0-9]{9}')");
+    expect(rules).toContain("date.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')");
+  });
+  it("rules deploy workflow exists and skips cleanly without its secret", () => {
+    const wf = read(".github/workflows/deploy-rules.yml");
+    expect(wf).toContain("FIREBASE_SERVICE_ACCOUNT");
+    expect(wf).toContain("go=no");
+    expect(JSON.parse(read("firebase.json")).storage.rules).toBe("storage.rules");
+  });
+});
+
 describe("offline page", () => {
   it("ships offline.html and a service worker that only handles navigations", () => {
     expect(read("public/offline.html")).toContain("You are offline");

@@ -172,6 +172,9 @@ describe("online booking", () => {
     await seed(env, (db) => setDoc(doc(db, "bookingPages", OWNER), { enabled: true }));
     const db = anon(env);
     await assertFails(addDoc(collection(db, "bookingRequests"), req({ phone: "123" })));
+    await assertFails(addDoc(collection(db, "bookingRequests"), req({ phone: "abcdefghij" })));
+    await assertFails(addDoc(collection(db, "bookingRequests"), req({ phone: "1234567890" })));
+    await assertFails(addDoc(collection(db, "bookingRequests"), req({ date: "<script>ab" })));
     await assertFails(addDoc(collection(db, "bookingRequests"), req({ slot: "Midnight" })));
     await assertFails(addDoc(collection(db, "bookingRequests"), req({ status: "confirmed" })));
     await assertFails(addDoc(collection(db, "bookingRequests"), req({ extra: 1 })));
