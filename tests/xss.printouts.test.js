@@ -6,6 +6,7 @@ import { consentHtml } from "../src/consent.js";
 import { referralSlipHtml } from "../src/referrals.js";
 import { buildReportHtml } from "../src/reports.js";
 import { recordSheetHtml } from "../src/recordSheet.js";
+import { buildBookingPosterHtml } from "../src/bookingPoster.js";
 
 // Every text field a person can type gets a hostile value. Nothing may come out as live HTML or a live attribute.
 const PAY = `"><img src=x onerror=alert(1)><script>alert(2)</script>'\`;}</style><svg onload=alert(3)>`;
@@ -47,5 +48,10 @@ describe("printable pages never turn typed text into live HTML", () => {
   it("patient record sheet", () => {
     const appts = [bag({ date: "2026-11-01", time: "10:00", patientName: PAY })];
     expectSafe(recordSheetHtml(patient, { appointments: appts, invoices: [] }, profile, new Date(2026, 10, 12)), "record sheet");
+  });
+  it("booking poster", () => {
+    const html = buildBookingPosterHtml({ clinicName: PAY, url: PAY, qrPng: 'data:image/png;base64,AAAA"><script>alert(1)</script>' });
+    expectSafe(html, "booking poster");
+    expect(html).not.toContain("<img src=\"data:");
   });
 });
