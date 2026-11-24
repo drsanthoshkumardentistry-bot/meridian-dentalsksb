@@ -22,3 +22,16 @@ export const sortVisits = (visits = []) =>
 
 export const addVisit = (patient, visit) => ({ ...patient, visits: sortVisits([visit, ...(Array.isArray(patient.visits) ? patient.visits : [])]) });
 export const removeVisit = (patient, visitId) => ({ ...patient, visits: (patient.visits || []).filter((v) => v.id !== visitId) });
+
+/** The reception intake (chief complaint) becomes the patient's first visit note, so the doctor need not retype it. */
+export const intakeVisit = (form, id, now = new Date()) => {
+  const complaint = String(form?.chiefComplaint || "").trim();
+  if (!complaint) return null;
+  const built = buildVisit({ complaint, date: dateKey(now) }, id, now);
+  return built.ok ? { ...built.visit, fromIntake: true } : null;
+};
+
+/** One-click "No relevant history": conditions and allergies read None / NRH and the red alert stays clear. */
+export const NRH_TEXT = "None / NRH";
+export const applyNrh = (patient) => ({ ...patient, conditions: NRH_TEXT, allergies: NRH_TEXT, nrh: true });
+export const clearNrh = (patient) => ({ ...patient, conditions: patient.conditions === NRH_TEXT ? "" : patient.conditions, allergies: patient.allergies === NRH_TEXT ? "" : patient.allergies, nrh: false });
