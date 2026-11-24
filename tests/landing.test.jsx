@@ -49,7 +49,7 @@ describe("landing page content", () => {
     render(<LandingPage firebaseConfigured onLoginClick={() => {}} />);
     const sec = document.getElementById("quality");
     expect(sec).toBeTruthy();
-    ["1,450+", "9 crore+"].forEach((n) => expect(sec.textContent).toContain(n));
+    ["1,500+", "9 crore+"].forEach((n) => expect(sec.textContent).toContain(n));
     expect(sec.textContent).toMatch(/not an outside audit/i);
     expect(sec.textContent).toMatch(/calculation logic.*not every screen/i);
     expect(sec.textContent).toMatch(/data-access rules tested/);
@@ -179,7 +179,7 @@ describe("security checks list", () => {
   it("shows the dated security checks and keeps the not-an-outside-audit note", () => {
     render(<LandingPage firebaseConfigured onLoginClick={() => {}} />);
     const sec = document.getElementById("quality");
-    expect(sec.textContent).toContain("Security checks, last run 23 November 2026");
+    expect(sec.textContent).toContain("Security checks, last run 24 November 2026");
     expect(sec.textContent).toContain("limited to pictures and PDFs under 10 MB");
     expect(sec.textContent).toContain("not an outside audit");
   });
