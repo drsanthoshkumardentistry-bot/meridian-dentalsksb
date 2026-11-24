@@ -55,7 +55,7 @@ let googleProvider = null;
 
 if (firebaseConfigured) {
   app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-  startAppCheck(app, env.VITE_RECAPTCHA_SITE_KEY); // before any Firestore request
+  startAppCheck(app, env.VITE_RECAPTCHA_SITE_KEY, env.VITE_TURNSTILE_SITE_KEY); // before any Firestore request
   authInstance = getAuth(app);
 
   // Offline-first: reads and writes keep working without internet and sync later.
