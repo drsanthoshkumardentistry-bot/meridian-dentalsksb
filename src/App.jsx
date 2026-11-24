@@ -10,8 +10,8 @@ import { lazyWithRetry } from "./lazyWithRetry.js";
 import { profileGaps } from "./profileGaps.js";
 import { todaySummary } from "./today.js";
 import { memberDiscountRupees, membershipInvoice, leadPatientPrefill, setLeadStatus, activeMembershipFor } from "./growth.js";
-import { AGING_BUCKETS, agingSummary, filterInvoices, invoiceAgeDays } from "./receivables.js";
-import { toggleFinding, normalizeConditions, chartedCount as chartedTeeth, findingLabel } from "./odontogram.js";
+import { AGING_BUCKETS, agingSummary, invoiceAgeDays } from "./receivables.js";
+import { toggleFinding, chartedCount as chartedTeeth } from "./odontogram.js";
 import { billingSummary, invoiceView, invoicesCsv, buildInvoiceMessage, isOverdue, daysOverdue, dueDateIn } from "./billingView.js";
 import { adjustStock, buildStockItem, stockState, stockSummary, stockView, buildReorderMessage, takeStockForBill } from "./stock.js";
 import { APPT_STATUSES, findClash, diarySummary, diaryView, withStatus, needsUpdate } from "./diary.js";
@@ -58,7 +58,7 @@ import { checkAccess } from "./accessGate.js";
 import AccessLimited from "./components/AccessLimited.jsx";
 import StaffRota from "./components/StaffRota.jsx";
 import TextTemplates from "./components/TextTemplates.jsx";
-import { rxAdviceLines } from "./templates.js";
+import { PatientBilling, VoidInvoiceDialog } from "./components/PatientBilling.jsx";
 import { medicinesOf, upsertMedicine, prescriptionLine } from "./medicines.js";
 import MedicineForm from "./components/MedicineForm.jsx";
 import MedicineLibrary from "./components/MedicineLibrary.jsx";
@@ -80,7 +80,7 @@ import RecycleBinCard from "./components/RecycleBinCard.jsx";
 import { makeBinEntry } from "./recycleBin.js";
 import { saveToBin, listBin, restoreFromBin, removeFromBin } from "./recycleStore.js";
 import { CONTACT, CONTACT_CO } from "./legal.js";
-import { setCariesDetail, pruneCariesDetails, cariesText } from "./caries.js";
+import { setCariesDetail, pruneCariesDetails } from "./caries.js";
 import { compressImage } from "./imageCompress.js";
 import { isDicomFile, dicomToImageFile } from "./dicom.js";
 import OptionLists from "./components/OptionLists.jsx";
@@ -2304,7 +2304,7 @@ export default function App() {
   }, [authUser, isVerified, practiceProfile.upiId, practiceProfile.name]);
   const diaryRowsAll = useMemo(() => diaryView(appointments, { view: diaryViewId, query: diaryQuery }), [appointments, diaryViewId, diaryQuery, dayKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const diaryPage = usePaged(diaryRowsAll, `${diaryViewId}|${diaryQuery}`);
-  const { dashboardPatientSeries, dashboardRevenueSeries, todayKey, trend30, dashboardVisitSeries } = useMemo(() => {
+  const { dashboardPatientSeries, dashboardRevenueSeries, trend30, dashboardVisitSeries } = useMemo(() => {
   const dashboardPatientSeries = dashboardDays.map((date) => {
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
     return {
@@ -3558,18 +3558,7 @@ export default function App() {
           )}
 
           {voidTarget && (
-            <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-slate-900/50 p-0 sm:p-4" onClick={() => setVoidTarget(null)}>
-              <form role="dialog" aria-modal="true" aria-label="Void invoice" onSubmit={handleVoidInvoice} onClick={(e) => e.stopPropagation()} className="w-full sm:max-w-sm bg-white rounded-t-2xl sm:rounded-2xl p-5 space-y-3">
-                <div className="font-bold text-slate-900">Void invoice {voidTarget.id}?</div>
-                <p className="text-xs text-slate-600">The invoice stays on record marked Void and counts as ₹0. Use this for a wrong entry. It cannot be undone.</p>
-                <label htmlFor="void-reason" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Reason</label>
-                <input id="void-reason" autoFocus value={voidReason} onChange={(e) => setVoidReason(e.target.value)} maxLength={200} placeholder="For example: wrong patient or wrong amount" className="w-full text-sm border border-rule rounded-lg px-3 py-2" />
-                <div className="flex gap-2">
-                  <button type="button" onClick={() => setVoidTarget(null)} className="flex-1 py-2 border border-rule rounded-lg text-xs font-semibold text-slate-700">Cancel</button>
-                  <button type="submit" className="flex-1 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold">Void invoice</button>
-                </div>
-              </form>
-            </div>
+            <VoidInvoiceDialog invoice={voidTarget} reason={voidReason} onReason={setVoidReason} onCancel={() => setVoidTarget(null)} onSubmit={handleVoidInvoice} />
           )}
 
           {clinicBinOpen && role === "owner" && CLINIC_ID && (
@@ -5441,37 +5430,15 @@ export default function App() {
                 />
               )}
 
-              {activeModalTab === "Billing" && (() => {
-                const mine = invoices.map(normalizeInvoice).filter((i) => (i.patientId ? i.patientId === activePatient.id : String(i.patient || "").trim().toLowerCase() === String(activePatient.name || "").trim().toLowerCase()));
-                return (
-                  <div className="space-y-3" data-testid="patient-billing">
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm font-bold text-slate-900">Invoices and payments</div>
-                      {canWrite(role, "invoices") && (
-                        <button type="button" onClick={() => startInvoiceFor(activePatient)} className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold">+ New invoice</button>
-                      )}
-                    </div>
-                    {mine.length === 0 ? (
-                      <p className="text-sm text-slate-500">No invoices for this patient yet.</p>
-                    ) : (
-                      <ul className="divide-y divide-rule border border-rule rounded-xl bg-white">
-                        {mine.map((inv) => (
-                          <li key={inv.id} className="p-3 flex flex-wrap items-center gap-2 text-xs">
-                            <span className="font-bold text-blue-700">{inv.id}</span>
-                            <span className="text-slate-500">{inv.date}</span>
-                            <span className="px-2 py-0.5 rounded-full border border-rule font-bold text-slate-700">{paymentStatus(inv)}</span>
-                            <span className="ml-auto font-bold">₹{formatINR(inv.totalP)}</span>
-                            <span className={balancePaise(inv) > 0 ? "font-bold text-rose-700" : "text-slate-500"}>Due ₹{formatINR(balancePaise(inv))}</span>
-                            {!inv.voided && canWrite(role, "invoices") && (
-                              <button type="button" onClick={() => { setPayForm({ amount: "", mode: "Cash" }); setActiveUpiQrInvoice(inv); }} className="px-3 py-1.5 bg-slate-100 border border-rule rounded-lg font-semibold">{balancePaise(inv) > 0 ? "Record payment" : "Payments"}</button>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                );
-              })()}
+              {activeModalTab === "Billing" && (
+                <PatientBilling
+                  patient={activePatient}
+                  invoices={invoices}
+                  canWrite={canWrite(role, "invoices")}
+                  onNew={() => startInvoiceFor(activePatient)}
+                  onPay={(inv) => { setPayForm({ amount: "", mode: "Cash" }); setActiveUpiQrInvoice(inv); }}
+                />
+              )}
 
               {activeModalTab === "Consent" && (
                 <ConsentForms

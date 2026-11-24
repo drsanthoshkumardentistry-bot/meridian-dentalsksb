@@ -40,6 +40,24 @@ describe("clinic owner", () => {
   });
 });
 
+describe("voiding invoices", () => {
+  const inv = (db) => doc(db, "clinics", OWNER, "invoices", "d1");
+  const voided = { reason: "wrong patient", at: "2026-11-24T00:00:00Z" };
+  it("a receptionist cannot add, change or delete the void mark; a manager can", async () => {
+    const rec = asEmail("rec");
+    await assertFails(setDoc(inv(rec), { name: "x", voided }));
+    await assertFails(updateDoc(inv(rec), { voided }));
+    await assertSucceeds(updateDoc(inv(asEmail("mgr")), { voided }));
+    await assertFails(updateDoc(inv(rec), { voided: null }));
+    await assertSucceeds(updateDoc(inv(rec), { name: "re-synced" }));
+    await assertFails(deleteDoc(inv(rec)));
+    await assertSucceeds(deleteDoc(inv(asEmail("mgr"))));
+  });
+  it("a receptionist can still delete or edit an invoice that is not void", async () => {
+    await assertSucceeds(deleteDoc(doc(asEmail("rec"), "clinics", OWNER, "invoices", "d1")));
+  });
+});
+
 describe("team roles", () => {
   it("manager reaches everything", async () => {
     const db = asEmail("mgr");

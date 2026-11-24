@@ -118,7 +118,15 @@ service cloud.firestore {
     match /clinics/{clinicId}/queue/{d}        { allow read, write: if memberHasRole(clinicId, ['manager', 'dentist', 'receptionist']); }
     match /clinics/{clinicId}/invoices/{d} {
       allow read: if memberHasRole(clinicId, ['manager', 'dentist', 'receptionist']);
-      allow write: if memberHasRole(clinicId, ['manager', 'receptionist']);
+      // Voiding a wrong invoice is for the owner and managers. A receptionist can create and edit invoices but cannot
+      // add, change or remove the void mark, and cannot delete a voided invoice (it is part of the audit trail).
+      allow create: if memberHasRole(clinicId, ['manager'])
+                    || (memberHasRole(clinicId, ['receptionist']) && !('voided' in request.resource.data));
+      allow update: if memberHasRole(clinicId, ['manager'])
+                    || (memberHasRole(clinicId, ['receptionist'])
+                        && request.resource.data.get('voided', null) == resource.data.get('voided', null));
+      allow delete: if memberHasRole(clinicId, ['manager'])
+                    || (memberHasRole(clinicId, ['receptionist']) && !('voided' in resource.data));
     }
     match /clinics/{clinicId}/inventory/{d} {
       allow read: if memberHasRole(clinicId, ['manager', 'dentist', 'receptionist']);
