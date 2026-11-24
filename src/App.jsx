@@ -96,7 +96,7 @@ import { addWalkIn, setQueueStatus, pruneQueue } from "./queue.js";
 import { buildBookingPage, bookingUrl, requestToAppointment } from "./booking.js";
 import { publishBookingPage, watchBookingRequests, markBookingRequest } from "./bookingStore.js";
 import { patientSummary } from "./patientSummary.js";
-import { buildVisit, addVisit, removeVisit } from "./visits.js";
+import { buildVisit, addVisit, removeVisit, intakeVisit, applyNrh, clearNrh } from "./visits.js";
 import { shiftDay, dayGrid, hourMarks } from "./dayView.js";
 const LazyOpgViewer = lazyWithRetry(() => import("./components/OpgViewer.jsx"));
 import ExtraRadiographs from "./components/ExtraRadiographs.jsx";
@@ -264,7 +264,7 @@ import {
 } from "./reports";
 import {
   TAX_CATEGORIES, MAX_LINE_ITEMS, computeLineItemTotals, nextInvoiceNumber, normalizeInvoice, addPayment,
-  paidPaise, balancePaise, paymentStatus, buildUpiUri, isValidUpiId, buildInvoiceHtml, formatINR, toPaise, MAX_AMOUNT_P,
+  paidPaise, balancePaise, paymentStatus, voidInvoice, buildUpiUri, isValidUpiId, buildInvoiceHtml, formatINR, toPaise, MAX_AMOUNT_P,
 } from "./billing";
 
 const auth = FirebaseModule.auth;
@@ -1388,6 +1388,7 @@ export default function App() {
       },
       prescriptions: [],
       referrals: [],
+      visits: (() => { const v = intakeVisit(formFields, newId("VN")); return v ? [v] : []; })(),
     };
 
     setPatients((prev) => [tagBranch(created, writeBranch), ...prev]);
@@ -2134,6 +2135,26 @@ export default function App() {
     setActiveNav("Patients & Odontogram");
     setIsAddPatientOpen(true);
     showToast("Fill in the rest of the details and save. The lead will be marked Booked.");
+  };
+
+  const [voidTarget, setVoidTarget] = useState(null);
+  const [voidReason, setVoidReason] = useState("");
+  const handleVoidInvoice = (e) => {
+    e.preventDefault();
+    const current = invoices.find((i) => i.id === voidTarget?.id);
+    const result = voidInvoice(current, voidReason, authUser?.email || "");
+    if (!result.ok) { showToast(result.error); return; }
+    setInvoices((prev) => prev.map((i) => (i.id === current.id ? result.invoice : i)));
+    logAudit("invoice.void", current.id, voidReason.trim());
+    setVoidTarget(null);
+    setVoidReason("");
+    showToast(`Invoice ${current.id} voided`);
+  };
+  const startInvoiceFor = (patient) => {
+    setNewInvoiceForm({ patientId: patient.id, patientName: patient.name, paymentMode: "Cash", items: [blankInvoiceItem()], discount: "", advance: "", dueDate: "", doctor: "" });
+    setIsChartModalOpen(false);
+    setActiveNav("Billing & Invoices");
+    setIsAddInvoiceOpen(true);
   };
 
   const handleCollectPayment = (e) => {
@@ -3471,6 +3492,18 @@ export default function App() {
                           </td>
                           <td data-label="Balance" className={`p-4 font-bold text-sm max-md:block max-md:px-1 max-md:py-1 max-md:before:content-[attr(data-label)] max-md:before:mr-2 max-md:before:text-[10px] max-md:before:font-semibold max-md:before:uppercase max-md:before:text-slate-400 ${balancePaise(inv) > 0 ? "text-rose-600" : "text-emerald-600"}`}>₹{formatINR(balancePaise(inv))}</td>
                           <td className="p-4 text-center md:space-x-1.5 md:whitespace-nowrap max-md:flex max-md:flex-wrap max-md:gap-1.5 max-md:px-1 max-md:pt-2 max-md:text-left">
+                            {inv.voided ? (
+                              <span className="text-[10px] font-bold text-slate-500" title={inv.voided.reason}>Void: {inv.voided.reason}</span>
+                            ) : null}
+                            {!inv.voided && paidPaise(inv) === 0 && canWrite(role, "invoices") && (role === "owner" || role === "manager") ? (
+                              <button
+                                onClick={() => { setVoidReason(""); setVoidTarget(inv); }}
+                                className="px-3 py-1.5 bg-white hover:bg-rose-50 border border-rule text-rose-700 rounded-lg text-xs font-semibold"
+                                aria-label={`Void invoice ${inv.id}`}
+                              >
+                                Void
+                              </button>
+                            ) : null}
                             <button
                               onClick={() => { setPayForm({ amount: "", mode: "Cash" }); setActiveUpiQrInvoice(inv); }}
                               className="px-3 py-1.5 bg-slate-100 hover:bg-blue-50 border border-rule text-slate-800 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5"
@@ -3521,6 +3554,21 @@ export default function App() {
                   </table>
                 </div>
               )}
+            </div>
+          )}
+
+          {voidTarget && (
+            <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-slate-900/50 p-0 sm:p-4" onClick={() => setVoidTarget(null)}>
+              <form role="dialog" aria-modal="true" aria-label="Void invoice" onSubmit={handleVoidInvoice} onClick={(e) => e.stopPropagation()} className="w-full sm:max-w-sm bg-white rounded-t-2xl sm:rounded-2xl p-5 space-y-3">
+                <div className="font-bold text-slate-900">Void invoice {voidTarget.id}?</div>
+                <p className="text-xs text-slate-600">The invoice stays on record marked Void and counts as ₹0. Use this for a wrong entry. It cannot be undone.</p>
+                <label htmlFor="void-reason" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Reason</label>
+                <input id="void-reason" autoFocus value={voidReason} onChange={(e) => setVoidReason(e.target.value)} maxLength={200} placeholder="For example: wrong patient or wrong amount" className="w-full text-sm border border-rule rounded-lg px-3 py-2" />
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setVoidTarget(null)} className="flex-1 py-2 border border-rule rounded-lg text-xs font-semibold text-slate-700">Cancel</button>
+                  <button type="submit" className="flex-1 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold">Void invoice</button>
+                </div>
+              </form>
             </div>
           )}
 
@@ -4974,6 +5022,9 @@ export default function App() {
                     <div className={`rounded-xl border px-3 py-2 ${sm.dueP > 0 ? "border-rose-200 bg-rose-50" : "border-rule bg-enamel"}`}>
                       <div className="text-[11px] text-slate-500">Balance due</div>
                       <div className={`font-bold text-sm ${sm.dueP > 0 ? "text-rose-700" : "text-slate-900"}`}>₹{formatINR(sm.dueP)}</div>
+                      {canWrite(role, "invoices") && (
+                        <button type="button" onClick={() => startInvoiceFor(activePatient)} className="mt-1 text-[11px] font-semibold text-blue-700 hover:underline">+ New invoice</button>
+                      )}
                     </div>
                     <div className="rounded-xl border border-rule bg-enamel px-3 py-2">
                       <div className="text-[11px] text-slate-500">Next visit</div>
@@ -5004,6 +5055,7 @@ export default function App() {
                   "Systemic Review",
                   "Prescriptions",
                   "Treatment Plan",
+                  "Billing",
                   "Lab Work",
                   "Consent",
                   "Certificates",
@@ -5389,6 +5441,38 @@ export default function App() {
                 />
               )}
 
+              {activeModalTab === "Billing" && (() => {
+                const mine = invoices.map(normalizeInvoice).filter((i) => (i.patientId ? i.patientId === activePatient.id : String(i.patient || "").trim().toLowerCase() === String(activePatient.name || "").trim().toLowerCase()));
+                return (
+                  <div className="space-y-3" data-testid="patient-billing">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-bold text-slate-900">Invoices and payments</div>
+                      {canWrite(role, "invoices") && (
+                        <button type="button" onClick={() => startInvoiceFor(activePatient)} className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold">+ New invoice</button>
+                      )}
+                    </div>
+                    {mine.length === 0 ? (
+                      <p className="text-sm text-slate-500">No invoices for this patient yet.</p>
+                    ) : (
+                      <ul className="divide-y divide-rule border border-rule rounded-xl bg-white">
+                        {mine.map((inv) => (
+                          <li key={inv.id} className="p-3 flex flex-wrap items-center gap-2 text-xs">
+                            <span className="font-bold text-blue-700">{inv.id}</span>
+                            <span className="text-slate-500">{inv.date}</span>
+                            <span className="px-2 py-0.5 rounded-full border border-rule font-bold text-slate-700">{paymentStatus(inv)}</span>
+                            <span className="ml-auto font-bold">₹{formatINR(inv.totalP)}</span>
+                            <span className={balancePaise(inv) > 0 ? "font-bold text-rose-700" : "text-slate-500"}>Due ₹{formatINR(balancePaise(inv))}</span>
+                            {!inv.voided && canWrite(role, "invoices") && (
+                              <button type="button" onClick={() => { setPayForm({ amount: "", mode: "Cash" }); setActiveUpiQrInvoice(inv); }} className="px-3 py-1.5 bg-slate-100 border border-rule rounded-lg font-semibold">{balancePaise(inv) > 0 ? "Record payment" : "Payments"}</button>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                );
+              })()}
+
               {activeModalTab === "Consent" && (
                 <ConsentForms
                   patient={activePatient}
@@ -5658,6 +5742,14 @@ export default function App() {
                     Systemic Screening & Allergies
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label className="md:col-span-2 flex items-center gap-2 border border-rule rounded-xl p-3 bg-white text-sm font-semibold text-slate-800">
+                      <input
+                        type="checkbox"
+                        checked={!!activePatient.nrh}
+                        onChange={(e) => setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? (e.target.checked ? applyNrh(p) : clearNrh(p)) : p)))}
+                      />
+                      No relevant history (NRH). Sets conditions and allergies to None / NRH
+                    </label>
                     <div className="border border-rule rounded-xl p-4 bg-white">
                       <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
                         Conditions
