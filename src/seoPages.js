@@ -239,6 +239,46 @@ export const SEO_PAGES = [
       { q: "Is MeriDent free right now?", a: "Yes. It is free during early access, with no credit card. We will tell you well before that changes." },
       { q: "Will the price go up after my team is trained?", a: "Clinics that join during early access keep their plan price for 12 months. After that, any change comes with at least 30 days' written notice." }
     ]
+  },
+  {
+    path: "/help",
+    nav: "Clinic guide",
+    title: "MeriDent clinic guide: set up, chart, bill and manage your team",
+    description: "A step-by-step guide for dental clinics using MeriDent: first-day setup, registering patients, charting, prescriptions, billing, voiding a wrong invoice and team roles.",
+    h1: "The MeriDent clinic guide",
+    lead: "Everything a doctor or front desk needs on day one, in the order you will use it. You can also print the guide as a two-page PDF.",
+    download: { href: "/MeriDent_Clinic_Guide.pdf", label: "Download the guide (PDF)" },
+    sections: [
+      { h: "First day", items: [
+        "Sign in with your email and verify it from your inbox.",
+        "In Practice Profile, add the clinic name, address, phone, UPI ID and logo. They appear on prescriptions and invoices.",
+        "Invite your team from the Team section of Practice Profile with their email and a role."] },
+      { h: "Register a patient", items: [
+        "Open Patients & Odontogram and tap Add Patient.",
+        "Enter the name, mobile, chief complaint and medical history at the desk.",
+        "The chief complaint becomes the first visit note, so the doctor does not retype it."] },
+      { h: "Chart and treat", items: [
+        "Tap a tooth and pick a finding to colour it on the chart.",
+        "Record each visit in Visit Notes, and tick conditions and allergies in Medical History. Tick No relevant history when there is nothing to record.",
+        "Write a prescription and send it as a PDF on WhatsApp."] },
+      { h: "Bill the visit", items: [
+        "Open the patient's Billing tab and tap New invoice. GST is worked out for you.",
+        "Record part-payments, share the UPI QR, or send the invoice on WhatsApp.",
+        "A wrong invoice can be voided by the owner or a manager with a reason. It stays on record and counts as zero. An invoice that already has a payment cannot be voided."] },
+      { h: "Who can do what", items: [
+        "Owner: everything, including the team, the activity log and voiding invoices.",
+        "Manager: patients, diary, billing, stock and reports.",
+        "Dentist: patients, diary and queue, with billing view only.",
+        "Receptionist: patients, diary and billing, but no voiding and no X-rays or photos."] },
+      { h: "Your data and safety", items: [
+        "Export your data at any time. A daily encrypted backup runs automatically, and deleted items go to a recycle bin first.",
+        "Each person signs in with their own email. Remove a team member the day they leave.",
+        "Role limits are enforced on our servers, not only on screen."] }
+    ],
+    faqs: [
+      { q: "Who do I contact if I am stuck?", a: "Message the founders on WhatsApp from the website. Tell us what you tapped and what you expected, and a screenshot helps." },
+      { q: "Can I print the guide?", a: "Yes. Download the PDF above. It is two pages." }
+    ]
   }
 ];
 
