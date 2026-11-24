@@ -22,3 +22,13 @@ if you want it.
 ## Out of scope
 
 Social engineering, attacks that need physical access to a phone, and denial-of-service by volume alone.
+
+## App Check with Cloudflare Turnstile (optional, free)
+
+Proves a request to Firebase comes from the real MeriDent web app. It does nothing until all of these are set:
+
+- Cloudflare Pages build variable `VITE_TURNSTILE_SITE_KEY` (the public Turnstile site key).
+- Cloudflare Pages secrets `TURNSTILE_SECRET_KEY`, `FIREBASE_SERVICE_ACCOUNT` and `APPCHECK_APP_ID` (the Firebase web app id; falls back to `VITE_FIREBASE_APP_ID`).
+- In the Firebase console, App Check, register the web app with the "Custom" provider.
+
+Turn on enforcement for Firestore only after the App Check metrics show verified requests, because enforcing earlier blocks real users. Without the variables the app behaves exactly as before.
