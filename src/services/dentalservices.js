@@ -2,11 +2,7 @@ import {
   collection, 
   doc, 
   setDoc, 
-  getDocs, 
-  updateDoc, 
   onSnapshot, 
-  query, 
-  where, 
   serverTimestamp 
 } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
