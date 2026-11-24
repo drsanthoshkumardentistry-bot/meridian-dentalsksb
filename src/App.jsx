@@ -2583,6 +2583,7 @@ export default function App() {
                 </button>
               );
             })}
+            <a href="/help" target="_blank" rel="noopener noreferrer" className="w-full text-left px-3.5 py-2 text-xs text-slate-600 hover:text-blue-700 block" data-testid="help-link">Help and clinic guide</a>
             {adminData && (
               <button type="button" onMouseEnter={(e) => showNavTip(e, "Admin profile")} onMouseLeave={hideNavTip} onFocus={(e) => showNavTip(e, "Admin profile")} onBlur={hideNavTip} onClick={() => { hideNavTip(); setSidebarOpen(false); setAdminStart("profile"); setAdminView(true); }} data-testid="back-to-admin" className="nav-item group w-full flex items-center gap-3 px-3.5 py-2.5 rounded-full text-[13px] font-medium text-blue-100/80 hover:text-white">
                 <span className="nav-icon"><ShieldCheck className="w-4 h-4" /></span>
