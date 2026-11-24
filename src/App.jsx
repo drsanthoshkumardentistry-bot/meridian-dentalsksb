@@ -5760,7 +5760,7 @@ export default function App() {
                 onClick={() => {
                   const win = window.open("", "_blank");
                   if (!win) { showToast("Allow pop-ups to open the record"); return; }
-                  win.document.write(recordSheetHtml(activePatient, { appointments: allAppointments, invoices: allInvoices }, practiceProfile));
+                  win.document.write(recordSheetHtml(activePatient, { appointments: allAppointments, invoices: allInvoices, palette: CLINICAL_PALETTE }, practiceProfile));
                   win.document.close();
                 }}
                 className="text-brand-700 hover:text-brand-900 font-medium flex items-center gap-1.5"
