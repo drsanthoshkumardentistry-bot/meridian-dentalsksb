@@ -1,6 +1,6 @@
 # If Santhoshkumar is unavailable (exams, illness, travel)
 
-For Sivasabari G or a trusted person. Nothing here needs coding.
+For Sivasabari G or a trusted person. Nothing here needs coding. Access, practice tasks and who answers clinics are in docs/second-operator.md.
 
 ## What keeps running by itself
 - The website, sign-in and clinic data run on Cloudflare Pages and Firebase and need no daily action.
