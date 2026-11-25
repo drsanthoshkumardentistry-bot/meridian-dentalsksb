@@ -67,7 +67,7 @@ describe("landing page content", () => {
       expect(screen.getByText(t)).toBeTruthy()
     );
     const faq = document.getElementById("faq");
-    expect(within(faq).getByText("Does MeriDent handle insurance claims?")).toBeTruthy();
+    expect(within(faq).getByText("Does MeriDent handle insurance or TPA claims?")).toBeTruthy();
     expect(faq.textContent).toMatch(/does not manage insurance/i);
     const features = document.getElementById("features").textContent;
     expect(features).not.toMatch(/insurance|TPA/i);

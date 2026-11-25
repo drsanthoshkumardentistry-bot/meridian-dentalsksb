@@ -197,8 +197,12 @@ const FAQS = [
     a: "Yes. MeriDent runs in your phone or laptop browser, so there is nothing you have to install. To keep it on your home screen, use your browser's \"Add to Home screen\" or \"Install app\" option. Android users can also download the app file from this page. It is not on the Play Store yet, so Android will ask you to allow the install. There is no iPhone app yet; on an iPhone, use Share, then Add to Home Screen."
   },
   {
-    q: "Does MeriDent handle insurance claims?",
-    a: "No. MeriDent is built for what patients pay the clinic: GST invoices, part payments, dues and UPI collection. It does not manage insurance or TPA claims."
+    q: "Does MeriDent handle insurance or TPA claims?",
+    a: "No. MeriDent is built for what patients pay the clinic: GST invoices, part payments, dues and UPI collection. It does not manage insurance or TPA claims, such as pre-authorisation, claim forms or settlement tracking. If your clinic needs this, tell us on WhatsApp so we know how many clinics ask for it."
+  },
+  {
+    q: "What does MeriDent not do yet?",
+    a: "MeriDent is in early access and built by dental students, so it has no long track record or third-party reviews yet. It does not manage insurance or TPA claims. For records, ask us how your clinic's data is stored and backed up before you upload patient data. The security section above lists what is in place today."
   },
   {
     q: "What is MeriDent Connect?",
