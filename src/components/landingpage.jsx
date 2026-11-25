@@ -73,7 +73,9 @@ const FEATURE_GROUPS = [
       { icon: FileText, title: "Medical, treatment & fitness certificates", text: "Print a medical certificate (rest advised), a dental treatment certificate or a fitness certificate with your clinic name, the doctor's name and council number. It prints on plain paper with space for a signature and seal." },
       { icon: ShieldCheck, title: "Caries risk & gum screening", text: "Tick risk factors to see low, moderate or high caries risk with a suggested recall. Score six sextants for a gum (BPE) screening. Both are saved on the patient." },
       { icon: FileText, title: "Signed treatment consents", text: "Pick a consent for an extraction, root canal, implant, braces and more, edit the wording, and have the patient or a parent sign on screen. The signed copy stays on the patient's record and prints on demand." },
-      { icon: FileText, title: "Prescriptions & referrals", text: "Add medicines from presets and share the prescription on WhatsApp. Refer patients between departments." }
+      { icon: FileText, title: "Prescriptions & referrals", text: "Add medicines from presets and send the prescription as a PDF on WhatsApp, with your clinic logo and details on it. Refer patients between departments." },
+      { icon: FileText, title: "Printable patient record", text: "Print or save a readable record with the tooth chart in colour, visit notes, treatment plans, claims and what the patient owes." },
+      { icon: ClipboardList, title: "No relevant history in one tap", text: "Tick No relevant history to set conditions and allergies to None, so the red medical alert stays for real risks. The chief complaint from the front desk becomes the first visit note." }
     ]
   },
   {
@@ -83,6 +85,7 @@ const FEATURE_GROUPS = [
       { icon: CalendarDays, title: "Appointments diary", text: "Book by chair and doctor, with a warning before you double-book. See today and upcoming visits, and mark each one Completed, No show or Cancelled." },
       { icon: IndianRupee, title: "GST billing & UPI QR", text: "Invoices with GST where it applies (therapeutic care is exempt), part payments, a scannable UPI QR for the exact balance, and printable invoices and receipts." },
       { icon: ReceiptText, title: "Multi-item invoices", text: "Bill several treatments on one invoice and mix GST-exempt and 18% work. Discounts are shared out fairly across the items." },
+      { icon: ReceiptText, title: "Billing inside the patient chart", text: "Every patient has a Billing tab with their invoices, a New invoice button and Record payment, so you never leave the chart. A wrong invoice can be voided with a reason by the owner or a manager. It stays on record at zero." },
       { icon: Users, title: "Walk-in queue & triage", text: "Give each walk-in a token, mark urgent cases to go first, see how long each person has waited, and call them in from the diary." },
       { icon: Calendar, title: "Online booking page", text: "Switch on a link you can share on WhatsApp or Instagram. Patients send a request, you confirm it, and it lands in your diary with a WhatsApp confirmation ready." },
       { icon: MessageCircle, title: "Patient feedback", text: "After a visit, one tap opens WhatsApp asking for a rating from 1 to 5. Record the reply, get a flag when someone is unhappy, and send a review link to happy patients." },
