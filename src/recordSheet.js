@@ -1,5 +1,6 @@
 // A readable, printable summary of one patient's record (opens as a page that can be printed or saved as PDF).
 import { formatINR, normalizeInvoice, balancePaise } from "./billing.js";
+import { claimsOf, claimOutstandingP } from "./claims.js";
 import { normalizeConditions, primaryCode, colorOf, findingLabel, isCustomCode } from "./odontogram.js";
 
 const localDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; // the clinic's own calendar day, not UTC
@@ -61,6 +62,7 @@ ${section("Odontogram (tooth chart)", teeth.length ? `${odontogramSvg(patient.to
 ${section("Treatment plans", plans.length ? `<table class="list">${plans.map((p) => `<tr><td>${esc(p.tooth || p.title || p.procedure || "Plan")}${p.procedure && p.tooth ? ` · ${esc(p.procedure)}` : ""}</td><td>${esc(p.status || "")}</td></tr>`).join("")}</table>` : "")}
 ${section("Visit notes", visits.length ? `<table class="list">${visits.map((v) => `<tr><td style="width:90px">${dmy(v.date)}</td><td>${[v.complaint && `Complaint: ${v.complaint}`, v.findings && `Findings: ${v.findings}`, v.treatment && `Treatment: ${v.treatment}`, v.advice && `Advice: ${v.advice}`].filter(Boolean).map(esc).join("<br>")}</td></tr>`).join("")}</table>` : "")}
 ${section("Appointments", appts.length ? `<table class="list">${appts.map((a) => `<tr><td style="width:90px">${dmy(a.date)} ${esc(a.time || "")}</td><td>${esc(a.procedure || a.visitType || "")}</td><td>${esc(a.status || "")}</td></tr>`).join("")}</table>` : "")}
+${section("Insurance and TPA claims", claimsOf(patient).length ? `<table class="list">${claimsOf(patient).map((c) => `<tr><td>${esc(c.insurer)}</td><td>${esc(c.status)}</td><td>₹${formatINR(c.claimedP)} claimed</td><td>${claimOutstandingP(c) > 0 ? `₹${formatINR(claimOutstandingP(c))} owed` : ""}</td></tr>`).join("")}</table>` : "")}
 ${section("Billing", invs.length ? `<table class="list">${invs.map((i) => `<tr><td>${esc(i.id)}</td><td>${dmy(i.date)}</td><td>₹${formatINR(balancePaise(i))} due</td></tr>`).join("")}</table><p><strong>Total due: ₹${formatINR(due)}</strong></p>` : "")}
 <p class="muted" style="margin-top:24px">Confidential patient record. Keep it safe.</p>
 </body></html>`;

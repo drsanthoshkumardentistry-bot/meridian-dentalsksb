@@ -61,16 +61,17 @@ describe("landing page content", () => {
     expect(text).not.toMatch(/trusted by|\d+\+ clinics|testimonial|DPDP compliant|HIPAA|best dental|#1/i);
   });
 
-  it("shows the newer features and is clear that insurance claims are not supported", () => {
+  it("shows the newer features and is clear that claims are tracked, not submitted", () => {
     render(<LandingPage firebaseConfigured onLoginClick={() => {}} />);
     ["MeriDent Connect", "Dues and overdue tracking", "Stock with reorder and expiry alerts", "Staff roster, leave and reviews", "Today at a glance"].forEach((t) =>
       expect(screen.getByText(t)).toBeTruthy()
     );
     const faq = document.getElementById("faq");
     expect(within(faq).getByText("Does MeriDent handle insurance or TPA claims?")).toBeTruthy();
-    expect(faq.textContent).toMatch(/does not manage insurance/i);
+    expect(faq.textContent).toMatch(/does not send claims to insurers/i);
     const features = document.getElementById("features").textContent;
-    expect(features).not.toMatch(/insurance|TPA/i);
+    expect(features).toMatch(/Insurance and TPA claim tracking/);
+    expect(features).toMatch(/does not submit them/);
     expect(features).toMatch(/Expenses & profit/);
   });
 

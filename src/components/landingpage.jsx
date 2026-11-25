@@ -89,6 +89,7 @@ const FEATURE_GROUPS = [
       { icon: Package, title: "Lab order tracking", text: "Send crowns, bridges and dentures to a lab with a due date. See what is late, message the lab on WhatsApp, and tell the patient the moment their work is back." },
       { icon: ClipboardList, title: "Treatment plan follow-up", text: "See estimates patients have not answered and approved plans nobody has booked, and nudge them on WhatsApp with one tap." },
       { icon: IndianRupee, title: "Pay in instalments", text: "In the Collect window, split the balance into 2 to 24 monthly parts. Each one shows Paid, Part paid, Due or Overdue. The bill's due date follows the next unpaid instalment, so the overdue list and reminders follow the plan. Collect any down payment first." },
+      { icon: Wallet, title: "Insurance and TPA claim tracking", text: "Record each claim with the insurer or TPA, policy and claim numbers, amount claimed, approved and settled, and its status. See what insurers still owe the clinic. MeriDent tracks claims; it does not submit them." },
       { icon: Wallet, title: "Dues and overdue tracking", text: "Set a due date, see unpaid money by age, filter to overdue invoices, search by patient and export the list to a spreadsheet." }
     ]
   },
@@ -198,11 +199,11 @@ const FAQS = [
   },
   {
     q: "Does MeriDent handle insurance or TPA claims?",
-    a: "No. MeriDent is built for what patients pay the clinic: GST invoices, part payments, dues and UPI collection. It does not manage insurance or TPA claims, such as pre-authorisation, claim forms or settlement tracking. If your clinic needs this, tell us on WhatsApp so we know how many clinics ask for it."
+    a: "It tracks them. For each patient you can record the insurer or TPA, policy and claim numbers, pre-authorisation, the amount claimed, approved and settled, and the status, and see what insurers still owe the clinic. It does not send claims to insurers or TPAs for you, and it does not fill claim forms. You submit claims the way you do today and keep the follow-up in MeriDent."
   },
   {
     q: "What does MeriDent not do yet?",
-    a: "MeriDent is in early access and built by dental students, so it has no long track record or third-party reviews yet. It does not manage insurance or TPA claims. For records, ask us how your clinic's data is stored and backed up before you upload patient data. The security section above lists what is in place today."
+    a: "MeriDent is in early access and built by dental students, so it has no long track record or third-party reviews yet. It tracks insurance and TPA claims but does not submit them to insurers. For records, ask us how your clinic's data is stored and backed up before you upload patient data. The security section above lists what is in place today."
   },
   {
     q: "What is MeriDent Connect?",
