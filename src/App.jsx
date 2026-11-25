@@ -59,6 +59,8 @@ import AccessLimited from "./components/AccessLimited.jsx";
 import StaffRota from "./components/StaffRota.jsx";
 import TextTemplates from "./components/TextTemplates.jsx";
 import { PatientBilling, VoidInvoiceDialog } from "./components/PatientBilling.jsx";
+import { PatientClaims, ClaimsOverview } from "./components/PatientClaims.jsx";
+import { addClaim, updateClaim, removeClaim, claimsOf } from "./claims.js";
 import { medicinesOf, upsertMedicine, prescriptionLine } from "./medicines.js";
 import MedicineForm from "./components/MedicineForm.jsx";
 import MedicineLibrary from "./components/MedicineLibrary.jsx";
@@ -3344,6 +3346,7 @@ export default function App() {
                   <Plus className="w-4 h-4" /> New Invoice
                 </button>
               </div>
+              <ClaimsOverview patients={patients} onOpen={(id) => { setSelectedPatientId(id); setActiveModalTab("Claims"); setIsChartModalOpen(true); }} />
 
               {invoices.length > 0 && (
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-testid="billing-summary">
@@ -5046,6 +5049,7 @@ export default function App() {
                   "Prescriptions",
                   "Treatment Plan",
                   "Billing",
+                  "Claims",
                   "Lab Work",
                   "Consent",
                   "Certificates",
@@ -5438,6 +5442,16 @@ export default function App() {
                   canWrite={canWrite(role, "invoices")}
                   onNew={() => startInvoiceFor(activePatient)}
                   onPay={(inv) => { setPayForm({ amount: "", mode: "Cash" }); setActiveUpiQrInvoice(inv); }}
+                />
+              )}
+
+              {activeModalTab === "Claims" && (
+                <PatientClaims
+                  patient={activePatient}
+                  canWrite={canWrite(role, "invoices")}
+                  makeId={() => newId("CL")}
+                  onSave={(claim) => { setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? (claimsOf(p).some((c) => c.id === claim.id) ? updateClaim(p, claim) : addClaim(p, claim)) : p))); showToast("Claim saved"); }}
+                  onRemove={(id) => { setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? removeClaim(p, id) : p))); showToast("Claim removed"); }}
                 />
               )}
 
