@@ -31,7 +31,7 @@ describe("landing page content", () => {
     expect(within(faq).getByText("Does MeriDent send WhatsApp messages by itself?")).toBeTruthy();
     expect(faq.textContent).toMatch(/you tap Send/);
     expect(faq.textContent).toMatch(/free during our trial run/i);
-    expect(faq.querySelectorAll("details").length).toBe(13);
+    expect(faq.querySelectorAll("details").length).toBe(14);
   });
 
   it("shows planned pricing with a clear trial-run notice", () => {
