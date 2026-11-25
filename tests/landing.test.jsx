@@ -205,4 +205,10 @@ describe("imaging features", () => {
     expect(screen.getByText(/If a DICOM file is compressed, export it as JPEG or PNG/)).toBeTruthy();
     expect(screen.getByText("Take pictures with a USB or intraoral camera")).toBeTruthy();
   });
+
+  it("lists the billing, record and history features added from clinic feedback", () => {
+    render(<LandingPage firebaseConfigured onLoginClick={() => {}} />);
+    const features = document.getElementById("features").textContent;
+    ["Billing inside the patient chart", "Printable patient record", "No relevant history in one tap", "voided with a reason", "as a PDF on WhatsApp"].forEach((t) => expect(features).toContain(t));
+  });
 });
