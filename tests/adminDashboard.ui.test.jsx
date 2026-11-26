@@ -305,7 +305,7 @@ describe("admin profile page", () => {
     expect(JSON.parse(localStorage.getItem("merident.admin.start"))).toBe("clinics");
   });
   it("opens on the saved start page", () => {
-    localStorage.setItem("merident.admin.start", JSON.stringify("billing"));
+    localStorage.setItem("merident.admin.start", '"billing"');
     render(<AdminDashboard email="boss@x.com" initial={data()} loadFn={vi.fn()} refreshMs={0} now={NOW} />);
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Billing & approvals");
     localStorage.clear();
