@@ -142,6 +142,18 @@ const PLANS = [
   { name: "Scale", price: "₹1,999", unit: "/month", sub: "or ₹19,999 per year", points: ["100 GB for X-rays and photos", "Everything in Growth", "Built for several doctors and branches"] },
 ];
 
+/** A wide app screenshot. On a phone it is shown at a readable size inside a box you can swipe sideways; from tablet width up it fits the box. */
+function WideShot({ src, alt, width, height }) {
+  return (
+    <>
+      <div className="overflow-x-auto md:overflow-visible overscroll-x-contain" tabIndex={0} role="group" aria-label={`${alt} (swipe sideways to see all of it)`}>
+        <img src={src} alt={alt} width={width} height={height} loading="lazy" className="block h-auto w-[780px] max-w-none md:w-full md:max-w-full" />
+      </div>
+      <p className="md:hidden bg-slate-50 px-3 py-1.5 text-center text-[11px] text-slate-500">Swipe sideways to see the whole screen</p>
+    </>
+  );
+}
+
 const QUALITY = [
   { n: "1,500+", label: "automated tests", note: "run before every update goes live" },
   { n: "9 crore+", label: "random stress checks", note: "bad input, odd dates, wrong totals, with 0 failures across all recent runs" },
@@ -567,7 +579,7 @@ export default function LandingPage({
         <p className="lp-reveal mx-auto mt-4 max-w-lg text-slate-300">Patients, diary, billing and stock sit in one menu. It runs in the browser on your phone or laptop.</p>
         <div className="lp-tilt mx-auto mt-11 max-w-[1000px] overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-[0_60px_110px_-50px_rgba(0,0,0,.7)]">
           <div className="flex gap-1.5 px-3.5 py-2.5 bg-slate-50 border-b border-slate-200" aria-hidden="true"><i className="w-2.5 h-2.5 rounded-full bg-slate-300" /><i className="w-2.5 h-2.5 rounded-full bg-slate-300" /><i className="w-2.5 h-2.5 rounded-full bg-slate-300" /></div>
-          <img src="/landing/app.jpg" alt="MeriDent patient records screen" width="1280" height="440" loading="lazy" className="block w-full h-auto" />
+          <WideShot src="/landing/app.jpg" alt="MeriDent patient records screen" width="1280" height="440" />
         </div>
       </section>
 
@@ -599,7 +611,7 @@ export default function LandingPage({
           linkHref="#features"
           linkText="See all features"
         >
-          <img src="/landing/prescription.jpg" alt="MeriDent prescription sets and WhatsApp dispatch" width="1160" height="276" loading="lazy" className="block w-full h-auto" />
+          <WideShot src="/landing/prescription.jpg" alt="MeriDent prescription sets and WhatsApp dispatch" width="1160" height="276" />
         </TourRow>
         <TourRow
           title="Price the plan tooth by tooth. Share it."
@@ -607,7 +619,7 @@ export default function LandingPage({
           linkHref="#features"
           linkText="See all features"
         >
-          <img src="/landing/plan.jpg" alt="MeriDent treatment plan with a price for each treatment" width="1160" height="278" loading="lazy" className="block w-full h-auto" />
+          <WideShot src="/landing/plan.jpg" alt="MeriDent treatment plan with a price for each treatment" width="1160" height="278" />
         </TourRow>
       </section>
 
