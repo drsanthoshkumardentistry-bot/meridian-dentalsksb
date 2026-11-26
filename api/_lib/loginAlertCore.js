@@ -15,15 +15,26 @@ export const buildAlert = ({ email, name, firstTime = false, blockUrl = "" }, no
 };
 
 // Looks up the caller from their Firebase ID token. Returns { uid, email, name, createdAt, lastLoginAt } or null.
-export const lookupUser = async (idToken, fetchFn = fetch) => {
+export const lookupUser = async (idToken, fetchFn = fetch, diag = null) => {
+  const why = (t) => { if (diag) diag.why = t; return null; };
   const apiKey = process.env.VITE_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY;
-  if (!apiKey || !idToken) return null;
+  if (!apiKey) return why("The server has no FIREBASE_API_KEY.");
+  if (!idToken) return why("No sign-in token was sent.");
+  // A key limited to website visits rejects server calls that carry no referrer, so say which site this is.
+  const headers = { "Content-Type": "application/json" };
+  if (process.env.SITE_URL) headers.Referer = String(process.env.SITE_URL).replace(/\/+$/, "") + "/";
   const r = await fetchFn(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`, {
-    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idToken }),
+    method: "POST", headers, body: JSON.stringify({ idToken }),
   });
-  if (!r.ok) return null;
+  if (!r.ok) {
+    let m = "";
+    try { const e = await r.json(); m = e && e.error && e.error.message ? String(e.error.message).slice(0, 160) : ""; } catch { /* no body */ }
+    return why(`Google answered ${r.status}${m ? `: ${m}` : ""}`);
+  }
   const data = await r.json();
   const u = data && data.users && data.users[0];
-  if (!u || !u.email || u.emailVerified === false) return null;
+  if (!u) return why("Google found no account for this sign-in.");
+  if (!u.email) return why("This account has no email address.");
+  if (u.emailVerified === false) return why("This email address is not verified yet.");
   return { uid: u.localId, email: String(u.email).toLowerCase(), name: u.displayName || "", createdAt: Number(u.createdAt) || 0, lastLoginAt: Number(u.lastLoginAt) || 0 };
 };

@@ -19,6 +19,7 @@ export default function AdminAccessProblem({ email = "", problem, onRetry, onHom
         <h1 className="text-lg font-bold text-slate-900">Admin could not open</h1>
         <p className="mt-1 text-sm text-slate-600">Signed in as <strong>{email || "unknown"}</strong>{problem && problem.status ? ` · server answered ${problem.status}` : ""}</p>
         <p className="mt-3 text-sm text-slate-800" role="alert">{adminProblemText(problem)}</p>
+        {problem && problem.why ? <p className="mt-2 rounded-lg bg-slate-100 p-2 text-xs text-slate-700" data-testid="admin-why">Reason from the server: {problem.why}</p> : null}
         <div className="mt-5 flex gap-2">
           <button type="button" onClick={onRetry} className="rounded-lg bg-blue-700 px-3 py-2 text-sm font-semibold text-white">Try again</button>
           <button type="button" onClick={onHome} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800">Go to home</button>
