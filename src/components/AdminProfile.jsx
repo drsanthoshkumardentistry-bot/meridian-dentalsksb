@@ -1,3 +1,4 @@
+import FeatureSwitches from "./FeatureSwitches.jsx";
 import React, { useEffect, useMemo, useState } from "react";
 import { Copy, Download, Plus, Trash2, Hospital, LogOut, Mail, StickyNote, ListChecks, Settings2, TrendingUp, MessageCircle, ShieldCheck, Rocket, UserRound, Megaphone } from "lucide-react";
 import UserAvatar from "./UserAvatar.jsx";
@@ -93,6 +94,8 @@ export default function AdminProfile({ announceLoad, announceSave, user, email =
         </div>
       </section>
 
+
+      {announceSave && <FeatureSwitches onToast={onToast} />}
 
       {announceSave && (
         <section aria-label="Announcement" className={card} data-testid="announcement-editor">

@@ -2,6 +2,7 @@
 // plus the Firebase web API key.
 import { MODEL, GEMINI_MODELS, buildRequest, parseVisitNote, makeLimiter } from "./_lib/aiCore.js";
 import { readServiceAccount } from "./_lib/blockCore.js";
+import { featureOn } from "./_lib/featuresCore.js";
 import { lookupUser } from "./_lib/loginAlertCore.js";
 import { checkAccess, dailyCap, siteDailyHit } from "./_lib/gateCore.js";
 
@@ -40,6 +41,7 @@ export default async function handler(req, res) {
   const sa = readServiceAccount();
   const gate = await checkAccess({ user, sa });
   if (!gate.ok) return send(res, gate.status, { error: gate.error });
+  if (!(await featureOn({ sa }, "ai"))) return send(res, 503, { error: "Meridee is switched off for a short while. Please try again later." });
   if (!(await siteDailyHit({ sa, name: "ai", limit: SITE_CAP(), fallback: () => allowAllMemory("site") }))) return send(res, 429, { error: "Meridee is busy today. Try again tomorrow." });
   if (!allow(uid)) return send(res, 429, { error: "Too many Meridee requests this hour. Try again later." });
 
