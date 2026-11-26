@@ -3,7 +3,7 @@
 import { getAccessToken } from "./blockCore.js";
 
 const SCOPE = "https://www.googleapis.com/auth/datastore https://www.googleapis.com/auth/identitytoolkit";
-export const PLAN_IDS = ["standard", "pro"];
+export const PLAN_IDS = ["standard", "pro", "scale"];
 export const MAX_DAYS = 800;
 const DAY = 86400000;
 

@@ -27,7 +27,7 @@ describe("planStatus", () => {
 });
 describe("subscribeText", () => {
   it("names the plan and clinic only", () => {
-    expect(subscribeText({ planId: "pro", clinic: "Smile" })).toBe("MeriDent: I am interested in the Pro plan (₹999/month).\nClinic: Smile");
+    expect(subscribeText({ planId: "pro", clinic: "Smile" })).toBe("MeriDent: I am interested in the Growth plan (₹999/month).\nClinic: Smile");
     expect(subscribeText({ yearly: true })).toContain("₹4,999 per year");
     expect(() => subscribeText({ planId: "zzz", clinic: null })).not.toThrow();
   });
@@ -37,9 +37,9 @@ describe("PlanCard", () => {
     render(<PlanCard clinic="Smile Dental" />);
     expect(screen.getByTestId("plan-card").textContent).toMatch(/trial run/);
     expect(screen.getByTestId("plan-card").textContent).toMatch(/nobody is being charged/);
-    fireEvent.click(screen.getByLabelText("Pro plan"));
+    fireEvent.click(screen.getByLabelText("Growth plan"));
     const href = screen.getByText(/Message us on WhatsApp/).getAttribute("href");
-    expect(decodeURIComponent(href)).toContain("Pro plan");
+    expect(decodeURIComponent(href)).toContain("Growth plan");
     expect(decodeURIComponent(href)).toContain("Smile Dental");
   });
 });

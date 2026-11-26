@@ -19,7 +19,7 @@ export function buildOverview({ users, presence, plans, requests, now = Date.now
     return {
       uid: x.uid, email: String(x.email || "(no email)").slice(0, 120), created: Number(x.createdAt) || 0, lastLogin: Number(x.lastLoginAt) || 0,
       online: !!(s && s.online), todayMin: s ? s.todayMin : 0, weekMin: s ? s.weekMin : 0,
-      plan: p && (p.plan === "pro" || p.plan === "standard") ? p.plan : "", paidUntil,
+      plan: p && (["standard", "pro", "scale"].includes(p.plan)) ? p.plan : "", paidUntil,
       state: paidUntil > now ? "paid" : paidUntil > 0 ? "expired" : "unpaid",
       request: r ? r.status || "" : "",
     };

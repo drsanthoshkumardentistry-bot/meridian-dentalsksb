@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     if (!body || typeof body !== "object") return send(res, 400, { error: "Bad request." });
     return send(res, 200, await createRequest({ sa, uid: user.uid, email: user.email, plan: body.plan, yearly: body.yearly === true, clinic: body.clinic }));
   } catch (e) {
-    if (e && e.message === "plan") return send(res, 400, { error: "Choose Standard or Pro." });
+    if (e && e.message === "plan") return send(res, 400, { error: "Choose Starter, Growth or Scale." });
     return send(res, 502, { error: "Could not save. Try again in a minute." });
   }
 }

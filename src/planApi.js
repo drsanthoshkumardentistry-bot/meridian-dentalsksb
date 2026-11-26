@@ -8,7 +8,7 @@ export const loadMyPlan = async ({ fetchFn = fetch, getToken = tokenOf } = {}) =
     const res = await fetchFn("/api/my-plan", { headers: { Authorization: `Bearer ${await getToken()}` } });
     if (!res.ok) return { plan: "", paidUntil: 0 };
     const d = await res.json();
-    return { plan: d.plan === "pro" || d.plan === "standard" ? d.plan : "", paidUntil: Number(d.paidUntil) || 0 };
+    return { plan: ["standard", "pro", "scale"].includes(d.plan) ? d.plan : "", paidUntil: Number(d.paidUntil) || 0 };
   } catch (e) { return { plan: "", paidUntil: 0 }; }
 };
 
@@ -34,6 +34,6 @@ export const loadMyRequest = async ({ fetchFn = fetch, getToken = tokenOf } = {}
     const res = await fetchFn("/api/plan-request", { headers: { Authorization: `Bearer ${await getToken()}` } });
     if (!res.ok) return { status: "" };
     const d = await res.json();
-    return { status: ["pending", "approved", "rejected"].includes(d.status) ? d.status : "", plan: d.plan === "pro" ? "pro" : d.plan === "standard" ? "standard" : "" };
+    return { status: ["pending", "approved", "rejected"].includes(d.status) ? d.status : "", plan: ["standard", "pro", "scale"].includes(d.plan) ? d.plan : "" };
   } catch (e) { return { status: "" }; }
 };
