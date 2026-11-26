@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import { legalPageFromSearch } from './legal.js';
 import { seoPageForPath } from './seoPages.js';
+import { blogPostForPath, isBlogIndex } from './blogPosts.js';
 import { shouldAutoReload } from './recover.js';
 import { EARLY_ACCESS_PATH } from './earlyAccess.js';
 import { installErrorReporting } from './errorReport.js';
@@ -21,6 +22,7 @@ const PatientPortalRoute = lazyWithRetry(() => import('./components/PatientPorta
 const LegalPage = lazyWithRetry(() => import('./components/LegalPage.jsx'));
 const PayPage = lazyWithRetry(() => import('./components/PayPage.jsx'));
 const SeoPage = lazyWithRetry(() => import('./components/SeoPage.jsx'));
+const BlogPage = lazyWithRetry(() => import('./components/BlogPage.jsx'));
 const LandingShell = lazyWithRetry(() => import('./components/LandingShell.jsx'));
 const EarlyAccessPage = lazyWithRetry(() => import('./components/EarlyAccessPage.jsx'));
 
@@ -45,6 +47,8 @@ const portalToken = params.get('portal');
 const legalPage = legalPageFromSearch(window.location.search);
 const payPage = params.get('pay') === '1';
 const seoPage = seoPageForPath(window.location.pathname);
+const blogPost = blogPostForPath(window.location.pathname);
+const blogIndex = isBlogIndex(window.location.pathname);
 const earlyAccess = window.location.pathname.replace(/\/+$/, '') === EARLY_ACCESS_PATH;
 
 // Shimmering dashboard-shaped placeholder instead of bare text. After ~4 s it says the connection is slow,
@@ -83,7 +87,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary>
       <Suspense fallback={<Loading />}>
-        {legalPage ? <LegalPage page={legalPage} /> : seoPage ? <SeoPage page={seoPage} /> : earlyAccess ? <EarlyAccessPage /> : payPage ? <PayPage /> : planToken ? <PlanApprovalRoute token={planToken} /> : portalToken ? <PatientPortalRoute token={portalToken} /> : bookId ? <BookingPageRoute clinicId={bookId} /> : <Home />}
+        {legalPage ? <LegalPage page={legalPage} /> : seoPage ? <SeoPage page={seoPage} /> : (blogPost || blogIndex) ? <BlogPage post={blogPost} /> : earlyAccess ? <EarlyAccessPage /> : payPage ? <PayPage /> : planToken ? <PlanApprovalRoute token={planToken} /> : portalToken ? <PatientPortalRoute token={portalToken} /> : bookId ? <BookingPageRoute clinicId={bookId} /> : <Home />}
       </Suspense>
     </ErrorBoundary>
   </React.StrictMode>
