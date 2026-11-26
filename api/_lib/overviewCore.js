@@ -16,11 +16,12 @@ export function buildOverview({ users, presence, plans, requests, now = Date.now
   const clinics = ok(users).filter((x) => x.uid).map((x) => {
     const p = planBy.get(x.uid), r = reqBy.get(x.uid), s = presBy.get(x.uid);
     const paidUntil = p ? Number(p.paidUntil) || 0 : 0;
+    const pausedRemaining = p ? Number(p.pausedRemaining) || 0 : 0;
     return {
       uid: x.uid, email: String(x.email || "(no email)").slice(0, 120), created: Number(x.createdAt) || 0, lastLogin: Number(x.lastLoginAt) || 0,
       online: !!(s && s.online), todayMin: s ? s.todayMin : 0, weekMin: s ? s.weekMin : 0,
       plan: p && (["standard", "pro", "scale"].includes(p.plan)) ? p.plan : "", paidUntil,
-      state: paidUntil > now ? "paid" : paidUntil > 0 ? "expired" : "unpaid",
+      pausedRemaining, state: pausedRemaining > 0 ? "paused" : paidUntil > now ? "paid" : paidUntil > 0 ? "expired" : "unpaid",
       request: r ? r.status || "" : "", suspended: !!x.disabled,
     };
   }).sort((a, b) => Number(b.online) - Number(a.online) || b.lastLogin - a.lastLogin).slice(0, 200);

@@ -35,4 +35,23 @@ describe("clinic account controls", () => {
     await waitFor(() => expect(planFn).toHaveBeenCalledWith({ email: "a@x.com", plan: "scale", days: 90 }));
     await waitFor(() => expect(onToast).toHaveBeenCalledWith("Days must be 1 to 800."));
   });
+  it("asks before pausing a subscription, then pauses it", async () => {
+    const actionFn = vi.fn().mockResolvedValue({ paused: true });
+    render(<ClinicDetail clinic={clinic} onToast={() => {}} actionFn={actionFn} planFn={vi.fn()} />);
+    fireEvent.click(screen.getByText("Pause subscription"));
+    expect(actionFn).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByText("Yes, pause"));
+    await waitFor(() => expect(actionFn).toHaveBeenCalledWith({ email: "a@x.com", action: "pause_subscription" }));
+    await waitFor(() => expect(screen.getByText("This subscription is paused.")).toBeTruthy());
+  });
+  it("offers to start a paused subscription and hides pause for unpaid clinics", async () => {
+    const actionFn = vi.fn().mockResolvedValue({});
+    const { unmount } = render(<ClinicDetail clinic={{ ...clinic, state: "paused" }} onToast={() => {}} actionFn={actionFn} planFn={vi.fn()} />);
+    fireEvent.click(screen.getByText("Start subscription again"));
+    fireEvent.click(screen.getByText("Yes, start"));
+    await waitFor(() => expect(actionFn).toHaveBeenCalledWith({ email: "a@x.com", action: "resume_subscription" }));
+    unmount();
+    render(<ClinicDetail clinic={{ ...clinic, state: "unpaid" }} onToast={() => {}} actionFn={actionFn} planFn={vi.fn()} />);
+    expect(screen.queryByText("Pause subscription")).toBeNull();
+  });
 });

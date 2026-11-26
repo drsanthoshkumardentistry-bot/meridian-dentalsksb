@@ -23,8 +23,10 @@ const ms = (v) => { const n = typeof v === "string" && /[A-Za-z]/.test(v) ? Date
  * state: "free" (trial run, nothing charged), "trial", "paid", or "ended".
  * `paidUntil` and `plan` come from the server later; bad or missing values never lock anyone out while pricing is off.
  */
-export const planStatus = ({ createdAt, paidUntil, plan, now = Date.now(), live = PRICING_LIVE } = {}) => {
+export const planStatus = ({ createdAt, paidUntil, plan, paused, pausedRemaining, now = Date.now(), live = PRICING_LIVE } = {}) => {
   if (!live) return { state: "free", plan: "all", daysLeft: null, allowed: true };
+  const kept = Number(pausedRemaining) || 0;
+  if (paused && kept > 0) return { state: "paused", plan: planIdOr(plan), daysLeft: Math.ceil(kept / DAY_MS), allowed: false };
   const paid = ms(paidUntil);
   if (paid && paid > now) return { state: "paid", plan: planIdOr(plan), daysLeft: Math.ceil((paid - now) / DAY_MS), allowed: true };
   const made = ms(createdAt);
