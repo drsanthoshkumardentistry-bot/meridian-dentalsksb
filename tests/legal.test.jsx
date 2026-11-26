@@ -32,4 +32,8 @@ describe("legal pages", () => {
     const text = JSON.stringify([PRIVACY, TERMS]);
     for (const w of ["Firebase", "Cloudflare", "WhatsApp", "consent", "download a full copy", "delete", "Connect", "Coimbatore"]) expect(text).toContain(w);
   });
+  it("names every service that touches data, so the policy matches the code", () => {
+    const text = JSON.stringify(PRIVACY);
+    for (const w of ["Google", "Cloudflare", "Resend", "Sentry", "Better Stack", "GitHub", "Gemini"]) expect(text).toContain(w);
+  });
 });

@@ -2,7 +2,7 @@
  * Privacy policy and terms of use, written to match what MeriDent actually does today.
  * Plain data so a test can check the facts and the page can render it. Have a lawyer review before relying on it.
  */
-export const LEGAL_UPDATED = "18 November 2026";
+export const LEGAL_UPDATED = "26 November 2026";
 export const CONTACT = { name: "Santhoshkumar S, Founder", whatsapp: "919043205927", display: "+91 90432 05927", email: "meridentapp@gmail.com" };
 export const CONTACT_CO = { name: "Sivasabari G, Co-founder", whatsapp: "918098318039", display: "+91 80983 18039" };
 
@@ -21,7 +21,7 @@ export const PRIVACY = {
       "We may look at technical logs to fix faults. We do not read patient records unless a clinic asks us for support and agrees to it."] },
     { h: "Where it is kept and who can see it", p: [
       "Data is stored with Google Firebase (Cloud Firestore and Firebase Authentication). Each clinic's records sit under its own account and are not visible to other clinics. Only people the clinic invites, with a role the clinic chooses, can open them. Branch-limited staff see only their branch.",
-      "Our service providers are Google (data storage and sign-in), Cloudflare (website hosting and security) and, only when a clinic switches on Meridee writing help, Google (the Gemini AI service). They process data only to provide those services.",
+      "Our service providers are Google (data storage and sign-in), Cloudflare (website hosting, security and a bot check that protects the database), Resend (emails such as invitations and sign-in alerts), Sentry (error reports, with personal-looking text removed and no patient records), Better Stack (checks that the website is up), GitHub (it holds our encrypted daily copy of the database for 90 days, which only a private key we keep can open) and, only when a clinic switches on Meridee writing help, Google (the Gemini AI service). They process data only to provide those services.",
       "While someone is signed in, MeriDent records when their sign-in address was last active and how many minutes per day it was in use. This is kept so we can support clinics and manage plans. It holds the sign-in email and times only, never patient or clinic records.", "When someone signs in, MeriDent may send a short email to its operator saying which sign-in address signed in and when. It holds no patient or clinic records. The email is sent through Resend, an email service, and is used to watch for unusual access."] },
     { h: "Meridee writing help", p: [
       "Meridee also has a Help chat in the bottom right corner. It sends only the question a user types, and the recent chat, to the AI service so it can answer how to use MeriDent. Users are told not to type patient details.",
