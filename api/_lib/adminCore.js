@@ -53,3 +53,21 @@ export const listAllUsers = async ({ sa, fetchFn = fetch, now = Date.now() }) =>
   }
   return out;
 };
+
+/** When did the holder of this Firebase ID token last actually sign in? Seconds since 1970, or 0. Call only after the token is verified. */
+export const signInTime = (token) => {
+  try {
+    const part = String(token || "").split(".")[1] || "";
+    const json = typeof atob === "function" ? atob(part.replace(/-/g, "+").replace(/_/g, "/")) : Buffer.from(part, "base64").toString();
+    const t = Number(JSON.parse(json).auth_time);
+    return Number.isFinite(t) && t > 0 ? t : 0;
+  } catch { return 0; }
+};
+
+export const FRESH_SIGNIN_SECONDS = 30 * 60;
+/** Money actions need a sign-in from the last 30 minutes, so a phone left unlocked or a stolen session cannot approve payments. */
+export const signedInRecently = (token, nowMs = Date.now()) => {
+  const t = signInTime(token);
+  return t > 0 && nowMs / 1000 - t <= FRESH_SIGNIN_SECONDS;
+};
+export const FRESH_SIGNIN_MESSAGE = "For safety, sign out and sign in again, then do this once more.";
