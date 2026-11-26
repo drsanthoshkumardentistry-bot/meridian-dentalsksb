@@ -9,7 +9,7 @@ Paste-ready text for the free listings that send search credibility to the websi
 - Category: Dental practice management software (cloud, runs in a web browser)
 - Founders: Santhoshkumar S and Sivasabari G, Coimbatore
 - Registered: StartupTN ref STN99974, MSME Udyam UDYAM-TN-04-0139569
-- Price: free during early access, no credit card. Planned: Standard 499 rupees a month or 4,999 a year, Pro 999 rupees a month.
+- Price: free during early access, no credit card. Planned (before GST, by X-ray and photo storage): Starter 499 rupees a month (5 GB), Growth 999 (25 GB), Scale 1,999 (100 GB); yearly is about 10 months for 12.
 - Logo: https://www.meridiandentalos.com/logo.png (square 512 px: /icon-512.png)
 - Contact: WhatsApp +91 90432 05927 (the number on the website)
 

@@ -40,8 +40,11 @@ describe("landing page content", () => {
     expect(sec).toBeTruthy();
     expect(within(sec).getByRole("note").textContent).toMatch(/trial run/i);
     expect(within(sec).getByRole("note").textContent).toMatch(/nobody is being charged/i);
-    ["₹0", "₹499", "₹999"].forEach((p) => expect(sec.textContent).toContain(p));
+    ["₹0", "₹499", "₹999", "₹1,999"].forEach((p) => expect(sec.textContent).toContain(p));
     expect(sec.textContent).toMatch(/₹4,999 per year/);
+    expect(sec.textContent).toMatch(/5 GB.*25 GB.*100 GB/);
+    expect(sec.textContent).toMatch(/storage meter and limits are not switched on/i);
+    expect(sec.textContent).not.toMatch(/unlimited/i);
     expect(document.querySelector('a[href="#pricing"]')).toBeTruthy();
   });
 

@@ -137,8 +137,9 @@ const COMING_NEXT = [
 
 const PLANS = [
   { name: "Free trial", price: "₹0", unit: "", sub: "for 30 days", points: ["Every feature included", "No card needed", "Export your data any time"] },
-  { name: "Standard", price: "₹499", unit: "/month", sub: "or ₹4,999 per year", hot: true, points: ["Patients, charting, appointments", "Billing and invoices", "Backups, import and export"] },
-  { name: "Pro", price: "₹999", unit: "/month", sub: "everything in Standard, plus", points: ["WhatsApp sending", "Multiple branches", "AI features"] },
+  { name: "Starter", price: "₹499", unit: "/month", sub: "or ₹4,999 per year", points: ["5 GB for X-rays and photos", "Patients, charting, appointments", "Billing, backups, import and export"] },
+  { name: "Growth", price: "₹999", unit: "/month", sub: "or ₹9,999 per year", hot: true, points: ["25 GB for X-rays and photos", "Everything in Starter", "Multiple branches", "AI features"] },
+  { name: "Scale", price: "₹1,999", unit: "/month", sub: "or ₹19,999 per year", points: ["100 GB for X-rays and photos", "Everything in Growth", "Built for several doctors and branches"] },
 ];
 
 const QUALITY = [
@@ -170,7 +171,7 @@ const FAQS = [
   },
   {
     q: "Will the price go up after my team is trained?",
-    a: "Clinics that join during early access keep their plan price for 12 months. After that, any change comes with at least 30 days' written notice, so you can decide before it applies.",
+    a: "Clinics that join during early access keep their plan price for 12 months. After that, any change comes with at least 60 days' written notice, so you can decide before it applies.",
   },
   {
     q: "MeriDent is new. What if it shuts down?",
@@ -740,7 +741,7 @@ export default function LandingPage({
           <div role="note" className="mb-8 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             <strong>We are in our trial run.</strong> These are our planned prices, and nobody is being charged yet. Everything is free for now. The first 10 clinics get 3 months free in return for feedback, then keep a locked-in early price.
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             {PLANS.map((plan) => (
               <div key={plan.name} className={`lp-reveal lp-lift rounded-2xl border-2 p-6 ${plan.hot ? "border-ink bg-ink text-white" : "border-slate-200 bg-white"}`}>
                 <h3 className={`font-display font-bold text-lg ${plan.hot ? "text-slate-300" : "text-brand-600"}`}>{plan.name}</h3>
@@ -752,7 +753,7 @@ export default function LandingPage({
               </div>
             ))}
           </div>
-          <p className="mt-6 text-sm text-slate-500">You can download all your data at any time, on every plan. Prices may change before we start charging, and we will tell you first.</p>
+          <p className="mt-6 text-sm text-slate-500">Prices are per clinic and before GST. The storage is for X-rays and photos, which we compress when you upload them. Need more room? Extra storage is planned at ₹99 per 10 GB a month. The storage meter and limits are not switched on yet, so nothing is limited during the trial run. You can download all your data at any time, on every plan. Prices may change before we start charging, and we will tell you first.</p>
         </div>
       </section>
 

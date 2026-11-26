@@ -40,7 +40,7 @@ describe("admin dashboard", () => {
     expect(t.getByText("a@x.com")).toBeTruthy();
     expect(t.getAllByText("Online").length).toBeGreaterThan(1); // the filter button and the clinic's own status
     expect(t.getByText("1h 30m")).toBeTruthy();
-    expect(t.getByText(/Pro until/)).toBeTruthy();
+    expect(t.getByText(/Growth until/)).toBeTruthy();
     expect(t.getByText(/ended/)).toBeTruthy();
     expect(mins(0)).toBe("-");
     expect(mins(45)).toBe("45m");
@@ -56,7 +56,7 @@ describe("admin dashboard", () => {
     fireEvent.click(box.getByText("Yes, activate"));
     await waitFor(() => expect(decide).toHaveBeenCalledWith({ uid: "uidB1234", action: "approve" }));
     expect(await screen.findByRole("status")).toBeTruthy();
-    expect(screen.getByRole("status").textContent).toContain("b@x.com has Standard until");
+    expect(screen.getByRole("status").textContent).toContain("b@x.com has Starter until");
   });
   it("can reject, and can cancel an approval", async () => {
     const decide = vi.fn(async () => ({ status: "rejected" }));
@@ -120,16 +120,16 @@ describe("plan card requests", () => {
   it("sends a request for the chosen plan and then shows it is waiting", async () => {
     const requestFn = vi.fn(async () => ({ status: "pending" }));
     render(<PlanCard clinic="Smile" requestFn={requestFn} myRequestFn={async () => ({ status: "" })} loadFn={async () => ({ plan: "", paidUntil: 0 })} />);
-    fireEvent.click(screen.getByLabelText("Pro plan"));
-    fireEvent.click(screen.getByText("Request Pro"));
+    fireEvent.click(screen.getByLabelText("Growth plan"));
+    fireEvent.click(screen.getByText("Request Growth"));
     await waitFor(() => expect(requestFn).toHaveBeenCalledWith({ plan: "pro", yearly: false, clinic: "Smile" }));
-    expect((await screen.findByTestId("plan-request-status")).textContent).toContain("Pro is with us");
-    expect(screen.getByText("Request Pro").disabled).toBe(true);
+    expect((await screen.findByTestId("plan-request-status")).textContent).toContain("Growth is with us");
+    expect(screen.getByText("Request Growth").disabled).toBe(true);
   });
   it("shows an earlier request and reports a failure with the WhatsApp fallback", async () => {
     render(<PlanCard myRequestFn={async () => ({ status: "rejected" })} loadFn={async () => ({ plan: "", paidUntil: 0 })} requestFn={async () => { throw new Error("Requests are not switched on yet. Use WhatsApp."); }} />);
     expect((await screen.findByTestId("plan-request-status")).textContent).toMatch(/not approved/);
-    fireEvent.click(screen.getByText("Request Standard"));
+    fireEvent.click(screen.getByText("Request Starter"));
     expect((await screen.findByRole("alert")).textContent).toContain("Use WhatsApp");
   });
 });

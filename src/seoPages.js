@@ -294,21 +294,23 @@ export const SEO_PAGES = [
     path: "/dental-software-pricing",
     nav: "Pricing",
     title: "Dental clinic software pricing in rupees | MeriDent",
-    description: "MeriDent is free during early access. Planned prices: Free trial, Standard at 499 rupees a month or 4,999 a year, and Pro at 999 rupees a month. Nobody is charged yet.",
+    description: "MeriDent is free during early access. Planned prices by X-ray and photo storage: Starter 499 rupees a month, Growth 999 and Scale 1,999. Nobody is charged yet.",
     h1: "Dental clinic software pricing, in rupees",
     lead: "MeriDent is free during our trial run, with no credit card. These are the planned prices, and nobody is being charged yet.",
     sections: [
       { h: "Planned plans", items: [
         "Free trial: ₹0 for 30 days.",
-        "Standard: ₹499 per month, or ₹4,999 per year.",
-        "Pro: ₹999 per month, with multiple branches and more."] },
+        "Starter: ₹499 per month, or ₹4,999 per year, with 5 GB for X-rays and photos.",
+        "Growth: ₹999 per month, or ₹9,999 per year, with 25 GB and multiple branches.",
+        "Scale: ₹1,999 per month, or ₹19,999 per year, with 100 GB for several doctors and branches.",
+        "Extra storage: ₹99 per 10 GB a month. Prices are before GST. Storage limits are not switched on yet."] },
       { h: "What we promise", items: [
         "Clinics that join during early access keep their plan price for 12 months.",
-        "Any later change comes with at least 30 days' written notice."] }
+        "Any later change comes with at least 60 days' written notice."] }
     ],
     faqs: [
       { q: "Is MeriDent free right now?", a: "Yes. It is free during early access, with no credit card. We will tell you well before that changes." },
-      { q: "Will the price go up after my team is trained?", a: "Clinics that join during early access keep their plan price for 12 months. After that, any change comes with at least 30 days' written notice." }
+      { q: "Will the price go up after my team is trained?", a: "Clinics that join during early access keep their plan price for 12 months. After that, any change comes with at least 60 days' written notice." }
     ]
   },
   {

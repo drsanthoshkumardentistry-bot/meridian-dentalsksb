@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { LayoutDashboard, IndianRupee, Users, Menu, X, LogOut, Hospital, UserCog, RefreshCw, CheckCircle2 } from "lucide-react";
 import NotificationBell from "./NotificationBell.jsx";
 import ClinicDetail from "./ClinicDetail.jsx";
+import { planName as planLabel } from "../plan.js";
 import AdminProfile from "./AdminProfile.jsx";
 import { readLocal, writeLocal, weeklySignups, renewalsTimeline, sortClinics, SORTS } from "../adminTools.js";
 import FullscreenButton from "./FullscreenButton.jsx";
@@ -16,7 +17,7 @@ const ago = (ms, now = Date.now()) => {
   return m < 2 ? "just now" : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : date(ms);
 };
 const rupees = (n) => `₹${Math.round(n).toLocaleString("en-IN")}`;
-const planName = (p, yearly) => `${p === "pro" ? "Pro" : "Standard"}${yearly ? " (yearly)" : ""}`;
+const planName = (p, yearly) => `${planLabel(p)}${yearly ? " (yearly)" : ""}`;
 const weekday = (day) => { const d = new Date(`${day}T00:00:00`); return Number.isNaN(d.getTime()) ? day.slice(5) : d.toLocaleDateString("en-GB", { weekday: "short" }); };
 const DAY = 86400000;
 const AVATARS = ["bg-brand-600", "bg-aqua-600", "bg-emerald-600", "bg-violet-600", "bg-gold-700", "bg-rose-600"];

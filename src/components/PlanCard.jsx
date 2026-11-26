@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { loadMyPlan, requestPlan, loadMyRequest } from "../planApi.js";
-import { PLANS, planStatus, subscribeText } from "../plan.js";
+import { PLANS, EXTRA_STORAGE, planName, planStatus, subscribeText } from "../plan.js";
 import { CONTACT } from "../legal.js";
 
 /** Settings: shows the clinic its plan. During the trial run everything is free and nothing is charged. */
@@ -24,10 +24,10 @@ export default function PlanCard({ clinic = "", createdAt, now, loadFn = loadMyP
         <h2 className="text-base font-bold text-slate-900">Your plan</h2>
         {status.state === "free" && <p className="text-xs text-slate-600">We are in our trial run. Everything is free for now and nobody is being charged. We will tell you well before that changes.</p>}
         {status.state === "trial" && <p className="text-xs text-slate-600">Free trial: {status.daysLeft} days left. Everything is included.</p>}
-        {status.state === "paid" && <p className="text-xs text-slate-600">{status.plan === "pro" ? "Pro" : "Standard"} plan, {status.daysLeft} days left.</p>}
+        {status.state === "paid" && <p className="text-xs text-slate-600">{planName(status.plan)} plan, {status.daysLeft} days left.</p>}
         {status.state === "ended" && <p role="alert" className="text-xs text-rose-700">Your free trial has ended. Choose a plan to keep using MeriDent. You can always download your data.</p>}
       </div>
-      <div className="grid sm:grid-cols-2 gap-2">
+      <div className="grid sm:grid-cols-3 gap-2">
         {PLANS.map((p) => (
           <label key={p.id} className={`rounded-lg border p-3 text-xs cursor-pointer ${planId === p.id ? "border-blue-600 bg-blue-50" : "border-slate-200"}`}>
             <input type="radio" name="plan" className="sr-only" checked={planId === p.id} onChange={() => setPlanId(p.id)} aria-label={`${p.name} plan`} />
@@ -36,8 +36,8 @@ export default function PlanCard({ clinic = "", createdAt, now, loadFn = loadMyP
           </label>
         ))}
       </div>
-      <p className="text-[11px] text-slate-500">Planned prices, per clinic. The first 10 clinics get 3 months free in return for feedback.</p>
-      {req.status === "pending" && <p role="status" className="text-xs text-blue-800" data-testid="plan-request-status">Your request for {req.plan === "pro" ? "Pro" : "Standard"} is with us. We will confirm once your payment is received.</p>}
+      <p className="text-[11px] text-slate-500">Planned prices before GST, per clinic. Need more space for X-rays? Extra {EXTRA_STORAGE.gb} GB is planned at ₹{EXTRA_STORAGE.monthly}/month. Storage limits and the usage meter are not switched on yet. The first 10 clinics get 3 months free in return for feedback.</p>
+      {req.status === "pending" && <p role="status" className="text-xs text-blue-800" data-testid="plan-request-status">Your request for {planName(req.plan)} is with us. We will confirm once your payment is received.</p>}
       {req.status === "approved" && <p role="status" className="text-xs text-emerald-700" data-testid="plan-request-status">Your last request was approved.</p>}
       {req.status === "rejected" && <p role="status" className="text-xs text-rose-700" data-testid="plan-request-status">Your last request was not approved. Message us on WhatsApp to sort it out.</p>}
       {reqMsg && <p role="alert" className="text-xs text-rose-700">{reqMsg}</p>}

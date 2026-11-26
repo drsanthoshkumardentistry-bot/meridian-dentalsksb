@@ -8,7 +8,7 @@ export const DAYS_FOR = (yearly) => (yearly ? 365 : 30);
 export const createRequest = async ({ sa, uid, email, plan, yearly = false, clinic = "", fetchFn = fetch, now = Date.now() }) => {
   if (!goodUid(uid)) throw new Error("uid");
   if (!PLAN_IDS.includes(plan)) throw new Error("plan");
-  const y = plan === "standard" && yearly === true; // only Standard has a yearly price
+  const y = yearly === true; // every plan has a yearly price
   const data = { plan, yearly: y, clinic: String(clinic || "").slice(0, 80), email: String(email || "").slice(0, 120), status: "pending", createdAt: now, decidedAt: 0 };
   await putDoc({ sa, path: `planRequests/${encodeURIComponent(uid)}`, data, fetchFn, now });
   return { status: "pending", plan, yearly: y };

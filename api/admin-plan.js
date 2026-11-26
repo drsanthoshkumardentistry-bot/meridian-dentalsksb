@@ -1,4 +1,4 @@
-// Vercel function: POST /api/admin-plan { email, plan: "standard"|"pro", days }. Founder only (FOUNDER_EMAILS).
+// Vercel function: POST /api/admin-plan { email, plan: "standard"|"pro"|"scale", days }. Founder only (FOUNDER_EMAILS).
 // Marks a clinic as paid for that many more days. Paying again before expiry adds to the time left.
 import { makeLimiter } from "./_lib/aiCore.js";
 import { lookupUser } from "./_lib/loginAlertCore.js";
@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     const r = await setPlan({ sa, uid, plan: body.plan, days: body.days, email: String(body.email).toLowerCase() });
     return send(res, 200, r);
   } catch (e) {
-    if (e && (e.message === "plan" || e.message === "days")) return send(res, 400, { error: e.message === "plan" ? "Choose Standard or Pro." : "Days must be 1 to 800." });
+    if (e && (e.message === "plan" || e.message === "days")) return send(res, 400, { error: e.message === "plan" ? "Choose Starter, Growth or Scale." : "Days must be 1 to 800." });
     return send(res, 502, { error: "Could not save. Try again in a minute." });
   }
 }

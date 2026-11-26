@@ -97,7 +97,7 @@ describe("client", () => {
     fireEvent.change(screen.getByLabelText("Plan"), { target: { value: "pro" } });
     fireEvent.change(screen.getByLabelText("Time paid for"), { target: { value: "90" } });
     fireEvent.click(screen.getByText("Save"));
-    await waitFor(() => expect(screen.getByRole("status").textContent).toMatch(/Pro until/));
+    await waitFor(() => expect(screen.getByRole("status").textContent).toMatch(/Growth until/));
     expect(payFn).toHaveBeenCalledWith({ email: "clinic@x.com", plan: "pro", days: 90 });
   });
   it("plan card shows paid time when the server says so, even while pricing is off it stays free", async () => {

@@ -99,7 +99,7 @@ describe("subscription requests", () => {
   it("creates a pending request, lets the clinic read only its own, and sanitises input", async () => {
     const fs = fakeFirestore();
     const r = await createRequest({ sa, uid: "uidA1234", email: "a@x.com", plan: "pro", yearly: true, clinic: "x".repeat(200), fetchFn: fs.fetchFn, now: NOW });
-    expect(r).toEqual({ status: "pending", plan: "pro", yearly: false }); // Pro has no yearly price
+    expect(r).toEqual({ status: "pending", plan: "pro", yearly: true }); // every plan has a yearly price
     expect(dec(fs.docs.get("planRequests/uidA1234")).clinic).toHaveLength(80);
     expect((await getRequest({ sa, uid: "uidA1234", fetchFn: fs.fetchFn })).status).toBe("pending");
     expect((await getRequest({ sa, uid: "uidZ9999", fetchFn: fs.fetchFn })).status).toBe("");
