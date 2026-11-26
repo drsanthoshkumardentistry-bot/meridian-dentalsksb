@@ -2432,6 +2432,14 @@ export default function App() {
     return <AccessLimited email={authUser.email} onLogout={() => handleLogout()} />;
   }
 
+  // The admin panel never needs the clinic database, so it opens as soon as the server has answered, even if Firestore is slow or broken.
+  if (isVerified && adminProblem && isAdminPath(window.location.pathname)) {
+    return <AdminAccessProblem email={authUser.email} problem={adminProblem} onRetry={() => setAdminTry((n) => n + 1)} onHome={() => { try { sessionStorage.setItem("merident.admin", "clinic"); } catch { /* ignore */ } window.location.assign("/"); }} />;
+  }
+  if (isVerified && adminData && (adminData.adminOnly || (isAdminPath(window.location.pathname) && adminOpen))) {
+    return <AdminDashboard email={authUser.email} user={authUser} startView={adminStart} initial={adminData} onOpenApp={() => { setAdminView(false); if (isAdminPath(window.location.pathname)) window.location.assign("/"); }} onLogout={() => handleLogout()} />;
+  }
+
   if (isVerified && (!membershipReady || (db && accessState === "checking"))) {
     return <AppLoading />;
   }
