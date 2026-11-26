@@ -5,6 +5,7 @@ import { makeLimiter } from "./_lib/aiCore.js";
 import { lookupUser } from "./_lib/loginAlertCore.js";
 import { buildSend } from "./_lib/whatsappCore.js";
 import { readServiceAccount } from "./_lib/blockCore.js";
+import { featureOn } from "./_lib/featuresCore.js";
 import { checkAccess, dailyCap, siteDailyHit } from "./_lib/gateCore.js";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -35,7 +36,9 @@ export default async function handler(req, res) {
   const sa = readServiceAccount();
   const gate = await checkAccess({ user, sa, minAgeMs: DAY });
   if (!gate.ok) return send(res, gate.status, { error: gate.error });
-  if (body.check) return send(res, 200, { enabled: true });
+  const waOn = await featureOn({ sa }, "whatsapp");
+  if (body.check) return send(res, 200, { enabled: waOn });
+  if (!waOn) return send(res, 503, { error: "WhatsApp sending is switched off for a short while." });
 
   const built = buildSend({ ...body, lang: process.env.WHATSAPP_TEMPLATE_LANG || "en" });
   if (built.error) return send(res, 400, { error: built.error });
