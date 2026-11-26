@@ -7,7 +7,7 @@ import { buildOverview } from "../api/_lib/overviewCore.js";
 import { enc, dec } from "../api/_lib/fsLite.js";
 import overview from "../api/admin-overview.js";
 import adminRequest from "../api/admin-request.js";
-import { signedInRecently, signInTime } from "../api/_lib/adminCore.js";
+import { signedInRecently, signInTime, isAdminOnly, adminOnlyEmails } from "../api/_lib/adminCore.js";
 // A token shaped like a Firebase ID token whose sign-in was ageSec seconds ago. The server only reads auth_time after Firebase has vouched for the token.
 const jwt = (ageSec) => `h.${Buffer.from(JSON.stringify({ auth_time: Math.floor(Date.now() / 1000) - ageSec })).toString("base64url")}.s`;
 import planRequest from "../api/plan-request.js";
@@ -236,5 +236,15 @@ describe("fresh sign-in for money actions", () => {
     expect(signedInRecently(jwt(31 * 60))).toBe(false);
     expect(signedInRecently("")).toBe(false);
     expect(signedInRecently("a.b.c")).toBe(false);
+  });
+});
+
+describe("admin-only account", () => {
+  it("defaults to meridentapp@gmail.com and can be changed or switched off", () => {
+    expect(isAdminOnly("MeriDentApp@gmail.com")).toBe(true);
+    expect(isAdminOnly("someone@x.com")).toBe(false);
+    expect(isAdminOnly("")).toBe(false);
+    expect(isAdminOnly("a@x.com", "a@x.com, b@x.com")).toBe(true);
+    expect(adminOnlyEmails("")).toEqual([]);
   });
 });
