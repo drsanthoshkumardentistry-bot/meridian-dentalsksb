@@ -53,7 +53,7 @@ export const listAllUsers = async ({ sa, fetchFn = fetch, now = Date.now() }) =>
     const r = await fetchFn(url, { headers: { Authorization: `Bearer ${token}` } });
     if (!r.ok) throw new Error("identity " + r.status);
     const d = await r.json();
-    for (const u of d.users || []) out.push({ uid: u.localId, email: u.email, createdAt: u.createdAt, lastLoginAt: u.lastLoginAt });
+    for (const u of d.users || []) out.push({ uid: u.localId, email: u.email, createdAt: u.createdAt, lastLoginAt: u.lastLoginAt, disabled: !!u.disabled });
     if (!d.nextPageToken) break;
     pageToken = d.nextPageToken;
   }

@@ -328,6 +328,7 @@ export default function AdminDashboard({ email = "", initial = null, loadFn = lo
                           : c.state === "expired" ? <Chip tone="bg-gold-50 text-gold-700">{`${planName(c.plan)} ended ${date(c.paidUntil)}`}</Chip>
                           : <Chip>Free trial</Chip>}
                         {c.request === "pending" && <Chip tone="bg-brand-600 text-white">Plan requested</Chip>}
+                        {c.suspended && <Chip tone="bg-red-50 text-red-700">Suspended</Chip>}
                       </div>
                       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-0.5 text-[11px] text-slate-500 [&>span]:whitespace-nowrap">
                         <span>Today <b className="text-slate-800 tabular-nums">{mins(c.todayMin)}</b></span>
