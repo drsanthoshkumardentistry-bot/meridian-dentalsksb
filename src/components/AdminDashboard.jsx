@@ -54,7 +54,7 @@ const Section = ({ title, label, children, right, testId }) => (
 const Chip = ({ children, tone = "bg-slate-100 text-slate-700" }) => <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${tone}`}>{children}</span>;
 
 /** Founder-only home screen: who is online, time spent, billing, and subscription approvals. No patient data. */
-export default function AdminDashboard({ email = "", initial = null, loadFn = loadOverview, decideFn = decideRequest, announceLoad = loadAnnouncement, announceSave = saveAnnouncement, onOpenApp, onLogout, refreshMs = 60000, now, user = null, startView = "overview" }) {
+export default function AdminDashboard({ email = "", initial = null, loadFn = loadOverview, decideFn = decideRequest, announceLoad = loadAnnouncement, announceSave = saveAnnouncement, onOpenApp, onLogout, refreshMs = 60000, now, user = null, startView = "" }) {
   const [data, setData] = useState(initial);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
@@ -66,7 +66,7 @@ export default function AdminDashboard({ email = "", initial = null, loadFn = lo
   const [showAll, setShowAll] = useState(false);
   const [sort, setSort] = useState("seen");
   const [openId, setOpenId] = useState("");
-  const [view, setView] = useState(NAV.some((n) => n[0] === startView) ? startView : "overview");
+  const [view, setView] = useState(() => { if (NAV.some((n) => n[0] === startView)) return startView; const saved = readLocal("merident.admin.start", "overview"); return NAV.some((n) => n[0] === saved) ? saved : "overview"; });
   const [menu, setMenu] = useState(false);
   const [every, setEvery] = useState(() => { const v = readLocal("merident.admin.refresh", null); return Number.isFinite(v) ? v : refreshMs; });
 
