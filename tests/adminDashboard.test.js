@@ -7,6 +7,9 @@ import { buildOverview } from "../api/_lib/overviewCore.js";
 import { enc, dec } from "../api/_lib/fsLite.js";
 import overview from "../api/admin-overview.js";
 import adminRequest from "../api/admin-request.js";
+import { signedInRecently, signInTime } from "../api/_lib/adminCore.js";
+// A token shaped like a Firebase ID token whose sign-in was ageSec seconds ago. The server only reads auth_time after Firebase has vouched for the token.
+const jwt = (ageSec) => `h.${Buffer.from(JSON.stringify({ auth_time: Math.floor(Date.now() / 1000) - ageSec })).toString("base64url")}.s`;
 import planRequest from "../api/plan-request.js";
 import heartbeat from "../api/heartbeat.js";
 
@@ -191,11 +194,11 @@ describe("endpoints keep strangers out", () => {
     const o = await run(overview, "GET", { authorization: "Bearer t" });
     expect(o.statusCode).toBe(200);
     expect(o.body.billing.pending).toBe(1);
-    const a = await run(adminRequest, "POST", { authorization: "Bearer t" }, { uid: "uidB1234", action: "approve" });
+    const a = await run(adminRequest, "POST", { authorization: `Bearer ${jwt(0)}` }, { uid: "uidB1234", action: "approve" });
     expect(a.statusCode).toBe(200);
     expect(a.body.status).toBe("approved");
-    expect((await run(adminRequest, "POST", { authorization: "Bearer t" }, { uid: "uidB1234", action: "approve" })).statusCode).toBe(409);
-    expect((await run(adminRequest, "POST", { authorization: "Bearer t" }, { uid: "uidZ9999", action: "approve" })).statusCode).toBe(404);
+    expect((await run(adminRequest, "POST", { authorization: `Bearer ${jwt(0)}` }, { uid: "uidB1234", action: "approve" })).statusCode).toBe(409);
+    expect((await run(adminRequest, "POST", { authorization: `Bearer ${jwt(0)}` }, { uid: "uidZ9999", action: "approve" })).statusCode).toBe(404);
   });
   it("a clinic can only request for itself and cannot approve", async () => {
     const fs = fakeFirestore();
@@ -222,5 +225,16 @@ describe("endpoints keep strangers out", () => {
     expect((await run(heartbeat, "POST", { authorization: "Bearer t" }, { sessionId: "sess1234" })).statusCode).toBe(204);
     expect(fs.docs.has("presence/uidA1234")).toBe(true);
     expect((await run(heartbeat, "POST", { authorization: "Bearer t" }, { sessionId: "!" })).statusCode).toBe(400);
+  });
+});
+
+describe("fresh sign-in for money actions", () => {
+  it("reads when the token was last signed in and allows 30 minutes", () => {
+    expect(signInTime("not-a-token")).toBe(0);
+    expect(signedInRecently(jwt(60))).toBe(true);
+    expect(signedInRecently(jwt(29 * 60))).toBe(true);
+    expect(signedInRecently(jwt(31 * 60))).toBe(false);
+    expect(signedInRecently("")).toBe(false);
+    expect(signedInRecently("a.b.c")).toBe(false);
   });
 });

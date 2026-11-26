@@ -2,7 +2,7 @@
 import { makeLimiter } from "./_lib/aiCore.js";
 import { lookupUser } from "./_lib/loginAlertCore.js";
 import { readServiceAccount } from "./_lib/blockCore.js";
-import { isFounder } from "./_lib/adminCore.js";
+import { isFounder, signedInRecently, FRESH_SIGNIN_MESSAGE } from "./_lib/adminCore.js";
 import { decideRequest } from "./_lib/requestCore.js";
 
 const allow = makeLimiter(100, 60 * 60 * 1000);
@@ -12,9 +12,11 @@ const MSG = { missing: [404, "That request no longer exists."], decided: [409, "
 export default async function handler(req, res) {
   if (req.method !== "POST") return send(res, 405, { error: "Use POST." });
   const header = String(req.headers.authorization || "");
-  const user = await lookupUser(header.startsWith("Bearer ") ? header.slice(7) : "").catch(() => null);
+  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+  const user = await lookupUser(token).catch(() => null);
   if (!user) return send(res, 401, { error: "Sign in again." });
   if (!isFounder(user.email)) return send(res, 403, { error: "Not available." });
+  if (!signedInRecently(token)) return send(res, 401, { error: FRESH_SIGNIN_MESSAGE });
   if (!allow(user.uid)) return send(res, 429, { error: "Too many requests." });
   const sa = readServiceAccount();
   if (!sa) return send(res, 503, { error: "Add FIREBASE_SERVICE_ACCOUNT first." });
