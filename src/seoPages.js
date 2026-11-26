@@ -1,5 +1,6 @@
 /* Public feature pages (/dental, /odontogram, ...). Each one describes only what MeriDent does today,
  * in the same words as the landing page. Plain data so a test can check the facts and the sitemap. */
+import { BLOG_POSTS, BLOG_PATH } from "./blogPosts.js";
 export const SITE = "https://www.meridiandentalos.com";
 
 export const SEO_PAGES = [
@@ -25,13 +26,14 @@ export const SEO_PAGES = [
     ],
     faqs: [
       { q: "Is MeriDent free?", a: "It is free during early access, with no credit card. We will announce simple pricing well before anything changes." },
-      { q: "Does it work for a clinic with several doctors or branches?", a: "Yes. Give each person their own login as manager, dentist or receptionist, and run several branches from one account." }
+      { q: "Does it work for a clinic with several doctors or branches?", a: "Yes. Give each person their own login as manager, dentist or receptionist, and run several branches from one account." },
+      { q: "Is MeriDent the same as Meridian Dental OS?", a: "Yes. Meridian Dental OS was our earlier name. The product is now called MeriDent, and this website address still carries the old name." }
     ]
   },
   {
     path: "/odontogram",
     nav: "Odontogram & charting",
-    title: "Dental odontogram and tooth charting software | MeriDent",
+    title: "Dental charting software and digital odontogram | MeriDent",
     description: "Chart all 32 teeth on a digital odontogram, with perio chart, OPG viewer, caries risk and signed consents. Saved on each patient's record. Free during early access.",
     h1: "A digital odontogram that keeps up with the chair",
     lead: "Open a patient and chart the first tooth in a few taps. Every finding is saved on the patient's record with its date.",
@@ -177,6 +179,75 @@ export const SEO_PAGES = [
     ]
   },
   {
+    path: "/dental-appointment-scheduling-software",
+    nav: "Appointment scheduling",
+    title: "Dental appointment scheduling software for clinics in India | MeriDent",
+    description: "A dental appointments diary by chair and doctor, with a warning before you double-book, a walk-in queue and online booking requests you confirm. Free during early access.",
+    h1: "Dental appointment scheduling for a busy clinic",
+    lead: "See the day by chair and doctor, catch a double booking before it happens, and keep walk-ins and phone bookings in one diary.",
+    sections: [
+      { h: "The diary", items: [
+        "An appointments diary by chair and by doctor.",
+        "A warning before you double-book a chair or a doctor.",
+        "Mark each visit Completed, No show or Cancelled, so the diary matches what happened.",
+        "A walk-in queue with tokens, with urgent cases shown first."] },
+      { h: "Getting patients into it", items: [
+        "Share an online booking link on WhatsApp or Instagram. A patient sends a request, and you confirm it before it lands in the diary.",
+        "WhatsApp reminders for tomorrow's patients open with the message already written, so you tap Send.",
+        "A 6-month recall list shows who is due a check-up."] }
+    ],
+    faqs: [
+      { q: "Is a booking confirmed without me?", a: "No. A patient's online request waits for you to confirm it, so you control the diary." },
+      { q: "Does MeriDent send reminders by itself?", a: "Not yet. It opens WhatsApp with the reminder ready and you tap Send. Automatic sending is coming next." },
+      { q: "Can several doctors and chairs share one diary?", a: "Yes. The diary is organised by chair and doctor, and each person signs in with their own role." }
+    ]
+  },
+  {
+    path: "/dental-insurance-tpa-claims-software",
+    nav: "Insurance & TPA claims",
+    title: "Dental insurance and TPA claim tracking for clinics | MeriDent",
+    description: "Record each insurance or TPA claim on the patient's chart: amounts claimed, approved and settled, status, and what insurers still owe the clinic. Tracking only, not submission.",
+    h1: "Track dental insurance and TPA claims in one place",
+    lead: "Note every claim against the patient, follow it from pre-authorisation to settlement, and see how much insurers still owe the clinic. MeriDent tracks claims. It does not submit them.",
+    sections: [
+      { h: "What you record", items: [
+        "The payer type: insurance, TPA, government scheme or corporate.",
+        "The insurer or TPA, the policy number and the claim number.",
+        "The amount claimed, approved and settled.",
+        "The status: pre-authorisation requested or approved, claim submitted, query raised, approved, settled or rejected."] },
+      { h: "What you see", items: [
+        "A Claims tab on each patient's chart.",
+        "A claims overview on the Billing screen, with what insurers still owe the clinic.",
+        "Claims on the printable patient record, next to the visits and bills."] }
+    ],
+    faqs: [
+      { q: "Does MeriDent submit claims to insurers or TPAs?", a: "No. You submit claims the way you do today. MeriDent keeps the record and the follow-up, so nothing is lost in a notebook." },
+      { q: "Does it connect to a TPA portal?", a: "No. There is no integration with insurer or TPA portals at present." },
+      { q: "Who can see claims?", a: "People you invite to your clinic, with the role you choose. Claims are kept with each patient's record, separate from every other clinic." }
+    ]
+  },
+  {
+    path: "/dental-prescription-software",
+    nav: "Prescriptions & certificates",
+    title: "Dental prescription software with PDF and WhatsApp | MeriDent",
+    description: "Write a dental prescription from medicine presets and send it as a PDF on WhatsApp with your clinic logo. Also certificates with your council number and signed consents.",
+    h1: "Dental prescriptions you can send in one tap",
+    lead: "Build the prescription from presets, check it, and send a clean PDF with your clinic's name and logo on it.",
+    sections: [
+      { h: "Prescriptions", items: [
+        "Add medicines from presets, then change anything before you save.",
+        "A prescription PDF with your clinic logo and details, shared on WhatsApp.",
+        "Refer a patient between departments from the same record."] },
+      { h: "Certificates and consents", items: [
+        "Medical, treatment and fitness certificates with your clinic name and council number.",
+        "Treatment consents for extractions, root canals, implants, braces and more, signed on screen and kept on the patient's record."] }
+    ],
+    faqs: [
+      { q: "Who decides what goes on the prescription?", a: "The dentist. Presets save typing, and every line can be edited before it is saved or sent." },
+      { q: "Where are prescriptions kept?", a: "On the patient's record in your clinic's own workspace, with a daily cloud restore point and a backup you can download." }
+    ]
+  },
+  {
     path: "/dental-software-coimbatore",
     nav: "For Coimbatore clinics",
     title: "Dental clinic software in Coimbatore, built by dental students | MeriDent",
@@ -290,5 +361,5 @@ export const seoPageForPath = (pathname = "") => {
 
 export const sitemapXml = () =>
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-  ["/", "/login", "/free-early-access", ...SEO_PAGES.map((p) => p.path)].map((p) => `  <url><loc>${SITE}${p === "/" ? "/" : p}</loc></url>`).join("\n") +
+  ["/", "/login", "/free-early-access", ...SEO_PAGES.map((p) => p.path), BLOG_PATH, ...BLOG_POSTS.map((b) => b.path)].map((p) => `  <url><loc>${SITE}${p === "/" ? "/" : p}</loc></url>`).join("\n") +
   `\n</urlset>\n`;

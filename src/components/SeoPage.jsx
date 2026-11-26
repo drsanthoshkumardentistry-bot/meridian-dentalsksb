@@ -98,7 +98,7 @@ export default function SeoPage({ page }) {
 
       <footer className="border-t border-white/70 bg-white/50">
         <p className="max-w-5xl mx-auto px-5 py-6 text-sm text-slate-600">
-          MeriDent, built by dental students in India. <a href="/" className="underline">Home</a> | <a href="/login" className="underline">Log in</a> | <a href="/?page=privacy" className="underline">Privacy Policy</a> | <a href="/?page=terms" className="underline">Terms of Use</a>
+          MeriDent (formerly Meridian Dental OS), built by dental students in India. <a href="/" className="underline">Home</a> | <a href="/blog" className="underline">Blog</a> | <a href="/login" className="underline">Log in</a> | <a href="/?page=privacy" className="underline">Privacy Policy</a> | <a href="/?page=terms" className="underline">Terms of Use</a>
         </p>
       </footer>
     </div>
