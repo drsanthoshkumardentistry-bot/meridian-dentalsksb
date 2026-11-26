@@ -117,6 +117,7 @@ import ReportProblem from "./components/ReportProblem.jsx";
 import PlanCard from "./components/PlanCard.jsx";
 import AdminDashboard from "./components/AdminDashboard.jsx";
 import { isAdminPath } from "./adminEntry.js";
+import AdminAccessProblem from "./components/AdminAccessProblem.jsx";
 import { loadOverview } from "./adminApi.js";
 import { startHeartbeat } from "./heartbeat.js";
 import { hasLock as pinLockOn, readLock as readPinLock } from "./appLock";
@@ -807,13 +808,19 @@ export default function App() {
   // Founder accounts open the admin dashboard. Everyone else gets "not available" from the server and sees the normal app.
   const [adminData, setAdminData] = useState(null);
   const [adminOpen, setAdminOpen] = useState(() => { if (isAdminPath(window.location.pathname)) return true; try { return sessionStorage.getItem("merident.admin") !== "clinic"; } catch { return true; } });
+  const [adminProblem, setAdminProblem] = useState(null);
+  const [adminTry, setAdminTry] = useState(0);
   useEffect(() => {
     setAdminData(null);
+    setAdminProblem(null);
     if (!isVerified || !authUser?.uid) return undefined;
     let live = true;
-    loadOverview().then((d) => { if (!live) return; if (d) setAdminData(d); else if (isAdminPath(window.location.pathname)) window.location.replace("/"); }).catch(() => { if (live && isAdminPath(window.location.pathname)) window.location.replace("/"); });
+    let seen = { status: 0, message: "" };
+    loadOverview({ onStatus: (status, message) => { seen = { status, message: message || "" }; } })
+      .then((d) => { if (!live) return; if (d) setAdminData(d); else if (isAdminPath(window.location.pathname)) setAdminProblem(seen); })
+      .catch((e) => { if (live && isAdminPath(window.location.pathname)) setAdminProblem({ status: seen.status, message: seen.message || (e && e.message) || "" }); });
     return () => { live = false; };
-  }, [isVerified, authUser?.uid]);
+  }, [isVerified, authUser?.uid, adminTry]);
   const [adminStart, setAdminStart] = useState("overview");
   const setAdminView = (open) => { setAdminOpen(open); try { sessionStorage.setItem("merident.admin", open ? "admin" : "clinic"); } catch { /* ignore */ } };
 
@@ -2441,6 +2448,10 @@ export default function App() {
         onLogout={() => handleLogout()}
       />
     );
+  }
+
+  if (adminProblem && isAdminPath(window.location.pathname)) {
+    return <AdminAccessProblem email={authUser.email} problem={adminProblem} onRetry={() => setAdminTry((n) => n + 1)} onHome={() => { try { sessionStorage.setItem("merident.admin", "clinic"); } catch { /* ignore */ } window.location.assign("/"); }} />;
   }
 
   if (adminData && (adminOpen || adminData.adminOnly)) {
