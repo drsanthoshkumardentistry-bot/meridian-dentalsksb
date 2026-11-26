@@ -1,9 +1,11 @@
 import React from "react";
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import ClinicDetail from "../src/components/ClinicDetail.jsx";
 
 const clinic = { uid: "u1", email: "a@x.com", state: "paid", plan: "pro", online: false, suspended: false };
+
+afterEach(cleanup);
 
 describe("clinic account controls", () => {
   it("asks before suspending, then suspends", async () => {
