@@ -11,6 +11,7 @@ import { installErrorReporting } from './errorReport.js';
 import { startSentry } from './sentry.js';
 import { registerOfflinePage } from './offlinePage.js';
 import { hasSavedSession } from './savedSession.js';
+import { isAdminPath, prepareAdminPage } from './adminEntry.js';
 import './index.css';
 
 // Each route is its own file, so a patient opening an estimate or booking link downloads only that page,
@@ -82,6 +83,7 @@ function Home() {
   return mode === 'landing' ? <LandingShell /> : <App />;
 }
 
+if (isAdminPath(window.location.pathname)) prepareAdminPage();
 registerOfflinePage();
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

@@ -116,6 +116,7 @@ import FounderCard from "./components/FounderCard.jsx";
 import ReportProblem from "./components/ReportProblem.jsx";
 import PlanCard from "./components/PlanCard.jsx";
 import AdminDashboard from "./components/AdminDashboard.jsx";
+import { isAdminPath } from "./adminEntry.js";
 import { loadOverview } from "./adminApi.js";
 import { startHeartbeat } from "./heartbeat.js";
 import { hasLock as pinLockOn, readLock as readPinLock } from "./appLock";
@@ -805,12 +806,12 @@ export default function App() {
 
   // Founder accounts open the admin dashboard. Everyone else gets "not available" from the server and sees the normal app.
   const [adminData, setAdminData] = useState(null);
-  const [adminOpen, setAdminOpen] = useState(() => { try { return sessionStorage.getItem("merident.admin") !== "clinic"; } catch { return true; } });
+  const [adminOpen, setAdminOpen] = useState(() => { if (isAdminPath(window.location.pathname)) return true; try { return sessionStorage.getItem("merident.admin") !== "clinic"; } catch { return true; } });
   useEffect(() => {
     setAdminData(null);
     if (!isVerified || !authUser?.uid) return undefined;
     let live = true;
-    loadOverview().then((d) => { if (live && d) setAdminData(d); }).catch(() => {});
+    loadOverview().then((d) => { if (!live) return; if (d) setAdminData(d); else if (isAdminPath(window.location.pathname)) window.location.replace("/"); }).catch(() => { if (live && isAdminPath(window.location.pathname)) window.location.replace("/"); });
     return () => { live = false; };
   }, [isVerified, authUser?.uid]);
   const [adminStart, setAdminStart] = useState("overview");
@@ -2443,7 +2444,7 @@ export default function App() {
   }
 
   if (adminData && adminOpen) {
-    return <AdminDashboard email={authUser.email} user={authUser} startView={adminStart} initial={adminData} onOpenApp={() => setAdminView(false)} onLogout={() => handleLogout()} />;
+    return <AdminDashboard email={authUser.email} user={authUser} startView={adminStart} initial={adminData} onOpenApp={() => { setAdminView(false); if (isAdminPath(window.location.pathname)) window.location.assign("/"); }} onLogout={() => handleLogout()} />;
   }
 
   const nowNext = diaryView(appointments, { view: "upcoming" }).find((a) => a.date === dateKey()) || null;
