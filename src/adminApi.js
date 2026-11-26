@@ -7,7 +7,7 @@ export const loadOverview = async ({ fetchFn = fetch, getToken = tokenOf, onStat
   const res = await fetchFn("/api/admin-overview", { headers: { Authorization: `Bearer ${await getToken()}` } });
   let d = {};
   try { d = await res.json(); } catch { /* keep empty */ }
-  if (typeof onStatus === "function") onStatus(res.status, d && d.error);
+  if (typeof onStatus === "function") onStatus(res.status, d && d.error, d && d.why);
   if (res.status === 403 || res.status === 401 || res.status === 404) return null;
   if (!res.ok) throw new Error(d.error || "Could not load the dashboard.");
   return d;

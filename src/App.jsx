@@ -815,10 +815,10 @@ export default function App() {
     setAdminProblem(null);
     if (!isVerified || !authUser?.uid) return undefined;
     let live = true;
-    let seen = { status: 0, message: "" };
-    loadOverview({ onStatus: (status, message) => { seen = { status, message: message || "" }; } })
+    let seen = { status: 0, message: "", why: "" };
+    loadOverview({ onStatus: (status, message, why) => { seen = { status, message: message || "", why: why || "" }; } })
       .then((d) => { if (!live) return; if (d) setAdminData(d); else if (isAdminPath(window.location.pathname)) setAdminProblem(seen); })
-      .catch((e) => { if (live && isAdminPath(window.location.pathname)) setAdminProblem({ status: seen.status, message: seen.message || (e && e.message) || "" }); });
+      .catch((e) => { if (live && isAdminPath(window.location.pathname)) setAdminProblem({ status: seen.status, message: seen.message || (e && e.message) || "", why: seen.why }); });
     return () => { live = false; };
   }, [isVerified, authUser?.uid, adminTry]);
   const [adminStart, setAdminStart] = useState("overview");

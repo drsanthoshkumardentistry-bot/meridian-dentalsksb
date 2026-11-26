@@ -15,8 +15,9 @@ const send = (res, status, body) => { res.statusCode = status; res.setHeader("Co
 export default async function handler(req, res) {
   if (req.method !== "GET") return send(res, 405, { error: "Use GET." });
   const header = String(req.headers.authorization || "");
-  const user = await lookupUser(header.startsWith("Bearer ") ? header.slice(7) : "").catch(() => null);
-  if (!user) return send(res, 401, { error: "Sign in again." });
+  const diag = {};
+  const user = await lookupUser(header.startsWith("Bearer ") ? header.slice(7) : "", undefined, diag).catch((e) => { diag.why = `Could not reach Google: ${String((e && e.message) || e).slice(0, 100)}`; return null; });
+  if (!user) return send(res, 401, { error: "Sign in again.", why: diag.why || "" });
   if (!isFounder(user.email)) return send(res, 403, { error: "Not available." });
   if (!allow(user.uid)) return send(res, 429, { error: "Too many requests. Try again later." });
   const sa = readServiceAccount();
