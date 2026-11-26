@@ -24,6 +24,13 @@ const overview = {
 beforeEach(() => { cleanup(); localStorage.clear(); sessionStorage.clear(); sessionStorage.setItem("merident_nav", "Patients & Odontogram"); h.user = { uid: "u-founder", email: "boss@example.com", displayName: "Boss", emailVerified: true, providerData: [{ providerId: "google.com" }] }; h.overview = null; h.beats = 0; });
 
 describe("founder lands on the admin dashboard", () => {
+  it("keeps an admin-only account in the admin panel, with no way into the clinic app", async () => {
+    h.overview = { ...overview, adminOnly: true };
+    render(<App />);
+    expect(await screen.findByTestId("admin-dashboard")).toBeTruthy();
+    expect(screen.queryByText("Open my clinic")).toBeNull();
+  });
+
   it("opens the dashboard for a founder, lets them open their clinic, and lets them come back", async () => {
     h.overview = overview;
     render(<App />);

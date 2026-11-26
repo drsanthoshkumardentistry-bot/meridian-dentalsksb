@@ -2443,7 +2443,7 @@ export default function App() {
     );
   }
 
-  if (adminData && adminOpen) {
+  if (adminData && (adminOpen || adminData.adminOnly)) {
     return <AdminDashboard email={authUser.email} user={authUser} startView={adminStart} initial={adminData} onOpenApp={() => { setAdminView(false); if (isAdminPath(window.location.pathname)) window.location.assign("/"); }} onLogout={() => handleLogout()} />;
   }
 

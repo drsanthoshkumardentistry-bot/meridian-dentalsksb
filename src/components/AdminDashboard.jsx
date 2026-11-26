@@ -146,9 +146,11 @@ export default function AdminDashboard({ email = "", initial = null, loadFn = lo
                 {id === "billing" && data && data.billing.pending > 0 && <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-bold text-brand-700" aria-label={`${data.billing.pending} waiting`}>{data.billing.pending}</span>}
               </button>
             ))}
-            <button type="button" onClick={onOpenApp} className="nav-item group w-full flex items-center gap-3 px-3.5 py-2.5 rounded-full text-[13px] font-medium text-blue-100/80 hover:text-white">
-              <span className="nav-icon"><Hospital className="w-4 h-4" /></span><span className="flex-1 text-left">Open my clinic</span>
-            </button>
+            {!(data && data.adminOnly) && (
+              <button type="button" onClick={onOpenApp} className="nav-item group w-full flex items-center gap-3 px-3.5 py-2.5 rounded-full text-[13px] font-medium text-blue-100/80 hover:text-white">
+                <span className="nav-icon"><Hospital className="w-4 h-4" /></span><span className="flex-1 text-left">Open my clinic</span>
+              </button>
+            )}
           </nav>
         </div>
         <div className="p-4 border-t border-white/10 space-y-3">

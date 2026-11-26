@@ -3,7 +3,7 @@
 import { makeLimiter } from "./_lib/aiCore.js";
 import { lookupUser } from "./_lib/loginAlertCore.js";
 import { readServiceAccount } from "./_lib/blockCore.js";
-import { isFounder, listAllUsers } from "./_lib/adminCore.js";
+import { isFounder, isAdminOnly, listAllUsers } from "./_lib/adminCore.js";
 import { listPresence } from "./_lib/presenceCore.js";
 import { listRequests } from "./_lib/requestCore.js";
 import { listDocs } from "./_lib/fsLite.js";
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     const [users, presence, plans, requests] = await Promise.all([
       listAllUsers({ sa }), listPresence({ sa }).catch(() => []), listDocs({ sa, collection: "plans" }).catch(() => []), listRequests({ sa }).catch(() => []),
     ]);
-    return send(res, 200, buildOverview({ users, presence, plans, requests }));
+    return send(res, 200, { ...buildOverview({ users, presence, plans, requests }), adminOnly: isAdminOnly(user.email) });
   } catch (e) {
     return send(res, 502, { error: "Could not read the numbers. Try again in a minute." });
   }

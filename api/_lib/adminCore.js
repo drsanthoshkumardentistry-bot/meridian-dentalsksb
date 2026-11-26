@@ -8,6 +8,12 @@ const SCOPE = "https://www.googleapis.com/auth/identitytoolkit";
 export const founderEmails = (raw = process.env.FOUNDER_EMAILS || "") =>
   String(raw).split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
 
+/** Accounts that are admin only: they open the admin panel and never the clinic app. Set ADMIN_ONLY_EMAILS (comma separated) to change it. */
+export const DEFAULT_ADMIN_ONLY = "meridentapp@gmail.com";
+export const adminOnlyEmails = (raw = process.env.ADMIN_ONLY_EMAILS === undefined ? DEFAULT_ADMIN_ONLY : process.env.ADMIN_ONLY_EMAILS) =>
+  String(raw).split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+export const isAdminOnly = (email, raw) => !!email && adminOnlyEmails(raw).includes(String(email).toLowerCase());
+
 export const isFounder = (email, raw) => !!email && founderEmails(raw).includes(String(email).toLowerCase());
 
 /** Pure: turn a list of sign-in accounts into the numbers the founder screen shows. */
