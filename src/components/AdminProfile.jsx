@@ -1,6 +1,6 @@
 import FeatureSwitches from "./FeatureSwitches.jsx";
 import React, { useEffect, useMemo, useState } from "react";
-import { Copy, Download, Plus, Trash2, Hospital, LogOut, Mail, StickyNote, ListChecks, Settings2, TrendingUp, MessageCircle, ShieldCheck, Rocket, UserRound, Megaphone } from "lucide-react";
+import { Copy, Download, Palette, SlidersHorizontal, BarChart3, Send, UserCog, ClipboardList, Plus, Trash2, Hospital, LogOut, Mail, StickyNote, ListChecks, Settings2, TrendingUp, MessageCircle, ShieldCheck, Rocket, UserRound, Megaphone } from "lucide-react";
 import UserAvatar from "./UserAvatar.jsx";
 import { clinicsCsv, requestsCsv, followUps, emailList, REFRESH_CHOICES, readLocal, writeLocal, cleanTodos, businessStats, goalProgress, TEMPLATES, fillTemplate, whatsappLink, LAUNCH_ITEMS, securityInfo } from "../adminTools.js";
 
@@ -9,7 +9,12 @@ const NOTE_KEY = "merident.admin.notes";
 const DETAILS_KEY = "merident.admin.details";
 const GOAL_KEY = "merident.admin.goal";
 const LAUNCH_KEY = "merident.admin.launch";
-const card = "rounded-2xl border border-rule bg-white/80 p-4 shadow-card";
+const TAB_KEY = "merident.admin.profileTab";
+const LOOK_KEY = "merident.admin.look";
+const START_KEY = "merident.admin.start";
+export const PROFILE_TABS = [["control", "Control", SlidersHorizontal], ["business", "Business", BarChart3], ["outreach", "Clinics", Send], ["me", "Me", UserCog], ["work", "Workspace", ClipboardList]];
+export const START_CHOICES = [["overview", "Overview"], ["billing", "Billing & approvals"], ["clinics", "Clinics"], ["profile", "Admin profile"]];
+const cleanLook = (v) => ({ dense: !!(v && v.dense), large: !!(v && v.large) });
 
 function saveFile(name, text) {
   try {
@@ -21,7 +26,9 @@ function saveFile(name, text) {
   } catch { return false; }
 }
 
-/** Founder's own page: account, who to follow up with, exports, refresh speed, private to-dos and notes. */
+const cardOf = (dense) => `rounded-2xl border border-rule bg-white/80 ${dense ? "p-3" : "p-4"} shadow-card`;
+
+/** Founder control centre: tabs for controls, business, clinic outreach, personal settings and a private workspace. */
 export default function AdminProfile({ announceLoad, announceSave, user, email = "", data, now, every, onEvery, onToast, onOpenApp, onLogout }) {
   const t0 = now || Date.now();
   const clinics = data ? data.clinics : [];
@@ -52,6 +59,14 @@ export default function AdminProfile({ announceLoad, announceSave, user, email =
   const [launch, setLaunch] = useState(() => { const l = readLocal(LAUNCH_KEY, {}); return l && typeof l === "object" && !Array.isArray(l) ? l : {}; });
   const [tpl, setTpl] = useState(TEMPLATES[0][0]);
   const [who, setWho] = useState("");
+  const [tab, setTabState] = useState(() => { const v = readLocal(TAB_KEY, "control"); return PROFILE_TABS.some((t) => t[0] === v) ? v : "control"; });
+  const setTab = (id) => { setTabState(id); writeLocal(TAB_KEY, id); };
+  const [look, setLookState] = useState(() => cleanLook(readLocal(LOOK_KEY, {})));
+  const setLook = (k, v) => { const next = { ...look, [k]: v }; setLookState(next); writeLocal(LOOK_KEY, next); };
+  const [start, setStartState] = useState(() => { const v = readLocal(START_KEY, "overview"); return START_CHOICES.some((c) => c[0] === v) ? v : "overview"; });
+  const setStart = (v) => { setStartState(v); writeLocal(START_KEY, v); onToast("Saved. The dashboard opens here next time."); };
+  const card = cardOf(look.dense);
+  const panel = (id) => ({ role: "tabpanel", id: `ptab-${id}`, "aria-labelledby": `ptabbtn-${id}`, hidden: tab !== id, className: look.dense ? "space-y-3" : "space-y-5" });
   const stats = useMemo(() => businessStats(data), [data]);
   const progress = stats ? goalProgress(stats.paidActive, goal) : null;
   const security = securityInfo(user);
@@ -79,7 +94,7 @@ export default function AdminProfile({ announceLoad, announceSave, user, email =
   ];
 
   return (
-    <div className="space-y-5" data-testid="admin-profile">
+    <div className={look.dense ? "space-y-3" : "space-y-5"} data-testid="admin-profile" style={look.large ? { zoom: 1.12 } : undefined}>
       <section aria-label="Account" className={`${card} flex flex-wrap items-center gap-4`}>
         <UserAvatar user={user || { email }} className="h-14 w-14" textClass="text-xl" />
         <div className="min-w-0 flex-1">
@@ -94,7 +109,14 @@ export default function AdminProfile({ announceLoad, announceSave, user, email =
         </div>
       </section>
 
+      <div role="tablist" aria-label="Admin profile sections" className="sticky top-0 z-20 -mx-1 flex gap-1.5 overflow-x-auto rounded-2xl border border-rule bg-white/95 p-1.5 shadow-card backdrop-blur" data-testid="profile-tabs">
+        {PROFILE_TABS.map(([id, label, Icon]) => (
+          <button key={id} type="button" role="tab" id={`ptabbtn-${id}`} aria-selected={tab === id} aria-controls={`ptab-${id}`} onClick={() => setTab(id)}
+            className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold ${tab === id ? "bg-brand-600 text-white shadow" : "text-slate-600 hover:bg-slate-100"}`}><Icon className="h-3.5 w-3.5" aria-hidden="true" />{label}</button>
+        ))}
+      </div>
 
+      <div {...panel("control")}>
       {announceSave && <FeatureSwitches onToast={onToast} />}
 
       {announceSave && (
@@ -118,6 +140,9 @@ export default function AdminProfile({ announceLoad, announceSave, user, email =
         </section>
       )}
 
+      </div>
+
+      <div {...panel("business")}>
       {stats && (
         <section aria-label="Business snapshot" className={card} data-testid="business-snapshot">
           <h2 className="flex items-center gap-2 font-display text-base font-extrabold text-ink"><TrendingUp className="h-4 w-4 text-brand-600" /> Business snapshot</h2>
@@ -139,6 +164,10 @@ export default function AdminProfile({ announceLoad, announceSave, user, email =
         </section>
       )}
 
+      {!stats && <p className="text-xs text-slate-500">Numbers appear once the dashboard has loaded.</p>}
+      </div>
+
+      <div {...panel("outreach")}>
       <section aria-label="Message templates" className={card}>
         <h2 className="flex items-center gap-2 font-display text-base font-extrabold text-ink"><MessageCircle className="h-4 w-4 text-brand-600" /> Ready-made messages</h2>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -179,7 +208,7 @@ export default function AdminProfile({ announceLoad, announceSave, user, email =
         </ul>
       </section>
 
-      <div className="grid gap-5 md:grid-cols-2">
+      <div>
         <section aria-label="Exports" className={card}>
           <h2 className="flex items-center gap-2 font-display text-base font-extrabold text-ink"><Download className="h-4 w-4 text-brand-600" /> Export for your records</h2>
           <p className="mt-1 text-[11px] text-slate-500">Opens in Excel or Google Sheets. Contains sign-in emails and plan dates only.</p>
@@ -189,6 +218,23 @@ export default function AdminProfile({ announceLoad, announceSave, user, email =
           </div>
         </section>
 
+      </div>
+      </div>
+
+      <div {...panel("me")}>
+      <div className="grid gap-5 md:grid-cols-2">
+        <section aria-label="Look and feel" className={card} data-testid="look-and-feel">
+          <h2 className="flex items-center gap-2 font-display text-base font-extrabold text-ink"><Palette className="h-4 w-4 text-brand-600" /> Look and start page</h2>
+          <div className="mt-3 space-y-2 text-xs">
+            {[["dense", "Compact layout", "Tighter spacing so more fits on the screen."], ["large", "Larger text", "Makes this page about 12% bigger."]].map(([k, label, hint]) => (
+              <div key={k} className="flex items-center justify-between gap-3"><div><div className="font-semibold text-slate-800">{label}</div><div className="text-[11px] text-slate-500">{hint}</div></div>
+                <button type="button" role="switch" aria-checked={!!look[k]} aria-label={`${label}: ${look[k] ? "on" : "off"}`} onClick={() => setLook(k, !look[k])} className={`rounded-full px-3 py-1 font-semibold ${look[k] ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-700"}`}>{look[k] ? "On" : "Off"}</button></div>
+            ))}
+            <div><label htmlFor="admin-start" className="block font-semibold text-slate-700">Open the dashboard on</label>
+              <select id="admin-start" value={start} onChange={(e) => setStart(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm">{START_CHOICES.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></div>
+            <p className="text-[11px] text-slate-500">Saved on this device.</p>
+          </div>
+        </section>
         <section aria-label="Preferences" className={card}>
           <h2 className="flex items-center gap-2 font-display text-base font-extrabold text-ink"><Settings2 className="h-4 w-4 text-brand-600" /> Dashboard settings</h2>
           <label htmlFor="admin-refresh" className="mt-3 block text-xs font-semibold text-slate-700">Refresh the numbers</label>
@@ -221,6 +267,9 @@ export default function AdminProfile({ announceLoad, announceSave, user, email =
         </section>
       </div>
 
+      </div>
+
+      <div {...panel("work")}>
       <section aria-label="Launch checklist" className={card}>
         <h2 className="flex items-center gap-2 font-display text-base font-extrabold text-ink"><Rocket className="h-4 w-4 text-brand-600" /> Launch checklist</h2>
         <p className="mt-1 text-[11px] text-slate-500">{LAUNCH_ITEMS.filter(([id]) => launch[id]).length} of {LAUNCH_ITEMS.length} done. Saved in this browser only.</p>
@@ -259,6 +308,7 @@ export default function AdminProfile({ announceLoad, announceSave, user, email =
         <textarea aria-label="Private notes" rows={4} maxLength={2000} value={note} onChange={(e) => { setNote(e.target.value); writeLocal(NOTE_KEY, e.target.value); }} placeholder="Ideas, who you spoke to, pricing thoughts. Do not type patient details." className="mt-3 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" />
         <p className="mt-1 text-[11px] text-slate-500">{note.length}/2000. Saved in this browser only.</p>
       </section>
+      </div>
     </div>
   );
 }

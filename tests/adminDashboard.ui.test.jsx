@@ -246,8 +246,10 @@ describe("admin profile page", () => {
   it("shows the account and follow-up lists, and copies emails", async () => {
     const writeText = vi.fn().mockResolvedValue();
     Object.assign(navigator, { clipboard: { writeText } });
+    localStorage.clear();
     await profile();
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Admin profile");
+    fireEvent.click(screen.getByRole("tab", { name: "Clinics" }));
     expect(within(screen.getByLabelText("Account")).getByText("boss@x.com")).toBeTruthy();
     expect(within(screen.getByTestId("follow-expired")).getByText("1")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Copy emails: Plan ended" }));
@@ -287,6 +289,26 @@ describe("admin profile page", () => {
     await profile();
     fireEvent.change(screen.getByLabelText("Refresh the numbers"), { target: { value: "300000" } });
     expect(localStorage.getItem("merident.admin.refresh")).toBe("300000");
+  });
+  it("has tabs that remember the last one, and a look and start-page panel", async () => {
+    localStorage.clear();
+    await profile();
+    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["Control", "Business", "Clinics", "Me", "Workspace"]);
+    expect(screen.getByRole("tab", { name: "Control" }).getAttribute("aria-selected")).toBe("true");
+    fireEvent.click(screen.getByRole("tab", { name: "Me" }));
+    expect(JSON.parse(localStorage.getItem("merident.admin.profileTab"))).toBe("me");
+    fireEvent.click(screen.getByRole("switch", { name: "Compact layout: off" }));
+    fireEvent.click(screen.getByRole("switch", { name: "Larger text: off" }));
+    expect(JSON.parse(localStorage.getItem("merident.admin.look"))).toEqual({ dense: true, large: true });
+    expect(screen.getByTestId("admin-profile").style.zoom).toBe("1.12");
+    fireEvent.change(screen.getByLabelText("Open the dashboard on"), { target: { value: "clinics" } });
+    expect(JSON.parse(localStorage.getItem("merident.admin.start"))).toBe("clinics");
+  });
+  it("opens on the saved start page", () => {
+    localStorage.setItem("merident.admin.start", JSON.stringify("billing"));
+    render(<AdminDashboard email="boss@x.com" initial={data()} loadFn={vi.fn()} refreshMs={0} now={NOW} />);
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Billing & approvals");
+    localStorage.clear();
   });
   it("can open straight on the profile", () => {
     render(<AdminDashboard email="boss@x.com" initial={data()} loadFn={vi.fn()} refreshMs={0} startView="profile" />);
