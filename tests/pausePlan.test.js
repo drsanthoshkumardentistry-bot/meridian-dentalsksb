@@ -49,3 +49,16 @@ describe("pause and start subscription", () => {
     expect(o.billing.paidActive).toBe(0);
   });
 });
+
+import { signedInFor } from "../src/components/AdminDashboard.jsx";
+describe("signed-in time", () => {
+  const now = Date.parse("2026-11-27T10:00:00Z");
+  it("shows how long the account has been signed in", () => {
+    const at = (min) => ({ metadata: { lastSignInTime: new Date(now - min * 60000).toUTCString() } });
+    expect(signedInFor(at(0), now)).toBe("just now");
+    expect(signedInFor(at(42), now)).toBe("42m");
+    expect(signedInFor(at(135), now)).toBe("2h 15m");
+    expect(signedInFor(at(3000), now)).toBe("2d 2h");
+    expect(signedInFor({}, now)).toBe("");
+  });
+});

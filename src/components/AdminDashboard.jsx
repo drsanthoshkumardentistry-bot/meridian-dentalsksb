@@ -9,6 +9,13 @@ import FullscreenButton from "./FullscreenButton.jsx";
 import { loadOverview, decideRequest } from "../adminApi.js";
 import { loadAnnouncement, saveAnnouncement } from "../announcementApi.js";
 
+/** How long this account has been signed in, from the sign-in time Firebase keeps ("" when unknown). */
+export const signedInFor = (user, now = Date.now()) => {
+  const t = Date.parse(user && user.metadata && user.metadata.lastSignInTime);
+  if (!Number.isFinite(t) || t > now + 60000) return "";
+  const m = Math.max(0, Math.floor((now - t) / 60000));
+  return m < 1 ? "just now" : m >= 1440 ? `${Math.floor(m / 1440)}d ${Math.floor((m % 1440) / 60)}h` : m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`;
+};
 export const mins = (m) => (m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : m > 0 ? `${m}m` : "-");
 const date = (ms) => (ms ? new Date(ms).toLocaleDateString("en-GB") : "never");
 const ago = (ms, now = Date.now()) => {
@@ -156,7 +163,7 @@ export default function AdminDashboard({ email = "", initial = null, loadFn = lo
         <div className="p-4 border-t border-white/10 space-y-3">
           <div className="flex items-center gap-3 min-w-0">
             <span aria-hidden="true" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-500 text-sm font-bold">{(email[0] || "A").toUpperCase()}</span>
-            <div className="min-w-0"><div className="text-xs font-semibold text-white">Founder</div><div className="truncate text-[11px] text-blue-200/70">{email || "Admin account"}</div></div>
+            <div className="min-w-0"><div className="text-xs font-semibold text-white">Founder</div><div className="truncate text-[11px] text-blue-200/70">{email || "Admin account"}</div>{signedInFor(user, now) && <div className="text-[11px] text-blue-200/70" data-testid="signed-in-for">Signed in {signedInFor(user, now)}</div>}</div>
           </div>
           <button type="button" onClick={onLogout} className="w-full flex items-center justify-center gap-2 rounded-lg border border-red-400/60 bg-red-600/15 py-2 text-xs font-semibold text-red-300 hover:bg-red-600 hover:text-white"><LogOut className="w-3.5 h-3.5" /> Sign out</button>
         </div>
