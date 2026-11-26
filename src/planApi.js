@@ -8,7 +8,8 @@ export const loadMyPlan = async ({ fetchFn = fetch, getToken = tokenOf } = {}) =
     const res = await fetchFn("/api/my-plan", { headers: { Authorization: `Bearer ${await getToken()}` } });
     if (!res.ok) return { plan: "", paidUntil: 0 };
     const d = await res.json();
-    return { plan: ["standard", "pro", "scale"].includes(d.plan) ? d.plan : "", paidUntil: Number(d.paidUntil) || 0 };
+    const out = { plan: ["standard", "pro", "scale"].includes(d.plan) ? d.plan : "", paidUntil: Number(d.paidUntil) || 0 };
+    return Number(d.pausedRemaining) > 0 ? { ...out, paused: true, pausedRemaining: Number(d.pausedRemaining) } : out;
   } catch (e) { return { plan: "", paidUntil: 0 }; }
 };
 

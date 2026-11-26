@@ -25,11 +25,15 @@ export default function ClinicDetail({ clinic, onToast, onChanged, actionFn = cl
   const [busy, setBusy] = useState(false);
   const [plan, setPlan] = useState(clinic.plan || "standard");
   const [days, setDays] = useState("30");
+  const [paused, setPaused] = useState(clinic.state === "paused");
+  const [pauseConfirm, setPauseConfirm] = useState(false);
+  const canPause = paused || clinic.state === "paid";
   const run = async (fn, done) => {
     setBusy(true);
     try { const r = await fn(); onToast(done(r)); if (onChanged) onChanged(r); } catch (e) { onToast((e && e.message) || "Could not save."); } finally { setBusy(false); setConfirm(false); }
   };
   const flip = () => run(() => actionFn({ email: clinic.email, action: suspended ? "resume" : "suspend" }).then((r) => { setSuspended(!suspended); return r; }), () => (suspended ? "Clinic can sign in again." : "Clinic suspended."));
+  const flipPause = () => run(() => actionFn({ email: clinic.email, action: paused ? "resume_subscription" : "pause_subscription" }).then((r) => { setPaused(!paused); return r; }), () => (paused ? "Subscription started again. Refresh to see the new date." : "Subscription paused. The days left are kept."));
   const applyPlan = () => run(() => planFn({ email: clinic.email, plan, days: Number(days) }), () => "Plan saved. Refresh to see the new date.");
   const copy = async (text, what) => {
     try { await navigator.clipboard.writeText(text); onToast(`Copied ${what}.`); } catch { onToast("Could not copy. Select the text and copy it yourself."); }
@@ -46,9 +50,18 @@ export default function ClinicDetail({ clinic, onToast, onChanged, actionFn = cl
             <select id={`plan-${id}`} value={plan} onChange={(e) => setPlan(e.target.value)} className="mt-1 rounded-lg border border-slate-300 bg-white px-2 py-1.5">{PLANS.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
           <div><label htmlFor={`days-${id}`} className="block text-slate-600">Add days</label>
             <input id={`days-${id}`} type="number" inputMode="numeric" min="1" max="800" value={days} onChange={(e) => setDays(e.target.value.slice(0, 3))} className="mt-1 w-20 rounded-lg border border-slate-300 bg-white px-2 py-1.5" /></div>
-          <button type="button" disabled={busy || !(Number(days) >= 1)} onClick={applyPlan} className="rounded-lg bg-brand-600 px-3 py-1.5 font-semibold text-white disabled:opacity-50">Apply plan</button>
+          <button type="button" disabled={busy || paused || !(Number(days) >= 1)} onClick={applyPlan} className="rounded-lg bg-brand-600 px-3 py-1.5 font-semibold text-white disabled:opacity-50">Apply plan</button>
         </div>
         <p className="text-[11px] text-slate-500">Adds paid days from today, or from the end of the current plan. Use it to give a free extension too.</p>
+        {canPause && (!pauseConfirm ? (
+          <button type="button" disabled={busy} onClick={() => setPauseConfirm(true)} className="rounded-lg border border-amber-400 px-3 py-1.5 font-semibold text-amber-800 disabled:opacity-50">{paused ? "Start subscription again" : "Pause subscription"}</button>
+        ) : (
+          <div role="alertdialog" aria-label="Confirm pause" className="rounded-lg bg-amber-50 p-2 text-amber-900">
+            <p>{paused ? "The days that were kept will start counting from today." : "The plan stops now and the days left are kept until you start it again."}</p>
+            <div className="mt-2 flex gap-2"><button type="button" disabled={busy} onClick={flipPause} className="rounded-lg bg-slate-900 px-3 py-1.5 font-semibold text-white">{paused ? "Yes, start" : "Yes, pause"}</button><button type="button" onClick={() => setPauseConfirm(false)} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-semibold text-slate-700">Cancel</button></div>
+          </div>
+        ))}
+        {paused && <p className="font-semibold text-amber-800">This subscription is paused.</p>}
         {!confirm ? (
           <button type="button" disabled={busy} onClick={() => setConfirm(true)} className={`rounded-lg border px-3 py-1.5 font-semibold disabled:opacity-50 ${suspended ? "border-emerald-600 text-emerald-700" : "border-red-300 text-red-700"}`}>{suspended ? "Allow this clinic to sign in again" : "Suspend this clinic"}</button>
         ) : (

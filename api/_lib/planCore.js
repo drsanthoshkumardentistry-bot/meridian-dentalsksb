@@ -27,13 +27,45 @@ export const getPlan = async ({ sa, uid, fetchFn = fetch, now = Date.now() }) =>
   const f = (await r.json()).fields || {};
   const paidUntil = Number(f.paidUntil && (f.paidUntil.integerValue ?? f.paidUntil.doubleValue)) || 0;
   const plan = f.plan && PLAN_IDS.includes(f.plan.stringValue) ? f.plan.stringValue : "";
-  return { plan, paidUntil };
+  const pausedRemaining = Number(f.pausedRemaining && (f.pausedRemaining.integerValue ?? f.pausedRemaining.doubleValue)) || 0;
+  return pausedRemaining > 0 ? { plan, paidUntil, paused: true, pausedRemaining } : { plan, paidUntil };
+};
+
+const patchPlan = async ({ sa, uid, fields, fetchFn, now }) => {
+  const token = await getAccessToken(sa, fetchFn, now, SCOPE);
+  const r = await fetchFn(`${root(sa)}/plans/${encodeURIComponent(uid)}`, {
+    method: "PATCH", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ fields }),
+  });
+  if (!r.ok) throw new Error("firestore " + r.status);
+};
+const int = (n) => ({ integerValue: String(Math.round(n)) });
+
+/** Pause: the days still left are set aside and the plan stops running. Needs time left and must not already be paused. */
+export const pausePlan = async ({ sa, uid, email = "", fetchFn = fetch, now = Date.now() }) => {
+  if (!goodUid(uid)) throw new Error("uid");
+  const cur = await getPlan({ sa, uid, fetchFn, now });
+  if (cur.paused) throw new Error("already_paused");
+  if (!(cur.paidUntil > now)) throw new Error("nothing_to_pause");
+  const remaining = cur.paidUntil - now;
+  await patchPlan({ sa, uid, fetchFn, now, fields: { plan: { stringValue: cur.plan }, paidUntil: int(now), pausedRemaining: int(remaining), pausedAt: int(now), email: { stringValue: String(email).slice(0, 120) }, updatedAt: int(now) } });
+  return { plan: cur.plan, paidUntil: now, paused: true, pausedRemaining: remaining };
+};
+
+/** Start again: the saved days run from today. */
+export const resumePlan = async ({ sa, uid, email = "", fetchFn = fetch, now = Date.now() }) => {
+  if (!goodUid(uid)) throw new Error("uid");
+  const cur = await getPlan({ sa, uid, fetchFn, now });
+  if (!cur.paused) throw new Error("not_paused");
+  const paidUntil = now + cur.pausedRemaining;
+  await patchPlan({ sa, uid, fetchFn, now, fields: { plan: { stringValue: cur.plan }, paidUntil: int(paidUntil), email: { stringValue: String(email).slice(0, 120) }, updatedAt: int(now) } });
+  return { plan: cur.plan, paidUntil };
 };
 
 export const setPlan = async ({ sa, uid, plan, days, email = "", fetchFn = fetch, now = Date.now() }) => {
   if (!goodUid(uid)) throw new Error("uid");
   if (!PLAN_IDS.includes(plan)) throw new Error("plan");
   const current = await getPlan({ sa, uid, fetchFn, now });
+  if (current.paused) throw new Error("paused");
   const paidUntil = extendPaidUntil(current.paidUntil, days, now);
   const token = await getAccessToken(sa, fetchFn, now, SCOPE);
   const r = await fetchFn(`${root(sa)}/plans/${encodeURIComponent(uid)}`, {

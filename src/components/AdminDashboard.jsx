@@ -325,6 +325,7 @@ export default function AdminDashboard({ email = "", initial = null, loadFn = lo
                       <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                         {c.online ? <Chip tone="bg-emerald-50 text-emerald-700"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-500" />Online</Chip> : <Chip>{`Seen ${ago(c.lastLogin, now)}`}</Chip>}
                         {c.state === "paid" ? <Chip tone="bg-brand-50 text-brand-700">{`${planName(c.plan)} until ${date(c.paidUntil)}`}</Chip>
+                          : c.state === "paused" ? <Chip tone="bg-amber-50 text-amber-800">{`${planName(c.plan)} paused, ${Math.ceil((c.pausedRemaining || 0) / 86400000)} days kept`}</Chip>
                           : c.state === "expired" ? <Chip tone="bg-gold-50 text-gold-700">{`${planName(c.plan)} ended ${date(c.paidUntil)}`}</Chip>
                           : <Chip>Free trial</Chip>}
                         {c.request === "pending" && <Chip tone="bg-brand-600 text-white">Plan requested</Chip>}

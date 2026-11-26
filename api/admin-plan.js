@@ -29,6 +29,7 @@ export default async function handler(req, res) {
     const r = await setPlan({ sa, uid, plan: body.plan, days: body.days, email: String(body.email).toLowerCase() });
     return send(res, 200, r);
   } catch (e) {
+    if (e && e.message === "paused") return send(res, 400, { error: "This subscription is paused. Start it again first." });
     if (e && (e.message === "plan" || e.message === "days")) return send(res, 400, { error: e.message === "plan" ? "Choose Starter, Growth or Scale." : "Days must be 1 to 800." });
     return send(res, 502, { error: "Could not save. Try again in a minute." });
   }

@@ -16,7 +16,7 @@ export default function PlanCard({ clinic = "", createdAt, now, loadFn = loadMyP
     try { const r = await requestFn({ plan: planId, yearly: false, clinic }); setReq({ status: r.status || "pending", plan: planId }); setReqMsg(""); }
     catch (e) { setReqMsg((e && e.message) || "Could not send the request. Use WhatsApp instead."); }
   };
-  const status = planStatus({ createdAt, now, paidUntil: paid.paidUntil, plan: paid.plan });
+  const status = planStatus({ createdAt, now, paidUntil: paid.paidUntil, plan: paid.plan, paused: paid.paused, pausedRemaining: paid.pausedRemaining });
   const link = `https://wa.me/${CONTACT.whatsapp}?text=${encodeURIComponent(subscribeText({ planId, clinic }))}`;
   return (
     <section className="rounded-xl border border-rule p-4 space-y-3" data-testid="plan-card">
@@ -25,6 +25,7 @@ export default function PlanCard({ clinic = "", createdAt, now, loadFn = loadMyP
         {status.state === "free" && <p className="text-xs text-slate-600">We are in our trial run. Everything is free for now and nobody is being charged. We will tell you well before that changes.</p>}
         {status.state === "trial" && <p className="text-xs text-slate-600">Free trial: {status.daysLeft} days left. Everything is included.</p>}
         {status.state === "paid" && <p className="text-xs text-slate-600">{planName(status.plan)} plan, {status.daysLeft} days left.</p>}
+        {status.state === "paused" && <p role="status" className="text-xs text-amber-800" data-testid="plan-paused">Your {planName(status.plan)} plan is paused. {status.daysLeft} days are kept and start again when we resume it. Message us on WhatsApp to start it.</p>}
         {status.state === "ended" && <p role="alert" className="text-xs text-rose-700">Your free trial has ended. Choose a plan to keep using MeriDent. You can always download your data.</p>}
       </div>
       <div className="grid sm:grid-cols-3 gap-2">
