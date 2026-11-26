@@ -3,3 +3,9 @@ name = "meridian-dentalsksb"
 compatibility_date = "2025-07-01"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "dist"
+
+# Private picture storage (X-rays and photos). Create the bucket in Cloudflare (R2), then uncomment these lines.
+# Until then /api/img answers "not switched on" and pictures stay where they are.
+# [[r2_buckets]]
+# binding = "IMAGES"
+# bucket_name = "merident-images"
