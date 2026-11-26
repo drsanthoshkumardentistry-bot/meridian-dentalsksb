@@ -21,3 +21,12 @@ export const decideRequest = async ({ uid, action }, { fetchFn = fetch, getToken
   if (!res.ok) throw new Error(d.error || "Could not save.");
   return d;
 };
+
+/** Founder only: suspend or resume a clinic's sign-in. Patient data is not touched. */
+export const clinicAction = async ({ email, action }, { fetchFn = fetch, getToken = tokenOf } = {}) => {
+  const res = await fetchFn("/api/admin-clinic", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${await getToken()}` }, body: JSON.stringify({ email, action }) });
+  let d = {};
+  try { d = await res.json(); } catch { /* keep empty */ }
+  if (!res.ok) throw new Error(d.error || "Could not save.");
+  return d;
+};

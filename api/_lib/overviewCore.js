@@ -21,7 +21,7 @@ export function buildOverview({ users, presence, plans, requests, now = Date.now
       online: !!(s && s.online), todayMin: s ? s.todayMin : 0, weekMin: s ? s.weekMin : 0,
       plan: p && (["standard", "pro", "scale"].includes(p.plan)) ? p.plan : "", paidUntil,
       state: paidUntil > now ? "paid" : paidUntil > 0 ? "expired" : "unpaid",
-      request: r ? r.status || "" : "",
+      request: r ? r.status || "" : "", suspended: !!x.disabled,
     };
   }).sort((a, b) => Number(b.online) - Number(a.online) || b.lastLogin - a.lastLogin).slice(0, 200);
 

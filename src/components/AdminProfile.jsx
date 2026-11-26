@@ -100,6 +100,11 @@ export default function AdminProfile({ announceLoad, announceSave, user, email =
           <p className="mt-1 text-[11px] text-slate-500">Shown as a banner at the top of every clinic's screen. Each clinic can dismiss it. {ann.live ? "A banner is live now." : "No banner is live."}</p>
           <label htmlFor="ann-text" className="mt-3 block text-xs font-semibold text-slate-700">Banner message</label>
           <textarea id="ann-text" rows={2} maxLength={240} value={ann.text} onChange={(e) => setAnn({ ...ann, text: e.target.value, touched: true })} placeholder="For example: MeriDent will be updated tonight at 11 pm. Please save your work." className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" />
+          <div className="mt-2 flex flex-wrap gap-1.5" role="group" aria-label="Ready-made messages">
+            {[["Maintenance soon", "warning", "MeriDent will be briefly unavailable for maintenance tonight. Please save your work before 11 pm."], ["Maintenance done", "success", "Maintenance is finished and MeriDent is working normally. Thank you for waiting."], ["Slow right now", "warning", "MeriDent is running slowly right now. We are fixing it. Your data is safe."]].map(([label, level, text]) => (
+              <button key={label} type="button" onClick={() => setAnn({ ...ann, text, level, touched: true })} className="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700">{label}</button>
+            ))}
+          </div>
           <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500"><span>{ann.text.length}/240. Plain text only. Do not put patient details here.</span></div>
           <div className="mt-2 flex flex-wrap items-end gap-2 text-xs">
             <div><label htmlFor="ann-level" className="block font-semibold text-slate-700">Style</label>
