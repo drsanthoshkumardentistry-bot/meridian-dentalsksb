@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { loadMyPlan, requestPlan, loadMyRequest } from "../planApi.js";
-import { PLANS, EXTRA_STORAGE, planName, planStatus, subscribeText } from "../plan.js";
+import { PLANS, EXTRA_STORAGE, PAY_TO, PRICING_LIVE, planName, planStatus, subscribeText } from "../plan.js";
+import { buildUpiUri, isValidUpiId } from "../billing.js";
 import { CONTACT } from "../legal.js";
 
 /** Settings: shows the clinic its plan. During the trial run everything is free and nothing is charged. */
-export default function PlanCard({ clinic = "", createdAt, now, loadFn = loadMyPlan, requestFn = requestPlan, myRequestFn = loadMyRequest }) {
+export default function PlanCard({ clinic = "", createdAt, now, loadFn = loadMyPlan, requestFn = requestPlan, myRequestFn = loadMyRequest, live = PRICING_LIVE, payTo = PAY_TO }) {
   const [paid, setPaid] = useState({ plan: "", paidUntil: 0 });
   useEffect(() => { let live = true; loadFn().then((p) => { if (live && p) setPaid(p); }).catch(() => {}); return () => { live = false; }; }, [loadFn]);
   const [planId, setPlanId] = useState("standard");
@@ -16,6 +17,10 @@ export default function PlanCard({ clinic = "", createdAt, now, loadFn = loadMyP
     try { const r = await requestFn({ plan: planId, yearly: false, clinic }); setReq({ status: r.status || "pending", plan: planId }); setReqMsg(""); }
     catch (e) { setReqMsg((e && e.message) || "Could not send the request. Use WhatsApp instead."); }
   };
+  const [copied, setCopied] = useState(false);
+  const copyId = () => { try { navigator.clipboard.writeText(payTo.vpa).then(() => setCopied(true), () => setCopied(false)); } catch { setCopied(false); } };
+  const asked = PLANS.find((p) => p.id === (req.plan || planId)) || PLANS[0];
+  const showPay = live && req.status === "pending" && isValidUpiId(payTo.vpa);
   const status = planStatus({ createdAt, now, paidUntil: paid.paidUntil, plan: paid.plan, paused: paid.paused, pausedRemaining: paid.pausedRemaining });
   const link = `https://wa.me/${CONTACT.whatsapp}?text=${encodeURIComponent(subscribeText({ planId, clinic }))}`;
   return (
@@ -39,6 +44,17 @@ export default function PlanCard({ clinic = "", createdAt, now, loadFn = loadMyP
       </div>
       <p className="text-[11px] text-slate-500">Planned prices before GST, per clinic. Need more space for X-rays? Extra {EXTRA_STORAGE.gb} GB is planned at ₹{EXTRA_STORAGE.monthly}/month. Storage limits and the usage meter are not switched on yet. The first 10 clinics get 3 months free in return for feedback.</p>
       {req.status === "pending" && <p role="status" className="text-xs text-blue-800" data-testid="plan-request-status">Your request for {planName(req.plan)} is with us. We will confirm once your payment is received.</p>}
+      {showPay && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-950" data-testid="pay-meridient">
+          <div className="font-bold">Pay for {asked.name}: ₹{asked.monthly.toLocaleString("en-IN")}</div>
+          <p className="mt-1">Open any UPI app. Before you pay, check that the name shows <strong>{payTo.name}</strong>. The money goes straight to this UPI ID: <strong className="break-all">{payTo.vpa}</strong></p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <a href={buildUpiUri({ vpa: payTo.vpa, name: payTo.name, amountP: asked.monthly * 100, note: `MeriDent ${asked.name}${clinic ? ` - ${clinic}` : ""}`.slice(0, 60) })} className="inline-block rounded-lg bg-emerald-700 px-3 py-1.5 font-semibold text-white">Pay with a UPI app</a>
+            <button type="button" onClick={copyId} className="rounded-lg border border-emerald-700 bg-white px-3 py-1.5 font-semibold text-emerald-800">{copied ? "Copied" : "Copy UPI ID"}</button>
+          </div>
+          <p className="mt-2 text-[11px] text-emerald-900">The listed price is before GST. If GST applies we will confirm the total with you on WhatsApp. After you pay, we activate your plan once the money arrives. Keep your payment screenshot.</p>
+        </div>
+      )}
       {req.status === "approved" && <p role="status" className="text-xs text-emerald-700" data-testid="plan-request-status">Your last request was approved.</p>}
       {req.status === "rejected" && <p role="status" className="text-xs text-rose-700" data-testid="plan-request-status">Your last request was not approved. Message us on WhatsApp to sort it out.</p>}
       {reqMsg && <p role="alert" className="text-xs text-rose-700">{reqMsg}</p>}

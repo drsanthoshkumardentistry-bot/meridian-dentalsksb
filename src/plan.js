@@ -4,6 +4,10 @@
 
 export const PRICING_LIVE = false;
 export const TRIAL_DAYS = 30;
+
+/* Where clinics send plan payments. One place to change. A UPI ID is public by design (it is what a QR code carries). The name is
+ * shown next to it so a clinic can check it before paying. The founder still approves every plan by hand once the money arrives. */
+export const PAY_TO = { vpa: "sabari2005g@okicici", name: "siva sabari" };
 export const DAY_MS = 24 * 60 * 60 * 1000;
 
 /* Plans are priced by image storage (X-rays and photos), which is what costs us money. Ids stay "standard" and "pro" so clinics
