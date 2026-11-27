@@ -30,3 +30,18 @@ export const clinicAction = async ({ email, action }, { fetchFn = fetch, getToke
   if (!res.ok) throw new Error(d.error || "Could not save.");
   return d;
 };
+
+const call = async (url, init, getToken) => {
+  const res = await (init.fetchFn || fetch)(url, { ...init.req, headers: { "Content-Type": "application/json", Authorization: `Bearer ${await getToken()}` } });
+  let d = {};
+  try { d = await res.json(); } catch { /* keep empty */ }
+  if (!res.ok) throw new Error(d.error || "Could not load.");
+  return d;
+};
+
+/** Founder only: the action log, newest first. */
+export const loadLog = ({ fetchFn = fetch, getToken = tokenOf } = {}) => call("/api/admin-log", { fetchFn, req: { method: "GET" } }, getToken).then((d) => (Array.isArray(d.entries) ? d.entries : []));
+
+/** Founder only: read (no text) or save (text) the private note about one clinic. */
+export const clinicNote = ({ email, note }, { fetchFn = fetch, getToken = tokenOf } = {}) =>
+  call("/api/admin-notes", { fetchFn, req: { method: "POST", body: JSON.stringify(typeof note === "string" ? { email, note } : { email }) } }, getToken);

@@ -11,7 +11,7 @@ vi.mock("../src/firebase", () => ({
   resendVerificationEmail: async () => {}, refreshVerifiedStatus: async () => true, logoutUser: async () => {}, completeRedirectLogin: async () => null,
 }));
 vi.mock("firebase/firestore", () => ({ collection: () => ({}), doc: () => ({}), setDoc: async () => {}, onSnapshot: () => () => {}, deleteDoc: async () => {} }));
-vi.mock("../src/adminApi.js", () => ({ loadOverview: async () => h.overview, decideRequest: async () => ({}) }));
+vi.mock("../src/adminApi.js", () => ({ loadLog: async () => [], clinicNote: async () => ({ note: "" }), loadOverview: async () => h.overview, decideRequest: async () => ({}) }));
 vi.mock("../src/heartbeat.js", () => ({ startHeartbeat: () => { h.beats += 1; return () => {}; } }));
 
 import App from "../src/App.jsx";
