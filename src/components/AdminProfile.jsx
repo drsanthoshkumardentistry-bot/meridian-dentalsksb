@@ -31,7 +31,7 @@ function saveFile(name, text) {
 const cardOf = (dense) => `rounded-2xl border border-rule bg-white/80 ${dense ? "p-3" : "p-4"} shadow-card`;
 
 /** Founder control centre: tabs for controls, business, clinic outreach, personal settings and a private workspace. */
-export default function AdminProfile({ announceLoad, announceSave, user, email = "", data, now, every, onEvery, onToast, onOpenApp, onLogout }) {
+export default function AdminProfile({ onGo = () => {}, onClinic = () => {}, announceLoad, announceSave, user, email = "", data, now, every, onEvery, onToast, onOpenApp, onLogout }) {
   const t0 = now || Date.now();
   const clinics = data ? data.clinics : [];
   const lists = useMemo(() => followUps(clinics, t0), [clinics, t0]);
@@ -146,13 +146,13 @@ export default function AdminProfile({ announceLoad, announceSave, user, email =
       </div>
 
       <div {...panel("business")}>
-      <Insights clinics={(data && data.clinics) || []} now={now} className={card} />
+      <Insights clinics={(data && data.clinics) || []} now={now} className={card} onGo={onGo} onClinic={onClinic} />
       {stats && (
         <section aria-label="Business snapshot" className={card} data-testid="business-snapshot">
           <h2 className="flex items-center gap-2 font-display text-base font-extrabold text-ink"><TrendingUp className="h-4 w-4 text-brand-600" /> Business snapshot</h2>
           <dl className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4 text-center">
             {[["Yearly value", `₹${Math.round(stats.yearlyValue).toLocaleString("en-IN")}`, "monthly value x 12"], ["Paying", `${stats.conversion}%`, `${stats.paidActive} of ${stats.total} clinics`], ["Lapsed", `${stats.churn}%`, "of clinics that ever paid"], ["Hours per clinic", String(stats.hoursPerClinic), "this week"]].map(([k, v, n]) => (
-              <div key={k} className="rounded-xl border border-rule bg-white p-3"><dd className="text-xl font-extrabold text-ink tabular-nums">{v}</dd><dt className="text-[11px] font-semibold text-slate-700">{k}</dt><div className="text-[10px] text-slate-500">{n}</div></div>
+              <button type="button" key={k} onClick={() => ({ "Yearly value": () => onGo("billing"), Paying: () => onGo("clinics", "paying"), Lapsed: () => onGo("clinics", "expired"), "Hours per clinic": () => onGo("clinics", "all", "time") }[k] || (() => {}))()} aria-label={`${k}: ${v}. Open details`} className="rounded-xl border border-rule bg-white p-3 hover:border-brand-200 hover:shadow-card"><dd className="text-xl font-extrabold text-ink tabular-nums">{v}</dd><dt className="text-[11px] font-semibold text-slate-700">{k}</dt><div className="text-[10px] text-slate-500">{n}</div></button>
             ))}
           </dl>
           <div className="mt-4">

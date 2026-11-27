@@ -29,12 +29,12 @@ export const weeklySignups = (clinics = [], now = Date.now(), weeks = 8) => {
   return out;
 };
 
-const List = ({ title, hint, rows, note }) => (
+const List = ({ title, hint, rows, note, onClinic }) => (
   <div className="rounded-xl border border-slate-100 bg-white p-3">
     <div className="flex items-baseline justify-between gap-2"><h3 className="text-xs font-bold text-slate-800">{title}</h3><span className="text-[11px] font-semibold text-slate-500">{rows.length}</span></div>
     <p className="text-[11px] text-slate-500">{hint}</p>
     {rows.length === 0 ? <p className="mt-2 text-[11px] text-slate-400">None right now.</p> : (
-      <ul className="mt-2 space-y-1">{rows.slice(0, 6).map((c) => <li key={c.uid} className="break-all text-xs text-slate-700">{c.email}<span className="text-slate-400">{note ? ` · ${note(c)}` : ""}</span></li>)}</ul>
+      <ul className="mt-2 space-y-1">{rows.slice(0, 6).map((c) => <li key={c.uid}><button type="button" onClick={() => onClinic(c)} aria-label={`Open ${c.email}`} className="break-all text-left text-xs text-slate-700 hover:text-brand-700 hover:underline">{c.email}<span className="text-slate-400">{note ? ` · ${note(c)}` : ""}</span></button></li>)}</ul>
     )}
   </div>
 );
@@ -58,7 +58,7 @@ const Trend = ({ clinics, now }) => {
   );
 };
 
-export default function Insights({ clinics, now = Date.now(), className = "" }) {
+export default function Insights({ clinics, now = Date.now(), className = "", onGo = () => {}, onClinic = () => {} }) {
   const i = insightsOf(clinics, now);
   const left = (c) => `${Math.max(0, Math.ceil((c.paidUntil - now) / DAY))} days left`;
   const trial = (c) => `${Math.max(0, Math.ceil((c.created + TRIAL_DAYS * DAY - now) / DAY))} days of trial left`;
@@ -67,17 +67,17 @@ export default function Insights({ clinics, now = Date.now(), className = "" }) 
       <h2 className="font-display text-base font-extrabold text-ink">Revenue and risk</h2>
       <p className="mt-1 text-[11px] text-slate-500">Worked out from the plans clinics are on today. Nobody is charged until pricing is switched on, so treat these as what it would be.</p>
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {[["Monthly", money(i.mrr)], ["Yearly (×12)", money(i.arr)], ["Per paying clinic", money(i.avg)], ["Signups paying", `${i.conversion}%`]].map(([k, v]) => (
-          <div key={k} className="rounded-xl bg-slate-50 p-3"><div className="text-[11px] text-slate-500">{k}</div><div className="font-display text-lg font-extrabold text-ink">{v}</div></div>
+        {[["Monthly", money(i.mrr), () => onGo("billing")], ["Yearly (×12)", money(i.arr), () => onGo("billing")], ["Per paying clinic", money(i.avg), () => onGo("clinics", "paying")], ["Signups paying", `${i.conversion}%`, () => onGo("clinics", "paying")]].map(([k, v, open]) => (
+          <button type="button" key={k} onClick={open} aria-label={`${k}: ${v}. Open details`} className="rounded-xl bg-slate-50 p-3 text-left hover:bg-blue-50"><div className="text-[11px] text-slate-500">{k}</div><div className="font-display text-lg font-extrabold text-ink">{v}</div></button>
         ))}
       </div>
       <p className="mt-2 text-[11px] text-slate-600" data-testid="plan-mix">{i.byPlan.map((p) => `${p.name} ${p.count}`).join(" · ")}</p>
       <Trend clinics={clinics} now={now} />
       <div className="mt-3 grid gap-2 md:grid-cols-2">
-        <List title="Paying but quiet" hint="Paid, yet nobody signed in this week. Check in before they leave." rows={i.quiet} note={left} />
-        <List title="Renewing within 7 days" hint="Paid time is about to run out." rows={i.endingSoon} note={left} />
-        <List title="Trials ending soon" hint="A good moment to offer a plan." rows={i.trialEnding} note={trial} />
-        <List title="Signed up, never opened" hint="Created over 3 days ago with no sign-in time." rows={i.neverUsed} />
+        <List onClinic={onClinic} title="Paying but quiet" hint="Paid, yet nobody signed in this week. Check in before they leave." rows={i.quiet} note={left} />
+        <List onClinic={onClinic} title="Renewing within 7 days" hint="Paid time is about to run out." rows={i.endingSoon} note={left} />
+        <List onClinic={onClinic} title="Trials ending soon" hint="A good moment to offer a plan." rows={i.trialEnding} note={trial} />
+        <List onClinic={onClinic} title="Signed up, never opened" hint="Created over 3 days ago with no sign-in time." rows={i.neverUsed} />
       </div>
     </section>
   );

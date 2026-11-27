@@ -33,14 +33,18 @@ const avatarOf = (s) => AVATARS[[...String(s)].reduce((n, c) => n + c.charCodeAt
 
 const NAV = [["overview", "Overview", LayoutDashboard], ["billing", "Billing & approvals", IndianRupee], ["clinics", "Clinics", Users], ["profile", "Admin profile", UserCog]];
 
-const Tile = ({ label, value, note, accent = "bg-brand-500", tone = "text-ink" }) => (
-  <div className="relative overflow-hidden rounded-2xl border border-rule bg-white p-4 pl-5 shadow-card">
+const Tile = ({ label, value, note, accent = "bg-brand-500", tone = "text-ink", onClick }) => {
+  const body = (<>
     <span aria-hidden="true" className={`absolute inset-y-0 left-0 w-1.5 ${accent}`} />
     <div className={`font-display text-3xl font-extrabold tabular-nums leading-none ${tone}`}>{value}</div>
     <div className="mt-1.5 text-xs font-semibold text-slate-700">{label}</div>
     {note && <div className="text-[11px] text-slate-500 mt-0.5">{note}</div>}
-  </div>
-);
+  </>);
+  const base = "relative block w-full overflow-hidden rounded-2xl border border-rule bg-white p-4 pl-5 text-left shadow-card";
+  return onClick
+    ? <button type="button" onClick={onClick} aria-label={`${label}: ${value}. Open details`} className={`${base} transition hover:shadow-lift hover:border-brand-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500`}>{body}</button>
+    : <div className={base}>{body}</div>;
+};
 
 const Section = ({ title, label, children, right, testId }) => (
   <section aria-label={label || title} data-testid={testId} className="space-y-3">
@@ -105,6 +109,8 @@ export default function AdminDashboard({ email = "", initial = null, loadFn = lo
   const counts = useMemo(() => ({
     all: clinics.length,
     online: clinics.filter((c) => c.online).length,
+    today: clinics.filter((c) => c.online || c.todayMin > 0).length,
+    expired: clinics.filter((c) => c.state === "expired").length,
     paying: clinics.filter((c) => c.state === "paid").length,
     requested: clinics.filter((c) => c.request === "pending").length,
     quiet: clinics.filter((c) => !c.online && (!c.lastLogin || t0 - c.lastLogin > 30 * DAY)).length,
@@ -112,7 +118,7 @@ export default function AdminDashboard({ email = "", initial = null, loadFn = lo
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
     return sortClinics(clinics, sort).filter((c) => (!q || c.email.toLowerCase().includes(q)) && (
-      filter === "all" || (filter === "online" && c.online) || (filter === "paying" && c.state === "paid") ||
+      filter === "all" || (filter === "online" && c.online) || (filter === "today" && (c.online || c.todayMin > 0)) || (filter === "expired" && c.state === "expired") || (filter === "paying" && c.state === "paid") ||
       (filter === "requested" && c.request === "pending") || (filter === "quiet" && !c.online && (!c.lastLogin || t0 - c.lastLogin > 30 * DAY))));
   }, [clinics, query, filter, sort, t0]);
   const signups = useMemo(() => weeklySignups(clinics, t0, 8), [clinics, t0]);
@@ -128,7 +134,14 @@ export default function AdminDashboard({ email = "", initial = null, loadFn = lo
     ...(counts.quiet ? [{ id: "quiet", tone: "blue", kind: "clinics", to: "clinics", text: `${counts.quiet} clinic${counts.quiet === 1 ? " has" : "s have"} not signed in for 30 days` }] : []),
   ];
   const decided = data ? data.requests.filter((r) => r.status !== "pending").slice(0, 8) : [];
-  const FILTERS = [["all", "All"], ["online", "Online"], ["paying", "Paying"], ["requested", "Requested"], ["quiet", "Quiet"]];
+  const FILTERS = [["all", "All"], ["online", "Online"], ["today", "Active today"], ["paying", "Paying"], ["expired", "Expired"], ["requested", "Requested"], ["quiet", "Quiet"]];
+  /** Open a page; for the clinic list, also pick the filter and sort so the tapped number can be checked. */
+  const go = (to, f = "all", by = "seen") => {
+    setView(to); setMenu(false);
+    if (to === "clinics") { setFilter(f); setSort(by); setQuery(""); setShowAll(false); setOpenId(""); }
+    window.scrollTo?.(0, 0);
+  };
+  const scrollTo = (id) => setTimeout(() => document.querySelector(`[data-testid="${id}"]`)?.scrollIntoView?.({ behavior: "smooth", block: "start" }), 0);
 
   return (
     <div className="min-h-screen app-backdrop text-slate-800 font-sans" data-testid="admin-dashboard">
@@ -199,35 +212,35 @@ export default function AdminDashboard({ email = "", initial = null, loadFn = lo
         {data && (<>
           {view === "overview" && <Section title="Activity" label="Activity">
             <div className="rounded-3xl bg-gradient-to-br from-navy-900 via-navy-800 to-brand-700 p-5 text-white shadow-lift grid grid-cols-2 gap-4 items-end">
-              <div>
+              <button type="button" onClick={() => go("clinics", "online")} aria-label={`Online now: ${data.presence.onlineNow}. Open details`} className="text-left rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">
                 <div className="flex items-center gap-2">
                   <span className="relative flex h-2.5 w-2.5" aria-hidden="true"><span className={`absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60 ${data.presence.onlineNow ? "animate-ping" : ""}`} /><span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" /></span>
                   <span className="text-[11px] text-blue-200">last 10 minutes</span>
                 </div>
                 <div className="font-display text-6xl font-extrabold leading-none tabular-nums mt-2">{data.presence.onlineNow}</div>
                 <div className="mt-1 text-sm font-semibold">Online now</div>
-              </div>
-              <div className="text-right">
+              </button>
+              <button type="button" onClick={() => go("clinics", "today", "time")} aria-label={`Active today: ${data.presence.activeToday}. Open details`} className="text-right rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">
                 <div className="font-display text-4xl font-extrabold leading-none tabular-nums">{data.presence.activeToday}</div>
                 <div className="mt-1 text-sm font-semibold text-blue-100">Active today</div>
-              </div>
+              </button>
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <Tile label="Hours online today" value={data.presence.hoursToday} accent="bg-aqua-500" />
-              <Tile label="Hours online, 7 days" value={data.presence.hoursWeek} accent="bg-aqua-500" />
-              <Tile label="Clinics signed up" value={data.users.total} note={`${data.users.newLast7} new this week`} accent="bg-brand-500" />
-              <Tile label="Gone quiet (30+ days)" value={data.users.quiet30} accent="bg-gold-500" tone={data.users.quiet30 ? "text-gold-700" : "text-ink"} />
+              <Tile label="Hours online today" value={data.presence.hoursToday} accent="bg-aqua-500" onClick={() => go("clinics", "today", "time")} />
+              <Tile label="Hours online, 7 days" value={data.presence.hoursWeek} accent="bg-aqua-500" onClick={() => go("clinics", "all", "time")} />
+              <Tile label="Clinics signed up" value={data.users.total} note={`${data.users.newLast7} new this week`} accent="bg-brand-500" onClick={() => go("clinics", "all", "new")} />
+              <Tile label="Gone quiet (30+ days)" value={data.users.quiet30} accent="bg-gold-500" tone={data.users.quiet30 ? "text-gold-700" : "text-ink"} onClick={() => go("clinics", "quiet")} />
             </div>
             <div className="rounded-2xl border border-rule bg-white p-4 shadow-card">
               <div className="text-xs font-semibold text-slate-700 mb-3">Hours online per day, all clinics</div>
               {anyTime ? (
                 <div className="flex items-end gap-2 h-28" role="img" aria-label="Hours online per day">
                   {data.presence.dayTotals.map((d, i, a) => (
-                    <div key={d.day} className="flex-1 flex flex-col items-center justify-end h-full">
+                    <button type="button" key={d.day} onClick={() => go("clinics", i === a.length - 1 ? "today" : "all", "time")} aria-label={`${weekday(d.day)}: ${d.hours} hours online. Open clinics by time`} className="flex-1 flex flex-col items-center justify-end h-full">
                       <div className="text-[10px] text-slate-500 tabular-nums">{d.hours > 0 ? d.hours : ""}</div>
                       <div className={`w-full rounded-t-md ${i === a.length - 1 ? "bg-brand-600" : "bg-brand-100"}`} style={{ height: `${Math.max(4, (d.hours / peak) * 78)}%` }} />
                       <div className={`text-[10px] mt-1 ${i === a.length - 1 ? "font-bold text-brand-700" : "text-slate-500"}`}>{weekday(d.day)}</div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               ) : (
@@ -238,11 +251,11 @@ export default function AdminDashboard({ email = "", initial = null, loadFn = lo
               <div className="text-xs font-semibold text-slate-700 mb-3">New clinics per week, last 8 weeks</div>
               <div className="flex items-end gap-2 h-24" role="img" aria-label="New clinics per week">
                 {signups.map((w, i, a) => (
-                  <div key={w.end} className="flex-1 flex flex-col items-center justify-end h-full">
+                  <button type="button" key={w.end} onClick={() => go("clinics", "all", "new")} aria-label={`${i === a.length - 1 ? "This week" : `${a.length - 1 - i} weeks ago`}: ${w.count} new clinics. Open newest clinics`} className="flex-1 flex flex-col items-center justify-end h-full">
                     <div className="text-[10px] text-slate-500 tabular-nums">{w.count > 0 ? w.count : ""}</div>
                     <div className={`w-full rounded-t-md ${i === a.length - 1 ? "bg-emerald-600" : "bg-emerald-200"}`} style={{ height: `${Math.max(4, (w.count / peakSignups) * 78)}%` }} />
                     <div className="text-[10px] mt-1 text-slate-500">{i === a.length - 1 ? "Now" : `-${a.length - 1 - i}w`}</div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
@@ -250,10 +263,10 @@ export default function AdminDashboard({ email = "", initial = null, loadFn = lo
 
           {view === "billing" && <Section title="Billing" label="Billing">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <Tile label="Paying clinics" value={data.billing.paidActive} accent="bg-emerald-500" tone="text-emerald-700" />
-              <Tile label="Monthly value" value={rupees(data.billing.monthlyValue)} note="at the list price of each paid plan" accent="bg-emerald-500" />
-              <Tile label="Expired plans" value={data.billing.expired} accent="bg-gold-500" tone={data.billing.expired ? "text-gold-700" : "text-ink"} />
-              <Tile label="Waiting for approval" value={data.billing.pending} accent="bg-brand-500" tone={data.billing.pending ? "text-brand-700" : "text-ink"} />
+              <Tile label="Paying clinics" value={data.billing.paidActive} accent="bg-emerald-500" tone="text-emerald-700" onClick={() => go("clinics", "paying")} />
+              <Tile label="Monthly value" value={rupees(data.billing.monthlyValue)} note="at the list price of each paid plan" accent="bg-emerald-500" onClick={() => scrollTo("renewals")} />
+              <Tile label="Expired plans" value={data.billing.expired} accent="bg-gold-500" tone={data.billing.expired ? "text-gold-700" : "text-ink"} onClick={() => go("clinics", "expired")} />
+              <Tile label="Waiting for approval" value={data.billing.pending} accent="bg-brand-500" tone={data.billing.pending ? "text-brand-700" : "text-ink"} onClick={() => scrollTo("requests")} />
             </div>
           </Section>}
 
@@ -356,7 +369,7 @@ export default function AdminDashboard({ email = "", initial = null, loadFn = lo
               <button type="button" onClick={() => setShowAll(true)} className="w-full rounded-xl border border-rule bg-white py-2.5 text-xs font-semibold text-brand-700">Show all {shown.length}</button>
             )}
           </Section>}
-          {view === "profile" && <AdminProfile announceLoad={announceLoad} announceSave={announceSave} user={user} email={email} data={data} now={now} every={every} onEvery={(ms) => { setEvery(ms); writeLocal("merident.admin.refresh", ms); }} onToast={setMsg} onOpenApp={onOpenApp} onLogout={onLogout} />}
+          {view === "profile" && <AdminProfile onGo={go} onClinic={(c) => { setView("clinics"); setFilter("all"); setQuery(c.email); setOpenId(c.uid); window.scrollTo?.(0, 0); }} announceLoad={announceLoad} announceSave={announceSave} user={user} email={email} data={data} now={now} every={every} onEvery={(ms) => { setEvery(ms); writeLocal("merident.admin.refresh", ms); }} onToast={setMsg} onOpenApp={onOpenApp} onLogout={onLogout} />}
         </>)}
         </main>
       </div>
