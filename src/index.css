@@ -338,7 +338,7 @@ main section.bg-white {
 }
 
 /* The app shell must never scroll itself. Focus or scrollIntoView on a field was shifting it up and leaving an empty band at the bottom. */
-.app-shell { overflow: clip; height: 100vh; height: 100dvh; }
+.app-shell { overflow: clip; height: 100vh; height: 100dvh; height: var(--app-h, 100dvh); }
 
 /* Slim icon rail on desktop: it widens and shows labels only when opened with the menu button, and closes when you click outside it */
 @media (min-width: 768px) {
