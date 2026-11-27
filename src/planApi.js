@@ -2,15 +2,15 @@ import { auth } from "./firebase.js";
 
 const tokenOf = async () => { const u = auth && auth.currentUser; if (!u) throw new Error("Sign in again."); return u.getIdToken(); };
 
-/** What this clinic has paid for: { plan, paidUntil } (empty when nothing). Never throws; unknown means unpaid. */
+/** What this clinic has paid for: { plan, paidUntil } (empty when nothing). Never throws. `failed: true` means we could not find out, which must never be treated as unpaid. */
 export const loadMyPlan = async ({ fetchFn = fetch, getToken = tokenOf } = {}) => {
   try {
     const res = await fetchFn("/api/my-plan", { headers: { Authorization: `Bearer ${await getToken()}` } });
-    if (!res.ok) return { plan: "", paidUntil: 0 };
+    if (!res.ok) return { plan: "", paidUntil: 0, failed: true };
     const d = await res.json();
     const out = { plan: ["standard", "pro", "scale"].includes(d.plan) ? d.plan : "", paidUntil: Number(d.paidUntil) || 0 };
     return Number(d.pausedRemaining) > 0 ? { ...out, paused: true, pausedRemaining: Number(d.pausedRemaining) } : out;
-  } catch (e) { return { plan: "", paidUntil: 0 }; }
+  } catch (e) { return { plan: "", paidUntil: 0, failed: true }; }
 };
 
 /** Founder only: mark a clinic paid for `days` more days. */

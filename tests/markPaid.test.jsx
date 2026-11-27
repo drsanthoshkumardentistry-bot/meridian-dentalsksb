@@ -78,11 +78,11 @@ describe("endpoints", () => {
 });
 
 describe("client", () => {
-  it("loadMyPlan never throws and treats failures as unpaid", async () => {
+  it("loadMyPlan never throws and marks failures as failed (never as unpaid)", async () => {
     const bad = { plan: "", paidUntil: 0 };
-    expect(await loadMyPlan({ getToken: async () => "t", fetchFn: async () => ({ ok: false }) })).toEqual(bad);
-    expect(await loadMyPlan({ getToken: async () => "t", fetchFn: async () => { throw new Error("x"); } })).toEqual(bad);
-    expect(await loadMyPlan({ getToken: async () => { throw new Error("no"); }, fetchFn: async () => ({}) })).toEqual(bad);
+    expect(await loadMyPlan({ getToken: async () => "t", fetchFn: async () => ({ ok: false }) })).toEqual({ ...bad, failed: true });
+    expect(await loadMyPlan({ getToken: async () => "t", fetchFn: async () => { throw new Error("x"); } })).toEqual({ ...bad, failed: true });
+    expect(await loadMyPlan({ getToken: async () => { throw new Error("no"); }, fetchFn: async () => ({}) })).toEqual({ ...bad, failed: true });
     expect(await loadMyPlan({ getToken: async () => "t", fetchFn: async () => ({ ok: true, json: async () => ({ plan: "pro", paidUntil: 5 }) }) })).toEqual({ plan: "pro", paidUntil: 5 });
     expect((await loadMyPlan({ getToken: async () => "t", fetchFn: async () => ({ ok: true, json: async () => ({ plan: "<script>", paidUntil: "x" }) }) })).plan).toBe("");
   });
