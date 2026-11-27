@@ -52,7 +52,7 @@ describe("landing page content", () => {
     render(<LandingPage firebaseConfigured onLoginClick={() => {}} />);
     const sec = document.getElementById("quality");
     expect(sec).toBeTruthy();
-    ["1,500+", "9 crore+"].forEach((n) => expect(sec.textContent).toContain(n));
+    ["1,600+", "10 crore+"].forEach((n) => expect(sec.textContent).toContain(n));
     expect(sec.textContent).toMatch(/not an outside audit/i);
     expect(sec.textContent).toMatch(/calculation logic.*not every screen/i);
     expect(sec.textContent).toMatch(/data-access rules tested/);
