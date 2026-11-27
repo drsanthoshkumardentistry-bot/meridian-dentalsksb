@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { LayoutDashboard, IndianRupee, Users, Menu, X, LogOut, Hospital, UserCog, RefreshCw, CheckCircle2 } from "lucide-react";
 import NotificationBell from "./NotificationBell.jsx";
+import QuickSearch from "./QuickSearch.jsx";
 import ClinicDetail from "./ClinicDetail.jsx";
 import { planName as planLabel } from "../plan.js";
 import AdminProfile from "./AdminProfile.jsx";
@@ -184,6 +185,7 @@ export default function AdminDashboard({ email = "", initial = null, loadFn = lo
           <div className="flex items-center gap-1.5">
             <button type="button" onClick={load} className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-white"><RefreshCw className="w-3.5 h-3.5" /> <span className="max-sm:sr-only">Refresh</span></button>
             <FullscreenButton />
+            <QuickSearch clinics={(data && data.clinics) || []} onPage={(id) => { setView(id); window.scrollTo?.(0, 0); }} onClinic={(c) => { setView("clinics"); setQuery(c.email); setFilter("all"); setOpenId(c.uid); window.scrollTo?.(0, 0); }} />
             <NotificationBell items={alerts} onOpen={(to) => setView(to)} />
           </div>
         </header>

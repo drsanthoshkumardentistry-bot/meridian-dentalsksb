@@ -21,6 +21,14 @@ export function insightsOf(clinics = [], now = Date.now()) {
   return { mrr, arr: mrr * 12, avg: paid.length ? mrr / paid.length : 0, paidCount: paid.length, conversion: total ? Math.round((paid.length / total) * 100) : 0, byPlan, quiet, endingSoon, trialEnding, neverUsed, total };
 }
 
+/** Signups per week for the last `weeks` weeks, oldest first. */
+export const weeklySignups = (clinics = [], now = Date.now(), weeks = 8) => {
+  const WEEK = 7 * DAY;
+  const out = Array.from({ length: weeks }, (_, k) => ({ start: now - (weeks - k) * WEEK, count: 0 }));
+  clinics.forEach((c) => { const age = now - (c.created || 0); if (c.created && age >= 0 && age < weeks * WEEK) out[weeks - 1 - Math.floor(age / WEEK)].count += 1; });
+  return out;
+};
+
 const List = ({ title, hint, rows, note }) => (
   <div className="rounded-xl border border-slate-100 bg-white p-3">
     <div className="flex items-baseline justify-between gap-2"><h3 className="text-xs font-bold text-slate-800">{title}</h3><span className="text-[11px] font-semibold text-slate-500">{rows.length}</span></div>
@@ -30,6 +38,25 @@ const List = ({ title, hint, rows, note }) => (
     )}
   </div>
 );
+
+const Trend = ({ clinics, now }) => {
+  const weeks = weeklySignups(clinics, now);
+  const max = Math.max(1, ...weeks.map((w) => w.count));
+  return (
+    <div className="mt-3 rounded-xl border border-slate-100 bg-white p-3" data-testid="signup-trend">
+      <h3 className="text-xs font-bold text-slate-800">New clinics per week</h3>
+      <div className="mt-2 flex h-20 items-end gap-1.5" role="img" aria-label={`New clinics per week, oldest to newest: ${weeks.map((w) => w.count).join(", ")}`}>
+        {weeks.map((w, k) => (
+          <div key={w.start} className="flex flex-1 flex-col items-center justify-end gap-1">
+            <span className="text-[10px] text-slate-500">{w.count}</span>
+            <div className={`w-full rounded-t ${k === weeks.length - 1 ? "bg-brand-600" : "bg-blue-200"}`} style={{ height: `${Math.max(4, (w.count / max) * 52)}px` }} />
+          </div>
+        ))}
+      </div>
+      <div className="mt-1 flex justify-between text-[10px] text-slate-400"><span>8 weeks ago</span><span>This week</span></div>
+    </div>
+  );
+};
 
 export default function Insights({ clinics, now = Date.now(), className = "" }) {
   const i = insightsOf(clinics, now);
@@ -45,6 +72,7 @@ export default function Insights({ clinics, now = Date.now(), className = "" }) 
         ))}
       </div>
       <p className="mt-2 text-[11px] text-slate-600" data-testid="plan-mix">{i.byPlan.map((p) => `${p.name} ${p.count}`).join(" · ")}</p>
+      <Trend clinics={clinics} now={now} />
       <div className="mt-3 grid gap-2 md:grid-cols-2">
         <List title="Paying but quiet" hint="Paid, yet nobody signed in this week. Check in before they leave." rows={i.quiet} note={left} />
         <List title="Renewing within 7 days" hint="Paid time is about to run out." rows={i.endingSoon} note={left} />
