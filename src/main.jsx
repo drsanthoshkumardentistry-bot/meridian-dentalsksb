@@ -12,7 +12,9 @@ import { startSentry } from './sentry.js';
 import { registerOfflinePage } from './offlinePage.js';
 import { hasSavedSession } from './savedSession.js';
 import { isAdminPath, prepareAdminPage } from './adminEntry.js';
+import { installViewportFit } from './viewportFit.js';
 import './index.css';
+installViewportFit();
 
 // Each route is its own file, so a patient opening an estimate or booking link downloads only that page,
 // not the whole clinic app.
