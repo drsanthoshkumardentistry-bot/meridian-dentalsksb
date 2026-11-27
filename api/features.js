@@ -3,6 +3,7 @@ import { makeLimiter } from "./_lib/aiCore.js";
 import { lookupUser } from "./_lib/loginAlertCore.js";
 import { readServiceAccount } from "./_lib/blockCore.js";
 import { isFounder, signedInRecently, FRESH_SIGNIN_MESSAGE } from "./_lib/adminCore.js";
+import { logAction } from "./_lib/auditCore.js";
 import { getFeatures, setFeature, allOn } from "./_lib/featuresCore.js";
 
 const allowRead = makeLimiter(240, 60 * 60 * 1000);
@@ -27,6 +28,6 @@ export default async function handler(req, res) {
   let body = req.body || {};
   if (typeof body === "string") { try { body = JSON.parse(body || "{}"); } catch (e) { return send(res, 400, { error: "Bad request." }); } }
   if (!body || typeof body !== "object" || typeof body.on !== "boolean") return send(res, 400, { error: "Bad request." });
-  try { return send(res, 200, await setFeature({ sa, key: body.key, on: body.on })); }
+  try { const next = await setFeature({ sa, key: body.key, on: body.on }); await logAction({ sa, actor: user.email, action: "feature", target: String(body.key), detail: body.on ? "switched on" : "switched off" }); return send(res, 200, next); }
   catch (e) { return send(res, e && e.message === "key" ? 400 : 502, { error: e && e.message === "key" ? "Choose ai or whatsapp." : "Could not save. Try again in a minute." }); }
 }

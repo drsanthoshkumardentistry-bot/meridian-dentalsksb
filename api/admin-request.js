@@ -3,6 +3,7 @@ import { makeLimiter } from "./_lib/aiCore.js";
 import { lookupUser } from "./_lib/loginAlertCore.js";
 import { readServiceAccount } from "./_lib/blockCore.js";
 import { isFounder, signedInRecently, FRESH_SIGNIN_MESSAGE } from "./_lib/adminCore.js";
+import { logAction } from "./_lib/auditCore.js";
 import { decideRequest } from "./_lib/requestCore.js";
 
 const allow = makeLimiter(100, 60 * 60 * 1000);
@@ -24,7 +25,9 @@ export default async function handler(req, res) {
   if (typeof body === "string") { try { body = JSON.parse(body || "{}"); } catch (e) { return send(res, 400, { error: "Bad request." }); } }
   if (!body || typeof body !== "object") return send(res, 400, { error: "Bad request." });
   try {
-    return send(res, 200, await decideRequest({ sa, uid: body.uid, action: body.action }));
+    const out = await decideRequest({ sa, uid: body.uid, action: body.action });
+    await logAction({ sa, actor: user.email, action: String(body.action), target: String(out && out.email || body.uid), detail: "subscription request" });
+    return send(res, 200, out);
   } catch (e) {
     const m = MSG[e && e.message];
     return m ? send(res, m[0], { error: m[1] }) : send(res, 502, { error: "Could not save. Try again in a minute." });

@@ -6,6 +6,7 @@ import { makeLimiter } from "./_lib/aiCore.js";
 import { lookupUser } from "./_lib/loginAlertCore.js";
 import { readServiceAccount, setBlocked } from "./_lib/blockCore.js";
 import { isFounder, signedInRecently, FRESH_SIGNIN_MESSAGE } from "./_lib/adminCore.js";
+import { logAction } from "./_lib/auditCore.js";
 import { uidByEmail, pausePlan, resumePlan } from "./_lib/planCore.js";
 
 const allow = makeLimiter(60, 60 * 60 * 1000);
@@ -34,9 +35,11 @@ export default async function handler(req, res) {
     const uid = await uidByEmail({ sa, email });
     if (!uid) return send(res, 404, { error: "No clinic account with that email." });
     if (uid === user.uid) return send(res, 400, { error: "You cannot suspend your own account." });
-    if (action === "pause_subscription") { const r = await pausePlan({ sa, uid, email }); return send(res, 200, { email, ...r }); }
-    if (action === "resume_subscription") { const r = await resumePlan({ sa, uid, email }); return send(res, 200, { email, ...r }); }
+    const note = (detail = "") => logAction({ sa, actor: user.email, action, target: email, detail });
+    if (action === "pause_subscription") { const r = await pausePlan({ sa, uid, email }); await note(`${Math.ceil(r.pausedRemaining / 86400000)} days kept`); return send(res, 200, { email, ...r }); }
+    if (action === "resume_subscription") { const r = await resumePlan({ sa, uid, email }); await note(); return send(res, 200, { email, ...r }); }
     await setBlocked(sa, uid, action === "suspend");
+    await note();
     return send(res, 200, { email, suspended: action === "suspend" });
   } catch (e) {
     const known = { already_paused: "This subscription is already paused.", nothing_to_pause: "There is no paid time left to pause.", not_paused: "This subscription is not paused." }[e && e.message];

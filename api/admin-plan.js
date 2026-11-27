@@ -4,6 +4,7 @@ import { makeLimiter } from "./_lib/aiCore.js";
 import { lookupUser } from "./_lib/loginAlertCore.js";
 import { readServiceAccount } from "./_lib/blockCore.js";
 import { isFounder, signedInRecently, FRESH_SIGNIN_MESSAGE } from "./_lib/adminCore.js";
+import { logAction } from "./_lib/auditCore.js";
 import { setPlan, uidByEmail } from "./_lib/planCore.js";
 
 const allow = makeLimiter(100, 60 * 60 * 1000);
@@ -27,6 +28,7 @@ export default async function handler(req, res) {
     const uid = await uidByEmail({ sa, email: body.email });
     if (!uid) return send(res, 404, { error: "No clinic account with that email." });
     const r = await setPlan({ sa, uid, plan: body.plan, days: body.days, email: String(body.email).toLowerCase() });
+    await logAction({ sa, actor: user.email, action: "plan", target: String(body.email).toLowerCase(), detail: `${body.plan}, ${body.days} days` });
     return send(res, 200, r);
   } catch (e) {
     if (e && e.message === "paused") return send(res, 400, { error: "This subscription is paused. Start it again first." });

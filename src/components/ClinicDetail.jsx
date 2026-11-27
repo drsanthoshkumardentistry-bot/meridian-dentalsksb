@@ -1,16 +1,16 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Copy, MessageCircle } from "lucide-react";
 import { TEMPLATES, fillTemplate, whatsappLink, readLocal, writeLocal } from "../adminTools.js";
-import { clinicAction } from "../adminApi.js";
+import { clinicAction, clinicNote } from "../adminApi.js";
 import { markPaid } from "../planApi.js";
 import { PLANS } from "../plan.js";
 
 const KEY = "merident.admin.clinicNotes";
 
 /** Opens under a clinic card: copy the email, send a ready-made message, keep a private note about that clinic. */
-export default function ClinicDetail({ clinic, onToast, onChanged, actionFn = clinicAction, planFn = markPaid }) {
+export default function ClinicDetail({ clinic, onToast, onChanged, actionFn = clinicAction, planFn = markPaid, noteFn = clinicNote }) {
   const id = String(clinic.uid || clinic.email);
-  const [note, setNote] = useState(() => { const all = readLocal(KEY, {}); return String((all && typeof all === "object" && all[id]) || "").slice(0, 400); });
+  const [note, setNote] = useState(() => { const all = readLocal(KEY, {}); return String((all && typeof all === "object" && all[id]) || "").slice(0, 2000); });
   const [tpl, setTpl] = useState(clinic.state === "expired" ? "renewal" : clinic.online ? "paid" : "quiet");
   const message = fillTemplate((TEMPLATES.find((t) => t[0] === tpl) || TEMPLATES[0])[2], {});
   const save = (v) => {
@@ -19,6 +19,20 @@ export default function ClinicDetail({ clinic, onToast, onChanged, actionFn = cl
     const next = { ...(all && typeof all === "object" && !Array.isArray(all) ? all : {}), [id]: v };
     if (!v) delete next[id];
     writeLocal(KEY, next);
+  };
+  const [sync, setSync] = useState("");
+  const noteRef = useRef(note);
+  noteRef.current = note;
+  useEffect(() => {
+    let live = true;
+    if (!clinic.email || clinic.email.startsWith("(")) return undefined;
+    Promise.resolve(noteFn({ email: clinic.email })).then((r) => { if (live && r && typeof r.note === "string" && r.note && !noteRef.current) save(r.note); }).catch(() => {});
+    return () => { live = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clinic.email]);
+  const keepOnAccount = () => {
+    setSync("Saving…");
+    Promise.resolve(noteFn({ email: clinic.email, note })).then(() => setSync("Kept on your account, so it is on every device.")).catch(() => setSync("Saved on this device only. Could not reach your account."));
   };
   const [suspended, setSuspended] = useState(!!clinic.suspended);
   const [confirm, setConfirm] = useState(false);
@@ -83,7 +97,8 @@ export default function ClinicDetail({ clinic, onToast, onChanged, actionFn = cl
       </div>
       <div>
         <label htmlFor={`note-${id}`} className="block font-semibold text-slate-700">Private note about this clinic</label>
-        <textarea id={`note-${id}`} rows={2} maxLength={400} value={note} onChange={(e) => save(e.target.value)} placeholder="Who you spoke to, what they asked for" className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5" />
+        <textarea id={`note-${id}`} rows={2} maxLength={2000} value={note} onChange={(e) => { save(e.target.value); setSync(""); }} onBlur={keepOnAccount} placeholder="Who you spoke to, what they asked for" className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5" />
+        {sync && <p role="status" className="mt-1 text-[11px] text-slate-500" data-testid="note-sync">{sync}</p>}
         <p className="text-[11px] text-slate-500">Saved in this browser only. {note.length}/400</p>
       </div>
     </div>

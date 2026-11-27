@@ -2,6 +2,8 @@ import FeatureSwitches from "./FeatureSwitches.jsx";
 import React, { useEffect, useMemo, useState } from "react";
 import { Copy, Download, Palette, SlidersHorizontal, BarChart3, Send, UserCog, ClipboardList, Plus, Trash2, Hospital, LogOut, Mail, StickyNote, ListChecks, Settings2, TrendingUp, MessageCircle, ShieldCheck, Rocket, UserRound, Megaphone } from "lucide-react";
 import UserAvatar from "./UserAvatar.jsx";
+import FounderLog from "./FounderLog.jsx";
+import Insights from "./Insights.jsx";
 import { clinicsCsv, requestsCsv, followUps, emailList, REFRESH_CHOICES, readLocal, writeLocal, cleanTodos, businessStats, goalProgress, TEMPLATES, fillTemplate, whatsappLink, LAUNCH_ITEMS, securityInfo } from "../adminTools.js";
 
 const TODO_KEY = "merident.admin.todos";
@@ -140,9 +142,11 @@ export default function AdminProfile({ announceLoad, announceSave, user, email =
         </section>
       )}
 
+      <FounderLog className={card} now={now} />
       </div>
 
       <div {...panel("business")}>
+      <Insights clinics={(data && data.clinics) || []} now={now} className={card} />
       {stats && (
         <section aria-label="Business snapshot" className={card} data-testid="business-snapshot">
           <h2 className="flex items-center gap-2 font-display text-base font-extrabold text-ink"><TrendingUp className="h-4 w-4 text-brand-600" /> Business snapshot</h2>
