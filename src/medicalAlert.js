@@ -57,7 +57,7 @@ export const SYSTEMIC_CONDITIONS = SYSTEM_GROUPS.flatMap((g) => g.items);
 /** Ticked conditions per system, for headings such as "Cardiovascular system (2)". */
 export const tickedInGroup = (patient, group) => group.items.filter((c) => patient?.systemic && patient.systemic[c.id]).length;
 
-const NONE = /^(none|nil|no|nkda|n\/a|na|not recorded|-)$/i;
+const NONE = /^(none|nil|no|nkda|nrh|no relevant history|none\s*\/\s*nrh|n\/a|na|not recorded|-)$/i;
 const clean = (v) => String(v ?? "").trim().replace(/\s+/g, " ");
 
 /** Alert parts in order, without repeats (case ignored) and without "None" style answers. */
