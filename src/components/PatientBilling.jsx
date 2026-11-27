@@ -42,6 +42,7 @@ export function VoidInvoiceDialog({ invoice, reason, onReason, onCancel, onSubmi
       <form role="dialog" aria-modal="true" aria-label="Void invoice" onSubmit={onSubmit} onClick={(e) => e.stopPropagation()} className="w-full sm:max-w-sm bg-white rounded-t-2xl sm:rounded-2xl p-5 space-y-3">
         <div className="font-bold text-slate-900">Void invoice {invoice.id}?</div>
         <p className="text-xs text-slate-600">The invoice stays on record marked Void and counts as ₹0. Use this for a wrong entry. It cannot be undone.</p>
+        {(invoice.payments || []).length > 0 && <p className="text-xs font-semibold text-rose-700">This invoice has payments recorded. They will be kept on the void record as reversed, so refund the patient yourself if money was taken.</p>}
         <label htmlFor="void-reason" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Reason</label>
         <input id="void-reason" autoFocus value={reason} onChange={(e) => onReason(e.target.value)} maxLength={200} placeholder="For example: wrong patient or wrong amount" className="w-full text-sm border border-rule rounded-lg px-3 py-2" />
         <div className="flex gap-2">

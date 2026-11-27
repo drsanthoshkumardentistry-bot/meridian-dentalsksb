@@ -11,9 +11,8 @@ describe("void invoice", () => {
     expect(r.invoice.voided.originalTotalP).toBe(50000);
     expect(paymentStatus(r.invoice)).toBe("Void");
   });
-  it("needs a reason, blocks paid and repeat voids", () => {
+  it("needs a reason and blocks repeat voids", () => {
     expect(voidInvoice(inv(), " ").ok).toBe(false);
-    expect(voidInvoice(inv({ payments: [{ amountP: 100, mode: "Cash" }] }), "mistake").ok).toBe(false);
     expect(voidInvoice(voidInvoice(inv(), "mistake").invoice, "again").ok).toBe(false);
   });
 });

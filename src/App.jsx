@@ -98,7 +98,7 @@ import { addWalkIn, setQueueStatus, pruneQueue } from "./queue.js";
 import { buildBookingPage, bookingUrl, requestToAppointment } from "./booking.js";
 import { publishBookingPage, watchBookingRequests, markBookingRequest } from "./bookingStore.js";
 import { patientSummary } from "./patientSummary.js";
-import { buildVisit, addVisit, removeVisit, intakeVisit, applyNrh, clearNrh } from "./visits.js";
+import { buildVisit, addVisit, removeVisit, intakeVisit, applyNrh, clearNrh, NRH_TEXT, canEditVisits, visitToForm, editVisit, editedLabel, prefillComplaint, registrationHistory } from "./visits.js";
 import { shiftDay, dayGrid, hourMarks } from "./dayView.js";
 const LazyOpgViewer = lazyWithRetry(() => import("./components/OpgViewer.jsx"));
 import ExtraRadiographs from "./components/ExtraRadiographs.jsx";
@@ -272,7 +272,7 @@ import {
 } from "./reports";
 import {
   TAX_CATEGORIES, MAX_LINE_ITEMS, computeLineItemTotals, nextInvoiceNumber, normalizeInvoice, addPayment,
-  paidPaise, balancePaise, paymentStatus, voidInvoice, buildUpiUri, isValidUpiId, buildInvoiceHtml, formatINR, toPaise, MAX_AMOUNT_P,
+  paidPaise, balancePaise, paymentStatus, voidInvoice, reversePayment, buildUpiUri, isValidUpiId, buildInvoiceHtml, formatINR, toPaise, MAX_AMOUNT_P,
 } from "./billing";
 
 const auth = FirebaseModule.auth;
@@ -625,7 +625,7 @@ const EMPTY_PATIENT_FORM = {
   bloodGroup: "Unknown", occupation: "", language: "English", referredBy: "Walk-in",
   emergencyName: "", emergencyPhone: "", abhaNumber: "",
   pregnancy: "Not applicable", chiefComplaint: "",
-  conditions: "", allergies: "", medicalAlert: "",
+  conditions: "", allergies: "", medicalAlert: "", nrh: false,
 };
 
 // Returns the first problem found, or an empty string when the form is valid
@@ -1396,6 +1396,7 @@ export default function App() {
     const created = {
       id: newId("P"),
       ...formFields,
+      ...registrationHistory(formFields),
       name: newPatientForm.name.trim(),
       phone: normalizePhone(newPatientForm.phone),
       guardianPhone: newPatientForm.guardianPhone ? normalizePhone(newPatientForm.guardianPhone) : "",
@@ -1845,7 +1846,14 @@ export default function App() {
   const [dateTo, setDateTo] = useState("");
   const [aiNotes, setAiNotes] = useState("");
   const [aiBusy, setAiBusy] = useState(false);
+  const [editingVisitId, setEditingVisitId] = useState(null);
   const [visitForm, setVisitForm] = useState({ complaint: "", findings: "", treatment: "", advice: "", nextVisit: "", nextVisitOn: "", date: "" });
+  // Opening Visit Notes fills the complaint typed at reception, so the doctor does not need "Draft from chart" for it
+  useEffect(() => {
+    if (activeModalTab !== "Visit Notes" || editingVisitId || !activePatient) return;
+    const c = prefillComplaint(activePatient);
+    if (c) setVisitForm((f) => (f.complaint ? f : { ...f, complaint: c }));
+  }, [activeModalTab, activePatient?.id, editingVisitId]); // eslint-disable-line react-hooks/exhaustive-deps
   const [diaryQuery, setDiaryQuery] = useState("");
   const visibleInvoices = invoiceView(invoices, { status: invoiceFilter, query: invoiceQuery });
   const invoicePage = usePaged(visibleInvoices, `${invoiceFilter}|${invoiceQuery}`);
@@ -2164,6 +2172,22 @@ export default function App() {
     showToast("Fill in the rest of the details and save. The lead will be marked Booked.");
   };
 
+  const [reverseIdx, setReverseIdx] = useState(null);
+  const [reverseReason, setReverseReason] = useState("");
+  const handleReversePayment = (e) => {
+    e.preventDefault();
+    const current = normalizeInvoice(invoices.find((i) => i.id === activeUpiQrInvoice?.id));
+    if (!current) return;
+    const result = reversePayment(current, reverseIdx, reverseReason, authUser?.email || role);
+    if (!result.ok) { showToast(result.error); return; }
+    const synced = syncDueDate(result.invoice);
+    setInvoices((prev) => prev.map((i) => (i.id === current.id ? synced : i)));
+    logAudit("payment.reverse", current.id, reverseReason.trim());
+    setActiveUpiQrInvoice(synced);
+    setReverseIdx(null);
+    setReverseReason("");
+    showToast("Payment reversed");
+  };
   const [voidTarget, setVoidTarget] = useState(null);
   const [voidReason, setVoidReason] = useState("");
   const handleVoidInvoice = (e) => {
@@ -3550,7 +3574,7 @@ export default function App() {
                             {inv.voided ? (
                               <span className="text-[10px] font-bold text-slate-500" title={inv.voided.reason}>Void: {inv.voided.reason}</span>
                             ) : null}
-                            {!inv.voided && paidPaise(inv) === 0 && canWrite(role, "invoices") && (role === "owner" || role === "manager") ? (
+                            {!inv.voided && canWrite(role, "invoices") && (role === "owner" || role === "manager") ? (
                               <button
                                 onClick={() => { setVoidReason(""); setVoidTarget(inv); }}
                                 className="px-3 py-1.5 bg-white hover:bg-rose-50 border border-rule text-rose-700 rounded-lg text-xs font-semibold"
@@ -5214,6 +5238,17 @@ export default function App() {
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
+                      if (editingVisitId) {
+                        if (!canEditVisits(role)) { showToast("Only the owner, manager or dentist can edit a saved note"); return; }
+                        const r = editVisit(activePatient, editingVisitId, visitForm, authUser?.email || role);
+                        if (!r.ok) { showToast(r.error); return; }
+                        setPatients((prev) => prev.map((p) => (p.id === activePatient.id ? r.patient : p)));
+                        logAudit("visit.edit", activePatient.name, editingVisitId);
+                        setEditingVisitId(null);
+                        setVisitForm({ complaint: "", findings: "", treatment: "", advice: "", nextVisit: "", nextVisitOn: "", date: "" });
+                        showToast("Visit note updated");
+                        return;
+                      }
                       const built = buildVisit(visitForm, newId("VN"));
                       if (!built.ok) {
                         showToast(built.error);
@@ -5262,7 +5297,8 @@ export default function App() {
                       </div>
                     </div>
                     <div className="sm:col-span-2 flex justify-end">
-                      <button type="submit" className="px-4 py-2 bg-[#2563eb] hover:bg-blue-700 text-white rounded-lg font-semibold">Save visit note</button>
+                      {editingVisitId && <button type="button" onClick={() => { setEditingVisitId(null); setVisitForm({ complaint: "", findings: "", treatment: "", advice: "", nextVisit: "", nextVisitOn: "", date: "" }); }} className="mr-2 px-4 py-2 border border-rule rounded-lg font-semibold text-slate-700">Cancel edit</button>}
+                      <button type="submit" className="px-4 py-2 bg-[#2563eb] hover:bg-blue-700 text-white rounded-lg font-semibold">{editingVisitId ? "Update visit note" : "Save visit note"}</button>
                     </div>
                   </form>
 
@@ -5285,6 +5321,10 @@ export default function App() {
                         <li key={v.id} className="rounded-xl border border-rule bg-white p-4 text-xs">
                           <div className="flex items-center justify-between gap-3 mb-2">
                             <span className="font-bold text-sm text-slate-900">{new Date(v.date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</span>
+                            <span className="flex items-center gap-3">
+                            {canEditVisits(role) && (
+                              <button type="button" aria-label={`Edit visit note from ${v.date}`} onClick={() => { setEditingVisitId(v.id); setVisitForm(visitToForm(v)); window.scrollTo?.({ top: 0 }); showToast("Editing this note. Change it above and press Update"); }} className="text-xs font-semibold text-[#2563eb] hover:underline">Edit</button>
+                            )}
                             <button
                               type="button"
                               aria-label={`Delete visit note from ${v.date}`}
@@ -5293,7 +5333,9 @@ export default function App() {
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
+                            </span>
                           </div>
+                          {editedLabel(v) && <div className="mb-2 text-[11px] font-semibold text-amber-700" data-testid="visit-edited">{editedLabel(v)}</div>}
                           <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-2">
                             {[["Complaint", v.complaint], ["Findings", v.findings], ["Treatment done", v.treatment], ["Advice", v.advice], ["Next visit", v.nextVisit]]
                               .filter(([, val]) => val)
@@ -6087,6 +6129,14 @@ export default function App() {
                 className="w-full px-3 py-2 border border-rose-200 bg-rose-50/40 rounded-lg text-rose-800 font-medium focus:outline-none"
               />
             </Field>
+            <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+              <input
+                type="checkbox"
+                checked={Boolean(newPatientForm.nrh)}
+                onChange={(e) => setNewPatientForm(e.target.checked ? { ...newPatientForm, nrh: true, medicalAlert: "", conditions: NRH_TEXT, allergies: NRH_TEXT } : { ...newPatientForm, nrh: false, conditions: newPatientForm.conditions === NRH_TEXT ? "" : newPatientForm.conditions, allergies: newPatientForm.allergies === NRH_TEXT ? "" : newPatientForm.allergies })}
+              />
+              No relevant history (NRH). Sets conditions and allergies to None / NRH
+            </label>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Known conditions">
                 <input
@@ -6814,9 +6864,23 @@ export default function App() {
                 {qrInvoice.payments.map((p, i) => (
                   <div key={i} className="flex justify-between text-slate-600">
                     <span>{p.date} · {p.mode}</span>
-                    <span className="font-semibold">₹{formatINR(p.amountP)}</span>
+                    <span className="font-semibold">₹{formatINR(p.amountP)}
+                      {(role === "owner" || role === "manager") && !qrInvoice.voided && (
+                        <button type="button" aria-label={`Reverse payment of ₹${formatINR(p.amountP)}`} onClick={() => { setReverseIdx(i); setReverseReason(""); }} className="ml-2 text-rose-700 font-semibold hover:underline">Reverse</button>
+                      )}
+                    </span>
                   </div>
                 ))}
+                {reverseIdx !== null && qrInvoice.payments[reverseIdx] && (
+                  <form onSubmit={handleReversePayment} aria-label="Reverse payment" className="mt-2 space-y-2 rounded-lg border border-rose-200 bg-rose-50/60 p-2.5">
+                    <div className="font-semibold text-rose-800">Reverse ₹{formatINR(qrInvoice.payments[reverseIdx].amountP)} paid on {qrInvoice.payments[reverseIdx].date}?</div>
+                    <input aria-label="Reason for reversing" autoFocus value={reverseReason} onChange={(e) => setReverseReason(e.target.value)} maxLength={200} placeholder="For example: entered twice by mistake" className="w-full text-xs border border-rule rounded-lg px-2.5 py-1.5 bg-white" />
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => setReverseIdx(null)} className="flex-1 py-1.5 border border-rule rounded-lg bg-white font-semibold">Keep it</button>
+                      <button type="submit" className="flex-1 py-1.5 bg-rose-600 text-white rounded-lg font-semibold">Reverse payment</button>
+                    </div>
+                  </form>
+                )}
               </div>
             )}
 

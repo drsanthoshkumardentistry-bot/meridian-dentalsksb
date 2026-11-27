@@ -338,7 +338,7 @@ export const SEO_PAGES = [
         "Open the patient's Billing tab and tap New invoice. GST is worked out for you.",
         "Record part-payments, share the UPI QR, or send the invoice on WhatsApp.",
         "For insurance or TPA patients, use the Claims tab to record the insurer, claim amounts and status, and see what insurers still owe. MeriDent tracks claims; it does not submit them.",
-        "A wrong invoice can be voided by the owner or a manager with a reason. It stays on record and counts as zero. An invoice that already has a payment cannot be voided."] },
+        "A wrong invoice can be voided by the owner or a manager with a reason. It stays on record and counts as zero. A single wrong or duplicate payment can be reversed with a reason, and a paid invoice can be voided. Every reversal is kept on record."] },
       { h: "Who can do what", items: [
         "Owner: everything, including the team, the activity log and voiding invoices.",
         "Manager: patients, diary, billing, stock and reports.",

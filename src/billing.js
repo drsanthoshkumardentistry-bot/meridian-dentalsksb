@@ -242,7 +242,7 @@ ${profile.texts?.invoiceFooter ? `<p style="margin-top:28px;white-space:pre-line
 
 /**
  * Void a wrong invoice. The record stays (for the audit trail) but counts as nothing: totals and balance become 0.
- * An invoice that already has money against it cannot be voided; refund or adjust the payment first.
+ * A paid invoice can be voided too: its payments are kept inside the void record (as reversed) and the reason is required.
  */
 export const voidInvoice = (inv, reason, by = "", now = new Date()) => {
   const cur = normalizeInvoice(inv);
@@ -250,7 +250,25 @@ export const voidInvoice = (inv, reason, by = "", now = new Date()) => {
   if (cur.voided) return { ok: false, error: "This invoice is already void" };
   const why = String(reason || "").trim().slice(0, 200);
   if (why.length < 3) return { ok: false, error: "Write the reason for voiding" };
-  if (paidPaise(cur) > 0) return { ok: false, error: "This invoice has payments recorded. Cannot void it" };
+  const paidBefore = paidPaise(cur);
   const zero = { subtotalP: 0, discountP: 0, taxableP: 0, cgstP: 0, sgstP: 0, taxP: 0, totalP: 0, payments: [], total: "0", rawAmount: "0" };
-  return { ok: true, invoice: { ...cur, ...zero, voided: { at: now.toISOString(), reason: why, by: String(by || "").slice(0, 80), originalTotalP: cur.totalP || 0 } } };
+  return { ok: true, invoice: { ...cur, ...zero, voided: { at: now.toISOString(), reason: why, by: String(by || "").slice(0, 80), originalTotalP: cur.totalP || 0, ...(paidBefore > 0 ? { reversedPaidP: paidBefore, reversedPayments: cur.payments } : {}) } } };
+};
+
+
+/**
+ * Reverse one wrong or duplicate payment. The payment leaves the totals but is kept on the invoice as a reversed entry
+ * with who, when and why, so the money trail stays honest.
+ */
+export const reversePayment = (inv, index, reason, by = "", now = new Date()) => {
+  const cur = normalizeInvoice(inv);
+  if (!cur) return { ok: false, error: "Invoice not found" };
+  if (cur.voided) return { ok: false, error: "This invoice is void" };
+  const list = cur.payments || [];
+  const pay = list[index];
+  if (!pay) return { ok: false, error: "Payment not found" };
+  const why = String(reason || "").trim().slice(0, 200);
+  if (why.length < 3) return { ok: false, error: "Write the reason for reversing" };
+  const reversed = { ...pay, reversedAt: now.toISOString(), reason: why, by: String(by || "").slice(0, 80) };
+  return { ok: true, invoice: { ...cur, payments: list.filter((_, i) => i !== index), reversedPayments: [...(cur.reversedPayments || []), reversed] } };
 };
