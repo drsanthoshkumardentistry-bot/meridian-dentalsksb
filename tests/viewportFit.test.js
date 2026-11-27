@@ -17,3 +17,11 @@ describe("viewport fit", () => {
     off();
   });
 });
+
+import { readFileSync } from "node:fs";
+describe("full-page screens", () => {
+  it("use the measured height too, not a stale 100vh", () => {
+    const css = readFileSync("src/index.css", "utf8");
+    expect(css).toMatch(/html \.min-h-screen\s*\{[^}]*var\(--app-h/);
+  });
+});
