@@ -9,7 +9,7 @@ import { startHeartbeat } from "../src/heartbeat.js";
 
 afterEach(() => { cleanup(); vi.useRealTimers(); });
 
-const go = async (name) => { fireEvent.click(await screen.findByRole("button", { name: new RegExp(`^${name}`) })); };
+const go = async (name) => { const all = await screen.findAllByRole("button", { name: new RegExp(`^${name}`) }); fireEvent.click(all.find((b) => !/Open details/.test(b.getAttribute("aria-label") || "")) || all[0]); };
 
 const NOW = Date.now();
 const data = () => ({
@@ -401,5 +401,35 @@ describe("clinic details", () => {
     expect(screen.getByLabelText("Private note about this clinic").value).toBe("Call Monday");
     fireEvent.change(screen.getByLabelText("Private note about this clinic"), { target: { value: "" } });
     expect(JSON.parse(localStorage.getItem("merident.admin.clinicNotes")).uidC1234).toBeUndefined();
+  });
+
+  it("opens the matching clinics when a number is tapped", async () => {
+    localStorage.clear();
+    render(<AdminDashboard email="boss@x.com" initial={data()} loadFn={vi.fn()} refreshMs={0} now={NOW} />);
+    fireEvent.click(screen.getByRole("button", { name: /^Online now: \d+\. Open details/ }));
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Clinics");
+    expect(screen.getByRole("button", { name: /^Online/, pressed: true })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /^Overview/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Active today: \d+\. Open details/ }));
+    expect(screen.getByRole("button", { name: /^Active today/, pressed: true })).toBeTruthy();
+    expect(screen.getByLabelText("Sort clinics").value).toBe("time");
+    fireEvent.click(screen.getByRole("button", { name: /^Overview/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Gone quiet/ }));
+    expect(screen.getByRole("button", { name: /^Quiet/, pressed: true })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /^Overview/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Clinics signed up/ }));
+    expect(screen.getByLabelText("Sort clinics").value).toBe("new");
+  });
+  it("opens the right place from the billing numbers and the day bars", async () => {
+    localStorage.clear();
+    render(<AdminDashboard email="boss@x.com" initial={data()} loadFn={vi.fn()} refreshMs={0} now={NOW} />);
+    fireEvent.click(screen.getAllByRole("button", { name: /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun): [\d.]+ hours online/ }).pop());
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Clinics");
+    await go("Billing");
+    fireEvent.click(screen.getByRole("button", { name: /^Paying clinics/ }));
+    expect(screen.getByRole("button", { name: /^Paying/, pressed: true })).toBeTruthy();
+    await go("Billing");
+    fireEvent.click(screen.getByRole("button", { name: /^Expired plans/ }));
+    expect(screen.getByRole("button", { name: /^Expired/, pressed: true })).toBeTruthy();
   });
 });

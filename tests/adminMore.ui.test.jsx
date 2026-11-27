@@ -33,6 +33,20 @@ describe("revenue and risk panel", () => {
   });
 });
 
+describe("revenue and risk panel taps", () => {
+  it("opens billing, the paying list and a clinic", () => {
+    const now = 1e12; const clinic = { uid: "u", email: "q@x.com", state: "paid", plan: "pro", paidUntil: now + 20 * 86400000, weekMin: 0, created: now - 90 * 86400000 };
+    const onGo = vi.fn(); const onClinic = vi.fn();
+    render(<Insights now={now} clinics={[clinic]} onGo={onGo} onClinic={onClinic} />);
+    fireEvent.click(screen.getByRole("button", { name: /^Monthly/ }));
+    expect(onGo).toHaveBeenCalledWith("billing");
+    fireEvent.click(screen.getByRole("button", { name: /^Signups paying/ }));
+    expect(onGo).toHaveBeenCalledWith("clinics", "paying");
+    fireEvent.click(screen.getByRole("button", { name: "Open q@x.com" }));
+    expect(onClinic).toHaveBeenCalledWith(clinic);
+  });
+});
+
 describe("clinic note kept on the account", () => {
   const clinic = { uid: "u1", email: "a@x.com", state: "unpaid" };
   it("loads the saved note and keeps edits on the account when you leave the box", async () => {
