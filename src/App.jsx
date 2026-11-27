@@ -22,7 +22,7 @@ import ActivityLog from "./components/ActivityLog.jsx";
 import { buildAuditEntry } from "./audit.js";
 import { writeAudit, watchAudit } from "./auditStore.js";
 import TeamCard from "./components/TeamCard.jsx";
-import { canRead, canWrite, navFor, NAV_BY_ROLE, firstScreen, branchScope, ROLE_LABEL, SCREENS, safeScreen, screenFromShortcut } from "./roles.js";
+import { canRead, canWrite as roleCanWrite, navFor, NAV_BY_ROLE, firstScreen, branchScope, ROLE_LABEL, SCREENS, safeScreen, screenFromShortcut } from "./roles.js";
 import { isActiveMember, isPendingInvite, buildInvite, inviteMessage } from "./team.js";
 import { watchMyMembership, watchTeam, createInvite, acceptInvite, updateMember, removeMember } from "./teamStore.js";
 import BranchesCard from "./components/BranchesCard.jsx";
@@ -115,6 +115,10 @@ import DeleteAccountCard from "./components/DeleteAccountCard.jsx";
 import FounderCard from "./components/FounderCard.jsx";
 import ReportProblem from "./components/ReportProblem.jsx";
 import PlanCard from "./components/PlanCard.jsx";
+import PlanBanner from "./components/PlanBanner.jsx";
+import PlanEndedScreen from "./components/PlanEndedScreen.jsx";
+import { planAccess, PRICING_LIVE } from "./plan.js";
+import { loadMyPlan } from "./planApi.js";
 import AdminDashboard from "./components/AdminDashboard.jsx";
 import { isAdminPath } from "./adminEntry.js";
 import AdminAccessProblem from "./components/AdminAccessProblem.jsx";
@@ -761,6 +765,19 @@ export default function App() {
   const pausedAccess = authUser && membership && membership.status === "active" && membership.active === false && membership.clinicId !== authUser.uid ? membership : null;
   const pendingInvite = authUser && isPendingInvite(membership) && membership.clinicId !== authUser.uid ? membership : null;
   const role = activeMember ? activeMember.role : "owner";
+  // What this clinic's plan allows (see plan.js). Only the owner's own session looks it up; if it cannot be read, nothing is locked.
+  const [myPlan, setMyPlan] = useState(null);
+  useEffect(() => {
+    if (!authUser || activeMember) return undefined;
+    let live = true;
+    loadMyPlan().then((p) => { if (live) setMyPlan(p); }).catch(() => {});
+    return () => { live = false; };
+  }, [authUser, activeMember]);
+  const access = (!authUser || activeMember || !myPlan || myPlan.failed)
+    ? { mode: "full" }
+    : planAccess({ createdAt: authUser.metadata && authUser.metadata.creationTime, paidUntil: myPlan.paidUntil, plan: myPlan.plan, paused: myPlan.paused, pausedRemaining: myPlan.pausedRemaining, live: PRICING_LIVE });
+  // View-only days: nobody can add or edit, whatever their role.
+  const canWrite = (r, collection) => access.mode !== "viewonly" && roleCanWrite(r, collection);
   const CLINIC_ID = isVerified && membershipReady ? (activeMember ? activeMember.clinicId : authUser.uid) : null;
   // Team members keep their own device cache so they never read or overwrite the owner's
   const CACHE_ID = CLINIC_ID && activeMember ? `${CLINIC_ID}_s${authUser.uid}` : CLINIC_ID;
@@ -2473,6 +2490,19 @@ export default function App() {
             diarySum.needsUpdate > 0 && { text: `${diarySum.needsUpdate} past ${diarySum.needsUpdate === 1 ? "visit has" : "visits have"} no outcome`, to: "Appointments Diary" },
           ].filter(Boolean);
   const openNewAppointment = () => { setActiveNav("Appointments Diary"); setIsAddApptOpen(true); };
+  if (access.mode === "download") {
+    return (
+      <PlanEndedScreen
+        access={access}
+        clinic={practiceProfile.name}
+        createdAt={authUser && authUser.metadata && authUser.metadata.creationTime}
+        data={{ patients: allPatients, appointments: allAppointments, invoices: allInvoices, inventory, employees, profile: practiceProfile }}
+        onDownloadFile={(text, name, type, bom) => { downloadFile(text, name, type, bom); if (/backup/i.test(name)) markBackupDone(CACHE_ID, new Date(), window.localStorage); }}
+        onLogout={() => handleLogout()}
+      />
+    );
+  }
+
   return (
     <div className="flex h-screen app-backdrop text-slate-800 font-sans overflow-hidden app-shell">
       {navTip && !sidebarOpen && (
@@ -2677,6 +2707,7 @@ export default function App() {
           <BackupNudge points={restorePoints.points} loaded={restorePoints.loaded} busy={restorePoints.busy} hasData={allPatients.length > 0} onSave={() => restorePoints.saveNow({ force: true })} />
         )}
         <AnnouncementBanner />
+        <PlanBanner access={access} clinic={practiceProfile.name} createdAt={authUser && authUser.metadata && authUser.metadata.creationTime} />
         <header className="h-16 bg-white border-b border-slate-200 px-3 sm:px-6 flex items-center justify-between gap-2 sticky top-0 z-30">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0 shrink">
             <button

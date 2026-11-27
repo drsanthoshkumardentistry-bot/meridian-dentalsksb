@@ -39,6 +39,34 @@ export const planStatus = ({ createdAt, paidUntil, plan, paused, pausedRemaining
   return left > 0 ? { state: "trial", plan: "all", daysLeft: Math.min(left, TRIAL_DAYS), allowed: true } : { state: "ended", plan: "none", daysLeft: 0, allowed: false };
 };
 
+/* What happens when a plan (or the free trial, or a pause) ends. Nothing is ever deleted because of this.
+ * Days 1 to GRACE_DAYS after the end date: everything keeps working, with a banner. This covers the wait between a clinic paying
+ * by UPI and the founder approving it. Days GRACE_DAYS+1 to VIEW_ONLY_DAYS: view and download only. After that: only the data
+ * download and the renew button. Renewing brings everything back at once. */
+export const GRACE_DAYS = 7;
+export const VIEW_ONLY_DAYS = 30;
+const FULL = { mode: "full", endedAt: 0, daysSince: 0, graceLeft: 0, viewOnlyLeft: 0, reason: "" };
+
+/**
+ * mode: "full" | "grace" | "viewonly" | "download". Unknown or missing data never locks anyone out.
+ */
+export const planAccess = ({ createdAt, paidUntil, plan, paused, pausedRemaining, now = Date.now(), live = PRICING_LIVE } = {}) => {
+  if (!live) return FULL;
+  const status = planStatus({ createdAt, paidUntil, plan, paused, pausedRemaining, now, live });
+  if (status.state === "free" || status.state === "paid" || status.state === "trial") return FULL;
+  const paid = ms(paidUntil);
+  const made = ms(createdAt);
+  const trialEnd = made ? made + TRIAL_DAYS * DAY_MS : 0;
+  const reason = status.state === "paused" ? "paused" : paid ? "paid" : "trial";
+  const endedAt = status.state === "paused" ? paid : Math.max(paid, trialEnd);
+  if (!endedAt) return status.state === "paused" ? { ...FULL, mode: "viewonly", reason, viewOnlyLeft: VIEW_ONLY_DAYS - GRACE_DAYS } : FULL;
+  const daysSince = Math.max(1, Math.ceil((now - endedAt) / DAY_MS));
+  const base = { endedAt, daysSince, reason };
+  if (daysSince <= GRACE_DAYS) return { ...base, mode: "grace", graceLeft: GRACE_DAYS - daysSince + 1, viewOnlyLeft: VIEW_ONLY_DAYS - GRACE_DAYS };
+  if (daysSince <= VIEW_ONLY_DAYS) return { ...base, mode: "viewonly", graceLeft: 0, viewOnlyLeft: VIEW_ONLY_DAYS - daysSince + 1 };
+  return { ...base, mode: "download", graceLeft: 0, viewOnlyLeft: 0 };
+};
+
 /** WhatsApp text for a clinic that wants to subscribe. Only the clinic name and chosen plan are included. */
 export const subscribeText = ({ planId = "standard", yearly = false, clinic = "" } = {}) => {
   const p = PLANS.find((x) => x.id === planId) || PLANS[0];
