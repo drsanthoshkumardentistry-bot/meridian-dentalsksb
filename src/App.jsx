@@ -173,6 +173,7 @@ import ShowMore from "./components/ShowMore.jsx";
 import { dentistEarnings, dentistEarningsCsv, cleanPct } from "./dentistReport.js";
 import { branchComparison, branchComparisonCsv } from "./branchReport.js";
 import LabOrders from "./components/LabOrders.jsx";
+import CadCam from "./components/CadCam.jsx";
 import LabBoard from "./components/LabBoard.jsx";
 import { openLabOrders, overdueCount as labOverdueCount, knownLabs, moveLabOrder, buildLabChase, buildPatientReady, markPatientNotified } from "./lab.js";
 import FollowUpPanels, { ReviewInvites, NextVisitPanel } from "./components/FollowUpPanels.jsx";
@@ -5126,6 +5127,7 @@ export default function App() {
                   "Billing",
                   "Claims",
                   "Lab Work",
+                  "CAD/CAM",
                   "Consent",
                   "Certificates",
                   "Photos & X-rays",
@@ -5585,6 +5587,15 @@ export default function App() {
                   newId={() => newId("LB")}
                   canWrite={canWrite(role, "patients")}
                   onChange={(labOrders) => updateActivePatient({ labOrders })}
+                />
+              )}
+
+              {activeModalTab === "CAD/CAM" && (
+                <CadCam
+                  patient={activePatient}
+                  newId={() => newId("CC")}
+                  canWrite={canWrite(role, "patients")}
+                  onChange={(cadCases) => updateActivePatient({ cadCases })}
                 />
               )}
 

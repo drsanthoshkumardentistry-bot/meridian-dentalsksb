@@ -30,7 +30,7 @@ const mapList = (list, fn) => {
 };
 
 export const safePatients = (list) => mapList(list, (p) => {
-  return fix(p, ["id", "name", "phone", "age", "gender", "email", "address", "allergies", "conditions", "medicalAlert", "chiefComplaint"], ["visits", "plans", "prescriptions", "referrals", "labels"], [], ["id", "name"]);
+  return fix(p, ["id", "name", "phone", "age", "gender", "email", "address", "allergies", "conditions", "medicalAlert", "chiefComplaint"], ["visits", "plans", "prescriptions", "referrals", "labels", "cadCases"], [], ["id", "name"]);
 });
 export const safeAppointments = (list) => mapList(list, (a) => fix(a, ["id", "patientId", "patientName", "phone", "date", "time", "doctor", "procedure", "status"], [], [], ["id", "date", "time"]));
 export const safeInvoices = (list) => mapList(list, (v) => fix(v, ["id", "patientId", "patient", "treatment", "date"], ["payments", "items"], ["subtotalP", "taxP", "cgstP", "sgstP", "totalP"], ["id", "date"]));
