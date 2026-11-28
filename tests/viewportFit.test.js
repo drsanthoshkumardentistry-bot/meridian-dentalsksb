@@ -25,3 +25,10 @@ describe("full-page screens", () => {
     expect(css).toMatch(/html \.min-h-screen\s*\{[^}]*var\(--app-h/);
   });
 });
+
+describe("phone sizing", () => {
+  it("scales rem sizes down on small screens with a percentage, so the phone's text setting still works", () => {
+    const css = readFileSync("src/index.css", "utf8");
+    expect(css).toMatch(/@media \(max-width: 480px\) \{\s*html \{ font-size: 90%; \}/);
+  });
+});
