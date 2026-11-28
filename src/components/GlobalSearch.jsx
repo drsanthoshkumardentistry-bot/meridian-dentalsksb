@@ -8,6 +8,15 @@ import { balancePaise, formatINR, normalizeInvoice } from "../billing.js";
 export default function GlobalSearch({ patients, appointments, invoices, onPick }) {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
+  // The header box is narrow on a phone, so a long hint gets cut off ("Search patien"): say just "Search" there.
+  const [narrow, setNarrow] = useState(() => { try { return window.matchMedia("(max-width: 640px)").matches; } catch { return false; } });
+  useEffect(() => {
+    let mq;
+    try { mq = window.matchMedia("(max-width: 640px)"); } catch { return undefined; }
+    const on = () => setNarrow(mq.matches);
+    mq.addEventListener?.("change", on);
+    return () => mq.removeEventListener?.("change", on);
+  }, []);
   const [active, setActive] = useState(0);
   const inputRef = useRef(null);
   const boxRef = useRef(null);
@@ -110,7 +119,7 @@ export default function GlobalSearch({ patients, appointments, invoices, onPick 
         }}
         onFocus={() => setOpen(true)}
         onKeyDown={onInputKey}
-        placeholder="Search patients, visits, invoices" maxLength={100}
+        placeholder={narrow ? "Search" : "Search patients, visits, invoices"} maxLength={100}
         className="w-full pl-9 pr-3 py-2 sm:py-1.5 bg-enamel border border-rule rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
       />
       {showPanel && (

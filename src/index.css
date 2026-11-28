@@ -97,6 +97,12 @@ html {
   scroll-padding-top: 5rem;
 }
 
+/* Phones: everything sized in rem (text, padding, cards, buttons) is 10% smaller, so more fits on screen.
+   A percentage, not a pixel size, so the phone's own text-size setting still works. */
+@media (max-width: 480px) {
+  html { font-size: 90%; }
+}
+
 /* ---- Landing: one orchestrated hero moment (teeth settle into the arch) ---- */
 @keyframes tooth-in {
   from {
