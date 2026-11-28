@@ -4117,6 +4117,17 @@ export default function App() {
 
               {role === "owner" && CLINIC_ID && <RecycleBinCard loadFn={() => listBin(db, CLINIC_ID)} restoreFn={(e) => restoreFromBin(db, CLINIC_ID, e)} removeFn={(e) => removeFromBin(db, CLINIC_ID, e)} />}
 
+              {(role === "owner" || role === "manager") && (
+                <div className="rounded-xl border border-rule p-4 space-y-1">
+                  <label className="flex items-start gap-3 text-sm font-semibold text-slate-900">
+                    <input type="checkbox" className="mt-1" checked={Boolean(practiceProfile.cadcam)} onChange={(e) => setPracticeProfile({ ...practiceProfile, cadcam: e.target.checked })} />
+                    <span>Use CAD/CAM (chairside scanner and mill)
+                      <span className="block text-xs font-normal text-slate-500">Adds a CAD/CAM tab to each patient's chart to follow a crown from scan to fitting and to view scans in 3D. Leave it off if your crowns come from a lab. Cases already saved stay visible either way.</span>
+                    </span>
+                  </label>
+                </div>
+              )}
+
               {role === "owner" && <FounderCard />}
 
               {role === "owner" && <DeleteAccountCard onSignOut={handleLogout} onDeleted={() => { setAuthUser(null); setAuthError(""); setAuthNotice("Your account and its data were deleted."); setActiveNav("Dashboard"); }} />}
@@ -5133,7 +5144,7 @@ export default function App() {
                   "Photos & X-rays",
                   "Medical History",
                   "Patient Details",
-                ].map((tab) => {
+                ].filter((tab) => tab !== "CAD/CAM" || practiceProfile.cadcam || (activePatient.cadCases || []).length > 0).map((tab) => {
                   const isActive = activeModalTab === tab;
                   return (
                     <button
